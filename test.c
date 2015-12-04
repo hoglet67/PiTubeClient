@@ -1,13 +1,3 @@
-/*
-#include <unistd.h>
-#include <stdint.h>
-#include <string.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <errno.h>
-#include <stdlib.h>
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,7 +27,7 @@
 #define F_BIT 0x40
 
 #define DEBUG 1
-#define DEBUGDETAIL 1
+#define DEBUGDETAIL 0
 
 // BCM GPIO 25
 #define IRQ_PIN 6
@@ -48,13 +38,14 @@ int spiClose(int spifd);
 void tubeWrite(unsigned char addr, unsigned char byte);
 unsigned char tubeRead(unsigned char addr);
 unsigned char tubeCmd(unsigned char cmd, unsigned char addr, unsigned char byte);
-void waitUntilSpace(unsigned char reg);
-void waitUntilData(unsigned char reg);
 void sendByte(unsigned char reg, unsigned char byte);
 void sendString(unsigned char reg, const unsigned char *msg);
 unsigned char receiveByte(unsigned char reg);
-void receiveString(unsigned char reg, unsigned char terminator, unsigned char *buf);
+void receiveString(unsigned char reg, unsigned char terminator, volatile unsigned char *buf);
 unsigned char pollForResponse(unsigned char reg);
+
+static volatile int reset;
+static volatile int error;
 
 static volatile unsigned char escFlag;
 static volatile unsigned char errNum;
@@ -88,70 +79,59 @@ void IRQInterrupt(void) {
       receiveByte(R2); // 0
       errNum = receiveByte(R2);
       receiveString(R2, 0x00, errMsg);
+      // Flag an error to the main process
+      error = 1;
       if (DEBUG) {
         printf("Error = %02x %s\n", errNum, errMsg);
       }
     } else {
       unsigned char id = receiveByte(R4);
       if (DEBUG) {
-        printf("Transfer = %02x %02x\n", type, id);
-      }      
-      if (type < 4 ) {
-	// Type 0 .. 3 transfers services by NMI
-	unsigned char a0 = receiveByte(R4);
-	unsigned char a1 = receiveByte(R4);
-	unsigned char a2 = receiveByte(R4);
-	unsigned char a3 = receiveByte(R4);
-	// TODO setup NMI
-	unsigned char sync = receiveByte(R4);
-
-      } else if (type == 4) {
-	// Type 4 : pass address to host
-	unsigned char a0 = receiveByte(R4);
-	unsigned char a1 = receiveByte(R4);
-	unsigned char a2 = receiveByte(R4);
-	unsigned char a3 = receiveByte(R4);
-	unsigned char sync = receiveByte(R4);
-	
-      } else if (type == 5) {
-	// Type 5 : tube release
-
-      } else if (type == 6) {
-	// Type 6 transfers are 256 byte block p -> h
-	unsigned char a0 = receiveByte(R4);
-	unsigned char a1 = receiveByte(R4);
-	unsigned char a2 = receiveByte(R4);
-	unsigned char a3 = receiveByte(R4);
-
-	// TODO write 256 bytes to R3 
-
-	unsigned char sync = receiveByte(R4);
-
-      } else if (type == 7) {
-	// Type 7 transfers are 256 byte block h -> p
-	unsigned char a0 = receiveByte(R4);
-	unsigned char a1 = receiveByte(R4);
-	unsigned char a2 = receiveByte(R4);
-	unsigned char a3 = receiveByte(R4);
-
-	// TODO read 256 bytes from R3 
-
-	unsigned char sync = receiveByte(R4);
-
+        printf("Transfer = %02x %02x", type, id);
       }
-      
-
+      if (type <= 4 || type == 6 || type == 7) {
+	unsigned char a3 = receiveByte(R4);
+	unsigned char a2 = receiveByte(R4);
+	unsigned char a1 = receiveByte(R4);
+	unsigned char a0 = receiveByte(R4);	
+	if (DEBUG) {
+	  printf(" %02x%02x%02x%02x", a3, a2, a1, a0);
+	}
+      }
+      if (type < 4 ) {
+	// Type 0 .. 3 transfers serviced by NMI
+	// TODO setup NMI
+      }
+      if (type == 6) {
+	// Type 6 transfers are 256 byte block p -> h
+	// TODO write 256 bytes to R3
+	sendByte(R4, 0x00);
+      }
+      if (type == 7) {
+	// Type 7 transfers are 256 byte block h -> p
+	// TODO read 256 bytes from R3 
+      }
+      if (type == 5) {
+	// Type 5 : tube release
+      } else {
+	// Every thing else has a sync byte
+	unsigned char sync = receiveByte(R4);
+	if (DEBUG) {
+	  printf(" %02x", sync);
+	}
+      }
+      if (DEBUG) {
+	printf("\n");
+      }
     }
-
-  }
-  
+  }  
 }
 
 int main(int argc, char **argv) {
+
   unsigned char resp;
   unsigned int i;
   unsigned char buffer[256];
-
 
   int speed = 16000000;
   if (argc > 1) {
@@ -177,15 +157,20 @@ int main(int argc, char **argv) {
     perror("wiringPiISR failed");
     exit(1);
   }
+
+  reset = 1;
   
-  // Send the reset message
-  sendString(R1, banner);
-  sendByte(R1, 0x00);
-
-  // Wait for the reponse in R2
-  receiveByte(R2);
-
   while (1) {
+
+    if (reset) {
+      reset = 0;
+      // Send the reset message
+      sendString(R1, banner);
+      sendByte(R1, 0x00);
+      // Wait for the reponse in R2
+      receiveByte(R2);
+    }
+
     // Print a prompt
     sendString(R1, "arm>*");
 
@@ -202,6 +187,8 @@ int main(int argc, char **argv) {
 
     // Was it escape
     if (resp >= 0x80) {
+
+      // Yes, print Escape
       sendString(R1, "\n\rEscape\n\r");
 
       // Acknowledge escape condition
@@ -215,29 +202,34 @@ int main(int argc, char **argv) {
 	resp = receiveByte(R2);
       }
 
-      continue;
+    } else {
+      
+      receiveString(R2, '\r', buffer);
+
+      // Check for *QUIT
+      if (strcasecmp(buffer, "quit") == 0) {
+	// Yes, we're done
+	break;
+      }
+
+      // Send string back as OSCLI
+      sendByte(R2, 0x02);
+      sendString(R2, buffer);
+      sendByte(R2, 0x0D);
+
+      // Wait for the reponse in R2
+      receiveByte(R2);
+
+      if (error) {
+	error = 0;
+	sendString(R1, errMsg);
+	sendString(R1, "\n\r");
+      }
     }
-
-    receiveString(R2, '\r', buffer);
-
-    // Check for *QUIT
-    if (strcasecmp(buffer, "quit") == 0) {
-      // Yes, we're done
-      sendString(R1, "Goodbye....\n\n\r");
-      break;
-    }
-
-    // Send string back as OSCLI
-    sendByte(R2, 0x02);
-    sendString(R2, buffer);
-    sendByte(R2, 0x0D);
-
-    // Wait for the reponse in R2
-    receiveByte(R2);
   }
-
+  
+  sendString(R1, "Goodbye....\n\n\r");	
   spiClose(spifd);
-
   return 0;
 }
 
@@ -278,35 +270,47 @@ unsigned char tubeCmd(unsigned char cmd, unsigned char addr, unsigned char byte)
 }
 
 
-void waitUntilSpace(unsigned char reg) {
+// Reg is 1..4
+void sendByte(unsigned char reg, unsigned char byte) {
   unsigned char addr = (reg - 1) * 2;
-  if (DEBUGDETAIL) {
-    printf("waiting for space in R%d\n", reg);
+  if (!error) {
+    if (DEBUGDETAIL) {
+      printf("waiting for space in R%d\n", reg);
+    }
+    while ((!error) && (tubeRead(addr) & F_BIT) == 0x00);
+    if (DEBUGDETAIL) {
+      printf("done waiting for space in R%d\n", reg);
+    }
   }
-  while ((tubeRead(addr) & F_BIT) == 0x00);
-  if (DEBUGDETAIL) {
-    printf("done waiting for space in R%d\n", reg);
-  }
-}
-
-void waitUntilData(unsigned char reg) {
-  unsigned char addr = (reg - 1) * 2;
-  if (DEBUGDETAIL) {
-    printf("waiting for data in R%d\n", reg);
-  }
-  while ((tubeRead(addr) & A_BIT) == 0x00);
-  if (DEBUGDETAIL) {
-    printf("done waiting for data in R%d\n", reg);
+  if (!error) {
+    tubeWrite((reg - 1) * 2 + 1, byte);
+    if (DEBUGDETAIL) {
+      printf("Tx: R%d = %02x\n", reg, byte);
+    }
   }
 }
 
 // Reg is 1..4
-void sendByte(unsigned char reg, unsigned char byte) {
-  waitUntilSpace(reg);
-  tubeWrite((reg - 1) * 2 + 1, byte);
-  if (DEBUGDETAIL) {
-    printf("Tx: R%d = %02x\n", reg, byte);
+unsigned char receiveByte(unsigned char reg) {
+  unsigned char byte;
+  unsigned char addr = (reg - 1) * 2;
+  if (!error) {
+    if (DEBUGDETAIL) {
+      printf("waiting for data in R%d\n", reg);
+    }
+    while ((!error) && (tubeRead(addr) & A_BIT) == 0x00);
+    if (DEBUGDETAIL) {
+      printf("done waiting for data in R%d\n", reg);
+    }
   }
+  if (!error) {
+    byte = tubeRead((reg - 1) * 2 + 1);
+    if (DEBUGDETAIL) {
+      printf("Rx: R%d = %02x\n", reg, byte);
+    }
+    return byte;
+  }
+  return 0;
 }
 
 // Reg is 1..4
@@ -318,18 +322,7 @@ void sendString(unsigned char reg, const unsigned char *msg) {
 }
 
 // Reg is 1..4
-unsigned char receiveByte(unsigned char reg) {
-  unsigned char byte;
-  waitUntilData(reg);
-  byte = tubeRead((reg - 1) * 2 + 1);
-  if (DEBUGDETAIL) {
-    printf("Rx: R%d = %02x\n", reg, byte);
-  }
-  return byte;
-}
-
-// Reg is 1..4
-void receiveString(unsigned char reg, unsigned char terminator, unsigned char *buf) {
+void receiveString(unsigned char reg, unsigned char terminator, volatile unsigned char *buf) {
   int i = 0;
   unsigned char c;
   do {
@@ -340,3 +333,4 @@ void receiveString(unsigned char reg, unsigned char terminator, unsigned char *b
   } while (c != terminator  && i < 100);
   buf[i++] = 0;
 }
+
