@@ -10,13 +10,15 @@
 
 #define BITSPERWORD 8
 
-#define CMD_WRITE 0x00
-#define CMD_READ  0x80
+#define CMD_WRITE 0x80
+#define CMD_READ  0xC0
 
 #define R1 1
 #define R2 2
 #define R3 3
 #define R4 4
+
+#define DEBUG 0
 
 unsigned int speed;
 
@@ -25,7 +27,7 @@ const char *banner = "Raspberry Pi ARMv6 Co Processor 900MHz\n\n\r";
 int spiOpen(unsigned char *devspi, unsigned char mode, unsigned char bitsPerWord);
 int spiClose(int spifd);
 int spiWriteRead(int spifd, unsigned char bitsPerWord, unsigned char *data, int length);
-unsigned char tubeCmd(int spifd, unsigned char cmd0, unsigned char cmd1);
+unsigned char tubeCmd(int spifd, unsigned char cmd, unsigned char addr, unsigned char byte);
 void waitUntilSpace(int spifd, unsigned char reg);
 void waitUntilData(int spifd, unsigned char reg);
 void sendByte(int spifd, unsigned char reg, unsigned char byte);
@@ -70,23 +72,31 @@ int main(int argc, char **argv) {
 
     // Was it escape
     if (resp >= 0x80) {
-      printf("Escape\n");
+      if (DEBUG) {
+	printf("Escape\n");
+      }
       sendString(spifd, R1, "\n\rEscape\n\r");
 
       // Read Escape Event
       resp = receiveByte(spifd, R1);
-      printf("Escape event %02x\n", resp);
+      if (DEBUG) {
+	printf("Escape event %02x\n", resp);
+      }
 
       // Acknowledge escape condition
       sendByte(spifd, R2, 0x04);
       sendByte(spifd, R2, 0x00);
       sendByte(spifd, R2, 0x7E);
       resp = receiveByte(spifd, R2);
-      printf("Acknowledge escape response %02x\n", resp);
+      if (DEBUG) {
+	printf("Acknowledge escape response %02x\n", resp);
+      }
 
       // Read Escape Event
       resp = receiveByte(spifd, R1);
-      printf("Escape event %02x\n", resp);
+      if (DEBUG) {
+	printf("Escape event %02x\n", resp);
+      }
       
       continue;
     }
@@ -204,44 +214,49 @@ int spiWriteRead(int spifd, unsigned char bitsPerWord, unsigned char *data, int 
  
 }
 
-unsigned char tubeCmd(int spifd, unsigned char cmd0, unsigned char cmd1) {
-  unsigned char data[3];
+unsigned char tubeCmd(int spifd, unsigned char cmd, unsigned char addr, unsigned char byte) {
+  unsigned char data[2];
+  unsigned char cmd0 = cmd | ((addr & 7) << 3);
+  unsigned char cmd1 = byte; 
   data[0] = cmd0;
-  data[2] = 0xff;
-  if (cmd0 & 128) {
-    // reads
-    data[1] = 0xff;
-    spiWriteRead(spifd, BITSPERWORD, data, 3 );
-    
-  } else {
-    // writes
-    data[1] = cmd1;
-    spiWriteRead(spifd, BITSPERWORD, data, 2 );
-  }  
-  // printf("%02x %02x -> %02x %02x %02x\n", cmd0, cmd1, data[0], data[1], data[2]);
-  return data[2];
+  data[1] = cmd1;
+  spiWriteRead(spifd, BITSPERWORD, data, 2 );
+  if (DEBUG) {
+    printf("%02x %02x -> %02x %02x\n", cmd0, cmd1, data[0], data[1]);
+  }
+  return data[1];
 }
 
 
 void waitUntilSpace(int spifd, unsigned char reg) {
   unsigned char addr = (reg - 1) * 2;
-  printf("waiting for space in R%d\n", reg);
-  while ((tubeCmd(spifd, CMD_READ + addr, 0xff) & 0x40) == 0x00);
-  printf("done waiting for space in R%d\n", reg);
+  if (DEBUG) {
+    printf("waiting for space in R%d\n", reg);
+  }
+  while ((tubeCmd(spifd, CMD_READ, addr, 0xff) & 0x40) == 0x00);
+  if (DEBUG) {
+    printf("done waiting for space in R%d\n", reg);
+  }
 }
 
 void waitUntilData(int spifd, unsigned char reg) {
   unsigned char addr = (reg - 1) * 2;
-  printf("waiting for data in R%d\n", reg);
-  while ((tubeCmd(spifd, CMD_READ + addr, 0xff) & 0x80) == 0x00);
-  printf("done waiting for data in R%d\n", reg);
+  if (DEBUG) {
+    printf("waiting for data in R%d\n", reg);
+  }
+  while ((tubeCmd(spifd, CMD_READ, addr, 0xff) & 0x80) == 0x00);
+  if (DEBUG) {
+    printf("done waiting for data in R%d\n", reg);
+  }
 }
 
 // Reg is 1..4
 void sendByte(int spifd, unsigned char reg, unsigned char byte) {
   waitUntilSpace(spifd, reg);
-  tubeCmd(spifd, CMD_WRITE + (reg - 1) * 2 + 1, byte);
-  printf("Tx: R%d = %02x\n", reg, byte);
+  tubeCmd(spifd, CMD_WRITE, (reg - 1) * 2 + 1, byte);
+  if (DEBUG) {
+    printf("Tx: R%d = %02x\n", reg, byte);
+  }
 }
 
 // Reg is 1..4
@@ -256,8 +271,10 @@ void sendString(int spifd, unsigned char reg, const unsigned char *msg) {
 unsigned char receiveByte(int spifd, unsigned char reg) {
   unsigned char byte;
   waitUntilData(spifd, reg);
-  byte = tubeCmd(spifd, CMD_READ + (reg - 1) * 2 + 1, 0xff);
-  printf("Rx: R%d = %02x\n", reg, byte);
+  byte = tubeCmd(spifd, CMD_READ, (reg - 1) * 2 + 1, 0xff);
+  if (DEBUG) {
+    printf("Rx: R%d = %02x\n", reg, byte);
+  }
   return byte;
 }
 
@@ -278,13 +295,17 @@ unsigned char pollForResponse(int spifd, unsigned char reg) {
   unsigned char r;
   unsigned char status;
   unsigned char byte;
-  printf("Waiting for response in R%d\n", reg);
+  if (DEBUG) {
+    printf("Waiting for response in R%d\n", reg);
+  }
   while (1) {
     for (r = 1; r <= 4; r++) {
-      status = tubeCmd(spifd, CMD_READ + (r - 1) * 2, 0xff);
+      status = tubeCmd(spifd, CMD_READ, (r - 1) * 2, 0xff);
       if (status & 0x80) {
-	byte = tubeCmd(spifd, CMD_READ + (r - 1) * 2 + 1 , 0xff);
-	printf("REG %02x = %02x\n", r, byte);
+	byte = tubeCmd(spifd, CMD_READ, (r - 1) * 2 + 1 , 0xff);
+	if (DEBUG) {
+	  printf("REG %02x = %02x\n", r, byte);
+	}
 	if (r == reg) {
 	  return byte;
 	}
