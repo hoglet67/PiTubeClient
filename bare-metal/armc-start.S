@@ -32,6 +32,7 @@
 .global _get_stack_pointer
 .global _exception_table
 .global _enable_interrupts
+.global _disable_interrupts
 
 // From the ARM ARM (Architecture Reference Manual). Make sure you get the
 // ARMv5 documentation which includes the ARMv6 documentation which is the
@@ -143,3 +144,11 @@ _enable_interrupts:
     msr     cpsr_c, r0
 
     mov     pc, lr
+
+_disable_interrupts:
+    mrs     r0, cpsr
+    orr     r0, r0, #0x80
+    msr     cpsr_c, r0
+
+    mov     pc, lr
+		

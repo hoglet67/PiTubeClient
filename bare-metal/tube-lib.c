@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "rpi-interrupts.h"
 #include "debug.h"
 #include "spi.h"
 #include "tube-lib.h"
@@ -19,11 +20,11 @@ unsigned char tubeCmd(unsigned char cmd, unsigned char addr, unsigned char byte)
   unsigned char rxBuf[2];
   txBuf[0] = cmd | ((addr & 7) << 3);
   txBuf[1] = byte;
-  spi_begin();
+  _disable_interrupts();
   spi_transfer(txBuf, rxBuf, sizeof(txBuf));
-  spi_end();
+  _enable_interrupts();
   if (DEBUGDETAIL) {
-    // printf("%02x %02x -> %02x %02x\n", cmd0, cmd1, data[0], data[1]);
+    printf("%02x%02x%02x%02x\n", txBuf[0], txBuf[1], rxBuf[0], rxBuf[1]);
   }
   return rxBuf[1];
 }

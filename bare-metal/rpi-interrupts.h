@@ -71,6 +71,7 @@ extern volatile int calculate_frame_count;
 
 /* Found in the *start.S file, implemented in assembler */
 extern void _enable_interrupts( void );
+extern void _disable_interrupts( void );
 extern rpi_irq_controller_t* RPI_GetIrqController( void );
 
 #endif

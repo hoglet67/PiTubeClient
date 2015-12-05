@@ -39,6 +39,7 @@
 #include "rpi-systimer.h"
 
 #include "debug.h"
+#include "spi.h"
 #include "tube-lib.h"
 #include "tube-isr.h"
 
@@ -77,6 +78,9 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
   /* Initialise the UART */
   RPI_AuxMiniUartInit( 57600, 8 );
+
+  /* Setup SPI*/
+  spi_begin();
 
   /* Print to the UART using the standard libc functions */
   printf( "Raspberry Pi ARMv6 Tube Client\r\n" );
@@ -163,6 +167,9 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
       }
     }
   }
+
+  spi_end();
+
 }
 
 

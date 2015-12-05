@@ -10,9 +10,14 @@ volatile unsigned char escFlag;
 volatile unsigned char errNum;
 volatile char errMsg[256];
 
+//void __attribute__((interrupt("IRQ"))) TubeInterrupt(void) {
 void TubeInterrupt(void) {
+
   // Check for R1 interrupt
   if (tubeRead(R1_STATUS) & A_BIT) {
+	if (DEBUG) {
+	  printf("R1 irq\n");
+	}
     unsigned char flag = tubeRead(R1_DATA);
     if (flag & 0x80) {
       // Update escape flag
@@ -30,8 +35,12 @@ void TubeInterrupt(void) {
       }
     }    
   }
+
   // Check for R4 interrupt
   if (tubeRead(R4_STATUS) & A_BIT) {
+	if (DEBUG) {
+	  printf("R4 irq\n");
+	}
     unsigned char type = tubeRead(R4_DATA);
     if (type == 0xff) {
       // Error

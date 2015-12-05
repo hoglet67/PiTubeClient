@@ -7,6 +7,8 @@
 #include "rpi-gpio.h"
 #include "rpi-interrupts.h"
 
+#include "tube-isr.h"
+
 /** @brief The BCM2835/6 Interupt controller peripheral at it's base address */
 static rpi_irq_controller_t* rpiIRQController =
         (rpi_irq_controller_t*)RPI_INTERRUPT_CONTROLLER_BASE;
@@ -113,6 +115,8 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
     static int ticks = 0;
     static int seconds = 0;
 
+
+
     /* Clear the ARM Timer interrupt - it's the only interrupt we have
        enabled, so we want don't have to work out which interrupt source
        caused us to interrupt */
@@ -143,6 +147,9 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
         LED_ON();
         lit = 1;
     }
+
+	TubeInterrupt();
+
 }
 
 
