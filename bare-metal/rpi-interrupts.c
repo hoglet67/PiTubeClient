@@ -111,15 +111,15 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 {
     static int lit = 0;
 
-	if (RPI_GetGpio()->GPEDS0 & RST_PIN_MASK) {
-	  RPI_GetGpio()->GPEDS0 = RST_PIN_MASK;
-	  //printf("RST PIN!!!\r\n");
-	  _start();
-	}
+    if (RPI_GetGpio()->GPEDS0 & RST_PIN_MASK) {
+      RPI_GetGpio()->GPEDS0 = RST_PIN_MASK;
+      //printf("RST PIN!!!\r\n");
+      _start();
+    }
 
 
     /* Clear the ARM Timer interrupt */
-	/* TODO: We should check it was the timer interrupt.... */
+    /* TODO: We should check it was the timer interrupt.... */
     RPI_GetArmTimer()->IRQClear = 1;
 
     /* Flip the LED */
@@ -134,16 +134,16 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
         lit = 1;
     }
 
-	if (RPI_GetGpio()->GPEDS0 & IRQ_PIN_MASK) {
-	  RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
-	  //printf("IRQ PIN!!!\r\n");
-	  TubeInterrupt();
-	}
+    if (RPI_GetGpio()->GPEDS0 & IRQ_PIN_MASK) {
+      RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
+      //printf("IRQ PIN!!!\r\n");
+      TubeInterrupt();
+    }
 
-	if (RPI_GetGpio()->GPEDS0 & NMI_PIN_MASK) {
-	  //RPI_GetGpio()->GPEDS0 = NMI_PIN_MASK;
-	  printf("NMI PIN!!!\r\n");
-	}
+    if (RPI_GetGpio()->GPEDS0 & NMI_PIN_MASK) {
+      //RPI_GetGpio()->GPEDS0 = NMI_PIN_MASK;
+      printf("NMI PIN!!!\r\n");
+    }
 
 }
 
