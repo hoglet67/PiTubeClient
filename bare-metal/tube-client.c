@@ -81,7 +81,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
   RPI_GetIrqController()->Enable_IRQs_2 = (1 << (49 - 32));
 
   /* Enable the timer interrupt IRQ */
-  RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
+  // RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
 
   /* Setup the system timer interrupt */
   /* Timer frequency = Clk/256 * 0x400 */
