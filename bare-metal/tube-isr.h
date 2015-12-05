@@ -17,6 +17,8 @@ extern volatile unsigned char escFlag;
 extern volatile unsigned char errNum;
 extern volatile char errMsg[256];
 
+extern volatile int in_isr;
+
 void TubeInterrupt(void);
 
 #endif

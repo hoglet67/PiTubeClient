@@ -20,9 +20,13 @@ unsigned char tubeCmd(unsigned char cmd, unsigned char addr, unsigned char byte)
   unsigned char rxBuf[2];
   txBuf[0] = cmd | ((addr & 7) << 3);
   txBuf[1] = byte;
-  _disable_interrupts();
+  if (!in_isr) {
+	_disable_interrupts();
+  }
   spi_transfer(txBuf, rxBuf, sizeof(txBuf));
-  _enable_interrupts();
+  if (!in_isr) {
+	_enable_interrupts();
+  }
   if (DEBUGDETAIL) {
     printf("%02x%02x%02x%02x\r\n", txBuf[0], txBuf[1], rxBuf[0], rxBuf[1]);
   }

@@ -155,14 +155,13 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 	if (RPI_GetGpio()->GPEDS0 & IRQ_PIN_MASK) {
 	  RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
 	  printf("IRQ PIN!!!\r\n");
+	  TubeInterrupt();
 	}
 
 	if (RPI_GetGpio()->GPEDS0 & NMI_PIN_MASK) {
 	  RPI_GetGpio()->GPEDS0 = NMI_PIN_MASK;
 	  printf("NMI PIN!!!\r\n");
 	}
-
-	TubeInterrupt();
 
 }
 

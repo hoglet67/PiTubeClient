@@ -8,9 +8,12 @@ volatile int error;
 volatile unsigned char escFlag;
 volatile unsigned char errNum;
 volatile char errMsg[256];
+volatile int in_isr;
 
 //void __attribute__((interrupt("IRQ"))) TubeInterrupt(void) {
 void TubeInterrupt(void) {
+
+  in_isr = 1;
 
   // Check for R1 interrupt
   if (tubeRead(R1_STATUS) & A_BIT) {
@@ -94,5 +97,6 @@ void TubeInterrupt(void) {
         printf("\r\n");
       }
     }
-  }  
+  }
+  in_isr = 0;
 }
