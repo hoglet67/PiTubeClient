@@ -67,8 +67,6 @@ typedef struct {
     volatile uint32_t Disable_Basic_IRQs;
     } rpi_irq_controller_t;
 
-extern volatile int calculate_frame_count;
-
 /* Found in the *start.S file, implemented in assembler */
 extern void _start( void );
 extern void _enable_interrupts( void );

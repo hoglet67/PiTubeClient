@@ -48,7 +48,7 @@ void sendByte(unsigned char reg, unsigned char byte) {
   }
   if (!error) {
     tubeWrite((reg - 1) * 2 + 1, byte);
-    if (DEBUGDETAIL) {
+    if (DEBUG) {
       printf("Tx: R%d = %02x\r\n", reg, byte);
     }
   }
@@ -69,7 +69,7 @@ unsigned char receiveByte(unsigned char reg) {
   }
   if (!error) {
     byte = tubeRead((reg - 1) * 2 + 1);
-    if (DEBUGDETAIL) {
+    if (DEBUG) {
       printf("Rx: R%d = %02x\r\n", reg, byte);
     }
     return byte;

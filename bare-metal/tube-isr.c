@@ -10,7 +10,6 @@ volatile unsigned char errNum;
 volatile char errMsg[256];
 volatile int in_isr;
 
-//void __attribute__((interrupt("IRQ"))) TubeInterrupt(void) {
 void TubeInterrupt(void) {
 
   in_isr = 1;

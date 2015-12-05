@@ -118,12 +118,6 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
   while( 1 ) {
 
-	if (calculate_frame_count) {
-	  printf( "Interrupt!!\r\n" );
-	  calculate_frame_count = 0;
-	}
-
-
     // Print a prompt
     sendString(R1, "arm>*");
 

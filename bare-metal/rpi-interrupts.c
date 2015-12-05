@@ -13,8 +13,6 @@
 static rpi_irq_controller_t* rpiIRQController =
         (rpi_irq_controller_t*)RPI_INTERRUPT_CONTROLLER_BASE;
 
-volatile int calculate_frame_count = 0;
-
 /**
     @brief Return the IRQ Controller register set
 */
@@ -112,33 +110,17 @@ void __attribute__((interrupt("ABORT"))) data_abort_vector(void)
 void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 {
     static int lit = 0;
-    static int ticks = 0;
-    static int seconds = 0;
 
 	if (RPI_GetGpio()->GPEDS0 & RST_PIN_MASK) {
 	  RPI_GetGpio()->GPEDS0 = RST_PIN_MASK;
-	  printf("RST PIN!!!\r\n");
+	  //printf("RST PIN!!!\r\n");
 	  _start();
 	}
 
-    /* Clear the ARM Timer interrupt - it's the only interrupt we have
-       enabled, so we want don't have to work out which interrupt source
-       caused us to interrupt */
+
+    /* Clear the ARM Timer interrupt */
+	/* TODO: We should check it was the timer interrupt.... */
     RPI_GetArmTimer()->IRQClear = 1;
-
-    ticks++;
-    if( ticks > 1 )
-    {
-        ticks = 0;
-
-        /* Calculate the FPS once a minute */
-        seconds++;
-        if( seconds > 59 )
-        {
-            seconds = 0;
-            calculate_frame_count = 1;
-        }
-    }
 
     /* Flip the LED */
     if( lit )
@@ -154,12 +136,12 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 
 	if (RPI_GetGpio()->GPEDS0 & IRQ_PIN_MASK) {
 	  RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
-	  printf("IRQ PIN!!!\r\n");
+	  //printf("IRQ PIN!!!\r\n");
 	  TubeInterrupt();
 	}
 
 	if (RPI_GetGpio()->GPEDS0 & NMI_PIN_MASK) {
-	  RPI_GetGpio()->GPEDS0 = NMI_PIN_MASK;
+	  //RPI_GetGpio()->GPEDS0 = NMI_PIN_MASK;
 	  printf("NMI PIN!!!\r\n");
 	}
 
