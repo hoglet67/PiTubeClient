@@ -59,7 +59,9 @@ add_executable( tube-client
     rpi-interrupts.c
     rpi-interrupts.h
     rpi-systimer.c
-    rpi-systimer.h )
+    rpi-systimer.h
+	spi.c
+	spi.h )
 
 add_custom_command(
     TARGET tube-client POST_BUILD
