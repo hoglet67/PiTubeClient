@@ -1,4 +1,4 @@
-
+#include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -115,7 +115,11 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
     static int ticks = 0;
     static int seconds = 0;
 
-
+	if (RPI_GetGpio()->GPEDS0 & RST_PIN_MASK) {
+	  RPI_GetGpio()->GPEDS0 = RST_PIN_MASK;
+	  printf("RST PIN!!!\r\n");
+	  _start();
+	}
 
     /* Clear the ARM Timer interrupt - it's the only interrupt we have
        enabled, so we want don't have to work out which interrupt source
@@ -149,10 +153,15 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
     }
 
 	if (RPI_GetGpio()->GPEDS0 & IRQ_PIN_MASK) {
-	  printf("IRQ PIN!!!\n");
+	  RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
+	  printf("IRQ PIN!!!\r\n");
 	}
 
-	RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
+	if (RPI_GetGpio()->GPEDS0 & NMI_PIN_MASK) {
+	  RPI_GetGpio()->GPEDS0 = NMI_PIN_MASK;
+	  printf("NMI PIN!!!\r\n");
+	}
+
 	TubeInterrupt();
 
 }

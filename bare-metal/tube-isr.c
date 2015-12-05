@@ -4,7 +4,6 @@
 #include "tube-isr.h"
 #include "tube-lib.h"
 
-volatile int reset;
 volatile int error;
 volatile unsigned char escFlag;
 volatile unsigned char errNum;
@@ -16,14 +15,14 @@ void TubeInterrupt(void) {
   // Check for R1 interrupt
   if (tubeRead(R1_STATUS) & A_BIT) {
 	if (DEBUG) {
-	  printf("R1 irq\n");
+	  printf("R1 irq\r\n");
 	}
     unsigned char flag = tubeRead(R1_DATA);
     if (flag & 0x80) {
       // Update escape flag
       escFlag = flag & 0x40;
       if (DEBUG) {
-        printf("Escape flag = %02x\n", escFlag);
+        printf("Escape flag = %02x\r\n", escFlag);
       }
     } else {
       // Event
@@ -31,7 +30,7 @@ void TubeInterrupt(void) {
       unsigned char x = receiveByte(R1);
       unsigned char a = receiveByte(R1);
       if (DEBUG) {
-        printf("Event = %02x %02x %02x\n", a, x, y);
+        printf("Event = %02x %02x %02x\r\n", a, x, y);
       }
     }    
   }
@@ -39,9 +38,12 @@ void TubeInterrupt(void) {
   // Check for R4 interrupt
   if (tubeRead(R4_STATUS) & A_BIT) {
 	if (DEBUG) {
-	  printf("R4 irq\n");
+	  printf("R4 irq\r\n");
 	}
     unsigned char type = tubeRead(R4_DATA);
+	if (DEBUG) {
+	  printf("R4 type = %02x\r\n",type);
+	}
     if (type == 0xff) {
       // Error
       receiveByte(R2); // 0
@@ -50,7 +52,7 @@ void TubeInterrupt(void) {
       // Flag an error to the main process
       error = 1;
       if (DEBUG) {
-        printf("Error = %02x %s\n", errNum, errMsg);
+        printf("Error = %02x %s\r\n", errNum, errMsg);
       }
     } else {
       unsigned char id = receiveByte(R4);
@@ -89,7 +91,7 @@ void TubeInterrupt(void) {
         }
       }
       if (DEBUG) {
-        printf("\n");
+        printf("\r\n");
       }
     }
   }  

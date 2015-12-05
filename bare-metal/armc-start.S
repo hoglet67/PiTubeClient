@@ -151,4 +151,3 @@ _disable_interrupts:
     msr     cpsr_c, r0
 
     mov     pc, lr
-		

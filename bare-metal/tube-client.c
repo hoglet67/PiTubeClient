@@ -59,16 +59,26 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 	 peripheral register to enable LED pin as an output */
   RPI_GetGpio()->LED_GPFSEL |= LED_GPFBIT;
 
-
   /* Configure GPIO to detect a falling edge of the IRQ pin */
   RPI_GetGpio()->GPFEN0 |= IRQ_PIN_MASK;
 
   /* Make sure there are no pending detections */
   RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
 
+  /* Configure GPIO to detect a falling edge of the NMI pin */
+  RPI_GetGpio()->GPFEN0 |= NMI_PIN_MASK;
+
+  /* Make sure there are no pending detections */
+  RPI_GetGpio()->GPEDS0 = NMI_PIN_MASK;
+
+  /* Configure GPIO to detect a rising edge of the RST pin */
+  RPI_GetGpio()->GPREN0 |= RST_PIN_MASK;
+
+  /* Make sure there are no pending detections */
+  RPI_GetGpio()->GPEDS0 = RST_PIN_MASK;
+
   /* Enable gpio_int[0] which is IRQ 49 */
   RPI_GetIrqController()->Enable_IRQs_2 = (1 << (49 - 32));
-
 
   /* Enable the timer interrupt IRQ */
   RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
@@ -95,16 +105,16 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
   /* Print to the UART using the standard libc functions */
   printf( "Raspberry Pi ARMv6 Tube Client\r\n" );
-  printf( "Initialise UART console with standard libc\r\n\n" );
+  printf( "Initialise UART console with standard libc\r\n" );
 
-
-  // Hook in the interrupt handler
-  //if (wiringPiISR(IRQ_PIN, INT_EDGE_FALLING, &IRQInterrupt) < 0) {
-  //  perror("wiringPiISR failed");
-  //  exit(1);
-  //}
-
-  reset = 1;
+  // Send the reset message
+  printf( "Sending banner\r\n" );
+  sendString(R1, banner);
+  sendByte(R1, 0x00);
+  printf( "Banner sent, awaiting response\r\n" );
+  // Wait for the reponse in R2
+  receiveByte(R2);
+  printf( "Received response\r\n" );
 
   while( 1 ) {
 
@@ -113,14 +123,6 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 	  calculate_frame_count = 0;
 	}
 
-    if (reset) {
-      reset = 0;
-      // Send the reset message
-      sendString(R1, banner);
-      sendByte(R1, 0x00);
-      // Wait for the reponse in R2
-      receiveByte(R2);
-    }
 
     // Print a prompt
     sendString(R1, "arm>*");
@@ -145,7 +147,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
       // Acknowledge escape condition
       if (escFlag) {
         if (DEBUG) {
-          printf("Acknowledging Escape\n");
+          printf("Acknowledging Escape\r\n");
         }
         sendByte(R2, 0x04);
         sendByte(R2, 0x00);

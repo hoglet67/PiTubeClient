@@ -24,7 +24,7 @@ unsigned char tubeCmd(unsigned char cmd, unsigned char addr, unsigned char byte)
   spi_transfer(txBuf, rxBuf, sizeof(txBuf));
   _enable_interrupts();
   if (DEBUGDETAIL) {
-    printf("%02x%02x%02x%02x\n", txBuf[0], txBuf[1], rxBuf[0], rxBuf[1]);
+    printf("%02x%02x%02x%02x\r\n", txBuf[0], txBuf[1], rxBuf[0], rxBuf[1]);
   }
   return rxBuf[1];
 }
@@ -35,17 +35,17 @@ void sendByte(unsigned char reg, unsigned char byte) {
   unsigned char addr = (reg - 1) * 2;
   if (!error) {
     if (DEBUGDETAIL) {
-      printf("waiting for space in R%d\n", reg);
+      printf("waiting for space in R%d\r\n", reg);
     }
     while ((!error) && (tubeRead(addr) & F_BIT) == 0x00);
     if (DEBUGDETAIL) {
-      printf("done waiting for space in R%d\n", reg);
+      printf("done waiting for space in R%d\r\n", reg);
     }
   }
   if (!error) {
     tubeWrite((reg - 1) * 2 + 1, byte);
     if (DEBUGDETAIL) {
-      printf("Tx: R%d = %02x\n", reg, byte);
+      printf("Tx: R%d = %02x\r\n", reg, byte);
     }
   }
 }
@@ -56,17 +56,17 @@ unsigned char receiveByte(unsigned char reg) {
   unsigned char addr = (reg - 1) * 2;
   if (!error) {
     if (DEBUGDETAIL) {
-      printf("waiting for data in R%d\n", reg);
+      printf("waiting for data in R%d\r\n", reg);
     }
     while ((!error) && (tubeRead(addr) & A_BIT) == 0x00);
     if (DEBUGDETAIL) {
-      printf("done waiting for data in R%d\n", reg);
+      printf("done waiting for data in R%d\r\n", reg);
     }
   }
   if (!error) {
     byte = tubeRead((reg - 1) * 2 + 1);
     if (DEBUGDETAIL) {
-      printf("Rx: R%d = %02x\n", reg, byte);
+      printf("Rx: R%d = %02x\r\n", reg, byte);
     }
     return byte;
   }
