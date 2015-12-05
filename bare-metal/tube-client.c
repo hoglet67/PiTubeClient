@@ -28,50 +28,56 @@
 
 */
 
-#include <stdint.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
+#include "rpi-aux.h"
+#include "rpi-armtimer.h"
 #include "rpi-gpio.h"
-#include "rpi-mailbox.h"
+#include "rpi-interrupts.h"
+#include "rpi-mailbox-interface.h"
+#include "rpi-systimer.h"
 
-/* Mailbox 0 mapped to it's base address */
-static mailbox_t* rpiMailbox0 = (mailbox_t*)RPI_MAILBOX0_BASE;
 
-void RPI_Mailbox0Write( mailbox0_channel_t channel, int value )
+extern volatile int calculate_frame_count;
+
+/** Main function - we'll never return from here */
+void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 {
-    /* For information about accessing mailboxes, see:
-       https://github.com/raspberrypi/firmware/wiki/Accessing-mailboxes */
 
-    /* Add the channel number into the lower 4 bits */
-    value &= ~(0xF);
-    value |= channel;
+    /* Write 1 to the LED init nibble in the Function Select GPIO
+       peripheral register to enable LED pin as an output */
+    RPI_GetGpio()->LED_GPFSEL |= LED_GPFBIT;
 
-    /* Wait until the mailbox becomes available and then write to the mailbox
-       channel */
-    while( ( rpiMailbox0->Status & ARM_MS_FULL ) != 0 ) { }
+    /* Enable the timer interrupt IRQ */
+    RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
 
-    /* Write the modified value + channel number into the write register */
-    rpiMailbox0->Write = value;
-}
+    /* Setup the system timer interrupt */
+    /* Timer frequency = Clk/256 * 0x400 */
+    RPI_GetArmTimer()->Load = 0x400;
 
+    /* Setup the ARM Timer */
+    RPI_GetArmTimer()->Control =
+            RPI_ARMTIMER_CTRL_23BIT |
+            RPI_ARMTIMER_CTRL_ENABLE |
+            RPI_ARMTIMER_CTRL_INT_ENABLE |
+            RPI_ARMTIMER_CTRL_PRESCALE_256;
 
-int RPI_Mailbox0Read( mailbox0_channel_t channel )
-{
-    /* For information about accessing mailboxes, see:
-       https://github.com/raspberrypi/firmware/wiki/Accessing-mailboxes */
-    int value = -1;
+    /* Enable interrupts! */
+    _enable_interrupts();
 
-    /* Keep reading the register until the desired channel gives us a value */
-    while( ( value & 0xF ) != channel )
-    {
-        /* Wait while the mailbox is empty because otherwise there's no value
-           to read! */
-        while( rpiMailbox0->Status & ARM_MS_EMPTY ) { }
+    /* Initialise the UART */
+    RPI_AuxMiniUartInit( 57600, 8 );
 
-        /* Extract the value from the Read register of the mailbox. The value
-           is actually in the upper 28 bits */
-        value = rpiMailbox0->Read;
+    /* Print to the UART using the standard libc functions */
+    printf( "Raspberry Pi ARMv6 Tube Client\r\n" );
+    printf( "Initialise UART console with standard libc\r\n\n" );
+
+    while( 1 ) {
+	  if (calculate_frame_count) {
+		printf( "Interrupt!!\r\n" );
+		calculate_frame_count = 0;
+	  }
     }
-
-    /* Return just the value (the upper 28-bits) */
-    return value >> 4;
 }

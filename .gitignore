@@ -1,3 +1,14 @@
+*~
+#*
+bare-metal/scripts/CMakeCache.txt
+bare-metal/scripts/CMakeFiles/
+bare-metal/scripts/Makefile
+bare-metal/scripts/cmake_install.cmake
+bare-metal/scripts/kernel.img
+bare-metal/scripts/tube-client
+bare-metal/scripts/tube-client.cbp
+
+
 # Object files
 *.o
 *.ko
