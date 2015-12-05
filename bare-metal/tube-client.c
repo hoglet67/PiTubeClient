@@ -59,6 +59,17 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 	 peripheral register to enable LED pin as an output */
   RPI_GetGpio()->LED_GPFSEL |= LED_GPFBIT;
 
+
+  /* Configure GPIO to detect a falling edge of the IRQ pin */
+  RPI_GetGpio()->GPFEN0 |= IRQ_PIN_MASK;
+
+  /* Make sure there are no pending detections */
+  RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
+
+  /* Enable gpio_int[0] which is IRQ 49 */
+  RPI_GetIrqController()->Enable_IRQs_2 = (1 << (49 - 32));
+
+
   /* Enable the timer interrupt IRQ */
   RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
 

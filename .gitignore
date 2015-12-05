@@ -41,3 +41,5 @@ bare-metal/scripts/tube-client.cbp
 
 # Debug files
 *.dSYM/
+../../not_in_git/
+not_in_git/

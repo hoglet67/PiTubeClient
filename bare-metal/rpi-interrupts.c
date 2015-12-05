@@ -148,6 +148,11 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
         lit = 1;
     }
 
+	if (RPI_GetGpio()->GPEDS0 & IRQ_PIN_MASK) {
+	  printf("IRQ PIN!!!\n");
+	}
+
+	RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
 	TubeInterrupt();
 
 }
