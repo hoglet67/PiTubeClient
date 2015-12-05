@@ -16,9 +16,9 @@ void TubeInterrupt(void) {
 
   // Check for R1 interrupt
   if (tubeRead(R1_STATUS) & A_BIT) {
-	if (DEBUG) {
-	  printf("R1 irq\r\n");
-	}
+    if (DEBUG) {
+      printf("R1 irq\r\n");
+    }
     unsigned char flag = tubeRead(R1_DATA);
     if (flag & 0x80) {
       // Update escape flag
@@ -39,13 +39,13 @@ void TubeInterrupt(void) {
 
   // Check for R4 interrupt
   if (tubeRead(R4_STATUS) & A_BIT) {
-	if (DEBUG) {
-	  printf("R4 irq\r\n");
-	}
+    if (DEBUG) {
+      printf("R4 irq\r\n");
+    }
     unsigned char type = tubeRead(R4_DATA);
-	if (DEBUG) {
-	  printf("R4 type = %02x\r\n",type);
-	}
+    if (DEBUG) {
+      printf("R4 type = %02x\r\n",type);
+    }
     if (type == 0xff) {
       // Error
       receiveByte(R2); // 0

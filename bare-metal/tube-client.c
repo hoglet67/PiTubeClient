@@ -56,7 +56,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
   char buffer[256];
 
   /* Write 1 to the LED init nibble in the Function Select GPIO
-	 peripheral register to enable LED pin as an output */
+     peripheral register to enable LED pin as an output */
   RPI_GetGpio()->LED_GPFSEL |= LED_GPFBIT;
 
   /* Configure GPIO to detect a falling edge of the IRQ pin */
@@ -89,10 +89,10 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
   /* Setup the ARM Timer */
   RPI_GetArmTimer()->Control =
-	RPI_ARMTIMER_CTRL_23BIT |
-	RPI_ARMTIMER_CTRL_ENABLE |
-	RPI_ARMTIMER_CTRL_INT_ENABLE |
-	RPI_ARMTIMER_CTRL_PRESCALE_256;
+    RPI_ARMTIMER_CTRL_23BIT |
+    RPI_ARMTIMER_CTRL_ENABLE |
+    RPI_ARMTIMER_CTRL_INT_ENABLE |
+    RPI_ARMTIMER_CTRL_PRESCALE_256;
 
   /* Enable interrupts! */
   _enable_interrupts();
@@ -178,5 +178,3 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
   spi_end();
 
 }
-
-
