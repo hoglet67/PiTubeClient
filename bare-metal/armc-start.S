@@ -69,7 +69,7 @@ _start:
 
 _reset_h:                           .word   _reset_
 _undefined_instruction_vector_h:    .word   undefined_instruction_vector
-_software_interrupt_vector_h:       .word   software_interrupt_vector
+_software_interrupt_vector_h:       .word   _swi_handler_
 _prefetch_abort_vector_h:           .word   prefetch_abort_vector
 _data_abort_vector_h:               .word   data_abort_vector
 _unused_handler_h:                  .word   _reset_
@@ -164,3 +164,17 @@ _disable_interrupts:
     msr     cpsr_c, r0
 
     mov     pc, lr
+
+_swi_handler_:
+    stmfd    sp!, {r0-r12, lr}    // Store registers.
+    mov      r1, sp               // Set pointer to parameters.
+    mrs      r0, spsr             // Get spsr.
+    stmfd    sp!, {r0}            // Store spsr onto stack. This is only really needed in case of nested SWIs.
+    ldr      r0, [lr, #-4]        // Calculate address of SWI instruction and load it into r0.
+    bic      r0, r0, #0xFF000000  // Mask off top 8 bits of instruction to give SWI number.
+                                  // r0 now contains SWI number
+                                  // r1 now contains pointer to stacked registers
+    bl       C_SWI_Handler        // Call C routine to handle the SWI.
+    ldmfd    sp!, {r0}            // Get spsr from stack.
+    msr      spsr_cf, r0          // Restore spsr.
+    ldmfd    sp!, {r0-r12, pc}^   // Restore registers and return.

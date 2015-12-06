@@ -65,6 +65,8 @@ add_executable( tube-client
 	debug.h
 	tube-lib.h
 	tube-lib.c
+	tube-swi.h
+	tube-swi.c
 	tube-isr.h
 	tube-isr.c)
 

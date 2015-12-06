@@ -41,6 +41,7 @@
 #include "debug.h"
 #include "spi.h"
 #include "tube-lib.h"
+#include "tube-swi.h"
 #include "tube-isr.h"
 
 const char *banner = "Raspberry Pi ARMv6 Co Processor 900MHz\n\n\r";
@@ -114,11 +115,13 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
   while( 1 ) {
 
-	// If an error is received on R4 (in the ISR) we return here
-	setjmp(errorRestart);
+    // If an error is received on R4 (in the ISR) we return here
+    setjmp(errorRestart);
 
     // Print a prompt
-    sendString(R1, "arm>*");
+    sendString(R1, "arm>");
+
+    OS_WriteC('*');
 
     // Ask for user input (OSWORD 0)
     sendByte(R2, 0x0A);
@@ -149,7 +152,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
       }
 
     } else {
-      
+
       receiveString(R2, '\r', buffer);
 
       // Check for *QUIT

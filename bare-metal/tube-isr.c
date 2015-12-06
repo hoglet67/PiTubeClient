@@ -135,7 +135,9 @@ void TubeInterrupt(void) {
           printf("Transfer = %02x %02x %08x\r\n", type, id, (unsigned int)address);
         }
       } else {
-        printf("Transfer = %02x %02x\r\n", type, id);
+        if (DEBUG) {
+          printf("Transfer = %02x %02x\r\n", type, id);
+        }
       }
       if (type == 5) {
         // Type 5 : tube release

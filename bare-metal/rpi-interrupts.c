@@ -54,22 +54,6 @@ void __attribute__((interrupt("UNDEF"))) undefined_instruction_vector(void)
 
 
 /**
-    @brief The supervisor call interrupt handler
-
-    The CPU will start executing this function. Just trap here as a debug
-    solution.
-*/
-void __attribute__((interrupt("SWI"))) software_interrupt_vector(void)
-{
-    while( 1 )
-    {
-        /* Do Nothing! */
-        LED_ON();
-    }
-}
-
-
-/**
     @brief The prefetch abort interrupt handler
 
     The CPU will start executing this function. Just trap here as a debug
