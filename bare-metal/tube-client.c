@@ -61,12 +61,6 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
   /* Make sure there are no pending detections */
   RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
 
-  /* Configure GPIO to detect a falling edge of the NMI pin */
-  RPI_GetGpio()->GPFEN0 |= NMI_PIN_MASK;
-
-  /* Make sure there are no pending detections */
-  RPI_GetGpio()->GPEDS0 = NMI_PIN_MASK;
-
   /* Configure GPIO to detect a rising edge of the RST pin */
   RPI_GetGpio()->GPREN0 |= RST_PIN_MASK;
 

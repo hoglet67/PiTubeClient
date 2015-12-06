@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "debug.h"
+#include "rpi-gpio.h"
 #include "tube-isr.h"
 #include "tube-lib.h"
 
@@ -9,11 +10,69 @@ volatile unsigned char *address;
 volatile unsigned char escFlag;
 volatile unsigned char errNum;
 volatile char errMsg[256];
+
+// a flag set when we are executing in interrupt mode
+// allows the SPI code to reliably disable/enable interrupts
 volatile int in_isr;
 
 jmp_buf errorRestart;
 
 extern void _isr_longjmp(jmp_buf env, int val);
+
+// single byte parasite -> host (e.g. *SAVE)
+void type_0_data_transfer(void) {
+  // Terminate the data transfer if IRQ falls (e.g. interrupt from tube release)
+  while (1) {
+	// Wait for NMI to fall
+	while (RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK) {
+	  if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
+		return;
+	  }
+	}
+	// Write the R3 data register, which should also clear the NMI
+	tubeWrite(R3_DATA, *address++);
+	// Wait for NMI to rise
+	while (!(RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK)) {
+	  if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
+		return;
+	  }
+	}
+  }
+}
+
+// single byte host -> parasite (e.g. *LOAD)
+void type_1_data_transfer(void) {
+  // Terminate the data transfer if IRQ falls (e.g. interrupt from tube release)
+  while (1) {
+	// Wait for NMI to fall
+	while (RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK) {
+	  if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
+		return;
+	  }
+	}
+	// Read the R3 data register, which should also clear the NMI
+	*address++ = tubeRead(R3_DATA);
+	// Wait for NMI to rise
+	while (!(RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK)) {
+	  if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
+		return;
+	  }
+	}
+  }
+}
+
+void type_2_data_transfer(void) {
+}
+
+void type_3_data_transfer(void) {
+}
+
+void type_6_data_transfer(void) {
+}
+
+void type_7_data_transfer(void) {
+}
+
 
 void TubeInterrupt(void) {
 
@@ -66,9 +125,6 @@ void TubeInterrupt(void) {
 	  _isr_longjmp(errorRestart, 1);
     } else {
       unsigned char id = receiveByte(R4);
-      if (DEBUG) {
-        printf("Transfer = %02x %02x", type, id);
-      }
       if (type <= 4 || type == 6 || type == 7) {
         unsigned char a3 = receiveByte(R4);
         unsigned char a2 = receiveByte(R4);
@@ -76,34 +132,40 @@ void TubeInterrupt(void) {
         unsigned char a0 = receiveByte(R4);
 		address = (unsigned char *)((a3 << 24) + (a2 << 16) + (a1 << 8) + a0);
         if (DEBUG) {
-          printf(" %08x", (unsigned int) address);
+		  printf("Transfer = %02x %02x %08x\r\n", type, id, (unsigned int)address);
         }
-      }
-      if (type < 4 ) {
-        // Type 0 .. 3 transfers serviced by NMI
-        // TODO setup NMI
-      }
-      if (type == 6) {
-        // Type 6 transfers are 256 byte block p -> h
-        // TODO write 256 bytes to R3
-        sendByte(R4, 0x00);
-      }
-      if (type == 7) {
-        // Type 7 transfers are 256 byte block h -> p
-        // TODO read 256 bytes from R3
-      }
+      } else {
+        printf("Transfer = %02x %02x\r\n", type, id);
+	  }
       if (type == 5) {
         // Type 5 : tube release
       } else {
         // Every thing else has a sync byte
-        unsigned char sync = receiveByte(R4);
-        if (DEBUG) {
-          printf(" %02x", sync);
-        }
+        receiveByte(R4);
       }
-      if (DEBUG) {
-        printf("\r\n");
-      }
+	  // TODO remove this
+	  tubeRead(R1_STATUS);
+	  // The data transfers are done by polling the GPIO bits for IRQ and NMI
+	  switch (type) {
+	  case 0:
+		type_0_data_transfer();
+		break;
+	  case 1:
+		type_1_data_transfer();
+		break;
+	  case 2:
+		type_2_data_transfer();
+		break;
+	  case 3:
+		type_3_data_transfer();
+		break;
+	  case 6:
+		type_6_data_transfer();
+		break;
+	  case 7:
+		type_7_data_transfer();
+		break;
+	  }
     }
   }
   in_isr = 0;

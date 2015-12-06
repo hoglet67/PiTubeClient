@@ -44,7 +44,7 @@ void sendByte(unsigned char reg, unsigned char byte) {
 	printf("done waiting for space in R%d\r\n", reg);
   }
   tubeWrite((reg - 1) * 2 + 1, byte);
-  if (DEBUG) {
+  if (DEBUGDETAIL) {
 	printf("Tx: R%d = %02x\r\n", reg, byte);
   }
 }
@@ -61,7 +61,7 @@ unsigned char receiveByte(unsigned char reg) {
 	printf("done waiting for data in R%d\r\n", reg);
   }
   byte = tubeRead((reg - 1) * 2 + 1);
-  if (DEBUG) {
+  if (DEBUGDETAIL) {
 	printf("Rx: R%d = %02x\r\n", reg, byte);
   }
   return byte;
