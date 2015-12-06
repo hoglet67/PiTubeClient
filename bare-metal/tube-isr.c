@@ -13,6 +13,8 @@ volatile int in_isr;
 
 jmp_buf errorRestart;
 
+extern void _isr_longjmp(jmp_buf env, int val);
+
 void TubeInterrupt(void) {
 
   in_isr = 1;
@@ -61,7 +63,7 @@ void TubeInterrupt(void) {
 	  sendString(R1, "\n\r");
 	  // TODO will eventually call a propert SWI
 	  in_isr = 0;
-	  longjmp(errorRestart, 1);
+	  _isr_longjmp(errorRestart, 1);
     } else {
       unsigned char id = receiveByte(R4);
       if (DEBUG) {

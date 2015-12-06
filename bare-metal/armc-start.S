@@ -29,6 +29,8 @@
 .section ".text.startup"
 
 .global _start
+.global _get_cpsr
+.global _isr_longjmp
 .global _get_stack_pointer
 .global _exception_table
 .global _enable_interrupts
@@ -137,17 +139,28 @@ _get_stack_pointer:
     // Return from the function
     mov     pc, lr
 
+_get_cpsr:
+    mrs     r0, cpsr
+    mov     pc, lr
+
+    // A special version of longjmp that sets the mode back to supervisor mode
+_isr_longjmp:
+    mrs     r4, cpsr
+    bic     r4, r4, #0x1f
+    orr     r4, r4, #CPSR_MODE_SVR
+    msr     cpsr_c, r4
+    b       longjmp
 
 _enable_interrupts:
     mrs     r0, cpsr
-    bic     r0, r0, #0x80
+    bic     r0, r0, #CPSR_IRQ_INHIBIT
     msr     cpsr_c, r0
 
     mov     pc, lr
 
 _disable_interrupts:
     mrs     r0, cpsr
-    orr     r0, r0, #0x80
+    orr     r0, r0, #CPSR_IRQ_INHIBIT
     msr     cpsr_c, r0
 
     mov     pc, lr
