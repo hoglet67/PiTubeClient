@@ -69,9 +69,9 @@ unsigned char receiveByte(unsigned char reg) {
 
 // Reg is 1..4
 void sendString(unsigned char reg, const volatile char *buf) {
-  int i;
-  for (i = 0; i < strlen(buf); i++) {
-    sendByte(reg, (unsigned char)buf[i]);
+  char c;
+  while ((c = *buf++) != 0) {
+    sendByte(reg, (unsigned char)c);
   }
 }
 
