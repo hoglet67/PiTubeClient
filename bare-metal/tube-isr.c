@@ -23,20 +23,20 @@ extern void _isr_longjmp(jmp_buf env, int val);
 void type_0_data_transfer(void) {
   // Terminate the data transfer if IRQ falls (e.g. interrupt from tube release)
   while (1) {
-	// Wait for NMI to fall
-	while (RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK) {
-	  if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
-		return;
-	  }
-	}
-	// Write the R3 data register, which should also clear the NMI
-	tubeWrite(R3_DATA, *address++);
-	// Wait for NMI to rise
-	while (!(RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK)) {
-	  if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
-		return;
-	  }
-	}
+    // Wait for NMI to fall
+    while (RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK) {
+      if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
+        return;
+      }
+    }
+    // Write the R3 data register, which should also clear the NMI
+    tubeWrite(R3_DATA, *address++);
+    // Wait for NMI to rise
+    while (!(RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK)) {
+      if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
+        return;
+      }
+    }
   }
 }
 
@@ -44,20 +44,20 @@ void type_0_data_transfer(void) {
 void type_1_data_transfer(void) {
   // Terminate the data transfer if IRQ falls (e.g. interrupt from tube release)
   while (1) {
-	// Wait for NMI to fall
-	while (RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK) {
-	  if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
-		return;
-	  }
-	}
-	// Read the R3 data register, which should also clear the NMI
-	*address++ = tubeRead(R3_DATA);
-	// Wait for NMI to rise
-	while (!(RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK)) {
-	  if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
-		return;
-	  }
-	}
+    // Wait for NMI to fall
+    while (RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK) {
+      if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
+        return;
+      }
+    }
+    // Read the R3 data register, which should also clear the NMI
+    *address++ = tubeRead(R3_DATA);
+    // Wait for NMI to rise
+    while (!(RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK)) {
+      if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
+        return;
+      }
+    }
   }
 }
 
@@ -118,11 +118,11 @@ void TubeInterrupt(void) {
       if (DEBUG) {
         printf("Error = %02x %s\r\n", errNum, errMsg);
       }
-	  sendString(R1, errMsg);
-	  sendString(R1, "\n\r");
-	  // TODO will eventually call a propert SWI
-	  in_isr = 0;
-	  _isr_longjmp(errorRestart, 1);
+      sendString(R1, errMsg);
+      sendString(R1, "\n\r");
+      // TODO will eventually call a propert SWI
+      in_isr = 0;
+      _isr_longjmp(errorRestart, 1);
     } else {
       unsigned char id = receiveByte(R4);
       if (type <= 4 || type == 6 || type == 7) {
@@ -130,42 +130,40 @@ void TubeInterrupt(void) {
         unsigned char a2 = receiveByte(R4);
         unsigned char a1 = receiveByte(R4);
         unsigned char a0 = receiveByte(R4);
-		address = (unsigned char *)((a3 << 24) + (a2 << 16) + (a1 << 8) + a0);
+        address = (unsigned char *)((a3 << 24) + (a2 << 16) + (a1 << 8) + a0);
         if (DEBUG) {
-		  printf("Transfer = %02x %02x %08x\r\n", type, id, (unsigned int)address);
+          printf("Transfer = %02x %02x %08x\r\n", type, id, (unsigned int)address);
         }
       } else {
         printf("Transfer = %02x %02x\r\n", type, id);
-	  }
+      }
       if (type == 5) {
         // Type 5 : tube release
       } else {
         // Every thing else has a sync byte
         receiveByte(R4);
       }
-	  // TODO remove this
-	  tubeRead(R1_STATUS);
-	  // The data transfers are done by polling the GPIO bits for IRQ and NMI
-	  switch (type) {
-	  case 0:
-		type_0_data_transfer();
-		break;
-	  case 1:
-		type_1_data_transfer();
-		break;
-	  case 2:
-		type_2_data_transfer();
-		break;
-	  case 3:
-		type_3_data_transfer();
-		break;
-	  case 6:
-		type_6_data_transfer();
-		break;
-	  case 7:
-		type_7_data_transfer();
-		break;
-	  }
+      // The data transfers are done by polling the GPIO bits for IRQ and NMI
+      switch (type) {
+      case 0:
+        type_0_data_transfer();
+        break;
+      case 1:
+        type_1_data_transfer();
+        break;
+      case 2:
+        type_2_data_transfer();
+        break;
+      case 3:
+        type_3_data_transfer();
+        break;
+      case 6:
+        type_6_data_transfer();
+        break;
+      case 7:
+        type_7_data_transfer();
+        break;
+      }
     }
   }
   in_isr = 0;
