@@ -45,10 +45,6 @@
 
 const char *banner = "Raspberry Pi ARMv6 Co Processor 900MHz\n\n\r";
 
-
-extern volatile int calculate_frame_count;
-
-
 /** Main function - we'll never return from here */
 void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 {
@@ -111,12 +107,21 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
   printf( "Sending banner\r\n" );
   sendString(R1, banner);
   sendByte(R1, 0x00);
+
+  // This should not be necessary, but I've seen a couple of cases
+  // where R4 errors happened during the startup message
+  setjmp(errorRestart);
+
   printf( "Banner sent, awaiting response\r\n" );
+
   // Wait for the reponse in R2
   receiveByte(R2);
   printf( "Received response\r\n" );
 
   while( 1 ) {
+
+	// If an error is received on R4 (in the ISR) we return here
+	setjmp(errorRestart);
 
     // Print a prompt
     sendString(R1, "arm>*");
@@ -166,12 +171,6 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
       // Wait for the reponse in R2
       receiveByte(R2);
-
-      if (error) {
-        error = 0;
-        sendString(R1, errMsg);
-        sendString(R1, "\n\r");
-      }
     }
   }
 

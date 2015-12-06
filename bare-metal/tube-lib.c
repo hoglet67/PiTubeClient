@@ -33,24 +33,19 @@ unsigned char tubeCmd(unsigned char cmd, unsigned char addr, unsigned char byte)
   return rxBuf[1];
 }
 
-
 // Reg is 1..4
 void sendByte(unsigned char reg, unsigned char byte) {
   unsigned char addr = (reg - 1) * 2;
-  if (!error) {
-    if (DEBUGDETAIL) {
-      printf("waiting for space in R%d\r\n", reg);
-    }
-    while ((!error) && (tubeRead(addr) & F_BIT) == 0x00);
-    if (DEBUGDETAIL) {
-      printf("done waiting for space in R%d\r\n", reg);
-    }
+  if (DEBUGDETAIL) {
+	printf("waiting for space in R%d\r\n", reg);
   }
-  if (!error) {
-    tubeWrite((reg - 1) * 2 + 1, byte);
-    if (DEBUG) {
-      printf("Tx: R%d = %02x\r\n", reg, byte);
-    }
+  while ((tubeRead(addr) & F_BIT) == 0x00);
+  if (DEBUGDETAIL) {
+	printf("done waiting for space in R%d\r\n", reg);
+  }
+  tubeWrite((reg - 1) * 2 + 1, byte);
+  if (DEBUG) {
+	printf("Tx: R%d = %02x\r\n", reg, byte);
   }
 }
 
@@ -58,23 +53,18 @@ void sendByte(unsigned char reg, unsigned char byte) {
 unsigned char receiveByte(unsigned char reg) {
   unsigned char byte;
   unsigned char addr = (reg - 1) * 2;
-  if (!error) {
-    if (DEBUGDETAIL) {
-      printf("waiting for data in R%d\r\n", reg);
-    }
-    while ((!error) && (tubeRead(addr) & A_BIT) == 0x00);
-    if (DEBUGDETAIL) {
-      printf("done waiting for data in R%d\r\n", reg);
-    }
+  if (DEBUGDETAIL) {
+	printf("waiting for data in R%d\r\n", reg);
   }
-  if (!error) {
-    byte = tubeRead((reg - 1) * 2 + 1);
-    if (DEBUG) {
-      printf("Rx: R%d = %02x\r\n", reg, byte);
-    }
-    return byte;
+  while ((tubeRead(addr) & A_BIT) == 0x00);
+  if (DEBUGDETAIL) {
+	printf("done waiting for data in R%d\r\n", reg);
   }
-  return 0;
+  byte = tubeRead((reg - 1) * 2 + 1);
+  if (DEBUG) {
+	printf("Rx: R%d = %02x\r\n", reg, byte);
+  }
+  return byte;
 }
 
 // Reg is 1..4

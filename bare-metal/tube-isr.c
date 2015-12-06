@@ -4,11 +4,14 @@
 #include "tube-isr.h"
 #include "tube-lib.h"
 
-volatile int error;
+volatile unsigned char *address;
+
 volatile unsigned char escFlag;
 volatile unsigned char errNum;
 volatile char errMsg[256];
 volatile int in_isr;
+
+jmp_buf errorRestart;
 
 void TubeInterrupt(void) {
 
@@ -34,7 +37,7 @@ void TubeInterrupt(void) {
       if (DEBUG) {
         printf("Event = %02x %02x %02x\r\n", a, x, y);
       }
-    }    
+    }
   }
 
   // Check for R4 interrupt
@@ -51,11 +54,14 @@ void TubeInterrupt(void) {
       receiveByte(R2); // 0
       errNum = receiveByte(R2);
       receiveString(R2, 0x00, errMsg);
-      // Flag an error to the main process
-      error = 1;
       if (DEBUG) {
         printf("Error = %02x %s\r\n", errNum, errMsg);
       }
+	  sendString(R1, errMsg);
+	  sendString(R1, "\n\r");
+	  // TODO will eventually call a propert SWI
+	  in_isr = 0;
+	  longjmp(errorRestart, 1);
     } else {
       unsigned char id = receiveByte(R4);
       if (DEBUG) {
@@ -65,9 +71,10 @@ void TubeInterrupt(void) {
         unsigned char a3 = receiveByte(R4);
         unsigned char a2 = receiveByte(R4);
         unsigned char a1 = receiveByte(R4);
-        unsigned char a0 = receiveByte(R4);        
+        unsigned char a0 = receiveByte(R4);
+		address = (unsigned char *)((a3 << 24) + (a2 << 16) + (a1 << 8) + a0);
         if (DEBUG) {
-          printf(" %02x%02x%02x%02x", a3, a2, a1, a0);
+          printf(" %08x", (unsigned int) address);
         }
       }
       if (type < 4 ) {
@@ -81,7 +88,7 @@ void TubeInterrupt(void) {
       }
       if (type == 7) {
         // Type 7 transfers are 256 byte block h -> p
-        // TODO read 256 bytes from R3 
+        // TODO read 256 bytes from R3
       }
       if (type == 5) {
         // Type 5 : tube release
