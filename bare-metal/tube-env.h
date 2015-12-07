@@ -39,7 +39,7 @@ typedef struct ET {
   EventHandler_type eventHandler;
   ExitHandler_type exitHandler;
   ExceptionHandler_type undefinedInstructionHandler;
-  ExceptionHandler_type prefectAbortHandler;
+  ExceptionHandler_type prefetchAbortHandler;
   ExceptionHandler_type dataAbortHandler;
   ExceptionHandler_type addressExceptionHandler;
 } Environment_type;

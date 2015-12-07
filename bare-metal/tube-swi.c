@@ -1,4 +1,4 @@
-#include <setjmp.h>
+#include "rpi-interrupts.h"
 #include "tube-lib.h"
 #include "tube-env.h"
 #include "tube-swi.h"
@@ -111,7 +111,6 @@ void updateCarry(unsigned char cy, unsigned int *reg) {
   }
 }
 
-
 // Client to Host transfers
 // Reference: http://mdfs.net/Software/Tube/Protocol
 // OSWRCH   R1: A
@@ -134,7 +133,11 @@ void tube_WriteC(unsigned int *reg) {
 }
 
 void tube_WriteS(unsigned int *reg) {
-  // TODO - Need to write in assmbley
+  // Reg 13 is the stacked link register which points to the string
+  tube_Write0(&reg[13]);
+  // Make sure new value of link register is word aligned to the next word boundary
+  reg[13] += 3;
+  reg[13] &= ~3;
 }
 
 void tube_Write0(unsigned int *reg) {
@@ -348,22 +351,31 @@ void tube_ReadLine(unsigned int *reg) {
 }
 
 void tube_Control(unsigned int *reg) {
+  unsigned int previous;
   // R0 = address of error handler (0 for no change)
+  previous = (unsigned int)env->errorHandler;
   if (reg[0]) {
 	env->errorHandler = (ErrorHandler_type) reg[0]; 
   }
+  reg[0] = previous;
   // R1 = address of error buffer (0 for no change) 
+  previous = (unsigned int)env->errorBuffer;
   if (reg[1]) {
 	env->errorBuffer = (ErrorBuffer_type *) reg[1]; 
   }
+  reg[1] = previous;
   // R2 = address of escape handler (0 for no change) 
+  previous = (unsigned int)env->escapeHandler;
   if (reg[2]) {
 	env->escapeHandler = (EscapeHandler_type) reg[2]; 
   }
+  reg[2] = previous;
   // R3 = address of event handler (0 for no change) 
+  previous = (unsigned int)env->eventHandler;
   if (reg[3]) {
 	env->eventHandler = (EventHandler_type) reg[3]; 
   }
+  reg[3] = previous;
 }
 
 void tube_GetEnv(unsigned int *reg) {
@@ -382,20 +394,63 @@ void tube_Exit(unsigned int *reg) {
 // The below do not seem to be used in BBC Basic, so implement later on
 
 void tube_SetEnv(unsigned int *reg) {
+  unsigned int previous;
   // R0 address of exit routine for Exit above to go to (or 0 if no change)
+  previous = (unsigned int)env->exitHandler;
+  if (reg[0]) {
+	env->exitHandler = (ExitHandler_type) reg[0]; 
+  }
+  reg[0] = previous;
   // R1 address of end of memory limit for GetEnv to read (or 0 if no change)
+  previous = env->memoryLimit;
+  if (reg[1]) {
+	env->memoryLimit = reg[1];
+  }
+  reg[1] = previous;
   // R2 address of the real end of memory (or 0 if no change)
+  previous = env->realEndOfMemory;
+  if (reg[2]) {
+	env->realEndOfMemory = reg[2];
+  }
+  reg[2] = previous;
   // R3 0 for no local buffering, 1 for local buffering (anything else no change)
+  previous = env->localBuffering;
+  if (reg[3]) {
+	env->localBuffering = reg[3];
+  }
+  reg[3] = previous;
   // R4 address of routine to handle undefined instructions (or 0 if no change)
+  previous = (unsigned int) env->undefinedInstructionHandler;
+  if (reg[4]) {
+	env->undefinedInstructionHandler = (ExceptionHandler_type) reg[4];
+  }
+  reg[4] = previous;
   // R5 address of routine to handle prefetch abort (or 0 if no change)
+  previous = (unsigned int) env->prefetchAbortHandler;
+  if (reg[5]) {
+	env->prefetchAbortHandler = (ExceptionHandler_type) reg[5];
+  }
+  reg[5] = previous;
   // R6 address of routine to handle data abort (or 0 if no change)
+  previous = (unsigned int) env->dataAbortHandler;
+  if (reg[6]) {
+	env->dataAbortHandler = (ExceptionHandler_type) reg[6];
+  }
+  reg[6] = previous;
   // R7 address of routine to handle address exception (or 0 if no change).
+  previous = (unsigned int) env->addressExceptionHandler;
+  if (reg[7]) {
+	env->addressExceptionHandler = (ExceptionHandler_type) reg[7];
+  }
+  reg[7] = previous;
 }
 
 void tube_IntOn(unsigned int *reg) {
+  _enable_interrupts();
 }
 
 void tube_IntOff(unsigned int *reg) {
+  _disable_interrupts();
 }
 
 void tube_CallBack(unsigned int *reg) {
@@ -421,6 +476,3 @@ void tube_SetCallBack(unsigned int *reg) {
 
 void tube_Mouse(unsigned int *reg) {
 }
-
-
-

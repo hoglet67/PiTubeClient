@@ -125,7 +125,7 @@ void initEnv() {
   env->eventHandler                = defaultEventHandler;
   env->exitHandler                 = defaultExitHandler;
   env->undefinedInstructionHandler = defaultExceptionHandler;
-  env->prefectAbortHandler         = defaultExceptionHandler;
+  env->prefetchAbortHandler        = defaultExceptionHandler;
   env->dataAbortHandler            = defaultExceptionHandler;
   env->addressExceptionHandler     = defaultExceptionHandler;
 }
