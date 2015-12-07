@@ -33,7 +33,7 @@
 
 .equ    SVR_STACK,        0x01F80000
 .equ    IRQ_STACK,        0x01F70000
-.equ    USR_STACK,        0x01F60000
+.equ    USER_STACK,       0x01F60000
         
 .section ".text.startup"
 
@@ -44,6 +44,7 @@
 .global _exception_table
 .global _enable_interrupts
 .global _disable_interrupts
+.global _user_exec
 
 // From the ARM ARM (Architecture Reference Manual). Make sure you get the
 // ARMv5 documentation which includes the ARMv6 documentation which is the
@@ -87,7 +88,7 @@ _fast_interrupt_vector_h:           .word   fast_interrupt_vector
 
 _irq_stack:                         .word   IRQ_STACK
 _svr_stack:                         .word   SVR_STACK
-_usr_stack:                         .word   USR_STACK
+_user_stack:                        .word   USER_STACK
 
 _patch_data:                        .word _reset_       
 _patch_address:                     .word _reset_h
@@ -200,7 +201,7 @@ _disable_interrupts:
     msr     cpsr_c, r0
 
     mov     pc, lr
-
+		
 _swi_handler_:
     stmfd    sp!, {r0-r12, lr}    // Store registers.
     mov      r1, sp               // Set pointer to parameters.
@@ -214,3 +215,23 @@ _swi_handler_:
     ldmfd    sp!, {r0}            // Get spsr from stack.
     msr      spsr_cf, r0          // Restore spsr.
     ldmfd    sp!, {r0-r12, pc}^   // Restore registers and return.
+
+_user_exec:
+		
+	// Move to user mode
+    mov      r1, #(CPSR_MODE_USER | CPSR_FIQ_INHIBIT )
+    msr 	 cpsr_c, r1
+
+	// Setup the user stack pointer
+    ldr 	 sp, _user_stack
+
+	// Jump to the address in R0
+	mov		 pc, r0
+
+	// There seems to be some wierd alignment issue
+	// The startup message is garbled and things don't work well
+	// Adding these fixed it
+    //nop
+	//nop
+	//nop
+	//nop

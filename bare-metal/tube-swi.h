@@ -17,6 +17,9 @@
 typedef void (*SWIHandler_Type) (unsigned int *reg);
 
 // Function prototypes
+void user_exec(volatile unsigned char *address);
+
+// SWI handler prototypes
 void tube_WriteC(unsigned int *reg);       // &00
 void tube_WriteS(unsigned int *reg);       // &01
 void tube_Write0(unsigned int *reg);       // &02

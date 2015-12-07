@@ -28,6 +28,8 @@
 // BCM GPIO 25
 #define IRQ_PIN 6
 
+void setTubeLibDebug(int d);
+
 void tubeWrite(unsigned char addr, unsigned char byte);
 
 unsigned char tubeRead(unsigned char addr);
@@ -38,7 +40,7 @@ void sendByte(unsigned char reg, unsigned char byte);
 
 unsigned char receiveByte(unsigned char reg);
 
-void sendString(unsigned char reg, const volatile char *buf);
+void sendString(unsigned char reg, unsigned char terminator, const volatile char *buf);
 
 int receiveString(unsigned char reg, unsigned char terminator, volatile char *buf);
 

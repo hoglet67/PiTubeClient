@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "startup.h"
+
 #include "rpi-armtimer.h"
 #include "rpi-base.h"
 #include "rpi-gpio.h"

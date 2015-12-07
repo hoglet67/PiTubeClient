@@ -14,6 +14,8 @@
 
 extern volatile int in_isr;
 
+extern volatile unsigned char *address;
+
 void TubeInterrupt(void);
 
 #endif

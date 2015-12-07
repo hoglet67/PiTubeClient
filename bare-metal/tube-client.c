@@ -40,6 +40,7 @@
 #include "rpi-systimer.h"
 
 #include "debug.h"
+#include "startup.h"
 #include "spi.h"
 #include "tube-lib.h"
 #include "tube-env.h"
@@ -58,9 +59,6 @@ const char *prompt = "arm>*";
 
 jmp_buf errorRestart;
 
-extern void _isr_longjmp(jmp_buf env, int val);
-
-
 
 // TODO Register usage incorrect!!
 void defaultErrorHandler() {
@@ -68,8 +66,8 @@ void defaultErrorHandler() {
   if (DEBUG) {
 	printf("Error = %02x %s\r\n", eb->errorNum, eb->errorMsg);
   }
-  sendString(R1, eb->errorMsg);
-  sendString(R1, "\n\r");
+  sendString(R1, 0x00, eb->errorMsg);
+  sendString(R1, 0x00, "\n\r");
   env->exitHandler();
 }
 
@@ -137,7 +135,7 @@ void tube_Reset() {
 
   // Send the reset message
   printf( "Sending banner\r\n" );
-  sendString(R1, banner);
+  sendString(R1, 0x00, banner);
   sendByte(R1, 0x00);
   printf( "Banner sent, awaiting response\r\n" );
 
@@ -227,7 +225,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
     if ((*carry) & CARRY_MASK) {
 
       // Yes, print Escape
-      sendString(R1, "\n\rEscape\n\r");
+      sendString(R1, 0x00, "\n\rEscape\n\r");
 
       // Acknowledge escape condition
 	  if (DEBUG) {
@@ -239,14 +237,17 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
     } else {
 
-      // Check for *QUIT
-      if (strcasecmp(env->commandBuffer, "quit") == 0) {
-        // Yes, we're done
-        break;
+      // Check for *GO
+      if (strncasecmp(env->commandBuffer, "go", 2) == 0) {
+		unsigned int address;
+		sscanf(env->commandBuffer + 2, "%x", &address);
+		// No return from here
+		user_exec((unsigned char *)address);
       }
 
 	  reg[0] = (unsigned int) env->commandBuffer;
 	  tube_CLI(reg);
+
     }
   }
 

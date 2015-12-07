@@ -1,7 +1,10 @@
-#include "rpi-interrupts.h"
+#include <stdio.h>
+#include "debug.h"
+#include "startup.h"
 #include "tube-lib.h"
 #include "tube-env.h"
 #include "tube-swi.h"
+#include "tube-isr.h"
 
 #define NUM_SWI_HANDLERS 0x1D
 
@@ -87,6 +90,9 @@ SWIHandler_Type SWIHandler_Table[NUM_SWI_HANDLERS] = {
 
 
 void C_SWI_Handler(unsigned int number, unsigned int *reg) {
+  if (DEBUG) {
+	printf("SWI %08x\r\n", number);
+  }
   if (number < NUM_SWI_HANDLERS) {
 	// Invoke one of the fixed handlers
 	SWIHandler_Table[number](reg);
@@ -95,6 +101,9 @@ void C_SWI_Handler(unsigned int number, unsigned int *reg) {
     tube_WriteC(&number);
   } else {
 	// TODO: Illegal SWI Handler
+  }
+  if (DEBUG) {
+	printf("SWI %08x complete\r\n", number);
   }
 }
 
@@ -109,6 +118,16 @@ void updateCarry(unsigned char cy, unsigned int *reg) {
   } else {
 	*reg &= ~CARRY_MASK;
   }
+}
+
+void user_exec(volatile unsigned char *address) {
+  if (DEBUG) {
+	printf("Execution passing to %08x\r\n", (unsigned int)address);
+  }
+  setTubeLibDebug(1);
+  // The machine code version in armc-startup.S does the real work
+  // of dropping down to user mode
+  _user_exec(address);
 }
 
 // Client to Host transfers
@@ -169,10 +188,11 @@ void tube_CLI(unsigned int *reg) {
   char *ptr = (char *)(*reg);
   // OSCLI    R2: &02 string &0D                    &7F or &80
   sendByte(R2, 0x02);
-  sendString(R2, ptr);
+  sendString(R2, 0x00, ptr);
   sendByte(R2, 0x0D);
   if (receiveByte(R2) & 0x80) {
-	// TODO: Execution should pass to last transfer address
+	// Execution should pass to last transfer address
+	user_exec(address);
   }
 }
 
@@ -246,7 +266,7 @@ void tube_File(unsigned int *reg) {
   sendWord(R2, *ptr--);            // r4 = leng
   sendWord(R2, *ptr--);            // r3 = exec
   sendWord(R2, *ptr--);            // r2 = load
-  sendString(R2, (char *)*ptr--);  // r1 = filename ptr
+  sendString(R2, 0x0D, (char *)*ptr--);  // r1 = filename ptr
   sendByte(R2, 0x0D);              //      filename terminator
   sendByte(R2, *ptr);              // r0 = action
   *ptr = receiveByte(R2);          // r0 = action
@@ -326,7 +346,7 @@ void tube_Find(unsigned int *reg) {
 	receiveByte(R2);
   } else {
 	// R1 points to the string
-	sendString(R2, (char *)reg[1]); 
+	sendString(R2, 0x0D, (char *)reg[1]); 
 	sendByte(R2, 0x0D);
 	// Response is the file handle of file just opened
 	reg[0] = receiveByte(R2);

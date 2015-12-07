@@ -1,11 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "rpi-interrupts.h"
+#include "startup.h"
 #include "debug.h"
 #include "spi.h"
 #include "tube-lib.h"
 #include "tube-isr.h"
+
+static int debug = 0;
+
+void setTubeLibDebug(int d) {
+  debug = d;
+}
 
 unsigned char tubeRead(unsigned char addr) {
   return tubeCmd(CMD_READ, addr, 0xff);
@@ -27,7 +33,7 @@ unsigned char tubeCmd(unsigned char cmd, unsigned char addr, unsigned char byte)
   if (!in_isr) {
     _enable_interrupts();
   }
-  if (DEBUGDETAIL2) {
+  if (debug >= 3) {
     printf("%02x%02x%02x%02x\r\n", txBuf[0], txBuf[1], rxBuf[0], rxBuf[1]);
   }
   return rxBuf[1];
@@ -36,15 +42,15 @@ unsigned char tubeCmd(unsigned char cmd, unsigned char addr, unsigned char byte)
 // Reg is 1..4
 void sendByte(unsigned char reg, unsigned char byte) {
   unsigned char addr = (reg - 1) * 2;
-  if (DEBUGDETAIL) {
+  if (debug >= 2) {
 	printf("waiting for space in R%d\r\n", reg);
   }
   while ((tubeRead(addr) & F_BIT) == 0x00);
-  if (DEBUGDETAIL) {
+  if (debug >= 2) {
 	printf("done waiting for space in R%d\r\n", reg);
   }
   tubeWrite((reg - 1) * 2 + 1, byte);
-  if (DEBUGDETAIL) {
+  if (debug >= 1) {
 	printf("Tx: R%d = %02x\r\n", reg, byte);
   }
 }
@@ -53,24 +59,24 @@ void sendByte(unsigned char reg, unsigned char byte) {
 unsigned char receiveByte(unsigned char reg) {
   unsigned char byte;
   unsigned char addr = (reg - 1) * 2;
-  if (DEBUGDETAIL) {
+  if (debug >= 2) {
 	printf("waiting for data in R%d\r\n", reg);
   }
   while ((tubeRead(addr) & A_BIT) == 0x00);
-  if (DEBUGDETAIL) {
+  if (debug >= 2) {
 	printf("done waiting for data in R%d\r\n", reg);
   }
   byte = tubeRead((reg - 1) * 2 + 1);
-  if (DEBUGDETAIL) {
+  if (debug >= 1) {
 	printf("Rx: R%d = %02x\r\n", reg, byte);
   }
   return byte;
 }
 
 // Reg is 1..4
-void sendString(unsigned char reg, const volatile char *buf) {
+void sendString(unsigned char reg, unsigned char terminator, const volatile char *buf) {
   char c;
-  while ((c = *buf++) != 0) {
+  while ((c = *buf++) != terminator) {
     sendByte(reg, (unsigned char)c);
   }
 }
