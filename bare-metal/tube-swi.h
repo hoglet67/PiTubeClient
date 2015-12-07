@@ -3,6 +3,8 @@
 #ifndef TUBE_SWI_H
 #define TUBE_SWI_H
 
+// The bit position of the carry flag in the ARM PSW
+#define CARRY_MASK (1 << 29)
 
 // Macro allowing SWI calls to be made from C
 // Note: stacking lr prevents corruption of lr when invoker in supervisor mode

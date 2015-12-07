@@ -27,7 +27,7 @@ unsigned char tubeCmd(unsigned char cmd, unsigned char addr, unsigned char byte)
   if (!in_isr) {
     _enable_interrupts();
   }
-  if (DEBUGDETAIL) {
+  if (DEBUGDETAIL2) {
     printf("%02x%02x%02x%02x\r\n", txBuf[0], txBuf[1], rxBuf[0], rxBuf[1]);
   }
   return rxBuf[1];

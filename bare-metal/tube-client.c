@@ -54,9 +54,13 @@ Environment_type *env = &defaultEnvironment;
 
 const char *banner = "Raspberry Pi ARMv6 Co Processor 900MHz\n\n\r";
 
+const char *prompt = "arm>*";
+
 jmp_buf errorRestart;
 
 extern void _isr_longjmp(jmp_buf env, int val);
+
+
 
 // TODO Register usage incorrect!!
 void defaultErrorHandler() {
@@ -126,12 +130,33 @@ void initEnv() {
   env->addressExceptionHandler     = defaultExceptionHandler;
 }
 
+// Tube Reset protocol
+void tube_Reset() {
+  // Print to the UART using the standard libc functions
+  printf( "Raspberry Pi ARMv6 Tube Client\r\n" );
+  printf( "Initialise UART console with standard libc\r\n" );
+
+  // Send the reset message
+  printf( "Sending banner\r\n" );
+  sendString(R1, banner);
+  sendByte(R1, 0x00);
+  printf( "Banner sent, awaiting response\r\n" );
+
+  // Wait for the reponse in R2
+  receiveByte(R2);
+  printf( "Received response\r\n" );
+}
+
 /** Main function - we'll never return from here */
 void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 {
-  unsigned char resp;
-  char buffer[256];
 
+  // Register block used to interact with tube_ functions
+  unsigned int block[5];
+  unsigned int *carry = &block[0];
+  unsigned int *reg = &block[1];
+
+  // Initialize the environment structure
   initEnv();
 
   /* Write 1 to the LED init nibble in the Function Select GPIO
@@ -176,78 +201,53 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
   /* Setup SPI*/
   spi_begin();
 
-  /* Print to the UART using the standard libc functions */
-  printf( "Raspberry Pi ARMv6 Tube Client\r\n" );
-  printf( "Initialise UART console with standard libc\r\n" );
-
-  // Send the reset message
-  printf( "Sending banner\r\n" );
-  sendString(R1, banner);
-  sendByte(R1, 0x00);
-
   // This should not be necessary, but I've seen a couple of cases
   // where R4 errors happened during the startup message
   setjmp(errorRestart);
 
-  printf( "Banner sent, awaiting response\r\n" );
-
-  // Wait for the reponse in R2
-  receiveByte(R2);
-  printf( "Received response\r\n" );
+  // Send reset message
+  tube_Reset();
 
   while( 1 ) {
 
     // If an error is received on R4 (in the ISR) we return here
     setjmp(errorRestart);
 
-    // Print a prompt
-    sendString(R1, "arm>*");
+    // Print the supervisor prompt
+	reg[0] = (unsigned int) prompt;
+	tube_Write0(reg);
 
     // Ask for user input (OSWORD 0)
-    sendByte(R2, 0x0A);
-    sendByte(R2, 0x7F); // max ascii value
-    sendByte(R2, 0x20); // min ascii value
-    sendByte(R2, 0x7F); // max line length
-    sendByte(R2, 0x07); // Buffer MSB (not used)
-    sendByte(R2, 0x00); // Buffer LSB (not used)
-
-    // Read response
-    resp = receiveByte(R2);
+	reg[0] = (unsigned int) env->commandBuffer;
+	reg[1] = 0x7F; // max line length
+	reg[2] = 0x20; // min ascii value
+	reg[3] = 0x7F; // max ascii value
+	tube_ReadLine(reg);
 
     // Was it escape
-    if (resp >= 0x80) {
+    if ((*carry) & CARRY_MASK) {
 
       // Yes, print Escape
       sendString(R1, "\n\rEscape\n\r");
 
       // Acknowledge escape condition
-      if (env->escapeFlag) {
-        if (DEBUG) {
-          printf("Acknowledging Escape\r\n");
-        }
-        sendByte(R2, 0x04);
-        sendByte(R2, 0x00);
-        sendByte(R2, 0x7E);
-        resp = receiveByte(R2);
-      }
+	  if (DEBUG) {
+		printf("Acknowledging Escape\r\n");
+	  }
+	  reg[0] = 0x7e;
+	  reg[1] = 0x00;
+	  tube_Byte(reg);
 
     } else {
 
-      receiveString(R2, '\r', buffer);
-
       // Check for *QUIT
-      if (strcasecmp(buffer, "quit") == 0) {
+      if (strcasecmp(env->commandBuffer, "quit") == 0) {
         // Yes, we're done
         break;
       }
 
-      // Send string back as OSCLI
-      sendByte(R2, 0x02);
-      sendString(R2, buffer);
-      sendByte(R2, 0x0D);
-
-      // Wait for the reponse in R2
-      receiveByte(R2);
+	  reg[0] = (unsigned int) env->commandBuffer;
+	  tube_CLI(reg);
     }
   }
 

@@ -104,10 +104,10 @@ void updateCarry(unsigned char cy, unsigned int *reg) {
   // The PSW is on the stack one word before the registers
   reg--;
   // bit 29 is the carry
-  if (cy) {
-	*reg |= (1 << 29);
+  if (cy & 0x80) {
+	*reg |= CARRY_MASK;
   } else {
-	*reg &= ~(1 << 29);
+	*reg &= ~CARRY_MASK;
   }
 }
 
@@ -337,12 +337,12 @@ void tube_ReadLine(unsigned int *reg) {
   sendByte(R2, reg[3]);      // max ascii value
   sendByte(R2, reg[2]);      // min ascii value
   sendByte(R2, reg[1]);      // max line length
-  sendByte(R2, reg[0] >> 8); // Buffer MSB (not used)
-  sendByte(R2, reg[0]);      // Buffer LSB (not used)
+  sendByte(R2, 0x07);        // Buffer MSB - set as per Tube Ap Note 004
+  sendByte(R2, 0x00);        // Buffer LSB - set as per Tube Ap Note 004
   resp = receiveByte(R2);    // 0x7F or 0xFF
   updateCarry(resp, reg);
   // Was it valid? 
-  if (resp & 0x80) {
+  if ((resp & 0x80) == 0x00) {
 	reg[1] = receiveString(R2, '\r', (char *)reg[0]);
   }
 }
