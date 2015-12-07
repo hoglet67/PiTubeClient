@@ -1,13 +1,9 @@
-#include "tube-swi.h"
+#include <setjmp.h>
 #include "tube-lib.h"
+#include "tube-env.h"
+#include "tube-swi.h"
 
 #define NUM_SWI_HANDLERS 0x1D
-
-static ErrorBuffer_type defaultErrorBuffer;
-
-ErrorBuffer_type *errorBuffer = &defaultErrorBuffer;
-
-ErrorHandler_type errorHandler = defaultErrorHandler;
 
 const int osword_in_len[] = {
   0,  // OSWORD 0x00
@@ -115,10 +111,6 @@ void updateCarry(unsigned char cy, unsigned int *reg) {
   }
 }
 
-
-void defaultErrorHandler() {
-
-}
 
 // Client to Host transfers
 // Reference: http://mdfs.net/Software/Tube/Protocol
@@ -358,21 +350,46 @@ void tube_ReadLine(unsigned int *reg) {
 void tube_Control(unsigned int *reg) {
   // R0 = address of error handler (0 for no change)
   if (reg[0]) {
-	errorHandler = (ErrorHandler_type) reg[0]; 
+	env->errorHandler = (ErrorHandler_type) reg[0]; 
   }
   // R1 = address of error buffer (0 for no change) 
   if (reg[1]) {
-	errorBuffer = (ErrorBuffer_type *) reg[1]; 
+	env->errorBuffer = (ErrorBuffer_type *) reg[1]; 
+  }
+  // R2 = address of escape handler (0 for no change) 
+  if (reg[2]) {
+	env->escapeHandler = (EscapeHandler_type) reg[2]; 
+  }
+  // R3 = address of event handler (0 for no change) 
+  if (reg[3]) {
+	env->eventHandler = (EventHandler_type) reg[3]; 
   }
 }
 
 void tube_GetEnv(unsigned int *reg) {
+  // R0 address of the command string (0 terminated) which ran the program
+  reg[0] = (unsigned int) env->commandBuffer;
+  // R1 address of the permitted RAM limit for example &10000 for 64K machine
+  reg[1] = env->memoryLimit;
+  // R2 address of 5 bytes - the time the program started running
+  reg[2] = (unsigned int) env->timeBuffer;
 }
 
 void tube_Exit(unsigned int *reg) {
+  env->exitHandler();
 }
 
+// The below do not seem to be used in BBC Basic, so implement later on
+
 void tube_SetEnv(unsigned int *reg) {
+  // R0 address of exit routine for Exit above to go to (or 0 if no change)
+  // R1 address of end of memory limit for GetEnv to read (or 0 if no change)
+  // R2 address of the real end of memory (or 0 if no change)
+  // R3 0 for no local buffering, 1 for local buffering (anything else no change)
+  // R4 address of routine to handle undefined instructions (or 0 if no change)
+  // R5 address of routine to handle prefetch abort (or 0 if no change)
+  // R6 address of routine to handle data abort (or 0 if no change)
+  // R7 address of routine to handle address exception (or 0 if no change).
 }
 
 void tube_IntOn(unsigned int *reg) {

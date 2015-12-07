@@ -31,6 +31,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <setjmp.h>
 
 #include "rpi-aux.h"
 #include "rpi-armtimer.h"
@@ -41,16 +42,97 @@
 #include "debug.h"
 #include "spi.h"
 #include "tube-lib.h"
+#include "tube-env.h"
 #include "tube-swi.h"
 #include "tube-isr.h"
 
+Environment_type defaultEnvironment;
+
+ErrorBuffer_type defaultErrorBuffer;
+
+Environment_type *env = &defaultEnvironment;
+
 const char *banner = "Raspberry Pi ARMv6 Co Processor 900MHz\n\n\r";
+
+jmp_buf errorRestart;
+
+extern void _isr_longjmp(jmp_buf env, int val);
+
+// TODO Register usage incorrect!!
+void defaultErrorHandler() {
+  ErrorBuffer_type* eb = env->errorBuffer;
+  if (DEBUG) {
+	printf("Error = %02x %s\r\n", eb->errorNum, eb->errorMsg);
+  }
+  sendString(R1, eb->errorMsg);
+  sendString(R1, "\n\r");
+  env->exitHandler();
+}
+
+// Entered with R11 bit 6 as escape status
+// R12 contains 0/-1 if not in/in the kernal presently
+// R11 and R12 may be altered. Return with MOV PC,R14
+// If R12 contains 1 on return then the Callback will be used 
+// TODO Register usage incorrect!!
+void defaultEscapeHandler(unsigned int reg0) {
+  if (DEBUG) {
+	printf("Escape flag = %02x\r\n", reg0);
+  }
+  env->escapeFlag = reg0;
+}
+
+// Entered with R0, R1 and R2 containing the A, X and Y parameters. R0,
+// R1, R2, R11 and R12 may be altered. Return with MOV PC, R14
+// R12 contains 0/-1 if not in/in the kernal presently
+// R13 contains the IRQ handling routine stack. When you return to the
+// system LDMFD R13!, (R0,R1,R2,R11,R12,PC}^ will be executed. If R12
+// contains 1 on return then the Callback will be used. 
+// TODO Register usage incorrect!!
+void defaultEventHandler(unsigned int reg0, unsigned int reg1, unsigned int reg2) {
+  if (DEBUG) {
+	printf("Event = %02x %02x %02x\r\n", reg0, reg1, reg2);
+  }
+}
+
+void defaultExitHandler() {
+  // TODO: This needs updating or we will stay in supervisor mode
+  _isr_longjmp(errorRestart, 1);
+}
+
+void defaultExceptionHandler() {
+}
+
+// Initialize the envorinment
+void initEnv() {
+  int i;
+  for (i = 0; i < sizeof(env->commandBuffer); i++) {
+	env->commandBuffer[i] = 0;
+  }
+  for (i = 0; i < sizeof(env->timeBuffer); i++) {
+	env->timeBuffer[i] = 0;
+  }
+  env->escapeFlag                  = 0;
+  env->memoryLimit                 = 2 * 1024 * 1024;
+  env->realEndOfMemory             = 3 * 1024 * 1024;
+  env->localBuffering              = 0;
+  env->errorHandler                = defaultErrorHandler;
+  env->errorBuffer                 = &defaultErrorBuffer;
+  env->escapeHandler               = defaultEscapeHandler;
+  env->eventHandler                = defaultEventHandler;
+  env->exitHandler                 = defaultExitHandler;
+  env->undefinedInstructionHandler = defaultExceptionHandler;
+  env->prefectAbortHandler         = defaultExceptionHandler;
+  env->dataAbortHandler            = defaultExceptionHandler;
+  env->addressExceptionHandler     = defaultExceptionHandler;
+}
 
 /** Main function - we'll never return from here */
 void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 {
   unsigned char resp;
   char buffer[256];
+
+  initEnv();
 
   /* Write 1 to the LED init nibble in the Function Select GPIO
      peripheral register to enable LED pin as an output */
@@ -139,7 +221,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
       sendString(R1, "\n\rEscape\n\r");
 
       // Acknowledge escape condition
-      if (escFlag) {
+      if (env->escapeFlag) {
         if (DEBUG) {
           printf("Acknowledging Escape\r\n");
         }

@@ -2,22 +2,15 @@
 #include <stdlib.h>
 #include "debug.h"
 #include "rpi-gpio.h"
-#include "tube-isr.h"
 #include "tube-lib.h"
+#include "tube-env.h"
+#include "tube-isr.h"
 
 volatile unsigned char *address;
-
-volatile unsigned char escFlag;
-volatile unsigned char errNum;
-volatile char errMsg[256];
 
 // a flag set when we are executing in interrupt mode
 // allows the SPI code to reliably disable/enable interrupts
 volatile int in_isr;
-
-jmp_buf errorRestart;
-
-extern void _isr_longjmp(jmp_buf env, int val);
 
 // single byte parasite -> host (e.g. *SAVE)
 void type_0_data_transfer(void) {
@@ -85,19 +78,16 @@ void TubeInterrupt(void) {
     }
     unsigned char flag = tubeRead(R1_DATA);
     if (flag & 0x80) {
-      // Update escape flag
-      escFlag = flag & 0x40;
-      if (DEBUG) {
-        printf("Escape flag = %02x\r\n", escFlag);
-      }
+      // Escape
+	  in_isr = 0;
+	  env->escapeHandler(flag & 0x40);
     } else {
       // Event
       unsigned char y = receiveByte(R1);
       unsigned char x = receiveByte(R1);
       unsigned char a = receiveByte(R1);
-      if (DEBUG) {
-        printf("Event = %02x %02x %02x\r\n", a, x, y);
-      }
+	  in_isr = 0;
+	  env->eventHandler(a, x, y);
     }
   }
 
@@ -112,17 +102,13 @@ void TubeInterrupt(void) {
     }
     if (type == 0xff) {
       // Error
-      receiveByte(R2); // 0
-      errNum = receiveByte(R2);
-      receiveString(R2, 0x00, errMsg);
-      if (DEBUG) {
-        printf("Error = %02x %s\r\n", errNum, errMsg);
-      }
-      sendString(R1, errMsg);
-      sendString(R1, "\n\r");
-      // TODO will eventually call a propert SWI
-      in_isr = 0;
-      _isr_longjmp(errorRestart, 1);
+      receiveByte(R2); // always 0
+	  ErrorBuffer_type *eb = env->errorBuffer;
+	  eb->errorAddr = 0;
+	  eb->errorNum = receiveByte(R2); 
+      receiveString(R2, 0x00, eb->errorMsg);
+	  in_isr = 0;
+	  env->errorHandler();
     } else {
       unsigned char id = receiveByte(R4);
       if (type <= 4 || type == 6 || type == 7) {

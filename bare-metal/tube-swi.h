@@ -3,6 +3,7 @@
 #ifndef TUBE_SWI_H
 #define TUBE_SWI_H
 
+
 // Macro allowing SWI calls to be made from C
 // Note: stacking lr prevents corruption of lr when invoker in supervisor mode
 #define SWI(NUM) \
@@ -10,21 +11,8 @@
   asm volatile("swi "#NUM);       \
   asm volatile("ldmfd sp!,{lr}")  \
 
-// Type definition for the Error Buffer
-typedef struct EBT {
-   unsigned char *error_addr;
-   unsigned int error_num;
-   char error_msg[248];
-} ErrorBuffer_type;
-
-// Type definition for the Error Handler
-typedef void (*ErrorHandler_type) (unsigned int *reg);
-
 // Type definition for a SWI handler
 typedef void (*SWIHandler_Type) (unsigned int *reg);
-
-// Function prototypes for default error handler
-void defaultErrorHandler();
 
 // Function prototypes
 void tube_WriteC(unsigned int *reg);       // &00
