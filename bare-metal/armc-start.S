@@ -25,7 +25,16 @@
 //  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 //  POSSIBILITY OF SUCH DAMAGE.
 
+//  Relocate to just below 32MB
+        
+.equ    RELOCATE_TO,      0x01F80000
+.equ    RELOCATE_FROM,    0x00008000
+.equ    RELOCATE_LENGTH,  0x00020000
 
+.equ    SVR_STACK,        0x01F80000
+.equ    IRQ_STACK,        0x01F70000
+.equ    USR_STACK,        0x01F60000
+        
 .section ".text.startup"
 
 .global _start
@@ -67,7 +76,7 @@ _start:
     ldr pc, _interrupt_vector_h
     ldr pc, _fast_interrupt_vector_h
 
-_reset_h:                           .word   _reset_
+_reset_h:                           .word   _copy_to_high_memory - RELOCATE_TO + RELOCATE_FROM
 _undefined_instruction_vector_h:    .word   undefined_instruction_vector
 _software_interrupt_vector_h:       .word   _swi_handler_
 _prefetch_abort_vector_h:           .word   prefetch_abort_vector
@@ -76,12 +85,38 @@ _unused_handler_h:                  .word   _reset_
 _interrupt_vector_h:                .word   interrupt_vector
 _fast_interrupt_vector_h:           .word   fast_interrupt_vector
 
+_irq_stack:                         .word   IRQ_STACK
+_svr_stack:                         .word   SVR_STACK
+_usr_stack:                         .word   USR_STACK
+
+_patch_data:                        .word _reset_       
+_patch_address:                     .word _reset_h
+
+_copy_to_high_memory:
+    // We need to copy ourself to high memory
+    mov     r0, #RELOCATE_FROM
+    mov     r1, #RELOCATE_TO
+    mov     r2, #RELOCATE_LENGTH
+_copy_loop:
+    // copy 16 bytes
+    ldmia   r0!,{r3, r4, r5, r6}
+    stmia   r1!,{r3, r4, r5, r6}
+    subs    r2, r2, #16
+    bge     _copy_loop
+    // patch the reset vector to bypass the copy code       
+    ldr     r0, _patch_data
+    ldr     r1, _patch_address
+    str     r0, [r1]        
+    // jump to high memory      
+    mov     pc, r0
+
+    // execution resumes here in high memory
 _reset_:
     // We enter execution in supervisor mode. For more information on
     // processor modes see ARM Section A2.2 (Processor Modes)
 
-    mov     r0, #0x8000
-    mov     r1, #0x0000
+    mov     r0, #RELOCATE_TO
+    mov     r1, #0x00000000
     ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9}
     stmia   r1!,{r2, r3, r4, r5, r6, r7, r8, r9}
     ldmia   r0!,{r2, r3, r4, r5, r6, r7, r8, r9}
@@ -93,7 +128,7 @@ _reset_:
     // stack pointer which differs to the application stack pointer:
     mov r0, #(CPSR_MODE_IRQ | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT )
     msr cpsr_c, r0
-    mov sp, #0x7000
+    ldr sp, _irq_stack
 
     // Switch back to supervisor mode (our application mode) and
     // set the stack pointer. Remember that the stack works its way
@@ -101,7 +136,7 @@ _reset_:
     // application.
     mov r0, #(CPSR_MODE_SVR | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT )
     msr cpsr_c, r0
-    mov sp, #0x8000
+    ldr sp, _svr_stack
 
     // Enable VFP ------------------------------------------------------------
 
@@ -143,11 +178,12 @@ _get_cpsr:
     mrs     r0, cpsr
     mov     pc, lr
 
-    // A special version of longjmp that sets the mode back to supervisor mode
+    // A special version of longjmp that restores the calling mode
 _isr_longjmp:
-    mrs     r4, cpsr
-    bic     r4, r4, #0x1f
-    orr     r4, r4, #CPSR_MODE_SVR
+    // mrs     r4, cpsr
+    // bic     r4, r4, #0x1f
+    // orr     r4, r4, #CPSR_MODE_SVR
+    mrs     r4, spsr
     msr     cpsr_c, r4
     b       longjmp
 

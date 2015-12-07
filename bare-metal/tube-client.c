@@ -99,7 +99,6 @@ void defaultEventHandler(unsigned int reg0, unsigned int reg1, unsigned int reg2
 }
 
 void defaultExitHandler() {
-  // TODO: This needs updating or we will stay in supervisor mode
   _isr_longjmp(errorRestart, 1);
 }
 
