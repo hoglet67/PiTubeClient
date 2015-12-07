@@ -119,9 +119,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
     setjmp(errorRestart);
 
     // Print a prompt
-    sendString(R1, "arm>");
-
-    OS_WriteC('*');
+    sendString(R1, "arm>*");
 
     // Ask for user input (OSWORD 0)
     sendByte(R2, 0x0A);

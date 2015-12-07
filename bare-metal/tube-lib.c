@@ -76,7 +76,7 @@ void sendString(unsigned char reg, const volatile char *buf) {
 }
 
 // Reg is 1..4
-void receiveString(unsigned char reg, unsigned char terminator, volatile char *buf) {
+int receiveString(unsigned char reg, unsigned char terminator, volatile char *buf) {
   int i = 0;
   unsigned char c;
   do {
@@ -85,5 +85,45 @@ void receiveString(unsigned char reg, unsigned char terminator, volatile char *b
       buf[i++] = (char) c;
     }
   } while (c != terminator  && i < 100);
-  buf[i++] = 0;
+  buf[i] = 0;
+  return i;
+}
+
+// Reg is 1..4
+void sendBlock(unsigned char reg, int len, const unsigned char *buf) {
+  int i;
+  for (i = 0; i < len; i++) {
+    sendByte(reg, (*buf++));
+  }
+}
+
+// Reg is 1..4
+void receiveBlock(unsigned char reg, int len, unsigned char *buf) {
+  int i;
+  for (i = 0; i < len; i++) {
+	*buf++ = receiveByte(reg);
+  } 
+}
+
+// Reg is 1..4
+void sendWord(unsigned char reg, unsigned int word) {
+  sendByte(reg, (unsigned char)(word >> 24));
+  word <<= 8;
+  sendByte(reg, (unsigned char)(word >> 24));
+  word <<= 8;
+  sendByte(reg, (unsigned char)(word >> 24));
+  word <<= 8;
+  sendByte(reg, (unsigned char)(word >> 24));
+}
+
+// Reg is 1..4
+unsigned int receiveWord(unsigned char reg) {
+  int word = receiveByte(reg);
+  word <<= 8;
+  word |= receiveByte(reg);
+  word <<= 8;
+  word |= receiveByte(reg);
+  word <<= 8;
+  word |= receiveByte(reg);
+  return word;
 }
