@@ -8,6 +8,9 @@
 
 volatile unsigned char *address;
 
+volatile unsigned int count;
+volatile unsigned int signature;
+
 // a flag set when we are executing in interrupt mode
 // allows the SPI code to reliably disable/enable interrupts
 volatile int in_isr;
@@ -23,7 +26,10 @@ void type_0_data_transfer(void) {
       }
     }
     // Write the R3 data register, which should also clear the NMI
-    tubeWrite(R3_DATA, *address++);
+    tubeWrite(R3_DATA, *address);
+    count++;
+    signature += *address++;
+    signature *= 13;
     // Wait for NMI to rise
     while (!(RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK)) {
       if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
@@ -44,7 +50,10 @@ void type_1_data_transfer(void) {
       }
     }
     // Read the R3 data register, which should also clear the NMI
-    *address++ = tubeRead(R3_DATA);
+    *address = tubeRead(R3_DATA);
+    count++;
+    signature += *address++;
+    signature *= 13;
     // Wait for NMI to rise
     while (!(RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK)) {
       if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
@@ -79,15 +88,15 @@ void TubeInterrupt(void) {
     unsigned char flag = tubeRead(R1_DATA);
     if (flag & 0x80) {
       // Escape
-	  in_isr = 0;
-	  env->escapeHandler(flag & 0x40);
+      in_isr = 0;
+      env->escapeHandler(flag & 0x40);
     } else {
       // Event
       unsigned char y = receiveByte(R1);
       unsigned char x = receiveByte(R1);
       unsigned char a = receiveByte(R1);
-	  in_isr = 0;
-	  env->eventHandler(a, x, y);
+      in_isr = 0;
+      env->eventHandler(a, x, y);
     }
   }
 
@@ -103,12 +112,12 @@ void TubeInterrupt(void) {
     if (type == 0xff) {
       // Error
       receiveByte(R2); // always 0
-	  ErrorBuffer_type *eb = env->errorBuffer;
-	  eb->errorAddr = 0;
-	  eb->errorNum = receiveByte(R2); 
+      ErrorBuffer_type *eb = env->errorBuffer;
+      eb->errorAddr = 0;
+      eb->errorNum = receiveByte(R2); 
       receiveString(R2, 0x00, eb->errorMsg);
-	  in_isr = 0;
-	  env->errorHandler();
+      in_isr = 0;
+      env->errorHandler();
     } else {
       unsigned char id = receiveByte(R4);
       if (type <= 4 || type == 6 || type == 7) {
@@ -132,6 +141,8 @@ void TubeInterrupt(void) {
         receiveByte(R4);
       }
       // The data transfers are done by polling the GPIO bits for IRQ and NMI
+      count = 0;
+      signature = 0;
       switch (type) {
       case 0:
         type_0_data_transfer();
@@ -151,6 +162,9 @@ void TubeInterrupt(void) {
       case 7:
         type_7_data_transfer();
         break;
+      }
+      if (DEBUG) {
+        printf("count = %0x signature = %0x\r\n", count, signature);
       }
     }
   }
