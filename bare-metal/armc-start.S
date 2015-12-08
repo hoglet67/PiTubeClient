@@ -78,10 +78,10 @@ _start:
     ldr pc, _fast_interrupt_vector_h
 
 _reset_h:                           .word   _copy_to_high_memory - RELOCATE_TO + RELOCATE_FROM
-_undefined_instruction_vector_h:    .word   undefined_instruction_vector
+_undefined_instruction_vector_h:    .word   _undefined_instruction_handler_
 _software_interrupt_vector_h:       .word   _swi_handler_
-_prefetch_abort_vector_h:           .word   prefetch_abort_vector
-_data_abort_vector_h:               .word   data_abort_vector
+_prefetch_abort_vector_h:           .word   _prefetch_abort_handler_
+_data_abort_vector_h:               .word   _data_abort_handler_
 _unused_handler_h:                  .word   _reset_
 _interrupt_vector_h:                .word   interrupt_vector
 _fast_interrupt_vector_h:           .word   fast_interrupt_vector
@@ -201,7 +201,23 @@ _disable_interrupts:
     msr     cpsr_c, r0
 
     mov     pc, lr
-		
+
+
+_undefined_instruction_handler_:
+    stmfd    sp!, {r0-r12, lr}
+    mov      r0, sp
+    bl       undefined_instruction_handler
+
+_prefetch_abort_handler_:
+    stmfd    sp!, {r0-r12, lr}
+    mov      r0, sp
+    bl       prefetch_abort_handler
+
+_data_abort_handler_:
+    stmfd    sp!, {r0-r12, lr}
+    mov      r0, sp
+    bl       data_abort_handler
+
 _swi_handler_:
     stmfd    sp!, {r0-r12, lr}    // Store registers.
     mov      r1, sp               // Set pointer to parameters.
@@ -231,7 +247,7 @@ _user_exec:
 	// There seems to be some wierd alignment issue
 	// The startup message is garbled and things don't work well
 	// Adding these fixed it
-    //nop
-	//nop
-	//nop
-	//nop
+    nop
+	nop
+	nop
+	nop

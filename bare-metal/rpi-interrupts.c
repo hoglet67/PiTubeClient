@@ -23,68 +23,6 @@ rpi_irq_controller_t* RPI_GetIrqController( void )
     return rpiIRQController;
 }
 
-
-/**
-    @brief The Reset vector interrupt handler
-
-    This can never be called, since an ARM core reset would also reset the
-    GPU and therefore cause the GPU to start running code again until
-    the ARM is handed control at the end of boot loading
-*/
-void __attribute__((interrupt("ABORT"))) reset_vector(void)
-{
-    while( 1 )
-    {
-        LED_ON();
-    }
-}
-
-/**
-    @brief The undefined instruction interrupt handler
-
-    If an undefined intstruction is encountered, the CPU will start
-    executing this function. Just trap here as a debug solution.
-*/
-void __attribute__((interrupt("UNDEF"))) undefined_instruction_vector(void)
-{
-    while( 1 )
-    {
-        /* Do Nothing! */
-        LED_ON();
-    }
-}
-
-
-/**
-    @brief The prefetch abort interrupt handler
-
-    The CPU will start executing this function. Just trap here as a debug
-    solution.
-*/
-void __attribute__((interrupt("ABORT"))) prefetch_abort_vector(void)
-{
-    while( 1 )
-    {
-        LED_ON();
-    }
-}
-
-
-/**
-    @brief The Data Abort interrupt handler
-
-    The CPU will start executing this function. Just trap here as a debug
-    solution.
-*/
-void __attribute__((interrupt("ABORT"))) data_abort_vector(void)
-{
-    while( 1 )
-    {
-        LED_ON();
-    }
-}
-
-
 /**
     @brief The IRQ Interrupt handler
 
