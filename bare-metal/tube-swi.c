@@ -6,7 +6,7 @@
 #include "tube-swi.h"
 #include "tube-isr.h"
 
-#define NUM_SWI_HANDLERS 0x1D
+#define NUM_SWI_HANDLERS 0x80
 
 const int osword_in_len[] = {
   0,  // OSWORD 0x00
@@ -56,54 +56,191 @@ const int osword_out_len[] = {
   128  // OSWORD 0x14
 };
 
+// Basic 135 uses the following on startup
+//   SWI 00000010 // OS_GetEnv
+//   SWI 0002006e // OS_SynchroniseCodeAreas *** Not Implemented ***
+//   SWI 00020040 // OS_ChangeEnvironment
+//   SWI 00020040 // OS_ChangeEnvironment
+//   SWI 00020040 // OS_ChangeEnvironment
+//   SWI 00020040 // OS_ChangeEnvironment
+//   SWI 00000010 // OS_GetEnv
+//   SWI 00000010 // OS_GetEnv
+//   SWI 00000001 // OS_WriteS
+//
+//   SWI 00062c82 // BASICTrans_Message *** Not Implemented ***
+//   SWI 0000013e // OS_WriteI
+//   SWI 0000000e // OS_ReadLine
+//   SWI 00062c81 // BASICTrans_Error *** Not Implemented ***
+//   SWI 00000006 // OS_Byte
+//
+//   SWI 00062c82 // BASICTrans_Message *** Not Implemented ***
+//   SWI 0000013e // OS_WriteI
+//   SWI 0000000e // OS_ReadLine
+
+
 SWIHandler_Type SWIHandler_Table[NUM_SWI_HANDLERS] = {
-  tube_WriteC,       // &00
-  tube_WriteS,       // &01
-  tube_Write0,       // &02
-  tube_NewLine,      // &03
-  tube_ReadC,        // &04
-  tube_CLI,          // &05
-  tube_Byte,         // &06
-  tube_Word,         // &07
-  tube_File,         // &08
-  tube_Args,         // &09
-  tube_BGet,         // &0A
-  tube_BPut,         // &0B
-  tube_GBPB,         // &0C
-  tube_Find,         // &0D
-  tube_ReadLine,     // &0E
-  tube_Control,      // &0F
-  tube_GetEnv,       // &10
-  tube_Exit,         // &11
-  tube_SetEnv,       // &12
-  tube_IntOn,        // &13
-  tube_IntOff,       // &14
-  tube_CallBack,     // &15
-  tube_EnterOS,      // &16
-  tube_BreakPt,      // &17
-  tube_BreakCtrl,    // &18
-  tube_UnusedSWI,    // &19
-  tube_UpdateMEMC,   // &1A
-  tube_SetCallBack,  // &1B
-  tube_Mouse         // &1C
+  tube_WriteC,                // (&00) -- OS_WriteC
+  tube_WriteS,                // (&01) -- OS_WriteS
+  tube_Write0,                // (&02) -- OS_Write0
+  tube_NewLine,               // (&03) -- OS_NewLine
+  tube_ReadC,                 // (&04) -- OS_ReadC
+  tube_CLI,                   // (&05) -- OS_CLI
+  tube_Byte,                  // (&06) -- OS_Byte
+  tube_Word,                  // (&07) -- OS_Word
+  tube_File,                  // (&08) -- OS_File
+  tube_Args,                  // (&09) -- OS_Args
+  tube_BGet,                  // (&0A) -- OS_BGet
+  tube_BPut,                  // (&0B) -- OS_BPut
+  tube_GBPB,                  // (&0C) -- OS_GBPB
+  tube_Find,                  // (&0D) -- OS_Find
+  tube_ReadLine,              // (&0E) -- OS_ReadLine
+  tube_SWI_Not_Known,         // (&0F) -- OS_Control
+  tube_GetEnv,                // (&10) -- OS_GetEnv
+  tube_Exit,                  // (&11) -- OS_Exit
+  tube_SWI_Not_Known,         // (&12) -- OS_SetEnv
+  tube_IntOn,                 // (&13) -- OS_IntOn
+  tube_IntOff,                // (&14) -- OS_IntOff
+  tube_SWI_Not_Known,         // (&15) -- OS_CallBack
+  tube_EnterOS,               // (&16) -- OS_EnterOS
+  tube_SWI_Not_Known,         // (&17) -- OS_BreakPt
+  tube_SWI_Not_Known,         // (&18) -- OS_BreakCtrl
+  tube_SWI_Not_Known,         // (&19) -- OS_UnusedSWI
+  tube_SWI_Not_Known,         // (&1A) -- OS_UpdateMEMC
+  tube_SWI_Not_Known,         // (&1B) -- OS_SetCallBack
+  tube_Mouse,                 // (&1C) -- OS_Mouse
+  tube_SWI_Not_Known,         // (&1D) -- OS_Heap
+  tube_SWI_Not_Known,         // (&1E) -- OS_Module
+  tube_SWI_Not_Known,         // (&1F) -- OS_Claim
+  tube_SWI_Not_Known,         // (&20) -- OS_Release
+  tube_SWI_Not_Known,         // (&21) -- OS_ReadUnsigned
+  tube_SWI_Not_Known,         // (&22) -- OS_GenerateEvent
+  tube_SWI_Not_Known,         // (&23) -- OS_ReadVarVal
+  tube_SWI_Not_Known,         // (&24) -- OS_SetVarVal
+  tube_SWI_Not_Known,         // (&25) -- OS_GSInit
+  tube_SWI_Not_Known,         // (&26) -- OS_GSRead
+  tube_SWI_Not_Known,         // (&27) -- OS_GSTrans
+  tube_SWI_Not_Known,         // (&28) -- OS_BinaryToDecimal
+  tube_SWI_Not_Known,         // (&29) -- OS_FSControl
+  tube_SWI_Not_Known,         // (&2A) -- OS_ChangeDynamicArea
+  tube_SWI_Not_Known,         // (&2B) -- OS_GenerateError
+  tube_SWI_Not_Known,         // (&2C) -- OS_ReadEscapeState
+  tube_SWI_Not_Known,         // (&2D) -- OS_EvaluateExpression
+  tube_SWI_Not_Known,         // (&2E) -- OS_SpriteOp
+  tube_SWI_Not_Known,         // (&2F) -- OS_ReadPalette
+  tube_SWI_Not_Known,         // (&30) -- OS_ServiceCall
+  tube_SWI_Not_Known,         // (&31) -- OS_ReadVduVariables
+  tube_SWI_Not_Known,         // (&32) -- OS_ReadPoint
+  tube_SWI_Not_Known,         // (&33) -- OS_UpCall
+  tube_SWI_Not_Known,         // (&34) -- OS_CallAVector
+  tube_SWI_Not_Known,         // (&35) -- OS_ReadModeVariable
+  tube_SWI_Not_Known,         // (&36) -- OS_RemoveCursors
+  tube_SWI_Not_Known,         // (&37) -- OS_RestoreCursors
+  tube_SWI_Not_Known,         // (&38) -- OS_SWINumberToString
+  tube_SWI_Not_Known,         // (&39) -- OS_SWINumberFromString
+  tube_SWI_Not_Known,         // (&3A) -- OS_ValidateAddress
+  tube_SWI_Not_Known,         // (&3B) -- OS_CallAfter
+  tube_SWI_Not_Known,         // (&3C) -- OS_CallEvery
+  tube_SWI_Not_Known,         // (&3D) -- OS_RemoveTickerEvent
+  tube_SWI_Not_Known,         // (&3E) -- OS_InstallKeyHandler
+  tube_SWI_Not_Known,         // (&3F) -- OS_CheckModeValid
+  tube_ChangeEnvironment,     // (&40) -- OS_ChangeEnvironment
+  tube_SWI_Not_Known,         // (&41) -- OS_ClaimScreenMemory
+  tube_SWI_Not_Known,         // (&42) -- OS_ReadMonotonicTime
+  tube_SWI_Not_Known,         // (&43) -- OS_SubstituteArgs
+  tube_SWI_Not_Known,         // (&44) -- OS_PrettyPrintCode
+  tube_SWI_Not_Known,         // (&45) -- OS_Plot
+  tube_SWI_Not_Known,         // (&46) -- OS_WriteN
+  tube_SWI_Not_Known,         // (&47) -- OS_AddToVector
+  tube_SWI_Not_Known,         // (&48) -- OS_WriteEnv
+  tube_SWI_Not_Known,         // (&49) -- OS_ReadArgs
+  tube_SWI_Not_Known,         // (&4A) -- OS_ReadRAMFsLimits
+  tube_SWI_Not_Known,         // (&4B) -- OS_ClaimDeviceVector
+  tube_SWI_Not_Known,         // (&4C) -- OS_ReleaseDeviceVector
+  tube_SWI_Not_Known,         // (&4D) -- OS_DelinkApplication
+  tube_SWI_Not_Known,         // (&4E) -- OS_RelinkApplication
+  tube_SWI_Not_Known,         // (&4F) -- OS_HeapSort
+  tube_SWI_Not_Known,         // (&50) -- OS_ExitAndDie
+  tube_SWI_Not_Known,         // (&51) -- OS_ReadMemMapInfo
+  tube_SWI_Not_Known,         // (&52) -- OS_ReadMemMapEntries
+  tube_SWI_Not_Known,         // (&53) -- OS_SetMemMapEntries
+  tube_SWI_Not_Known,         // (&54) -- OS_AddCallBack
+  tube_SWI_Not_Known,         // (&55) -- OS_ReadDefaultHandler
+  tube_SWI_Not_Known,         // (&56) -- OS_SetECFOrigin
+  tube_SWI_Not_Known,         // (&57) -- OS_SerialOp
+  tube_SWI_Not_Known,         // (&58) -- OS_ReadSysInfo
+  tube_SWI_Not_Known,         // (&59) -- OS_Confirm
+  tube_SWI_Not_Known,         // (&5A) -- OS_ChangedBox
+  tube_SWI_Not_Known,         // (&5B) -- OS_CRC
+  tube_SWI_Not_Known,         // (&5C) -- OS_ReadDynamicArea
+  tube_SWI_Not_Known,         // (&5D) -- OS_PrintChar
+  tube_SWI_Not_Known,         // (&5E) -- OS_ChangeRedirection
+  tube_SWI_Not_Known,         // (&5F) -- OS_RemoveCallBack
+  tube_SWI_Not_Known,         // (&60) -- OS_FindMemMapEntries
+  tube_SWI_Not_Known,         // (&61) -- OS_SetColourCode
+  tube_SWI_Not_Known,         // (&62) -- OS_ClaimSWI
+  tube_SWI_Not_Known,         // (&63) -- OS_ReleaseSWI
+  tube_SWI_Not_Known,         // (&64) -- OS_Pointer
+  tube_SWI_Not_Known,         // (&65) -- OS_ScreenMode
+  tube_SWI_Not_Known,         // (&66) -- OS_DynamicArea
+  tube_SWI_Not_Known,         // (&67) -- OS_AbortTrap
+  tube_SWI_Not_Known,         // (&68) -- OS_Memory
+  tube_SWI_Not_Known,         // (&69) -- OS_ClaimProcessorVector
+  tube_SWI_Not_Known,         // (&6A) -- OS_Reset
+  tube_SWI_Not_Known,         // (&6B) -- OS_MMUControl
+  tube_SWI_Not_Known,         // (&6C) -- OS_ResyncTime
+  tube_SWI_Not_Known,         // (&6D) -- OS_PlatformFeatures
+  tube_SWI_Not_Known,         // (&6E) -- OS_SynchroniseCodeAreas
+  tube_SWI_Not_Known,         // (&6F) -- OS_CallASWI
+  tube_SWI_Not_Known,         // (&70) -- OS_AMBControl
+  tube_SWI_Not_Known,         // (&71) -- OS_CallASWIR12
+  tube_SWI_Not_Known,         // (&72) -- OS_SpecialControl
+  tube_SWI_Not_Known,         // (&73) -- OS_EnterUSR32
+  tube_SWI_Not_Known,         // (&74) -- OS_EnterUSR26
+  tube_SWI_Not_Known,         // (&75) -- OS_VIDCDivider
+  tube_SWI_Not_Known,         // (&76) -- OS_NVMemory
+  tube_SWI_Not_Known,         // (&77) -- OS_ClaimOSSWI
+  tube_SWI_Not_Known,         // (&78) -- OS_TaskControl
+  tube_SWI_Not_Known,         // (&79) -- OS_DeviceDriver
+  tube_SWI_Not_Known,         // (&7A) -- OS_Hardware
+  tube_SWI_Not_Known,         // (&7B) -- OS_IICOp
+  tube_SWI_Not_Known,         // (&7C) -- OS_LeaveOS
+  tube_SWI_Not_Known,         // (&7D) -- OS_ReadLine32
+  tube_SWI_Not_Known,         // (&7E) -- OS_SubstituteArgs32
+  tube_SWI_Not_Known          // (&7F) -- OS_HeapSort32
 };
 
+// For an unimplemented environment handler
+void handler_not_implemented(unsigned int handler) {
+  printf("Handler %d not implemented\r\n", handler);
+}
+
+// For an unimplemented SWI
+void tube_SWI_Not_Known(unsigned int *reg) {
+  unsigned int *lr = (unsigned int *)reg[13];
+  printf("SWI %08x not implemented\r\n", *(lr - 1) & 0xFFFFFF);
+}
 
 void C_SWI_Handler(unsigned int number, unsigned int *reg) {
+  unsigned int num = number;
+  int errorBit = 0;
   if (DEBUG) {
-	printf("SWI %08x\r\n", number);
+    printf("SWI %08x called from %08x\r\n", number, reg[13] - 4);
   }
-  if (number < NUM_SWI_HANDLERS) {
-	// Invoke one of the fixed handlers
-	SWIHandler_Table[number](reg);
-  } else if ((number & 0xFF00) == 0x0100) {
-	// SWI's 0x100 - 0x1FF are OS_WriteI
-    tube_WriteC(&number);
+  if (num & ERROR_BIT) {
+    errorBit = 1;
+    num &= ~ERROR_BIT;
+  }
+  if (num < NUM_SWI_HANDLERS) {
+    // Invoke one of the fixed handlers
+    SWIHandler_Table[num](reg);
+  } else if ((num & 0xFF00) == 0x0100) {
+    // SWI's 0x100 - 0x1FF are OS_WriteI
+    tube_WriteC(&num);
   } else {
-	// TODO: Illegal SWI Handler
+    tube_SWI_Not_Known(reg);
   }
   if (DEBUG) {
-	printf("SWI %08x complete\r\n", number);
+    printf("SWI %08x complete\r\n", number);
   }
 }
 
@@ -114,17 +251,17 @@ void updateCarry(unsigned char cy, unsigned int *reg) {
   reg--;
   // bit 29 is the carry
   if (cy & 0x80) {
-	*reg |= CARRY_MASK;
+    *reg |= CARRY_MASK;
   } else {
-	*reg &= ~CARRY_MASK;
+    *reg &= ~CARRY_MASK;
   }
 }
 
 void user_exec(volatile unsigned char *address) {
   if (DEBUG) {
-	printf("Execution passing to %08x\r\n", (unsigned int)address);
+    printf("Execution passing to %08x\r\n", (unsigned int)address);
   }
-  setTubeLibDebug(1);
+  // setTubeLibDebug(1);
   // The machine code version in armc-startup.S does the real work
   // of dropping down to user mode
   _user_exec(address);
@@ -164,7 +301,7 @@ void tube_Write0(unsigned int *reg) {
   unsigned char c;
   // Output characters pointed to by R0, until a terminating zero
   while ((c = *ptr++) != 0) {
-	sendByte(R1, c);
+    sendByte(R1, c);
   }
   // On exit, R0 points to the byte after the terminator
   *reg = (unsigned int)ptr;
@@ -191,36 +328,42 @@ void tube_CLI(unsigned int *reg) {
   sendString(R2, 0x00, ptr);
   sendByte(R2, 0x0D);
   if (receiveByte(R2) & 0x80) {
-	// Execution should pass to last transfer address
-	user_exec(address);
+    // Execution should pass to last transfer address
+    user_exec(address);
   }
 }
 
 void tube_Byte(unsigned int *reg) {
+  if (DEBUG) {
+    printf("%08x %08x %08x\r\n", reg[0], reg[1], reg[2]);
+  }
   unsigned char cy;
   unsigned char a = reg[0] & 0xff;
   unsigned char x = reg[1] & 0xff;
   unsigned char y = reg[2] & 0xff;
   if (a < 128) {
-	// OSBYTELO R2: &04 X A                           X
-	sendByte(R2, 0x04);
-	sendByte(R2, x);
-	sendByte(R2, a);
-	x = receiveByte(R2);
-	reg[1] = x; 
+    // OSBYTELO R2: &04 X A                           X
+    sendByte(R2, 0x04);
+    sendByte(R2, x);
+    sendByte(R2, a);
+    x = receiveByte(R2);
+    reg[1] = x;
 
   } else {
-	// OSBYTEHI R2: &06 X Y A                         Cy Y X
-	sendByte(R2, 0x06);
-	sendByte(R2, x);
-	sendByte(R2, y);
-	sendByte(R2, a);
-	cy = receiveByte(R2);
-	y = receiveByte(R2);
-	x = receiveByte(R2);
-	reg[1] = x;
-	reg[2] = y;
-	updateCarry(cy, reg);
+    // OSBYTEHI R2: &06 X Y A                         Cy Y X
+    sendByte(R2, 0x06);
+    sendByte(R2, x);
+    sendByte(R2, y);
+    sendByte(R2, a);
+    cy = receiveByte(R2);
+    y = receiveByte(R2);
+    x = receiveByte(R2);
+    reg[1] = x;
+    reg[2] = y;
+    updateCarry(cy, reg);
+  }
+  if (DEBUG) {
+    printf("%08x %08x %08x\r\n", reg[0], reg[1], reg[2]);
   }
 }
 
@@ -228,26 +371,26 @@ void tube_Word(unsigned int *reg) {
   int in_len;
   int out_len;
   unsigned char a = reg[0] & 0xff;
-  unsigned char *block; 
-  // Note that call with R0b=0 (Acorn MOS RDLN) does nothing, the ReadLine call should be used instead. 
+  unsigned char *block;
+  // Note that call with R0b=0 (Acorn MOS RDLN) does nothing, the ReadLine call should be used instead.
   // Ref: http://chrisacorns.computinghistory.org.uk/docs/Acorn/OEM/AcornOEM_ARMUtilitiesRM.pdf
   if (a == 0) {
-	return;
+    return;
   }
   // Work out block lengths
   // Ref: http://mdfs.net/Info/Comp/Acorn/AppNotes/004.pdf
   block = (unsigned char *)reg[1];
   if (a < 0x15) {
-	in_len = osword_in_len[a];
-	out_len = osword_out_len[a];
+    in_len = osword_in_len[a];
+    out_len = osword_out_len[a];
   } else if (a < 128) {
-	in_len = 16;
-	out_len = 16;
+    in_len = 16;
+    out_len = 16;
   } else {
-	// TODO: Check with JGH whether it is correct to update block to exclude the lengths
-	in_len = *block++;
-	out_len = *block++;
-  }  
+    // TODO: Check with JGH whether it is correct to update block to exclude the lengths
+    in_len = *block++;
+    out_len = *block++;
+  }
   // OSWORD   R2: &08 A in_length block out_length  block
   sendByte(R2, 0x08);
   sendByte(R2, a);
@@ -258,6 +401,10 @@ void tube_Word(unsigned int *reg) {
 }
 
 void tube_File(unsigned int *reg) {
+  if (DEBUG) {
+    printf("%08x %08x %08x %08x %08x %08x\r\n", reg[0], reg[1], reg[2], reg[3], reg[4], reg[5]);
+    printf("%s\r\n", (char *)reg[1]);
+  }
   // start at the last param (r5)
   unsigned int *ptr = reg + 5;
   // OSFILE   R2: &14 block string &0D A            A block
@@ -275,6 +422,9 @@ void tube_File(unsigned int *reg) {
   *ptr-- = receiveWord(R2);        // r4 = lang
   *ptr-- = receiveWord(R2);        // r3 = exec
   *ptr-- = receiveWord(R2);        // r2 = load
+  if (DEBUG) {
+    printf("%08x %08x %08x %08x %08x %08x\r\n", reg[0], reg[1], reg[2], reg[3], reg[4], reg[5]);
+  }
 }
 
 void tube_Args(unsigned int *reg) {
@@ -329,7 +479,7 @@ void tube_GBPB(unsigned int *reg) {
   *ptr-- = receiveWord(R2);          // r3
   *ptr-- = receiveWord(R2);          // r2
   *ptr-- = receiveByte(R2);          // r1
-  updateCarry(receiveByte(R2), reg); // Cy  
+  updateCarry(receiveByte(R2), reg); // Cy
   *ptr-- = receiveWord(R2);          // r0
 }
 
@@ -340,16 +490,16 @@ void tube_Find(unsigned int *reg) {
   // A = R0 is the operation type
   sendByte(R2, reg[0]);
   if (reg[0] == 0) {
-	// Y = R1 is the file handle to close
-	sendByte(R2, reg[1]);
-	// Response is always 7F so ignored
-	receiveByte(R2);
+    // Y = R1 is the file handle to close
+    sendByte(R2, reg[1]);
+    // Response is always 7F so ignored
+    receiveByte(R2);
   } else {
-	// R1 points to the string
-	sendString(R2, 0x0D, (char *)reg[1]); 
-	sendByte(R2, 0x0D);
-	// Response is the file handle of file just opened
-	reg[0] = receiveByte(R2);
+    // R1 points to the string
+    sendString(R2, 0x0D, (char *)reg[1]);
+    sendByte(R2, 0x0D);
+    // Response is the file handle of file just opened
+    reg[0] = receiveByte(R2);
   }
 }
 
@@ -364,38 +514,10 @@ void tube_ReadLine(unsigned int *reg) {
   sendByte(R2, 0x00);        // Buffer LSB - set as per Tube Ap Note 004
   resp = receiveByte(R2);    // 0x7F or 0xFF
   updateCarry(resp, reg);
-  // Was it valid? 
+  // Was it valid?
   if ((resp & 0x80) == 0x00) {
-	reg[1] = receiveString(R2, '\r', (char *)reg[0]);
+    reg[1] = receiveString(R2, '\r', (char *)reg[0]);
   }
-}
-
-void tube_Control(unsigned int *reg) {
-  unsigned int previous;
-  // R0 = address of error handler (0 for no change)
-  previous = (unsigned int)env->errorHandler;
-  if (reg[0]) {
-	env->errorHandler = (ErrorHandler_type) reg[0]; 
-  }
-  reg[0] = previous;
-  // R1 = address of error buffer (0 for no change) 
-  previous = (unsigned int)env->errorBuffer;
-  if (reg[1]) {
-	env->errorBuffer = (ErrorBuffer_type *) reg[1]; 
-  }
-  reg[1] = previous;
-  // R2 = address of escape handler (0 for no change) 
-  previous = (unsigned int)env->escapeHandler;
-  if (reg[2]) {
-	env->escapeHandler = (EscapeHandler_type) reg[2]; 
-  }
-  reg[2] = previous;
-  // R3 = address of event handler (0 for no change) 
-  previous = (unsigned int)env->eventHandler;
-  if (reg[3]) {
-	env->eventHandler = (EventHandler_type) reg[3]; 
-  }
-  reg[3] = previous;
 }
 
 void tube_GetEnv(unsigned int *reg) {
@@ -405,64 +527,13 @@ void tube_GetEnv(unsigned int *reg) {
   reg[1] = env->memoryLimit;
   // R2 address of 5 bytes - the time the program started running
   reg[2] = (unsigned int) env->timeBuffer;
+  if (DEBUG) {
+    printf("%08x %08x %08x\r\n", reg[0], reg[1], reg[2]);
+  }
 }
 
 void tube_Exit(unsigned int *reg) {
   env->exitHandler();
-}
-
-// The below do not seem to be used in BBC Basic, so implement later on
-
-void tube_SetEnv(unsigned int *reg) {
-  unsigned int previous;
-  // R0 address of exit routine for Exit above to go to (or 0 if no change)
-  previous = (unsigned int)env->exitHandler;
-  if (reg[0]) {
-	env->exitHandler = (ExitHandler_type) reg[0]; 
-  }
-  reg[0] = previous;
-  // R1 address of end of memory limit for GetEnv to read (or 0 if no change)
-  previous = env->memoryLimit;
-  if (reg[1]) {
-	env->memoryLimit = reg[1];
-  }
-  reg[1] = previous;
-  // R2 address of the real end of memory (or 0 if no change)
-  previous = env->realEndOfMemory;
-  if (reg[2]) {
-	env->realEndOfMemory = reg[2];
-  }
-  reg[2] = previous;
-  // R3 0 for no local buffering, 1 for local buffering (anything else no change)
-  previous = env->localBuffering;
-  if (reg[3]) {
-	env->localBuffering = reg[3];
-  }
-  reg[3] = previous;
-  // R4 address of routine to handle undefined instructions (or 0 if no change)
-  previous = (unsigned int) env->undefinedInstructionHandler;
-  if (reg[4]) {
-	env->undefinedInstructionHandler = (ExceptionHandler_type) reg[4];
-  }
-  reg[4] = previous;
-  // R5 address of routine to handle prefetch abort (or 0 if no change)
-  previous = (unsigned int) env->prefetchAbortHandler;
-  if (reg[5]) {
-	env->prefetchAbortHandler = (ExceptionHandler_type) reg[5];
-  }
-  reg[5] = previous;
-  // R6 address of routine to handle data abort (or 0 if no change)
-  previous = (unsigned int) env->dataAbortHandler;
-  if (reg[6]) {
-	env->dataAbortHandler = (ExceptionHandler_type) reg[6];
-  }
-  reg[6] = previous;
-  // R7 address of routine to handle address exception (or 0 if no change).
-  previous = (unsigned int) env->addressExceptionHandler;
-  if (reg[7]) {
-	env->addressExceptionHandler = (ExceptionHandler_type) reg[7];
-  }
-  reg[7] = previous;
 }
 
 void tube_IntOn(unsigned int *reg) {
@@ -473,26 +544,152 @@ void tube_IntOff(unsigned int *reg) {
   _disable_interrupts();
 }
 
-void tube_CallBack(unsigned int *reg) {
-}
-
 void tube_EnterOS(unsigned int *reg) {
 }
 
-void tube_BreakPt(unsigned int *reg) {
-}
-
-void tube_BreakCtrl(unsigned int *reg) {
-}
-
-void tube_UnusedSWI(unsigned int *reg) {
-}
-
-void tube_UpdateMEMC(unsigned int *reg) {
-}
-
-void tube_SetCallBack(unsigned int *reg) {
-}
-
 void tube_Mouse(unsigned int *reg) {
+}
+
+// Entry:
+// R0   Handler number
+// R1   New address, or 0 to read
+// R2   Value of R12 when code is called
+// R3   Pointer to buffer if appropriate or 0 to read
+// Exit:
+// R0   Preserved
+// R1   Previous address
+// R2   Previous R12
+// R3   Previous buffer pointer
+
+void tube_ChangeEnvironment(unsigned int *reg) {
+  unsigned int previous;
+
+  if (DEBUG) {
+    printf("%08x %08x %08x %08x\r\n", reg[0], reg[1], reg[2], reg[3]);
+  }
+
+  switch (reg[0]) {
+
+  case 0:    // Memory limit
+    previous = env->memoryLimit;
+    if (reg[1]) {
+      env->memoryLimit = reg[1];
+    }
+    reg[1] = previous;
+    break;
+
+  case 1:    // Undefined instruction?
+    previous = (unsigned int) env->undefinedInstructionHandler;
+    if (reg[1]) {
+      env->undefinedInstructionHandler = (ExceptionHandler_type) reg[1];
+    }
+    reg[1] = previous;
+    break;
+
+  case 2:    // Prefetch abort?
+    previous = (unsigned int) env->prefetchAbortHandler;
+    if (reg[1]) {
+      env->prefetchAbortHandler = (ExceptionHandler_type) reg[1];
+    }
+    reg[1] = previous;
+    break;
+
+  case 3:    // Data abort?
+    previous = (unsigned int) env->dataAbortHandler;
+    if (reg[1]) {
+      env->dataAbortHandler = (ExceptionHandler_type) reg[1];
+    }
+    reg[1] = previous;
+    break;
+
+  case 4:    // Address exception?
+    previous = (unsigned int) env->addressExceptionHandler;
+    if (reg[1]) {
+      env->addressExceptionHandler = (ExceptionHandler_type) reg[1];
+    }
+    reg[1] = previous;
+    break;
+
+  case 5:    // Other exceptions (reserved)
+    handler_not_implemented(reg[0]);
+    break;
+
+  case 6:    // Error
+    previous = (unsigned int)env->errorHandler;
+    if (reg[1]) {
+      env->errorHandler = (ErrorHandler_type) reg[1];
+    }
+    reg[1] = previous;
+    previous = (unsigned int)env->errorBuffer;
+    if (reg[3]) {
+      env->errorBuffer = (ErrorBuffer_type *) reg[1];
+    }
+    reg[3] = previous;
+    break;
+
+  case 7:    // CallBack?
+    handler_not_implemented(reg[0]);
+    break;
+
+  case 8:    // BreakPoint?
+    handler_not_implemented(reg[0]);
+    break;
+
+  case 9:    // Escape
+    previous = (unsigned int)env->escapeHandler;
+    if (reg[1]) {
+      env->escapeHandler = (EscapeHandler_type) reg[1];
+    }
+    reg[1] = previous;
+    break;
+
+  case 10:   // Event?
+    previous = (unsigned int)env->eventHandler;
+    if (reg[1]) {
+      env->eventHandler = (EventHandler_type) reg[1];
+    }
+    reg[1] = previous;
+    break;
+
+  case 11:   // Exit
+    previous = (unsigned int)env->exitHandler;
+    if (reg[1]) {
+      env->exitHandler = (ExitHandler_type) reg[1];
+    }
+    reg[1] = previous;
+    break;
+
+  case 12:   // Unused SWI?
+    handler_not_implemented(reg[0]);
+    break;
+
+  case 13:   // Exception registers?
+    handler_not_implemented(reg[0]);
+    break;
+
+  case 14:   // Application space
+    previous = env->realEndOfMemory;
+    if (reg[1]) {
+      env->realEndOfMemory = reg[1];
+    }
+    reg[1] = previous;
+    break;
+
+  case 15:   // Currently active object
+    handler_not_implemented(reg[0]);
+    break;
+
+  case 16:   // UpCall?
+    handler_not_implemented(reg[0]);
+    break;
+
+  default:
+    handler_not_implemented(reg[0]);
+    break;
+  }
+
+  if (DEBUG) {
+    printf("%08x %08x %08x %08x\r\n", reg[0], reg[1], reg[2], reg[3]);
+  }
+
 }
