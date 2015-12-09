@@ -26,6 +26,8 @@ unsigned char tubeCmd(unsigned char cmd, unsigned char addr, unsigned char byte)
   unsigned char rxBuf[2];
   txBuf[0] = cmd | ((addr & 7) << 3);
   txBuf[1] = byte;
+  rxBuf[0] = 0x0F;
+  rxBuf[1] = 0x0F;
   if (!in_isr) {
     _disable_interrupts();
   }
@@ -76,9 +78,10 @@ unsigned char receiveByte(unsigned char reg) {
 // Reg is 1..4
 void sendString(unsigned char reg, unsigned char terminator, const volatile char *buf) {
   char c;
-  while ((c = *buf++) != terminator) {
+  do {
+	c = *buf++;
     sendByte(reg, (unsigned char)c);
-  }
+  } while (c != terminator);
 }
 
 // Reg is 1..4
@@ -87,27 +90,27 @@ int receiveString(unsigned char reg, unsigned char terminator, volatile char *bu
   unsigned char c;
   do {
     c = receiveByte(reg);
-    if (c != terminator) {
-      buf[i++] = (char) c;
-    }
-  } while (c != terminator  && i < 100);
-  buf[i] = 0;
+	buf[i++] = (char) c;
+  } while (c != terminator);
   return i;
 }
 
 // Reg is 1..4
 void sendBlock(unsigned char reg, int len, const unsigned char *buf) {
-  int i;
-  for (i = 0; i < len; i++) {
-    sendByte(reg, (*buf++));
+  // bytes in a block are transferred high downto low
+  buf += len;
+  while (len-- > 0) {
+    sendByte(reg, (*--buf));
   }
 }
 
 // Reg is 1..4
 void receiveBlock(unsigned char reg, int len, unsigned char *buf) {
-  int i;
-  for (i = 0; i < len; i++) {
-	*buf++ = receiveByte(reg);
+  // bytes in a block are transferred high downto low
+  // bytes in a block are transferred high downto low
+  buf += len;
+  while (len-- > 0) {
+	*--buf = receiveByte(reg);
   } 
 }
 

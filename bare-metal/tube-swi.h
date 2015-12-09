@@ -51,6 +51,7 @@ void tube_IntOff(unsigned int *reg);            // &14
 void tube_EnterOS(unsigned int *reg);           // &16
 void tube_Mouse(unsigned int *reg);             // &1C
 void tube_ChangeEnvironment(unsigned int *reg); // &40
+void tube_WriteN(unsigned int *reg);            // &46
 
 
 #endif

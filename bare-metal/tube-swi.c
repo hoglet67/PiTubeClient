@@ -2,6 +2,7 @@
 #include "debug.h"
 #include "startup.h"
 #include "tube-lib.h"
+#include "tube-commands.h"
 #include "tube-env.h"
 #include "tube-swi.h"
 #include "tube-isr.h"
@@ -149,7 +150,7 @@ SWIHandler_Type SWIHandler_Table[NUM_SWI_HANDLERS] = {
   tube_SWI_Not_Known,         // (&43) -- OS_SubstituteArgs
   tube_SWI_Not_Known,         // (&44) -- OS_PrettyPrintCode
   tube_SWI_Not_Known,         // (&45) -- OS_Plot
-  tube_SWI_Not_Known,         // (&46) -- OS_WriteN
+  tube_WriteN,                // (&46) -- OS_WriteN
   tube_SWI_Not_Known,         // (&47) -- OS_AddToVector
   tube_SWI_Not_Known,         // (&48) -- OS_WriteEnv
   tube_SWI_Not_Known,         // (&49) -- OS_ReadArgs
@@ -285,7 +286,7 @@ void user_exec(volatile unsigned char *address) {
 // OSGBPB   R2: &16 block A                       block Cy A
 
 void tube_WriteC(unsigned int *reg) {
-  sendByte(R1, (unsigned char)(*reg & 0xff));
+  sendByte(R1, (unsigned char)((*reg) & 0xff));
 }
 
 void tube_WriteS(unsigned int *reg) {
@@ -323,13 +324,15 @@ void tube_ReadC(unsigned int *reg) {
 
 void tube_CLI(unsigned int *reg) {
   char *ptr = (char *)(*reg);
-  // OSCLI    R2: &02 string &0D                    &7F or &80
-  sendByte(R2, 0x02);
-  sendString(R2, 0x00, ptr);
-  sendByte(R2, 0x0D);
-  if (receiveByte(R2) & 0x80) {
-    // Execution should pass to last transfer address
-    user_exec(address);
+  // dispatchCmd returns 0 if command handled locally
+  if (dispatchCmd(ptr)) {
+	// OSCLI    R2: &02 string &0D                    &7F or &80
+	sendByte(R2, 0x02);
+	sendString(R2, 0x0D, ptr);
+	if (receiveByte(R2) & 0x80) {
+	  // Execution should pass to last transfer address
+	  user_exec(address);
+	}
   }
 }
 
@@ -414,7 +417,6 @@ void tube_File(unsigned int *reg) {
   sendWord(R2, *ptr--);            // r3 = exec
   sendWord(R2, *ptr--);            // r2 = load
   sendString(R2, 0x0D, (char *)*ptr--);  // r1 = filename ptr
-  sendByte(R2, 0x0D);              //      filename terminator
   sendByte(R2, *ptr);              // r0 = action
   *ptr = receiveByte(R2);          // r0 = action
   ptr = reg + 5;                   // ptr = r5
@@ -497,7 +499,6 @@ void tube_Find(unsigned int *reg) {
   } else {
     // R1 points to the string
     sendString(R2, 0x0D, (char *)reg[1]);
-    sendByte(R2, 0x0D);
     // Response is the file handle of file just opened
     reg[0] = receiveByte(R2);
   }
@@ -692,4 +693,12 @@ void tube_ChangeEnvironment(unsigned int *reg) {
     printf("%08x %08x %08x %08x\r\n", reg[0], reg[1], reg[2], reg[3]);
   }
 
+}
+
+void tube_WriteN(unsigned int *reg) {
+  unsigned char *ptr = (unsigned char *)reg[0];
+  int len = reg[1];
+  while (len-- > 0) {
+	sendByte(R1, *ptr++);
+  }
 }

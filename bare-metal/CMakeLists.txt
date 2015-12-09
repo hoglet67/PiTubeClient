@@ -66,6 +66,8 @@ add_executable( tube-client
 	tube-env.h
 	tube-lib.h
 	tube-lib.c
+	tube-commands.h
+	tube-commands.c
 	tube-swi.h
 	tube-swi.c
 	tube-exception.c
