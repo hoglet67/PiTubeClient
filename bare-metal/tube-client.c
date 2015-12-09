@@ -31,6 +31,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <setjmp.h>
 
 #include "rpi-aux.h"
@@ -53,12 +54,174 @@ ErrorBuffer_type defaultErrorBuffer;
 
 Environment_type *env = &defaultEnvironment;
 
-const char *banner = "Raspberry Pi ARMv6 Co Processor 900MHz\n\n\r";
+const char *banner = "Raspberry Pi ARMv6 Co Processor 900MHz\r\n\n";
+
+const char *help = "ARM Tube Client 0.10\r\n";
 
 const char *prompt = "arm>*";
 
+char line[80];
+
 jmp_buf errorRestart;
 
+unsigned int memAddr;
+
+int doCmdHelp(char *params);
+int doCmdGo(char *params);
+int doCmdMem(char *params);
+int doCmdFill(char *params);
+int doCmdCrc(char *params);
+
+// The Atom CRC Polynomial
+#define CRC_POLY          0x002d
+
+/***********************************************************
+ * Build in Commands
+ ***********************************************************/
+
+#define NUM_CMDS 5
+
+// Must be kept in step with cmdFuncs (just below)
+char *cmdStrings[NUM_CMDS] = {
+  "HELP",
+  "GO",
+  "MEM",
+  "FILL",
+  "CRC"
+};
+
+int (*cmdFuncs[NUM_CMDS])(char *params) = {
+  doCmdHelp,
+  doCmdGo,
+  doCmdMem,
+  doCmdFill,
+  doCmdCrc
+};
+
+int dispatchCmd(char *cmd) {
+  int i;
+  int c;
+  int r;
+  char *cmdPtr;
+  char *refPtr;
+  //  skip any leading space
+  while (isblank((int) *cmd)) {
+	cmd++;
+  }
+  // Match the command 
+  for (i = 0; i < NUM_CMDS; i++) {
+	cmdPtr = cmd;
+	refPtr = cmdStrings[i];
+	do {
+	  c = tolower((int)*cmdPtr++);	  
+	  r = tolower((int)*refPtr++);
+	  if (r == 0 || c == '.') {
+		// skip any trailing space becore the params
+		while (isblank((int)*cmdPtr)) {
+		  cmdPtr++;
+		}
+		return (*cmdFuncs[i])(cmdPtr);
+	  }
+	} while (c != 0 && c == r);
+  }
+  // non-zero means pass the command onto the CLI processor
+  return 1;
+}
+
+int doCmdHelp(char *params) {
+  int i;
+  sendString(R1, 0x00, help);
+  sendByte(R1, 0x00);
+  if (strcasecmp(params, "ARM") == 0) {
+	for (i = 0; i < NUM_CMDS; i++) {
+	  sendString(R1, 0x00, "  ");
+	  sendString(R1, 0x00, cmdStrings[i]);
+	  sendString(R1, 0x00, "\r\n");
+	  sendByte(R1, 0x00);
+	}
+	return 0;
+  }
+  // pass the command on to the CLI
+  return 1;
+}
+
+int doCmdGo(char *params) {
+  unsigned int address;
+  sscanf(params, "%x", &address);
+  // No return from here
+  user_exec((unsigned char *)address);
+  return 0;
+}
+
+int doCmdFill(char *params) {
+  unsigned int i;
+  unsigned int start;
+  unsigned int end;
+  unsigned int data;
+  sscanf(params, "%x %x %x", &start, &end, &data);
+  for (i = start; i <= end; i++) {
+	*((unsigned char *)i) = data;
+  }
+  return 0;
+}
+
+int doCmdMem(char *params) {
+  int i, j;
+  unsigned char c;
+  char *ptr;
+  sscanf(params, "%x", &memAddr);
+  for (i = 0; i < 0x100; i+= 16) {
+	ptr = line;
+	// Generate the address
+	ptr += sprintf(ptr, "%08X ", (memAddr + i));	
+	  // Generate the hex values
+	for (j = 0; j < 16; j++) {
+	  c = *((unsigned char *)(memAddr + i + j));
+	  ptr += sprintf(ptr, "%02X ", c);
+	}
+	// Generate the ascii values
+	for (j = 0; j < 16; j++) {
+	  c = *((unsigned char *)(memAddr + i + j));
+      if (c < 32 || c > 126) {
+		c = '.';
+      }
+	  ptr += sprintf(ptr, "%c", c);
+	}
+	ptr += sprintf(ptr, "\r\n");
+	sendString(R1, 0x00, line);
+	sendByte(R1, 0x00);
+  }
+  memAddr += 0x100;
+  return 0;
+}
+
+int doCmdCrc(char *params) {
+  unsigned int i;
+  unsigned int j;
+  unsigned int start;
+  unsigned int end;
+  unsigned int data;
+  unsigned long crc = 0;
+  sscanf(params, "%x %x %x", &start, &end, &data);
+  for (i = start; i <= end; i++) {
+	data = *((unsigned char *)i);
+    for (j = 0; j < 8; j++) {
+      crc = crc << 1;
+      crc = crc | (data & 1);
+      data >>= 1;
+      if (crc & 0x10000)
+		crc = (crc ^ CRC_POLY) & 0xFFFF;
+    }
+  }
+  sprintf(line, "%04X\r\n", (unsigned short)crc);
+  sendString(R1, 0x00, line);
+  sendByte(R1, 0x00);
+  return 0;
+}
+
+/***********************************************************
+ * Default Handlers
+ ***********************************************************/
 
 // TODO Register usage incorrect!!
 void defaultErrorHandler() {
@@ -103,7 +266,10 @@ void defaultExitHandler() {
 void defaultExceptionHandler() {
 }
 
-// Initialize the envorinment
+/***********************************************************
+ * Initialize the envorinment
+ ***********************************************************/
+
 void initEnv() {
   int i;
   for (i = 0; i < sizeof(env->commandBuffer); i++) {
@@ -127,35 +293,11 @@ void initEnv() {
   env->addressExceptionHandler     = defaultExceptionHandler;
 }
 
-// Tube Reset protocol
-void tube_Reset() {
-  // Print to the UART using the standard libc functions
-  printf( "Raspberry Pi ARMv6 Tube Client\r\n" );
-  printf( "Initialise UART console with standard libc\r\n" );
+/***********************************************************
+ * Initialize the hardware
+ ***********************************************************/
 
-  // Send the reset message
-  printf( "Sending banner\r\n" );
-  sendString(R1, 0x00, banner);
-  sendByte(R1, 0x00);
-  printf( "Banner sent, awaiting response\r\n" );
-
-  // Wait for the reponse in R2
-  receiveByte(R2);
-  printf( "Received response\r\n" );
-}
-
-/** Main function - we'll never return from here */
-void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
-{
-
-  // Register block used to interact with tube_ functions
-  unsigned int block[5];
-  unsigned int *carry = &block[0];
-  unsigned int *reg = &block[1];
-
-  // Initialize the environment structure
-  initEnv();
-
+void initHardware() {
   /* Write 1 to the LED init nibble in the Function Select GPIO
      peripheral register to enable LED pin as an output */
   RPI_GetGpio()->LED_GPFSEL |= LED_GPFBIT;
@@ -197,6 +339,41 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
   /* Setup SPI*/
   spi_begin();
+}
+
+// Tube Reset protocol
+void tube_Reset() {
+  // Print to the UART using the standard libc functions
+  printf( "Raspberry Pi ARMv6 Tube Client\r\n" );
+  printf( "Initialise UART console with standard libc\r\n" );
+
+  // Send the reset message
+  printf( "Sending banner\r\n" );
+  sendString(R1, 0x00, banner);
+  sendByte(R1, 0x00);
+  printf( "Banner sent, awaiting response\r\n" );
+
+  // Wait for the reponse in R2
+  receiveByte(R2);
+  printf( "Received response\r\n" );
+}
+
+/***********************************************************
+ * Main function - we'll never return from here
+ ***********************************************************/
+
+void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
+{
+  // Register block used to interact with tube_ functions
+  unsigned int block[5];
+  unsigned int *carry = &block[0];
+  unsigned int *reg = &block[1];
+
+  // Initialize the environment structure
+  initEnv();
+
+  // Initialize the hardware
+  initHardware();
 
   // This should not be necessary, but I've seen a couple of cases
   // where R4 errors happened during the startup message
@@ -236,21 +413,14 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 	  tube_Byte(reg);
 
     } else {
-
-      // Check for *GO
-      if (strncasecmp(env->commandBuffer, "go", 2) == 0) {
-		unsigned int address;
-		sscanf(env->commandBuffer + 2, "%x", &address);
-		// No return from here
-		user_exec((unsigned char *)address);
-      }
-
-	  reg[0] = (unsigned int) env->commandBuffer;
-	  tube_CLI(reg);
-
+      if (dispatchCmd(env->commandBuffer)) {
+		// Return code 0 means the command was successfully handled locally
+		tube_CLI(reg);
+	  }
     }
   }
 
+  // This never gets called
   spi_end();
 
 }
