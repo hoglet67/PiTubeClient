@@ -43,3 +43,12 @@ bare-metal/scripts/tube-client.cbp
 *.dSYM/
 ../../not_in_git/
 not_in_git/
+
+#FordP exclude Eclipse related stuff for now
+Debug/
+.settings/
+.cproject
+.project
+
+*.d
+*.map
