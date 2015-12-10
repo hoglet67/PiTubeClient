@@ -18,7 +18,7 @@
 ;> Module header
 
 RELEASEVER                      *       1                      ;1 for release version: no MANDEL or Roger
-OWNERRORS                       *       0                      ;1 for error messages in module
+OWNERRORS                       *       1                      ;1 for error messages in module
 CHECKCRUNCH                     *       1                      ;1 for BASIC$Crunch check on -quit and LIBRARY, INSTALL etc.
 LOOKUPHELP                      *       1                      ;1 for lookup command help syntax in Global.Messages file.
 DO32BIT                         *       1                      ;1 for 32-bit (and hence not ARM 2/3) compatible
