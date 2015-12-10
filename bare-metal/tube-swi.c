@@ -218,7 +218,8 @@ void handler_not_implemented(unsigned int handler) {
 // For an unimplemented SWI
 void tube_SWI_Not_Known(unsigned int *reg) {
   unsigned int *lr = (unsigned int *)reg[13];
-  printf("SWI %08x not implemented\r\n", *(lr - 1) & 0xFFFFFF);
+  printf("%08x %08x %08x %08x\r\n", reg[0], reg[1], reg[2], reg[3]);
+  printf("SWI %08x not implemented ************\r\n", *(lr - 1) & 0xFFFFFF);
 }
 
 void C_SWI_Handler(unsigned int number, unsigned int *reg) {
