@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //#include "config.h"
 #include <stdint.h>
 #include <stdio.h>
-#include "../source/tube.h"
+#include "../bare-metal/tube-lib.h"
 #include "iop80186.h"
 
 #define TUBE_ACCESS(ADDRESS)	(((ADDRESS) & 0xFFF1) == 0x0080)
@@ -46,7 +46,7 @@ void	portout (uint16_t portnum, uint8_t value)
 {
 	if (TUBE_ACCESS(portnum))
 	{
-		tube_write(TUBE_CONVERT(portnum), value);
+		tubeWrite(TUBE_CONVERT(portnum), value);
 	}
 }
 
@@ -54,7 +54,7 @@ uint8_t	portin (uint16_t portnum)
 {
 	if (TUBE_ACCESS(portnum))
 	{
-		return tube_read(TUBE_CONVERT(portnum));
+		return tubeRead(TUBE_CONVERT(portnum));
 	}
 
 	return 0xFF;

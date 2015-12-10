@@ -61,6 +61,29 @@ void spi_transfer(u8* TxBuff, u8* RxBuff, u32 Length)
   SPI0_CONTROL &= ~BIT(SPI_C_TA);                                            // Set TA = 0
 }
 
+// New Expirimental Faster Send, It just sends bytes without reading the Recieve FIFO as we will discard the data anyway
+void spi_send(u8* TxBuff, u32 Length)
+{
+	SPI0_CONTROL |= BIT(SPI_C_CLEAR_RX) | BIT(SPI_C_CLEAR_TX) | BIT(SPI_C_TA);		// Clear TX and RX FIFOs and enable SPI
+
+	while (Length--)
+	{
+		while ((SPI0_CONTROL & BIT(SPI_C_TXD)) == 0)                           // Wait for space in the FIFO
+		{
+			continue;
+		}
+		SPI0_FIFO = *(TxBuff++);
+	}
+
+	while ((SPI0_CONTROL & BIT(SPI_C_DONE)) == 0)								// While not done
+	{
+		continue;
+	}
+
+	SPI0_CONTROL |= BIT(SPI_C_CLEAR_RX) | BIT(SPI_C_CLEAR_TX);				// Clear RX FIFO as we have not read the bytes
+  	SPI0_CONTROL &= ~BIT(SPI_C_TA);													// Set TA = 0
+}
+
 void spi_end(void)                                                           // Set all the SPI0 pins back to input
 {
   gpioGPFSEL1 &=~((7 << 0) | (7 << 3));                                      // Set as input pins GPIO = 000

@@ -53,5 +53,6 @@ typedef volatile unsigned int v32;
 extern void wait(unsigned int delay);
 extern void spi_begin(void);
 extern void spi_transfer(u8* TxBuff, u8* RxBuff, u32 Length);
+extern void spi_send(u8* TxBuff, u32 Length);
 extern void spi_end(void);
 #endif
