@@ -18,45 +18,50 @@ void dump_hex(unsigned int h) {
   }
 }
 
+void dump_string(char *string) {
+  char c;
+  while ((c = *string++) != 0) {
+	RPI_AuxMiniUartWrite(c);
+  }	
+}
+
 // For some reason printf generally doesn't work here
-void dump_info(unsigned int *reg) {
+void dump_info(unsigned int *reg, int offset, char *type) {
   unsigned int *addr;
   int i;
   int rstlow;
   int led;
-  dump_hex((unsigned int)reg);
-  RPI_AuxMiniUartWrite('\r');
-  RPI_AuxMiniUartWrite('\n');  
+  dump_string(type);
+  dump_string(" at ");
+  // Make sure we avoid unaligned accesses
+  reg = (unsigned int *)(((unsigned int) reg) & ~3);
+  // The stacked LR points one or two words afer the exception address
+  addr = (unsigned int *)((reg[13] & ~3) - offset);
+  dump_hex((unsigned int)addr);
+  dump_string("\r\nRegisters:\r\n");
   for (i = 0; i <= 13; i++) {
-	RPI_AuxMiniUartWrite('r');
-	RPI_AuxMiniUartWrite('e');  
-	RPI_AuxMiniUartWrite('g');  
-	RPI_AuxMiniUartWrite('[');  
+	dump_string("  r[");
 	RPI_AuxMiniUartWrite('0' + (i / 10));  
 	RPI_AuxMiniUartWrite('0' + (i % 10));  
-	RPI_AuxMiniUartWrite(']');
-	RPI_AuxMiniUartWrite('=');
+	dump_string("]=");
 	dump_hex(reg[i]);
-	RPI_AuxMiniUartWrite('\r');
-	RPI_AuxMiniUartWrite('\n');  
+	dump_string("\r\n");
   }
-  addr = (unsigned int *)(reg[13] & ~3);
+  dump_string("Memory:\r\n");
   for (i = -4; i <= 4; i++) {
+	dump_string("  ");
 	dump_hex((unsigned int) (addr + i));
 	RPI_AuxMiniUartWrite('=');
-	dump_hex(*(addr + i));	
-	RPI_AuxMiniUartWrite('\r');
-	RPI_AuxMiniUartWrite('\n');  
+	dump_hex(*(addr + i));
+	if (i == 0) {
+	  dump_string(" <<<<<< \r\n");
+	} else {
+	  dump_string("\r\n");
+	}
   }
-  RPI_AuxMiniUartWrite('H');
-  RPI_AuxMiniUartWrite('a');
-  RPI_AuxMiniUartWrite('l');
-  RPI_AuxMiniUartWrite('t');
-  RPI_AuxMiniUartWrite('e');
-  RPI_AuxMiniUartWrite('d');
-  RPI_AuxMiniUartWrite('\r');
-  RPI_AuxMiniUartWrite('\n');
-
+  dump_string("Stack: ");
+  dump_hex((unsigned int) reg);
+  dump_string("\r\nHalted waiting for reset\r\n");
   rstlow = 0;
   led = 0;
   while (1) {
@@ -80,32 +85,14 @@ void dump_info(unsigned int *reg) {
 }
 
 void undefined_instruction_handler(unsigned int *reg) {
-  RPI_AuxMiniUartWrite('*');
-  RPI_AuxMiniUartWrite('U');
-  RPI_AuxMiniUartWrite('I');
-  RPI_AuxMiniUartWrite('*');
-  RPI_AuxMiniUartWrite('\r');
-  RPI_AuxMiniUartWrite('\n');
-  dump_info(reg);
+  dump_info(reg, 4, "Undefined Instruction");
 }
 
 void prefetch_abort_handler(unsigned int *reg) {
-  RPI_AuxMiniUartWrite('*');
-  RPI_AuxMiniUartWrite('P');
-  RPI_AuxMiniUartWrite('A');
-  RPI_AuxMiniUartWrite('*');
-  RPI_AuxMiniUartWrite('\r');
-  RPI_AuxMiniUartWrite('\n');
-  dump_info(reg);
+  dump_info(reg, 4, "Prefetch Abort");
 }
 
 void data_abort_handler(unsigned int *reg) {
-  RPI_AuxMiniUartWrite('*');
-  RPI_AuxMiniUartWrite('D');
-  RPI_AuxMiniUartWrite('A');
-  RPI_AuxMiniUartWrite('*');
-  RPI_AuxMiniUartWrite('\r');
-  RPI_AuxMiniUartWrite('\n');
-  dump_info(reg);
+  dump_info(reg, 8, "Data Abort");
 }
 
