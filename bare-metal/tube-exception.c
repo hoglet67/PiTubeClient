@@ -1,5 +1,8 @@
+#include "rpi-base.h"
 #include "rpi-aux.h"
 #include "rpi-gpio.h"
+#include "rpi-interrupts.h"
+#include "tube-isr.h"
 
 void dump_hex(unsigned int h) {
   int i;
@@ -19,6 +22,8 @@ void dump_hex(unsigned int h) {
 void dump_info(unsigned int *reg) {
   unsigned int *addr;
   int i;
+  int rstlow;
+  int led;
   dump_hex((unsigned int)reg);
   RPI_AuxMiniUartWrite('\r');
   RPI_AuxMiniUartWrite('\n');  
@@ -50,15 +55,30 @@ void dump_info(unsigned int *reg) {
   RPI_AuxMiniUartWrite('e');
   RPI_AuxMiniUartWrite('d');
   RPI_AuxMiniUartWrite('\r');
-  RPI_AuxMiniUartWrite('\n');  
-  while (1) {
-	for (i = 0; i < 1000000; i++);
-	LED_ON();
-	for (i = 0; i < 1000000; i++);
-	LED_OFF();
-  }
+  RPI_AuxMiniUartWrite('\n');
 
+  rstlow = 0;
+  led = 0;
+  while (1) {
+	for (i = 0; i < 1000000; i++) {
+	  // look for reset being low
+	  if (!(RPI_GetGpio()->GPLEV0 & RST_PIN_MASK)) {
+		rstlow = 1;
+	  }
+	  // then reset on the next rising edge
+	  if (rstlow && (RPI_GetGpio()->GPLEV0 & RST_PIN_MASK)) {
+		reboot_now();
+	  }
+	}
+	if (led) {
+	  LED_OFF();
+	} else {
+	  LED_ON();
+	}
+	led = ~led;
+  }
 }
+
 void undefined_instruction_handler(unsigned int *reg) {
   RPI_AuxMiniUartWrite('*');
   RPI_AuxMiniUartWrite('U');

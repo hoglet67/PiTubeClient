@@ -11,6 +11,20 @@
 
 #include "tube-isr.h"
 
+// From here: https://www.raspberrypi.org/forums/viewtopic.php?f=72&t=53862
+void reboot_now(void)
+{
+  const int PM_PASSWORD = 0x5a000000;
+  const int PM_RSTC_WRCFG_FULL_RESET = 0x00000020;
+  unsigned int *PM_WDOG = (unsigned int *) (PERIPHERAL_BASE + 0x00100024);
+  unsigned int *PM_RSTC = (unsigned int *) (PERIPHERAL_BASE + 0x0010001c);
+  
+  // timeout = 1/16th of a second? (whatever)
+  *PM_WDOG = PM_PASSWORD | 1;
+  *PM_RSTC = PM_PASSWORD | PM_RSTC_WRCFG_FULL_RESET;
+  while(1);
+}
+
 /** @brief The BCM2835/6 Interupt controller peripheral at it's base address */
 static rpi_irq_controller_t* rpiIRQController =
         (rpi_irq_controller_t*)RPI_INTERRUPT_CONTROLLER_BASE;
@@ -38,7 +52,7 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
     if (RPI_GetGpio()->GPEDS0 & RST_PIN_MASK) {
       RPI_GetGpio()->GPEDS0 = RST_PIN_MASK;
       //printf("RST PIN!!!\r\n");
-      _start();
+      reboot_now();
     }
 
 
