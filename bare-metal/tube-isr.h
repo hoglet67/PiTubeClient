@@ -3,14 +3,20 @@
 #ifndef TUBE_ISR_H
 #define TUBE_ISR_H
 
-/* Connects to: Header pin 16 == BCM GPIO23 */
-#define IRQ_PIN_MASK (1 << 23)
+#include "rpi-gpio.h"
 
-/* Connects to: Header pin 18 == BCM GPIO24 */
-#define NMI_PIN_MASK (1 << 24)
+/* Connects to: Header pin 3 == BCM GPIO0 */
+#define RST_PIN      (RPI_GPIO0)
 
-/* Connects to: Header pin 22 == BCM GPIO25 */
-#define RST_PIN_MASK (1 << 25)
+/* Connects to: Header pin 11 == BCM GPIO17 */
+#define IRQ_PIN      (RPI_GPIO17)
+
+/* Connects to: Header pin 12 == BCM GPIO18 */
+#define NMI_PIN      (RPI_GPIO18)
+
+#define RST_PIN_MASK (1 << RST_PIN)
+#define IRQ_PIN_MASK (1 << IRQ_PIN)
+#define NMI_PIN_MASK (1 << NMI_PIN)
 
 extern volatile int in_isr;
 

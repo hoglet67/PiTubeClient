@@ -25,9 +25,6 @@
 #define A_BIT 0x80
 #define F_BIT 0x40
 
-// BCM GPIO 25
-#define IRQ_PIN 6
-
 void setTubeLibDebug(int d);
 
 void tubeWrite(unsigned char addr, unsigned char byte);

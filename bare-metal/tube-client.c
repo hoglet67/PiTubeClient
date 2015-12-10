@@ -192,6 +192,11 @@ void initHardware() {
      peripheral register to enable LED pin as an output */
   RPI_GetGpio()->LED_GPFSEL |= LED_GPFBIT;
 
+  /* Configure our pins as inputs */
+  RPI_SetGpioPinFunction(IRQ_PIN, FS_INPUT);
+  RPI_SetGpioPinFunction(NMI_PIN, FS_INPUT);
+  RPI_SetGpioPinFunction(RST_PIN, FS_INPUT);
+
   /* Configure GPIO to detect a falling edge of the IRQ pin */
   RPI_GetGpio()->GPFEN0 |= IRQ_PIN_MASK;
 
