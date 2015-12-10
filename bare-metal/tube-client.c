@@ -47,6 +47,8 @@
 #include "tube-swi.h"
 #include "tube-isr.h"
 
+unsigned int defaultEscapeFlag;
+
 Environment_type defaultEnvironment;
 
 ErrorBuffer_type defaultErrorBuffer;
@@ -63,11 +65,9 @@ jmp_buf errorRestart;
  * Default Handlers
  ***********************************************************/
 
-// TODO Register usage incorrect!!
-void defaultErrorHandler() {
-  ErrorBuffer_type* eb = env->errorBuffer;
+void defaultErrorHandler(ErrorBuffer_type *eb) {
   if (DEBUG) {
-	printf("Error = %02x %s\r\n", eb->errorNum, eb->errorMsg);
+    printf("Error = %02x %s\r\n", eb->errorNum, eb->errorMsg);
   }
   sendString(R1, 0x00, eb->errorMsg);
   sendString(R1, 0x00, "\n\r");
@@ -77,13 +77,15 @@ void defaultErrorHandler() {
 // Entered with R11 bit 6 as escape status
 // R12 contains 0/-1 if not in/in the kernal presently
 // R11 and R12 may be altered. Return with MOV PC,R14
-// If R12 contains 1 on return then the Callback will be used 
-// TODO Register usage incorrect!!
-void defaultEscapeHandler(unsigned int reg0) {
+// If R12 contains 1 on return then the Callback will be used
+
+// Note, the way we invoke this via the _escape_handler_wrapper will
+// work, because the flag will also still be in r0.
+void defaultEscapeHandler(unsigned int flag) {
   if (DEBUG) {
-	printf("Escape flag = %02x\r\n", reg0);
+    printf("Escape flag = %02x\r\n", flag);
   }
-  env->escapeFlag = reg0;
+  *(env->escapeFlagPtr) = flag;
 }
 
 // Entered with R0, R1 and R2 containing the A, X and Y parameters. R0,
@@ -91,11 +93,10 @@ void defaultEscapeHandler(unsigned int reg0) {
 // R12 contains 0/-1 if not in/in the kernal presently
 // R13 contains the IRQ handling routine stack. When you return to the
 // system LDMFD R13!, (R0,R1,R2,R11,R12,PC}^ will be executed. If R12
-// contains 1 on return then the Callback will be used. 
-// TODO Register usage incorrect!!
-void defaultEventHandler(unsigned int reg0, unsigned int reg1, unsigned int reg2) {
+// contains 1 on return then the Callback will be used.
+void defaultEventHandler(unsigned int a, unsigned int x, unsigned int y) {
   if (DEBUG) {
-	printf("Event = %02x %02x %02x\r\n", reg0, reg1, reg2);
+    printf("Event: A=%02x X=%02x Y=%02x\r\n", a, x, y);
   }
 }
 
@@ -111,20 +112,20 @@ void defaultExceptionHandler() {
  ***********************************************************/
 
 void initEnv() {
+  defaultEscapeFlag = 0;
   int i;
   for (i = 0; i < sizeof(env->commandBuffer); i++) {
-	env->commandBuffer[i] = 0;
+    env->commandBuffer[i] = 0;
   }
   for (i = 0; i < sizeof(env->timeBuffer); i++) {
-	env->timeBuffer[i] = 0;
+    env->timeBuffer[i] = 0;
   }
-  env->escapeFlag                  = 0;
   env->memoryLimit                 = 2 * 1024 * 1024;
   env->realEndOfMemory             = 3 * 1024 * 1024;
-  env->localBuffering              = 0;
   env->errorHandler                = defaultErrorHandler;
-  env->errorBuffer                 = &defaultErrorBuffer;
+  env->errorBufferPtr              = &defaultErrorBuffer;
   env->escapeHandler               = defaultEscapeHandler;
+  env->escapeFlagPtr               = &defaultEscapeFlag;
   env->eventHandler                = defaultEventHandler;
   env->exitHandler                 = defaultExitHandler;
   env->undefinedInstructionHandler = defaultExceptionHandler;
@@ -228,15 +229,15 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
     setjmp(errorRestart);
 
     // Print the supervisor prompt
-	reg[0] = (unsigned int) prompt;
-	tube_Write0(reg);
+    reg[0] = (unsigned int) prompt;
+    tube_Write0(reg);
 
     // Ask for user input (OSWORD 0)
-	reg[0] = (unsigned int) env->commandBuffer;
-	reg[1] = 0x7F; // max line length
-	reg[2] = 0x20; // min ascii value
-	reg[3] = 0x7F; // max ascii value
-	tube_ReadLine(reg);
+    reg[0] = (unsigned int) env->commandBuffer;
+    reg[1] = 0x7F; // max line length
+    reg[2] = 0x20; // min ascii value
+    reg[3] = 0x7F; // max ascii value
+    tube_ReadLine(reg);
 
     // Was it escape
     if ((*carry) & CARRY_MASK) {
@@ -245,15 +246,15 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
       sendString(R1, 0x00, "\n\rEscape\n\r");
 
       // Acknowledge escape condition
-	  if (DEBUG) {
-		printf("Acknowledging Escape\r\n");
-	  }
-	  reg[0] = 0x7e;
-	  reg[1] = 0x00;
-	  tube_Byte(reg);
+      if (DEBUG) {
+        printf("Acknowledging Escape\r\n");
+      }
+      reg[0] = 0x7e;
+      reg[1] = 0x00;
+      tube_Byte(reg);
 
     } else {
-	  tube_CLI(reg);
+      tube_CLI(reg);
     }
   }
 

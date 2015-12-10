@@ -210,6 +210,26 @@ SWIHandler_Type SWIHandler_Table[NUM_SWI_HANDLERS] = {
   tube_SWI_Not_Known          // (&7F) -- OS_HeapSort32
 };
 
+void updateOverflow(unsigned char ovf, unsigned int *reg) {
+  // The PSW is on the stack one word before the registers
+  reg--;
+  if (ovf) {
+    *reg |= OVERFLOW_MASK;
+  } else {
+    *reg &= ~OVERFLOW_MASK;
+  }
+}
+
+void updateCarry(unsigned char cyf, unsigned int *reg) {
+  // The PSW is on the stack one word before the registers
+  reg--;
+  if (cyf) {
+    *reg |= CARRY_MASK;
+  } else {
+    *reg &= ~CARRY_MASK;
+  }
+}
+
 // For an unimplemented environment handler
 void handler_not_implemented(unsigned int handler) {
   printf("Handler %d not implemented\r\n", handler);
@@ -228,6 +248,8 @@ void C_SWI_Handler(unsigned int number, unsigned int *reg) {
   if (DEBUG) {
     printf("SWI %08x called from %08x\r\n", number, reg[13] - 4);
   }
+  // TODO - We need to switch to a local error handler
+  // for the error bit to work as intended.
   if (num & ERROR_BIT) {
     errorBit = 1;
     num &= ~ERROR_BIT;
@@ -238,8 +260,17 @@ void C_SWI_Handler(unsigned int number, unsigned int *reg) {
   } else if ((num & 0xFF00) == 0x0100) {
     // SWI's 0x100 - 0x1FF are OS_WriteI
     tube_WriteC(&num);
+  } else if (num == 0x42c80) {
+    tube_BASICTrans_HELP(reg);
+  } else if (num == 0x42c81) {
+    tube_BASICTrans_Error(reg);
+  } else if (num == 0x42c82) {
+    tube_BASICTrans_Message(reg);
   } else {
     tube_SWI_Not_Known(reg);
+    if (errorBit) {
+      updateOverflow(1, reg);
+    }
   }
   if (DEBUG) {
     printf("SWI %08x complete\r\n", number);
@@ -247,17 +278,6 @@ void C_SWI_Handler(unsigned int number, unsigned int *reg) {
 }
 
 // Helper functions
-
-void updateCarry(unsigned char cy, unsigned int *reg) {
-  // The PSW is on the stack one word before the registers
-  reg--;
-  // bit 29 is the carry
-  if (cy & 0x80) {
-    *reg |= CARRY_MASK;
-  } else {
-    *reg &= ~CARRY_MASK;
-  }
-}
 
 void user_exec(volatile unsigned char *address) {
   if (DEBUG) {
@@ -269,6 +289,14 @@ void user_exec(volatile unsigned char *address) {
   _user_exec(address);
 }
 
+char *write_string(char *ptr) {
+  unsigned char c;
+  // Output characters pointed to by R0, until a terminating zero
+  while ((c = *ptr++) != 0) {
+    sendByte(R1, c);
+  }
+  return ptr;
+}
 // Client to Host transfers
 // Reference: http://mdfs.net/Software/Tube/Protocol
 // OSWRCH   R1: A
@@ -287,26 +315,20 @@ void user_exec(volatile unsigned char *address) {
 // OSGBPB   R2: &16 block A                       block Cy A
 
 void tube_WriteC(unsigned int *reg) {
-  sendByte(R1, (unsigned char)((*reg) & 0xff));
+  sendByte(R1, (unsigned char)((reg[0]) & 0xff));
 }
 
 void tube_WriteS(unsigned int *reg) {
   // Reg 13 is the stacked link register which points to the string
-  tube_Write0(&reg[13]);
+  reg[13] = (unsigned int) write_string((char *)reg[13]);
   // Make sure new value of link register is word aligned to the next word boundary
   reg[13] += 3;
   reg[13] &= ~3;
 }
 
 void tube_Write0(unsigned int *reg) {
-  unsigned char *ptr = (unsigned char *)(*reg);
-  unsigned char c;
-  // Output characters pointed to by R0, until a terminating zero
-  while ((c = *ptr++) != 0) {
-    sendByte(R1, c);
-  }
   // On exit, R0 points to the byte after the terminator
-  *reg = (unsigned int)ptr;
+  reg[0] = (unsigned int)write_string((char *)reg[0]);;
 }
 
 void tube_NewLine(unsigned int *reg) {
@@ -318,7 +340,7 @@ void tube_ReadC(unsigned int *reg) {
   // OSRDCH   R2: &00                               Cy A
   sendByte(R2, 0x00);
   // On exit, the Carry flag indicaes validity
-  updateCarry(receiveByte(R2), reg);
+  updateCarry(receiveByte(R2) & 0x80, reg);
   // On exit, R0 contains the character
   reg[0] = receiveByte(R2);
 }
@@ -327,13 +349,13 @@ void tube_CLI(unsigned int *reg) {
   char *ptr = (char *)(*reg);
   // dispatchCmd returns 0 if command handled locally
   if (dispatchCmd(ptr)) {
-	// OSCLI    R2: &02 string &0D                    &7F or &80
-	sendByte(R2, 0x02);
-	sendString(R2, 0x0D, ptr);
-	if (receiveByte(R2) & 0x80) {
-	  // Execution should pass to last transfer address
-	  user_exec(address);
-	}
+    // OSCLI    R2: &02 string &0D                    &7F or &80
+    sendByte(R2, 0x02);
+    sendString(R2, 0x0D, ptr);
+    if (receiveByte(R2) & 0x80) {
+      // Execution should pass to last transfer address
+      user_exec(address);
+    }
   }
 }
 
@@ -359,7 +381,7 @@ void tube_Byte(unsigned int *reg) {
     sendByte(R2, x);
     sendByte(R2, y);
     sendByte(R2, a);
-    cy = receiveByte(R2);
+    cy = receiveByte(R2) & 0x80;
     y = receiveByte(R2);
     x = receiveByte(R2);
     reg[1] = x;
@@ -451,7 +473,7 @@ void tube_BGet(unsigned int *reg) {
   // Y = R1 is the file namdle
   sendByte(R2, reg[1]);
   // On exit, the Carry flag indicaes validity
-  updateCarry(receiveByte(R2), reg);
+  updateCarry(receiveByte(R2) & 0x80, reg);
   // On exit, R0 contains the character
   reg[0] = receiveByte(R2);
 }
@@ -482,7 +504,7 @@ void tube_GBPB(unsigned int *reg) {
   *ptr-- = receiveWord(R2);          // r3
   *ptr-- = receiveWord(R2);          // r2
   *ptr-- = receiveByte(R2);          // r1
-  updateCarry(receiveByte(R2), reg); // Cy
+  updateCarry(receiveByte(R2) & 0x80, reg); // Cy
   *ptr-- = receiveWord(R2);          // r0
 }
 
@@ -515,7 +537,7 @@ void tube_ReadLine(unsigned int *reg) {
   sendByte(R2, 0x07);        // Buffer MSB - set as per Tube Ap Note 004
   sendByte(R2, 0x00);        // Buffer LSB - set as per Tube Ap Note 004
   resp = receiveByte(R2);    // 0x7F or 0xFF
-  updateCarry(resp, reg);
+  updateCarry(resp & 0x80, reg);
   // Was it valid?
   if ((resp & 0x80) == 0x00) {
     reg[1] = receiveString(R2, '\r', (char *)reg[0]);
@@ -622,9 +644,9 @@ void tube_ChangeEnvironment(unsigned int *reg) {
       env->errorHandler = (ErrorHandler_type) reg[1];
     }
     reg[1] = previous;
-    previous = (unsigned int)env->errorBuffer;
+    previous = (unsigned int)env->errorBufferPtr;
     if (reg[3]) {
-      env->errorBuffer = (ErrorBuffer_type *) reg[1];
+      env->errorBufferPtr = (ErrorBuffer_type *) reg[1];
     }
     reg[3] = previous;
     break;
@@ -643,6 +665,11 @@ void tube_ChangeEnvironment(unsigned int *reg) {
       env->escapeHandler = (EscapeHandler_type) reg[1];
     }
     reg[1] = previous;
+    previous = (unsigned int)env->escapeFlagPtr;
+    if (reg[3]) {
+      env->escapeFlagPtr = (unsigned int *) reg[1];
+    }
+    reg[3] = previous;
     break;
 
   case 10:   // Event?
@@ -700,6 +727,27 @@ void tube_WriteN(unsigned int *reg) {
   unsigned char *ptr = (unsigned char *)reg[0];
   int len = reg[1];
   while (len-- > 0) {
-	sendByte(R1, *ptr++);
+    sendByte(R1, *ptr++);
   }
+}
+
+// The purpose of this call is to lookup and output (via OS_WriteC) a help message for a given BASIC keyword.
+
+void tube_BASICTrans_HELP(unsigned int *reg) {
+  // Return with V set to indicate an error
+  updateOverflow(1, reg);
+}
+
+// The purpose of this call is to lookup an error message. The buffer pointer to by R1 must be at least 252 bytes long.
+
+void tube_BASICTrans_Error(unsigned int *reg) {
+  // Return with V set to indicate an error
+  updateOverflow(1, reg);
+}
+
+// The purpose of this call is to lookup and display (via OS_WriteC) a message.
+
+void tube_BASICTrans_Message(unsigned int *reg) {
+  // Return with V set to indicate an error
+  updateOverflow(1, reg);
 }

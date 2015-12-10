@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "debug.h"
+#include "startup.h"
 #include "rpi-gpio.h"
 #include "tube-lib.h"
 #include "tube-env.h"
@@ -89,7 +90,9 @@ void TubeInterrupt(void) {
     if (flag & 0x80) {
       // Escape
       in_isr = 0;
-      env->escapeHandler(flag & 0x40);
+      // The escape handler is called with the escape flag value in R11
+      // That's with this wrapper achieves
+      _escape_handler_wrapper(flag & 0x40, env->escapeHandler);
     } else {
       // Event
       unsigned char y = receiveByte(R1);
@@ -112,12 +115,12 @@ void TubeInterrupt(void) {
     if (type == 0xff) {
       // Error
       receiveByte(R2); // always 0
-      ErrorBuffer_type *eb = env->errorBuffer;
+      ErrorBuffer_type *eb = env->errorBufferPtr;
       eb->errorAddr = 0;
-      eb->errorNum = receiveByte(R2); 
+      eb->errorNum = receiveByte(R2);
       receiveString(R2, 0x00, eb->errorMsg);
       in_isr = 0;
-      env->errorHandler();
+      env->errorHandler(eb);
     } else {
       unsigned char id = receiveByte(R4);
       if (type <= 4 || type == 6 || type == 7) {

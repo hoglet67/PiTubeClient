@@ -47,6 +47,7 @@
 .global _enable_interrupts
 .global _disable_interrupts
 .global _user_exec
+.global _escape_handler_wrapper
 
 // From the ARM ARM (Architecture Reference Manual). Make sure you get the
 // ARMv5 documentation which includes the ARMv6 documentation which is the
@@ -264,3 +265,19 @@ _user_exec:
 
     // Jump to the address in R0
     mov      pc, r0
+
+    // Called with the escape flag value in R0 and the escape handler address in R1
+_escape_handler_wrapper:
+
+    // Preserve the registers the escape handler will use
+    stmfd    sp!, {r11-r12, lr}
+
+    // Move the escape flag into R11
+    mov      r11, r0
+
+    // Call the escape handler
+    blx      r1
+
+    // Restore stacked resisters and return
+    ldmfd    sp!, {r11-r12, lr}
+    mov      pc, lr

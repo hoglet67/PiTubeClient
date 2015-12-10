@@ -6,6 +6,9 @@
 // The bit position of the error handling bit in the SWI number
 #define ERROR_BIT (1 << 17)
 
+// The bit position of the overflow flag in the ARM PSW
+#define OVERFLOW_MASK (1 << 28)
+
 // The bit position of the carry flag in the ARM PSW
 #define CARRY_MASK (1 << 29)
 
@@ -52,6 +55,8 @@ void tube_EnterOS(unsigned int *reg);           // &16
 void tube_Mouse(unsigned int *reg);             // &1C
 void tube_ChangeEnvironment(unsigned int *reg); // &40
 void tube_WriteN(unsigned int *reg);            // &46
-
+void tube_BASICTrans_HELP(unsigned int *reg);   // &42C80
+void tube_BASICTrans_Error(unsigned int *reg);  // &42C81
+void tube_BASICTrans_Message(unsigned int *reg);// &42C82
 
 #endif
