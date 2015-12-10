@@ -24,11 +24,8 @@ typedef void (*SWIHandler_Type) (unsigned int *reg);
 
 // Function prototypes
 void user_exec(volatile unsigned char *address);
-
-// For an unimplemented handler
-void handler_not_implemented(unsigned int handler);
-
-// For an unimplemented environment handler
+void handler_not_defined(unsigned int num);
+void handler_not_implemented(char *type);
 void tube_SWI_Not_Known(unsigned int *reg);
 
 // SWI handler prototypes

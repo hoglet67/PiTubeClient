@@ -71,7 +71,7 @@ void defaultErrorHandler(ErrorBuffer_type *eb) {
   }
   sendString(R1, 0x00, eb->errorMsg);
   sendString(R1, 0x00, "\n\r");
-  env->exitHandler();
+  env->handler[EXIT_HANDLER].handler();
 }
 
 // Entered with R11 bit 6 as escape status
@@ -85,7 +85,7 @@ void defaultEscapeHandler(unsigned int flag) {
   if (DEBUG) {
     printf("Escape flag = %02x\r\n", flag);
   }
-  *(env->escapeFlagPtr) = flag;
+  *((unsigned int *)(env->handler[ESCAPE_HANDLER].address)) = flag;
 }
 
 // Entered with R0, R1 and R2 containing the A, X and Y parameters. R0,
@@ -104,7 +104,40 @@ void defaultExitHandler() {
   _isr_longjmp(errorRestart, 1);
 }
 
-void defaultExceptionHandler() {
+void defaultUndefinedInstructionHandler() {
+  handler_not_implemented("UNDEFINED_INSTRUCTION_HANDLER");
+}
+
+void defaultPrefetchAbortHandler() {
+  handler_not_implemented("PREFETCH_ABORT_HANDLER");
+}
+
+void defaultDataAbortHandler() {
+  handler_not_implemented("DATA_ABORT_HANDLER");
+}
+
+void defaultAddressExceptionHandler() {
+  handler_not_implemented("ADDRESS_EXCEPTION_HANDLER");
+}
+
+void defaultOtherExceptionHandler() {
+  handler_not_implemented("OTHER_EXCEPTIONS_HANDLER");
+}
+
+void defaultCallbackHandler() {
+  handler_not_implemented("CALLBACK_HANDLER");
+}
+
+void defaultUnusedSWIHandler() {
+  handler_not_implemented("UNUSED_SWI_HANDLER");
+}
+
+void defaultExceptionRegistersHandler() {
+  handler_not_implemented("EXCEPTION_REGISTERS_HANDLER");
+}
+
+void defaultUpcallHandler() {
+  handler_not_implemented("UPCALL_HANDLER");
 }
 
 /***********************************************************
@@ -120,18 +153,34 @@ void initEnv() {
   for (i = 0; i < sizeof(env->timeBuffer); i++) {
     env->timeBuffer[i] = 0;
   }
-  env->memoryLimit                 = 2 * 1024 * 1024;
-  env->realEndOfMemory             = 3 * 1024 * 1024;
-  env->errorHandler                = defaultErrorHandler;
-  env->errorBufferPtr              = &defaultErrorBuffer;
-  env->escapeHandler               = defaultEscapeHandler;
-  env->escapeFlagPtr               = &defaultEscapeFlag;
-  env->eventHandler                = defaultEventHandler;
-  env->exitHandler                 = defaultExitHandler;
-  env->undefinedInstructionHandler = defaultExceptionHandler;
-  env->prefetchAbortHandler        = defaultExceptionHandler;
-  env->dataAbortHandler            = defaultExceptionHandler;
-  env->addressExceptionHandler     = defaultExceptionHandler;
+  for (i = 0; i < NUM_HANDLERS; i++) {
+    env->handler[i].address = (void *)0;
+    env->handler[i].r12 = 0xAAAAAAAA;
+  }
+  // Handlers that are code points
+  env->handler[  UNDEFINED_INSTRUCTION_HANDLER].handler = defaultUndefinedInstructionHandler;
+  env->handler[         PREFETCH_ABORT_HANDLER].handler = defaultPrefetchAbortHandler;
+  env->handler[             DATA_ABORT_HANDLER].handler = defaultDataAbortHandler;
+  env->handler[      ADDRESS_EXCEPTION_HANDLER].handler = defaultAddressExceptionHandler;
+  env->handler[       OTHER_EXCEPTIONS_HANDLER].handler = defaultOtherExceptionHandler;
+  env->handler[                  ERROR_HANDLER].handler = defaultErrorHandler;
+  env->handler[                  ERROR_HANDLER].address = &defaultErrorBuffer;
+  env->handler[               CALLBACK_HANDLER].handler = defaultCallbackHandler;
+  env->handler[                 ESCAPE_HANDLER].handler = defaultEscapeHandler;
+  env->handler[                 ESCAPE_HANDLER].address = &defaultEscapeFlag;
+  env->handler[                  EVENT_HANDLER].handler = defaultEventHandler;
+  env->handler[                   EXIT_HANDLER].handler = defaultExitHandler;
+  env->handler[             UNUSED_SWI_HANDLER].handler = defaultUnusedSWIHandler;
+  env->handler[    EXCEPTION_REGISTERS_HANDLER].handler = defaultExceptionRegistersHandler;
+  env->handler[                 UPCALL_HANDLER].handler = defaultUpcallHandler;
+
+  // Handlers where the handler is just data
+  env->handler[           MEMORY_LIMIT_HANDLER].handler = (EnvironmentHandler_type) (2 * 1024 * 1024);
+  env->handler[      APPLICATION_SPACE_HANDLER].handler = (EnvironmentHandler_type) (3 * 1024 * 1024);
+  env->handler[CURRENTLY_ACTIVE_OBJECT_HANDLER].handler = (EnvironmentHandler_type) (0);
+
+
+
 }
 
 /***********************************************************

@@ -229,10 +229,14 @@ void updateCarry(unsigned char cyf, unsigned int *reg) {
     *reg &= ~CARRY_MASK;
   }
 }
-
 // For an unimplemented environment handler
-void handler_not_implemented(unsigned int handler) {
-  printf("Handler %d not implemented\r\n", handler);
+void handler_not_implemented(char *type) {
+  printf("Handler %s defined but not implemented\r\n", type);
+}
+
+// For an undefined environment handler (i.e. where num >= NUM_HANDLERS)
+void handler_not_defined(unsigned int num) {
+  printf("Handler %d not defined\r\n", num);
 }
 
 // For an unimplemented SWI
@@ -548,7 +552,7 @@ void tube_GetEnv(unsigned int *reg) {
   // R0 address of the command string (0 terminated) which ran the program
   reg[0] = (unsigned int) env->commandBuffer;
   // R1 address of the permitted RAM limit for example &10000 for 64K machine
-  reg[1] = env->memoryLimit;
+  reg[1] = (unsigned int) env->handler[MEMORY_LIMIT_HANDLER].handler;
   // R2 address of 5 bytes - the time the program started running
   reg[2] = (unsigned int) env->timeBuffer;
   if (DEBUG) {
@@ -557,7 +561,12 @@ void tube_GetEnv(unsigned int *reg) {
 }
 
 void tube_Exit(unsigned int *reg) {
-  env->exitHandler();
+  unsigned int r12 = env->handler[EXIT_HANDLER].r12;
+  EnvironmentHandler_type handler = env->handler[EXIT_HANDLER].handler;
+  if (DEBUG) {
+    printf("Calling exit handler at %08x with r12 %08x\r\n", (unsigned int) handler, r12);
+  }
+  _exit_handler_wrapper(r12, handler);
 }
 
 void tube_IntOn(unsigned int *reg) {
@@ -592,129 +601,39 @@ void tube_ChangeEnvironment(unsigned int *reg) {
     printf("%08x %08x %08x %08x\r\n", reg[0], reg[1], reg[2], reg[3]);
   }
 
-  switch (reg[0]) {
+  unsigned int n = reg[0];
 
-  case 0:    // Memory limit
-    previous = env->memoryLimit;
+  if (n < NUM_HANDLERS) {
+
+    // Grab the approriate handler state block from the environment
+    HandlerState_type *hs = &env->handler[n];
+
+    // Update the handler function from reg1
+    previous = (unsigned int) hs->handler;
     if (reg[1]) {
-      env->memoryLimit = reg[1];
+      hs->handler = (EnvironmentHandler_type) reg[1];
     }
     reg[1] = previous;
-    break;
 
-  case 1:    // Undefined instruction?
-    previous = (unsigned int) env->undefinedInstructionHandler;
-    if (reg[1]) {
-      env->undefinedInstructionHandler = (ExceptionHandler_type) reg[1];
+    // Update the r12 value from reg2
+    previous = hs->r12;
+    if (reg[2]) {
+      hs->r12 = reg[2];
     }
-    reg[1] = previous;
-    break;
+    reg[2] = previous;
 
-  case 2:    // Prefetch abort?
-    previous = (unsigned int) env->prefetchAbortHandler;
-    if (reg[1]) {
-      env->prefetchAbortHandler = (ExceptionHandler_type) reg[1];
-    }
-    reg[1] = previous;
-    break;
-
-  case 3:    // Data abort?
-    previous = (unsigned int) env->dataAbortHandler;
-    if (reg[1]) {
-      env->dataAbortHandler = (ExceptionHandler_type) reg[1];
-    }
-    reg[1] = previous;
-    break;
-
-  case 4:    // Address exception?
-    previous = (unsigned int) env->addressExceptionHandler;
-    if (reg[1]) {
-      env->addressExceptionHandler = (ExceptionHandler_type) reg[1];
-    }
-    reg[1] = previous;
-    break;
-
-  case 5:    // Other exceptions (reserved)
-    handler_not_implemented(reg[0]);
-    break;
-
-  case 6:    // Error
-    previous = (unsigned int)env->errorHandler;
-    if (reg[1]) {
-      env->errorHandler = (ErrorHandler_type) reg[1];
-    }
-    reg[1] = previous;
-    previous = (unsigned int)env->errorBufferPtr;
+    // Update the buffer address from reg3
+    previous = (unsigned int) hs->address;
     if (reg[3]) {
-      env->errorBufferPtr = (ErrorBuffer_type *) reg[1];
+      hs->address = (void *) reg[3];
     }
     reg[3] = previous;
-    break;
 
-  case 7:    // CallBack?
-    handler_not_implemented(reg[0]);
-    break;
 
-  case 8:    // BreakPoint?
-    handler_not_implemented(reg[0]);
-    break;
+  } else {
 
-  case 9:    // Escape
-    previous = (unsigned int)env->escapeHandler;
-    if (reg[1]) {
-      env->escapeHandler = (EscapeHandler_type) reg[1];
-    }
-    reg[1] = previous;
-    previous = (unsigned int)env->escapeFlagPtr;
-    if (reg[3]) {
-      env->escapeFlagPtr = (unsigned int *) reg[1];
-    }
-    reg[3] = previous;
-    break;
+    handler_not_defined(n);
 
-  case 10:   // Event?
-    previous = (unsigned int)env->eventHandler;
-    if (reg[1]) {
-      env->eventHandler = (EventHandler_type) reg[1];
-    }
-    reg[1] = previous;
-    break;
-
-  case 11:   // Exit
-    previous = (unsigned int)env->exitHandler;
-    if (reg[1]) {
-      env->exitHandler = (ExitHandler_type) reg[1];
-    }
-    reg[1] = previous;
-    break;
-
-  case 12:   // Unused SWI?
-    handler_not_implemented(reg[0]);
-    break;
-
-  case 13:   // Exception registers?
-    handler_not_implemented(reg[0]);
-    break;
-
-  case 14:   // Application space
-    previous = env->realEndOfMemory;
-    if (reg[1]) {
-      env->realEndOfMemory = reg[1];
-    }
-    reg[1] = previous;
-    break;
-
-  case 15:   // Currently active object
-    handler_not_implemented(reg[0]);
-    break;
-
-  case 16:   // UpCall?
-    handler_not_implemented(reg[0]);
-    break;
-
-  default:
-    handler_not_implemented(reg[0]);
-    break;
   }
 
   if (DEBUG) {
