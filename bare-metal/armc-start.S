@@ -26,7 +26,7 @@
 //  POSSIBILITY OF SUCH DAMAGE.
 
 //  Relocate to just below 32MB
-        
+
 .equ    RELOCATE_TO,      0x01F80000
 .equ    RELOCATE_FROM,    0x00008000
 .equ    RELOCATE_LENGTH,  0x00020000
@@ -34,7 +34,9 @@
 .equ    SVR_STACK,        0x01F80000
 .equ    IRQ_STACK,        0x01F70000
 .equ    USER_STACK,       0x01F60000
-        
+.equ    ABORT_STACK,      0x01F50000
+.equ    UNDEFINED_STACK,  0x01F40000
+
 .section ".text.startup"
 
 .global _start
@@ -89,8 +91,10 @@ _fast_interrupt_vector_h:           .word   fast_interrupt_vector
 _irq_stack:                         .word   IRQ_STACK
 _svr_stack:                         .word   SVR_STACK
 _user_stack:                        .word   USER_STACK
+_undefined_stack:                   .word   UNDEFINED_STACK
+_abort_stack:                       .word   ABORT_STACK
 
-_patch_data:                        .word _reset_       
+_patch_data:                        .word _reset_
 _patch_address:                     .word _reset_h
 
 _copy_to_high_memory:
@@ -104,11 +108,11 @@ _copy_loop:
     stmia   r1!,{r3, r4, r5, r6}
     subs    r2, r2, #16
     bge     _copy_loop
-    // patch the reset vector to bypass the copy code       
+    // patch the reset vector to bypass the copy code
     ldr     r0, _patch_data
     ldr     r1, _patch_address
-    str     r0, [r1]        
-    // jump to high memory      
+    str     r0, [r1]
+    // jump to high memory
     mov     pc, r0
 
     // execution resumes here in high memory
@@ -130,6 +134,17 @@ _reset_:
     mov r0, #(CPSR_MODE_IRQ | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT )
     msr cpsr_c, r0
     ldr sp, _irq_stack
+
+    // Also setup the stack used for undefined exceptions
+    mov r0, #(CPSR_MODE_UNDEFINED | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT )
+    msr cpsr_c, r0
+    ldr sp, _undefined_stack
+
+
+    // Also setup the stack used for prefetch and data abort exceptions
+    mov r0, #(CPSR_MODE_ABORT | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT )
+    msr cpsr_c, r0
+    ldr sp, _abort_stack
 
     // Switch back to supervisor mode (our application mode) and
     // set the stack pointer. Remember that the stack works its way
@@ -205,16 +220,22 @@ _disable_interrupts:
 
 _undefined_instruction_handler_:
     stmfd    sp!, {r0-r12, lr}
+    mrs      r0, spsr             // Get spsr.
+    stmfd    sp!, {r0}            // Store spsr onto stack.
     mov      r0, sp
     bl       undefined_instruction_handler
 
 _prefetch_abort_handler_:
     stmfd    sp!, {r0-r12, lr}
+    mrs      r0, spsr             // Get spsr.
+    stmfd    sp!, {r0}            // Store spsr onto stack.
     mov      r0, sp
     bl       prefetch_abort_handler
 
 _data_abort_handler_:
     stmfd    sp!, {r0-r12, lr}
+    mrs      r0, spsr             // Get spsr.
+    stmfd    sp!, {r0}            // Store spsr onto stack.
     mov      r0, sp
     bl       data_abort_handler
 
@@ -233,21 +254,13 @@ _swi_handler_:
     ldmfd    sp!, {r0-r12, pc}^   // Restore registers and return.
 
 _user_exec:
-		
-	// Move to user mode
+
+    // Move to user mode
     mov      r1, #(CPSR_MODE_USER | CPSR_FIQ_INHIBIT )
-    msr 	 cpsr_c, r1
+    msr      cpsr_c, r1
 
-	// Setup the user stack pointer
-    ldr 	 sp, _user_stack
+    // Setup the user stack pointer
+    ldr      sp, _user_stack
 
-	// Jump to the address in R0
-	mov		 pc, r0
-
-	// There seems to be some wierd alignment issue
-	// The startup message is garbled and things don't work well
-	// Adding these fixed it
-    nop
-	nop
-	nop
-	nop
+    // Jump to the address in R0
+    mov      pc, r0
