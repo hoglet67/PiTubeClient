@@ -7,7 +7,8 @@ bare-metal/scripts/cmake_install.cmake
 bare-metal/scripts/kernel.img
 bare-metal/scripts/tube-client
 bare-metal/scripts/tube-client.cbp
-
+bbc_basic_1_23/tmp/
+bbc_basic_1_35/tmp/
 
 # Object files
 *.o
