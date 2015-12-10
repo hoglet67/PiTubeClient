@@ -48,6 +48,7 @@
 .global _disable_interrupts
 .global _user_exec
 .global _escape_handler_wrapper
+.global _exit_handler_wrapper
 
 // From the ARM ARM (Architecture Reference Manual). Make sure you get the
 // ARMv5 documentation which includes the ARMv6 documentation which is the
@@ -280,4 +281,20 @@ _escape_handler_wrapper:
 
     // Restore stacked resisters and return
     ldmfd    sp!, {r11-r12, lr}
+    mov      pc, lr
+
+// Called with the R12 value in R0 and the exit handler address in R1
+_exit_handler_wrapper:
+
+    // Preserve the registers the escape handler will use
+    stmfd    sp!, {r12, lr}
+
+    // Move the "R12 value" into R12
+    mov      r12, r0
+
+    // Call the exit handler, never to return
+    blx      r1
+
+    // Restore stacked resisters and return
+    ldmfd    sp!, {r12, lr}
     mov      pc, lr

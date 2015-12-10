@@ -92,14 +92,14 @@ void TubeInterrupt(void) {
       in_isr = 0;
       // The escape handler is called with the escape flag value in R11
       // That's with this wrapper achieves
-      _escape_handler_wrapper(flag & 0x40, env->escapeHandler);
+      _escape_handler_wrapper(flag & 0x40, env->handler[ESCAPE_HANDLER].handler);
     } else {
       // Event
       unsigned char y = receiveByte(R1);
       unsigned char x = receiveByte(R1);
       unsigned char a = receiveByte(R1);
       in_isr = 0;
-      env->eventHandler(a, x, y);
+      env->handler[EVENT_HANDLER].handler(a, x, y);
     }
   }
 
@@ -115,12 +115,12 @@ void TubeInterrupt(void) {
     if (type == 0xff) {
       // Error
       receiveByte(R2); // always 0
-      ErrorBuffer_type *eb = env->errorBufferPtr;
+      ErrorBuffer_type *eb = (ErrorBuffer_type *)env->handler[ERROR_HANDLER].address;
       eb->errorAddr = 0;
       eb->errorNum = receiveByte(R2);
       receiveString(R2, 0x00, eb->errorMsg);
       in_isr = 0;
-      env->errorHandler(eb);
+      env->handler[ERROR_HANDLER].handler(eb);
     } else {
       unsigned char id = receiveByte(R4);
       if (type <= 4 || type == 6 || type == 7) {
