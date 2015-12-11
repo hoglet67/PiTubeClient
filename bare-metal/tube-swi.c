@@ -9,6 +9,8 @@
 
 #define NUM_SWI_HANDLERS 0x80
 
+jmp_buf enterOS;
+
 const int osword_in_len[] = {
   0,  // OSWORD 0x00
   0,
@@ -578,6 +580,7 @@ void tube_IntOff(unsigned int *reg) {
 }
 
 void tube_EnterOS(unsigned int *reg) {
+  longjmp(enterOS, 1);
 }
 
 void tube_Mouse(unsigned int *reg) {

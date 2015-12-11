@@ -16,10 +16,12 @@ extern void _disable_interrupts( void );
 
 extern void _user_exec(volatile unsigned char *address);
 
-extern void _isr_longjmp(jmp_buf env, int val);
+extern void _error_handler_wrapper(ErrorBuffer_type *eb, EnvironmentHandler_type errorHandler);
 
 extern void _escape_handler_wrapper(unsigned int escapeFlag, EnvironmentHandler_type escapeHandler);
 
 extern void _exit_handler_wrapper(unsigned int r12, EnvironmentHandler_type exitHandler);
+
+extern unsigned int _get_cpsr();
 
 #endif

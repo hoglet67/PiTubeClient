@@ -41,14 +41,15 @@
 
 .global _start
 .global _get_cpsr
-.global _isr_longjmp
 .global _get_stack_pointer
 .global _exception_table
 .global _enable_interrupts
 .global _disable_interrupts
 .global _user_exec
+.global _error_handler_wrapper
 .global _escape_handler_wrapper
 .global _exit_handler_wrapper
+.global _get_cpsr
 
 // From the ARM ARM (Architecture Reference Manual). Make sure you get the
 // ARMv5 documentation which includes the ARMv6 documentation which is the
@@ -148,6 +149,11 @@ _reset_:
     msr cpsr_c, r0
     ldr sp, _abort_stack
 
+    // Finally, a user/system mode stack, although the application will likely reset this
+    mov r0, #(CPSR_MODE_SYSTEM | CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT )
+    msr cpsr_c, r0
+    ldr sp, _user_stack
+
     // Switch back to supervisor mode (our application mode) and
     // set the stack pointer. Remember that the stack works its way
     // down memory, our heap will work it's way up from after the
@@ -196,29 +202,17 @@ _get_cpsr:
     mrs     r0, cpsr
     mov     pc, lr
 
-    // A special version of longjmp that restores the calling mode
-_isr_longjmp:
-    // mrs     r4, cpsr
-    // bic     r4, r4, #0x1f
-    // orr     r4, r4, #CPSR_MODE_SVR
-    mrs     r4, spsr
-    msr     cpsr_c, r4
-    b       longjmp
-
 _enable_interrupts:
     mrs     r0, cpsr
     bic     r0, r0, #CPSR_IRQ_INHIBIT
     msr     cpsr_c, r0
-
     mov     pc, lr
 
 _disable_interrupts:
     mrs     r0, cpsr
     orr     r0, r0, #CPSR_IRQ_INHIBIT
     msr     cpsr_c, r0
-
     mov     pc, lr
-
 
 _undefined_instruction_handler_:
     stmfd    sp!, {r0-r12, lr}
@@ -267,6 +261,16 @@ _user_exec:
     // Jump to the address in R0
     mov      pc, r0
 
+    // Called with the error buffer ppointer in R0 and the error handler address in R1
+_error_handler_wrapper:
+
+    // Move to user mode
+    mov      r4, #(CPSR_MODE_USER | CPSR_FIQ_INHIBIT )
+    msr      cpsr_c, r4
+
+    // Continue execution of the error handler
+    mov      pc, r1
+
     // Called with the escape flag value in R0 and the escape handler address in R1
 _escape_handler_wrapper:
 
@@ -283,18 +287,16 @@ _escape_handler_wrapper:
     ldmfd    sp!, {r11-r12, lr}
     mov      pc, lr
 
-// Called with the R12 value in R0 and the exit handler address in R1
+    // Called with the R12 value in R0 and the exit handler address in R1
 _exit_handler_wrapper:
-
-    // Preserve the registers the escape handler will use
-    stmfd    sp!, {r12, lr}
 
     // Move the "R12 value" into R12
     mov      r12, r0
 
-    // Call the exit handler, never to return
-    blx      r1
+    // Move to user mode
+    mov      r4, #(CPSR_MODE_USER | CPSR_FIQ_INHIBIT )
+    msr      cpsr_c, r4
 
-    // Restore stacked resisters and return
-    ldmfd    sp!, {r12, lr}
-    mov      pc, lr
+    // Continue execution of the exit handler
+    mov      pc, r1
+        

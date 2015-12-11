@@ -41,6 +41,7 @@
 
 #include "debug.h"
 #include "startup.h"
+#include "swi.h"
 #include "spi.h"
 #include "tube-lib.h"
 #include "tube-env.h"
@@ -59,19 +60,19 @@ const char *banner = "Raspberry Pi ARMv6 Co Processor 900MHz\r\n\n";
 
 const char *prompt = "arm>*";
 
-jmp_buf errorRestart;
-
 /***********************************************************
  * Default Handlers
  ***********************************************************/
 
+// Note: this will be executed in user mode
 void defaultErrorHandler(ErrorBuffer_type *eb) {
+  // TODO: Consider resetting the user stack?
   if (DEBUG) {
     printf("Error = %02x %s\r\n", eb->errorNum, eb->errorMsg);
   }
   sendString(R1, 0x00, eb->errorMsg);
   sendString(R1, 0x00, "\n\r");
-  env->handler[EXIT_HANDLER].handler();
+  SWI_OS_Exit;
 }
 
 // Entered with R11 bit 6 as escape status
@@ -100,8 +101,12 @@ void defaultEventHandler(unsigned int a, unsigned int x, unsigned int y) {
   }
 }
 
+// This should be called in USR mode whenever OS_Exit or OS_ExitAndDie is called.
 void defaultExitHandler() {
-  _isr_longjmp(errorRestart, 1);
+  if (DEBUG) {
+    printf("Invoking default exit handler\r\n");
+  }
+  SWI_OS_EnterOS;
 }
 
 void defaultUndefinedInstructionHandler() {
@@ -226,9 +231,6 @@ void initHardware() {
     RPI_ARMTIMER_CTRL_INT_ENABLE |
     RPI_ARMTIMER_CTRL_PRESCALE_256;
 
-  /* Enable interrupts! */
-  _enable_interrupts();
-
   /* Initialise the UART */
   RPI_AuxMiniUartInit( 57600, 8 );
 
@@ -272,15 +274,22 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 
   // This should not be necessary, but I've seen a couple of cases
   // where R4 errors happened during the startup message
-  setjmp(errorRestart);
+  setjmp(enterOS);
 
   // Send reset message
   tube_Reset();
 
   while( 1 ) {
 
-    // If an error is received on R4 (in the ISR) we return here
-    setjmp(errorRestart);
+    // When SWI OS_EnterOS is called, we return here
+    setjmp(enterOS);
+
+    // Enable interrupts!
+    _enable_interrupts();
+
+    if (DEBUG) {
+      printf("%08x\r\n", _get_cpsr());
+    }
 
     // Print the supervisor prompt
     reg[0] = (unsigned int) prompt;

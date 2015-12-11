@@ -120,7 +120,7 @@ void TubeInterrupt(void) {
       eb->errorNum = receiveByte(R2);
       receiveString(R2, 0x00, eb->errorMsg);
       in_isr = 0;
-      env->handler[ERROR_HANDLER].handler(eb);
+      _error_handler_wrapper(eb, env->handler[ERROR_HANDLER].handler);
     } else {
       unsigned char id = receiveByte(R4);
       if (type <= 4 || type == 6 || type == 7) {
