@@ -5,8 +5,8 @@
 
 #include "rpi-gpio.h"
 
-/* Connects to: Header pin 3 == BCM GPIO0 */
-#define RST_PIN      (RPI_GPIO0)
+/* Connects to: Header pin 26 == BCM GPIO7 */
+#define RST_PIN      (RPI_GPIO7)
 
 /* Connects to: Header pin 11 == BCM GPIO17 */
 #define IRQ_PIN      (RPI_GPIO17)
