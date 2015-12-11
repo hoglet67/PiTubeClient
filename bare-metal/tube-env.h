@@ -3,13 +3,18 @@
 #ifndef TUBE_ENV_H
 #define TUBE_ENV_H
 
-// Type definition for the Error Buffer
-typedef struct EBT {
-   unsigned char *errorAddr;
+// Type definition for the Error Block
+typedef struct EBKT {
    unsigned int errorNum;
-   char errorMsg[256];
-} ErrorBuffer_type;
+   char errorMsg[252];
+} ErrorBlock_type;
 
+
+// Type definition for the Error Buffer
+typedef struct EBFT {
+   void *errorAddr;
+   ErrorBlock_type errorBlock;
+} ErrorBuffer_type;
 
 // Type definition for a Generic Environment Handler, which will in practice be one of the above
 typedef void (*EnvironmentHandler_type) ();

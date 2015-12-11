@@ -131,4 +131,11 @@
 #define SWI_OS_SubstituteArgs32        asm volatile ("SWI 0x00007E")
 #define SWI_OS_HeapSort32              asm volatile ("SWI 0x00007F")
 
+#define SWI_OS_GenerateError_R(eblk)  \
+  asm volatile (                      \
+   "mov r0, %0\n\t"                   \
+   "SWI 0x00002B"                     \
+   : : "r" ((eblk))                   \
+  )
+
 #endif

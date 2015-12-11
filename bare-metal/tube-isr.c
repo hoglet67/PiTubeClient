@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include "debug.h"
 #include "startup.h"
+#include "swi.h"
 #include "rpi-gpio.h"
 #include "tube-lib.h"
 #include "tube-env.h"
+#include "tube-swi.h"
 #include "tube-isr.h"
 
 volatile unsigned char *address;
@@ -15,6 +17,8 @@ volatile unsigned int signature;
 // a flag set when we are executing in interrupt mode
 // allows the SPI code to reliably disable/enable interrupts
 volatile int in_isr;
+
+ErrorBlock_type isrErrorBlock;
 
 // single byte parasite -> host (e.g. *SAVE)
 void type_0_data_transfer(void) {
@@ -76,7 +80,6 @@ void type_6_data_transfer(void) {
 void type_7_data_transfer(void) {
 }
 
-
 void TubeInterrupt(void) {
 
   in_isr = 1;
@@ -113,14 +116,16 @@ void TubeInterrupt(void) {
       printf("R4 type = %02x\r\n",type);
     }
     if (type == 0xff) {
-      // Error
       receiveByte(R2); // always 0
-      ErrorBuffer_type *eb = (ErrorBuffer_type *)env->handler[ERROR_HANDLER].address;
-      eb->errorAddr = 0;
-      eb->errorNum = receiveByte(R2);
-      receiveString(R2, 0x00, eb->errorMsg);
+      // Build the error block
+      ErrorBlock_type *eblk = &isrErrorBlock;
+      eblk->errorNum = receiveByte(R2);
+      receiveString(R2, 0x00, eblk->errorMsg);
       in_isr = 0;
-      _error_handler_wrapper(eb, env->handler[ERROR_HANDLER].handler);
+      // SWI OS_GenerateError need the error block in R0
+      //asm volatile ("mov r0, %0" : : "r" (eblk));
+      //SWI_OS_GenerateError;
+      SWI_OS_GenerateError_R(eblk);
     } else {
       unsigned char id = receiveByte(R4);
       if (type <= 4 || type == 6 || type == 7) {
