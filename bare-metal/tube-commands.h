@@ -8,6 +8,7 @@ int dispatchCmd(char *cmd);
 int doCmdHelp(char *params);
 int doCmdGo(char *params);
 int doCmdMem(char *params);
+int doCmdDis(char *params);
 int doCmdFill(char *params);
 int doCmdCrc(char *params);
 
