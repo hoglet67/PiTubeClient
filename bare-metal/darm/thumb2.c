@@ -50,7 +50,7 @@ void thumb2_parse_misc(darm_t *d, uint16_t w, uint16_t w2);
 // We don't care about the carry for the moment (should we?)
 uint32_t thumb_expand_imm(uint16_t imm12)
 {
-    uint32_t value;
+    uint32_t value = 0;
 
     imm12 &= 0xfff;
 
@@ -593,10 +593,10 @@ static int thumb2_disasm(darm_t *d, uint16_t w, uint16_t w2)
 // TODO: This lacks a lot of functionality, for debug only, replace with better function
 char *darm_thumb2_str(darm_t *d)
 {
-    int index=0, offset=0;
+    int i, index=0, offset=0;
     static char stringbuf[512];
 
-    for (int i = 0; i < THUMB2_INSTRUCTION_COUNT; i++) {
+    for (i = 0; i < THUMB2_INSTRUCTION_COUNT; i++) {
         if(d->instr == thumb2_instr_labels[i]) {
             index = i;
             break;
@@ -627,7 +627,7 @@ char *darm_thumb2_str(darm_t *d)
     }
 
     if(d->I == B_SET) {
-        offset += sprintf(stringbuf+offset, "#0x%x", d->imm);
+        offset += sprintf(stringbuf+offset, "#0x%lx", d->imm);
     }
 
     return stringbuf;

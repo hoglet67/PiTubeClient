@@ -136,6 +136,8 @@ int darm_disasm(darm_t *d, uint16_t w, uint16_t w2, uint32_t addr)
 
 int darm_str(const darm_t *d, darm_str_t *str)
 {
+    int i;
+    char ch;
     if(d->instr == I_INVLD || d->instr >= ARRAYSIZE(darm_mnemonics)) {
         return -1;
     }
@@ -185,7 +187,7 @@ int darm_str(const darm_t *d, darm_str_t *str)
     const char **ptrs = armv7_format_strings[d->instr];
     if(ptrs[0] == NULL) return -1;
 
-    for (char ch; (ch = ptrs[idx][off]) != 0; off++) {
+    for (; (ch = ptrs[idx][off]) != 0; off++) {
         switch (ch) {
         case 's':
             if(d->S == B_SET) {
@@ -544,7 +546,7 @@ finalize:
     char *instr = str->total;
     APPEND(instr, str->mnemonic);
 
-    for (int i = 0; i < 6 && args[i] != str->arg[i]; i++) {
+    for (i = 0; i < 6 && args[i] != str->arg[i]; i++) {
         if(i != 0) *instr++ = ',';
         *instr++ = ' ';
         APPEND(instr, str->arg[i]);
@@ -562,6 +564,7 @@ finalize:
 
 int darm_str2(const darm_t *d, darm_str_t *str, int lowercase)
 {
+    uint32_t i;
     if(darm_str(d, str) < 0) {
         return -1;
     }
@@ -569,8 +572,8 @@ int darm_str2(const darm_t *d, darm_str_t *str, int lowercase)
     if(lowercase != 0) {
         // just lowercase the entire object, including null-bytes
         char *buf = (char *) str;
-        for (uint32_t i = 0; i < sizeof(darm_str_t); i++) {
-            buf[i] = tolower(buf[i]);
+        for (i = 0; i < sizeof(darm_str_t); i++) {
+          buf[i] = tolower((int) buf[i]);
         }
     }
     return 0;
@@ -620,7 +623,7 @@ int darm_reglist(uint16_t reglist, char *out)
 void darm_dump(const darm_t *d)
 {
     printf(
-        "encoded:       0x%08x\n"
+        "encoded:       0x%08lx\n"
         "instr:         I_%s\n"
         "instr-type:    T_%s\n",
         d->w, darm_mnemonic_name(d->instr),
@@ -646,11 +649,11 @@ void darm_dump(const darm_t *d)
     PRINT_REG(RdLo);
 
     if(d->I == B_SET) {
-        printf("imm:           0x%08x  %d\n", d->imm, d->imm);
+        printf("imm:           0x%08lx  %lu\n", d->imm, d->imm);
     }
 
 #define PRINT_FLAG(flag, comment, comment2) if(d->flag != B_INVLD) \
-    printf("%s:             %d   (%s)\n", #flag, d->flag, \
+    printf("%s:             %lu   (%s)\n", #flag, d->flag, \
         d->flag == B_SET ? comment : comment2)
 
     PRINT_FLAG(B, "swap one byte", "swap four bytes");
@@ -675,14 +678,14 @@ void darm_dump(const darm_t *d)
     }
 
     if(d->rotate != 0) {
-        printf("rotate:        %d\n", d->rotate);
+        printf("rotate:        %lu\n", d->rotate);
     }
 
     if(d->shift_type != S_INVLD) {
         if(d->Rs == R_INVLD) {
             printf(
                 "type:          %s (shift type)\n"
-                "shift:         %-2d  (shift constant)\n",
+                "shift:         %-2lu  (shift constant)\n",
                 darm_shift_type_name(d->shift_type), d->shift);
         }
         else {
@@ -696,8 +699,8 @@ void darm_dump(const darm_t *d)
 
     if(d->lsb != 0 || d->width != 0) {
         printf(
-            "lsb:           %d\n"
-            "width:         %d\n",
+            "lsb:           %lu\n"
+            "width:         %lu\n",
             d->lsb, d->width);
     }
 
@@ -707,7 +710,7 @@ void darm_dump(const darm_t *d)
         printf("reglist:       %s\n", reglist);
     }
     if (d->sat_imm != 0) {
-        printf("sat_imm:           0x%08x  %d\n", d->sat_imm, d->sat_imm);
+        printf("sat_imm:           0x%08lx  %lu\n", d->sat_imm, d->sat_imm);
     }
 
     if(d->opc1 != 0 || d->opc2 != 0 || d->coproc != 0) {

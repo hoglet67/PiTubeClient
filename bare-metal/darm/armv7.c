@@ -923,12 +923,13 @@ const char *darm_condition_meaning_fp(darm_cond_t cond)
 
 darm_cond_t darm_condition_index(const char *condition_code)
 {
+    uint32_t i;
     if(condition_code == NULL) return -1;
 
     // the "AL" condition flag
     if(condition_code[0] == 0) return C_AL;
 
-    for (uint32_t i = 0; i < ARRAYSIZE(g_condition_codes); i++) {
+    for (i = 0; i < ARRAYSIZE(g_condition_codes); i++) {
         if(!strcmp(condition_code, g_condition_codes[i].mnemonic_extension)) {
             return i;
         }
