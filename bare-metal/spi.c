@@ -1,6 +1,7 @@
 // spi.c
 
 #include "spi.h"
+#include "rpi-gpio.h"
 #define BIT(in) (1 << (in))
 
 // Select whether to use SPIO_CE0_N OR SPIO_CE1_N
@@ -27,19 +28,19 @@ void spi_pin_init(void)
   unsigned int var;
   int ce_offset = get_ce_offset();
 
-  var = gpioGPFSEL1;                                                         // Read current value of GPFSEL1- GPIO 10 & 11
+  var = RPI_GpioBase->GPFSEL[1];                                            // Read current value of GPFSEL1- GPIO 10 & 11
 
   var &=~((7 << 0) | (7 << 3));                                              // Set as input pins GPIO = 000
   var |= ((4 << 0) | (4 << 3));                                              // Set to alt function ALT0, GPIO = 000
 
-  gpioGPFSEL1 = var;                                                         // Write back updated value
+  RPI_GpioBase->GPFSEL[1] = var;                                            // Write back updated value
 
-  var = gpioGPFSEL0;                                                         // Read current value of GPFSEL1- GPIO 7,8 & 9
+  var = RPI_GpioBase->GPFSEL[0];                                            // Read current value of GPFSEL1- GPIO 7,8 & 9
 
   var &=~((7 << ce_offset) | (7 << 27));                                     // Set as input pins GPIO = 000
   var |= ((4 << ce_offset) | (4 << 27));                                     // Set to alt function ALT0, GPIO = 000
 
-  gpioGPFSEL0 =var;                                                          // Write back updated value
+  RPI_GpioBase->GPFSEL[0] =var;                                             // Write back updated value
 }
 
 void spi_begin(void)
@@ -108,6 +109,6 @@ void spi_send(u8* TxBuff, u32 Length)
 void spi_end(void)                                                            // Set all the SPI0 pins back to input
 {
   int ce_offset = get_ce_offset();
-  gpioGPFSEL1 &=~((7 << 0) | (7 << 3));                                       // Set as input pins GPIO = 000
-  gpioGPFSEL0 &=~((ce_offset) | (7 << 27));                                   // Set as input pins GPIO = 000
+  RPI_GpioBase->GPFSEL[1] &=~((7 << 0) | (7 << 3));                                       // Set as input pins GPIO = 000
+  RPI_GpioBase->GPFSEL[0] &=~((ce_offset) | (7 << 27));                                   // Set as input pins GPIO = 000
 }

@@ -49,8 +49,8 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 {
     static int lit = 0;
 
-    if (RPI_GetGpio()->GPEDS0 & RST_PIN_MASK) {
-      RPI_GetGpio()->GPEDS0 = RST_PIN_MASK;
+    if (RPI_GpioBase->GPEDS0 & RST_PIN_MASK) {
+   	 RPI_GpioBase->GPEDS0 = RST_PIN_MASK;
       //printf("RST PIN!!!\r\n");
       reboot_now();
     }
@@ -72,14 +72,14 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
         lit = 1;
     }
 
-    if (RPI_GetGpio()->GPEDS0 & IRQ_PIN_MASK) {
-      RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
+    if (RPI_GpioBase->GPEDS0 & IRQ_PIN_MASK) {
+   	 RPI_GpioBase->GPEDS0 = IRQ_PIN_MASK;
       //printf("IRQ PIN!!!\r\n");
       TubeInterrupt();
     }
 
-    if (RPI_GetGpio()->GPEDS0 & NMI_PIN_MASK) {
-      //RPI_GetGpio()->GPEDS0 = NMI_PIN_MASK;
+    if (RPI_GpioBase->GPEDS0 & NMI_PIN_MASK) {
+      //RPI_GpioBase->GPEDS0 = NMI_PIN_MASK;
       printf("NMI PIN!!!\r\n");
     }
 

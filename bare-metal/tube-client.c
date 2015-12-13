@@ -192,10 +192,22 @@ void initEnv() {
  * Initialize the hardware
  ***********************************************************/
 
-void initHardware() {
-  /* Write 1 to the LED init nibble in the Function Select GPIO
+void initHardware()
+{
+#define JTAG_DEBUG
+#ifdef JTAG_DEBUG
+	// See http://sysprogs.com/VisualKernel/tutorials/raspberry/jtagsetup/
+	RPI_SetGpioPinFunction(RPI_GPIO4, FS_ALT5);		// TDI
+	RPI_SetGpioPinFunction(RPI_GPIO22, FS_ALT4);		// nTRST
+	RPI_SetGpioPinFunction(RPI_GPIO23, FS_ALT4);		// RTCK
+	RPI_SetGpioPinFunction(RPI_GPIO24, FS_ALT4);		// TDO
+	RPI_SetGpioPinFunction(RPI_GPIO25, FS_ALT4);		// TCK
+	RPI_SetGpioPinFunction(RPI_GPIO27, FS_ALT4);		// TMS
+#endif
+
+	/* Write 1 to the LED init nibble in the Function Select GPIO
      peripheral register to enable LED pin as an output */
-  RPI_GetGpio()->LED_GPFSEL |= LED_GPFBIT;
+  RPI_GpioBase->LED_GPFSEL |= LED_GPFBIT;
 
   /* Configure our pins as inputs */
   RPI_SetGpioPinFunction(IRQ_PIN, FS_INPUT);
@@ -203,16 +215,16 @@ void initHardware() {
   RPI_SetGpioPinFunction(RST_PIN, FS_INPUT);
 
   /* Configure GPIO to detect a falling edge of the IRQ pin */
-  RPI_GetGpio()->GPFEN0 |= IRQ_PIN_MASK;
+  RPI_GpioBase->GPFEN0 |= IRQ_PIN_MASK;
 
   /* Make sure there are no pending detections */
-  RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
+  RPI_GpioBase->GPEDS0 = IRQ_PIN_MASK;
 
   /* Configure GPIO to detect a rising edge of the RST pin */
-  RPI_GetGpio()->GPREN0 |= RST_PIN_MASK;
+  RPI_GpioBase->GPREN0 |= RST_PIN_MASK;
 
   /* Make sure there are no pending detections */
-  RPI_GetGpio()->GPEDS0 = RST_PIN_MASK;
+  RPI_GpioBase->GPEDS0 = RST_PIN_MASK;
 
   /* Enable gpio_int[0] which is IRQ 49 */
   RPI_GetIrqController()->Enable_IRQs_2 = (1 << (49 - 32));

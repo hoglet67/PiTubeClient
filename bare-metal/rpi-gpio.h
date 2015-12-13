@@ -1,5 +1,4 @@
 /*
-
     Part of the Raspberry-Pi Bare Metal Tutorials
     Copyright (c) 2013-2015, Brian Sidebotham
     All rights reserved.
@@ -25,7 +24,6 @@
     CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
     ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
     POSSIBILITY OF SUCH DAMAGE.
-
 */
 
 #ifndef RPI_GPIO_H
@@ -34,27 +32,28 @@
 #include "rpi-base.h"
 
 /** The base address of the GPIO peripheral (ARM Physical Address) */
-#define RPI_GPIO_BASE       ( PERIPHERAL_BASE + 0x200000UL )
+#define RPI_GPIO_BASE       (PERIPHERAL_BASE + 0x200000UL)
 
-#if defined( RPIBPLUS ) || defined( RPI2 )
+#if defined(RPIBPLUS) || defined(RPI2)
     #define LED_GPFSEL      GPFSEL4
     #define LED_GPFBIT      21
     #define LED_GPSET       GPSET1
     #define LED_GPCLR       GPCLR1
     #define LED_GPIO_BIT    15
-    #define LED_ON()        do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
-    #define LED_OFF()       do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_ON()        do { RPI_GpioBase->LED_GPCLR = (1 << LED_GPIO_BIT); } while(0)
+    #define LED_OFF()       do { RPI_GpioBase->LED_GPSET = (1 << LED_GPIO_BIT); } while(0)
 #else
-    #define LED_GPFSEL      GPFSEL1
+    #define LED_GPFSEL      GPFSEL[1]
     #define LED_GPFBIT      18
     #define LED_GPSET       GPSET0
     #define LED_GPCLR       GPCLR0
     #define LED_GPIO_BIT    16
-    #define LED_ON()        do { RPI_GetGpio()->LED_GPSET = ( 1 << LED_GPIO_BIT ); } while( 0 )
-    #define LED_OFF()       do { RPI_GetGpio()->LED_GPCLR = ( 1 << LED_GPIO_BIT ); } while( 0 )
+    #define LED_ON()        do { RPI_GpioBase->LED_GPSET = (1 << LED_GPIO_BIT); } while(0)
+    #define LED_OFF()       do { RPI_GpioBase->LED_GPCLR = (1 << LED_GPIO_BIT); } while(0)
 #endif
 
-typedef enum {
+typedef enum
+{
     FS_INPUT = 0,
     FS_OUTPUT,
     FS_ALT5,
@@ -63,13 +62,13 @@ typedef enum {
     FS_ALT1,
     FS_ALT2,
     FS_ALT3,
-    } rpi_gpio_alt_function_t;
+} rpi_gpio_alt_function_t;
 
-/* A mask to be able to clear the bits in the register before setting the
-   value we require */
+/* A mask to be able to clear the bits in the register before setting the value we require */
 #define FS_MASK     (7)
 
-typedef enum {
+typedef enum
+{
     RPI_GPIO0 = 0,
     RPI_GPIO1,
     RPI_GPIO2,
@@ -124,7 +123,7 @@ typedef enum {
     RPI_GPIO51,
     RPI_GPIO52,
     RPI_GPIO53,
-    } rpi_gpio_pin_t;
+} rpi_gpio_pin_t;
 
 
 /** The GPIO Peripheral is described in section 6 of the BCM2835 Peripherals
@@ -144,13 +143,9 @@ typedef enum {
 
     The Alternate function table also has the pull state (pull-up/pull-down)
     which is applied after a power down. */
-typedef struct {
-    rpi_reg_rw_t    GPFSEL0;
-    rpi_reg_rw_t    GPFSEL1;
-    rpi_reg_rw_t    GPFSEL2;
-    rpi_reg_rw_t    GPFSEL3;
-    rpi_reg_rw_t    GPFSEL4;
-    rpi_reg_rw_t    GPFSEL5;
+typedef struct
+{
+    rpi_reg_rw_t    GPFSEL[6];
     rpi_reg_ro_t    Reserved0;
     rpi_reg_wo_t    GPSET0;
     rpi_reg_wo_t    GPSET1;
@@ -186,26 +181,25 @@ typedef struct {
     rpi_reg_wo_t    GPPUDCLK0;
     rpi_reg_wo_t    GPPUDCLK1;
     rpi_reg_ro_t    Reserved11;
-    } rpi_gpio_t;
+} rpi_gpio_t;
 
-
-typedef enum {
+typedef enum
+{
     RPI_IO_LO = 0,
     RPI_IO_HI,
     RPI_IO_ON,
     RPI_IO_OFF,
     RPI_IO_UNKNOWN,
-    } rpi_gpio_value_t;
+} rpi_gpio_value_t;
 
-
-extern rpi_gpio_t* RPI_GetGpio(void);
-extern void RPI_SetGpioPinFunction( rpi_gpio_pin_t gpio, rpi_gpio_alt_function_t func );
-extern void RPI_SetGpioOutput( rpi_gpio_pin_t gpio );
-extern void RPI_SetGpioInput( rpi_gpio_pin_t gpio );
-extern rpi_gpio_value_t RPI_GetGpioValue( rpi_gpio_pin_t gpio );
-extern void RPI_SetGpioHi( rpi_gpio_pin_t gpio );
-extern void RPI_SetGpioLo( rpi_gpio_pin_t gpio );
-extern void RPI_SetGpioValue( rpi_gpio_pin_t gpio, rpi_gpio_value_t value );
-extern void RPI_ToggleGpio( rpi_gpio_pin_t gpio );
+extern rpi_gpio_t* RPI_GpioBase;
+extern void RPI_SetGpioPinFunction(rpi_gpio_pin_t gpio, rpi_gpio_alt_function_t func);
+extern void RPI_SetGpioOutput(rpi_gpio_pin_t gpio);
+extern void RPI_SetGpioInput(rpi_gpio_pin_t gpio);
+extern rpi_gpio_value_t RPI_GetGpioValue(rpi_gpio_pin_t gpio);
+extern void RPI_SetGpioHi(rpi_gpio_pin_t gpio);
+extern void RPI_SetGpioLo(rpi_gpio_pin_t gpio);
+extern void RPI_SetGpioValue(rpi_gpio_pin_t gpio, rpi_gpio_value_t value);
+extern void RPI_ToggleGpio(rpi_gpio_pin_t gpio);
 
 #endif

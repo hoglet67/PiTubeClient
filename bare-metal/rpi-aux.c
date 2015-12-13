@@ -58,11 +58,11 @@ void RPI_AuxMiniUartInit( int baud, int bits )
     RPI_SetGpioPinFunction( RPI_GPIO14, FS_ALT5 );
     RPI_SetGpioPinFunction( RPI_GPIO15, FS_ALT5 );
 
-    RPI_GetGpio()->GPPUD = 0;
+    RPI_GpioBase->GPPUD = 0;
     for( i=0; i<150; i++ ) { }
-    RPI_GetGpio()->GPPUDCLK0 = ( 1 << 14 );
+    RPI_GpioBase->GPPUDCLK0 = ( 1 << 14 );
     for( i=0; i<150; i++ ) { }
-    RPI_GetGpio()->GPPUDCLK0 = 0;
+    RPI_GpioBase->GPPUDCLK0 = 0;
 
     /* Disable flow control,enable transmitter and receiver! */
     auxillary->MU_CNTL = AUX_MUCNTL_TX_ENABLE;

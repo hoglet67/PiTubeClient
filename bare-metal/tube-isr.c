@@ -25,8 +25,8 @@ void type_0_data_transfer(void) {
   // Terminate the data transfer if IRQ falls (e.g. interrupt from tube release)
   while (1) {
     // Wait for NMI to fall
-    while (RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK) {
-      if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
+    while (RPI_GpioBase->GPLEV0 & NMI_PIN_MASK) {
+      if (!(RPI_GpioBase->GPLEV0 & IRQ_PIN_MASK)) {
         return;
       }
     }
@@ -36,8 +36,8 @@ void type_0_data_transfer(void) {
     signature += *address++;
     signature *= 13;
     // Wait for NMI to rise
-    while (!(RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK)) {
-      if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
+    while (!(RPI_GpioBase->GPLEV0 & NMI_PIN_MASK)) {
+      if (!(RPI_GpioBase->GPLEV0 & IRQ_PIN_MASK)) {
         return;
       }
     }
@@ -49,8 +49,8 @@ void type_1_data_transfer(void) {
   // Terminate the data transfer if IRQ falls (e.g. interrupt from tube release)
   while (1) {
     // Wait for NMI to fall
-    while (RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK) {
-      if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
+    while (RPI_GpioBase->GPLEV0 & NMI_PIN_MASK) {
+      if (!(RPI_GpioBase->GPLEV0 & IRQ_PIN_MASK)) {
         return;
       }
     }
@@ -60,8 +60,8 @@ void type_1_data_transfer(void) {
     signature += *address++;
     signature *= 13;
     // Wait for NMI to rise
-    while (!(RPI_GetGpio()->GPLEV0 & NMI_PIN_MASK)) {
-      if (!(RPI_GetGpio()->GPLEV0 & IRQ_PIN_MASK)) {
+    while (!(RPI_GpioBase->GPLEV0 & NMI_PIN_MASK)) {
+      if (!(RPI_GpioBase->GPLEV0 & IRQ_PIN_MASK)) {
         return;
       }
     }
