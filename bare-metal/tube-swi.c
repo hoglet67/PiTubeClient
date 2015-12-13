@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "debug.h"
 #include "startup.h"
 #include "tube-lib.h"
@@ -125,7 +126,7 @@ SWIHandler_Type SWIHandler_Table[NUM_SWI_HANDLERS] = {
   tube_SWI_Not_Known,         // (&28) -- OS_BinaryToDecimal
   tube_SWI_Not_Known,         // (&29) -- OS_FSControl
   tube_SWI_Not_Known,         // (&2A) -- OS_ChangeDynamicArea
-  tube_SWI_Not_Known,         // (&2B) -- OS_GenerateError
+  tube_GenerateError,         // (&2B) -- OS_GenerateError
   tube_SWI_Not_Known,         // (&2C) -- OS_ReadEscapeState
   tube_SWI_Not_Known,         // (&2D) -- OS_EvaluateExpression
   tube_SWI_Not_Known,         // (&2E) -- OS_SpriteOp
@@ -584,6 +585,21 @@ void tube_EnterOS(unsigned int *reg) {
 }
 
 void tube_Mouse(unsigned int *reg) {
+}
+
+void tube_GenerateError(unsigned int *reg) {
+  // The error block is passed to the SWI in reg 0
+  ErrorBlock_type *eblk = (ErrorBlock_type *)reg[0];
+  // Get the current handler's error buffer
+  ErrorBuffer_type *ebuf = (ErrorBuffer_type *)env->handler[ERROR_HANDLER].address;
+  // Fill in the error address from the stacked link register
+  ebuf->errorAddr = (void *) reg[13];
+  // Copy the error number into the handler's error block
+  ebuf->errorBlock.errorNum = eblk->errorNum;
+  // Copy the error string into the handler's error block
+  strcpy(ebuf->errorBlock.errorMsg, eblk->errorMsg);
+  // The wrapper drops back to user mode and calls the handler
+  _error_handler_wrapper(ebuf, env->handler[ERROR_HANDLER].handler);
 }
 
 // Entry:

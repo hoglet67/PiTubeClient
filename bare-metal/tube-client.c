@@ -68,9 +68,9 @@ const char *prompt = "arm>*";
 void defaultErrorHandler(ErrorBuffer_type *eb) {
   // TODO: Consider resetting the user stack?
   if (DEBUG) {
-    printf("Error = %02x %s\r\n", eb->errorNum, eb->errorMsg);
+    printf("Error = %p %02x %s\r\n", eb->errorAddr, eb->errorBlock.errorNum, eb->errorBlock.errorMsg);
   }
-  sendString(R1, 0x00, eb->errorMsg);
+  sendString(R1, 0x00, eb->errorBlock.errorMsg);
   sendString(R1, 0x00, "\n\r");
   SWI_OS_Exit;
 }
