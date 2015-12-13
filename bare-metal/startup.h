@@ -14,7 +14,7 @@ extern void _enable_interrupts( void );
 
 extern void _disable_interrupts( void );
 
-extern void _user_exec(volatile unsigned char *address);
+extern int  _user_exec(volatile unsigned char *address, unsigned int r0, unsigned int r1, unsigned int r2);
 
 extern void _error_handler_wrapper(ErrorBuffer_type *eb, EnvironmentHandler_type errorHandler);
 
@@ -23,5 +23,7 @@ extern void _escape_handler_wrapper(unsigned int escapeFlag, EnvironmentHandler_
 extern void _exit_handler_wrapper(unsigned int r12, EnvironmentHandler_type exitHandler);
 
 extern unsigned int _get_cpsr();
+
+extern unsigned int _get_stack_pointer();
 
 #endif

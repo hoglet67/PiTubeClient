@@ -106,7 +106,10 @@ void defaultExitHandler() {
   if (DEBUG) {
     printf("Invoking default exit handler\r\n");
   }
-  OS_EnterOS();
+  // Move back to supervisor mode
+  swi(SWI_OS_EnterOS);
+  // Jump back to the command prompt
+  longjmp(enterOS, 1);  
 }
 
 void defaultUndefinedInstructionHandler() {
@@ -261,7 +264,7 @@ void tube_Reset() {
  * Initialize the hardware (in User Mode)
  ***********************************************************/
 
-void cli_loop() {
+int cli_loop() {
   unsigned int flags;
   int length;
 
@@ -269,7 +272,7 @@ void cli_loop() {
 
     // In debug mode, print the mode (which should be user mode...)
     if (DEBUG) {
-      printf("%08x\r\n", _get_cpsr());
+      printf("tube_cli: cpsr=%08x stack=%08x\r\n", _get_cpsr(), _get_stack_pointer());
     }
 
     // Print the supervisor prompt
@@ -295,6 +298,7 @@ void cli_loop() {
       OS_CLI(env->commandBuffer);
     }
   }
+  return 0;
 }
 
 /***********************************************************
@@ -309,6 +313,7 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
   // Initialize the hardware
   initHardware();
 
+  // If the default exit handler is called during tube_Reset(), we return here
   // This should not be necessary, but I've seen a couple of cases
   // where R4 errors happened during the startup message
   setjmp(enterOS);
@@ -316,12 +321,12 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
   // Send reset message
   tube_Reset();
 
-  // When SWI OS_EnterOS is called, we return here
+  // When the default exit handler is called, we return here
   setjmp(enterOS);
 
   // Enable interrupts!
   _enable_interrupts();
 
   // Execute cli_loop as a normal user program
-  user_exec((unsigned char *)cli_loop);
+  user_exec_fn(cli_loop, 0);
 }

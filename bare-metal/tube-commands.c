@@ -2,11 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "swi.h"
 #include "tube-swi.h"
-#include "tube-lib.h"
 #include "tube-commands.h"
 #include "darm/darm.h"
-unsigned int memAddr;
 
 const char *help = "ARM Tube Client 0.10\r\n";
 
@@ -16,11 +15,12 @@ char line[256];
  * Build in Commands
  ***********************************************************/
 
-#define NUM_CMDS 6
+#define NUM_CMDS 7
 
 // Must be kept in step with cmdFuncs (just below)
 char *cmdStrings[NUM_CMDS] = {
   "HELP",
+  "TEST",
   "GO",
   "MEM",
   "DIS",
@@ -30,11 +30,22 @@ char *cmdStrings[NUM_CMDS] = {
 
 int (*cmdFuncs[NUM_CMDS])(char *params) = {
   doCmdHelp,
+  doCmdTest,
   doCmdGo,
   doCmdMem,
   doCmdDis,
   doCmdFill,
   doCmdCrc
+};
+
+int cmdMode[NUM_CMDS] = {
+  MODE_USER,
+  MODE_USER,
+  MODE_USER,
+  MODE_USER,
+  MODE_USER,
+  MODE_USER,
+  MODE_USER
 };
 
 int dispatchCmd(char *cmd) {
@@ -59,7 +70,13 @@ int dispatchCmd(char *cmd) {
 		while (isblank((int)*cmdPtr)) {
 		  cmdPtr++;
 		}
-		return (*cmdFuncs[i])(cmdPtr);
+        if (cmdMode[i] == MODE_USER) {
+          // Execute the command in user mode
+          return user_exec_fn(cmdFuncs[i], (int) cmdPtr);
+        } else {
+          // Execute the command in supervisor mode
+          return cmdFuncs[i](cmdPtr);
+        }
 	  }
       cmdPtr++;
       refPtr++;
@@ -69,16 +86,19 @@ int dispatchCmd(char *cmd) {
   return 1;
 }
 
+int doCmdTest(char *params) {
+  OS_Write0("doCmdTest\r\n");
+  return 0;
+}
+
 int doCmdHelp(char *params) {
   int i;
-  sendString(R1, 0x00, help);
-  sendByte(R1, 0x00);
-  if (strcasecmp(params, "ARM") == 0) {
+  OS_Write0(help);
+  if (strncasecmp(params, "ARM", 3) == 0) {
 	for (i = 0; i < NUM_CMDS; i++) {
-	  sendString(R1, 0x00, "  ");
-	  sendString(R1, 0x00, cmdStrings[i]);
-	  sendString(R1, 0x00, "\r\n");
-	  sendByte(R1, 0x00);
+      OS_Write0("  ");
+	  OS_Write0(cmdStrings[i]);
+	  OS_Write0("\r\n");
 	}
 	return 0;
   }
@@ -88,9 +108,11 @@ int doCmdHelp(char *params) {
 
 int doCmdGo(char *params) {
   unsigned int address;
+  FunctionPtr_Type f;
   sscanf(params, "%x", &address);
-  // No return from here
-  user_exec((unsigned char *)address);
+  // Cast address to a generic function pointer
+  f = (FunctionPtr_Type) address;
+  f();
   return 0;
 }
 
@@ -110,29 +132,34 @@ int doCmdMem(char *params) {
   int i, j;
   unsigned char c;
   char *ptr;
+  unsigned int flags;
+  unsigned int memAddr;
   sscanf(params, "%x", &memAddr);
-  for (i = 0; i < 0x100; i+= 16) {
-	ptr = line;
-	// Generate the address
-	ptr += sprintf(ptr, "%08X ", (memAddr + i));	
+  do {
+    for (i = 0; i < 16; i++) {
+      ptr = line;
+      // Generate the address
+      ptr += sprintf(ptr, "%08X ", memAddr);	
 	  // Generate the hex values
-	for (j = 0; j < 16; j++) {
-	  c = *((unsigned char *)(memAddr + i + j));
-	  ptr += sprintf(ptr, "%02X ", c);
-	}
-	// Generate the ascii values
-	for (j = 0; j < 16; j++) {
-	  c = *((unsigned char *)(memAddr + i + j));
-      if (c < 32 || c > 126) {
-		c = '.';
+      for (j = 0; j < 16; j++) {
+        c = *((unsigned char *)(memAddr + j));
+        ptr += sprintf(ptr, "%02X ", c);
       }
-	  ptr += sprintf(ptr, "%c", c);
-	}
-	ptr += sprintf(ptr, "\r\n");
-	sendString(R1, 0x00, line);
-	sendByte(R1, 0x00);
-  }
-  memAddr += 0x100;
+      // Generate the ascii values
+      for (j = 0; j < 16; j++) {
+        c = *((unsigned char *)(memAddr + j));
+        if (c < 32 || c > 126) {
+          c = '.';
+        }
+        ptr += sprintf(ptr, "%c", c);
+      }
+      ptr += sprintf(ptr, "\r\n");
+      OS_Write0(line);
+      memAddr += 0x10;
+    }
+    OS_ReadC(&flags);   
+  } while ((flags & CARRY_MASK) == 0);
+  OS_Byte(0x7e, 0x00, 0x00, NULL, NULL);
   return 0;
 }
 
@@ -140,8 +167,9 @@ int doCmdDis(char *params) {
   darm_t d;
   darm_str_t str;
   int i;
+  unsigned int flags;
   unsigned int opcode;
-  unsigned int regs[2];
+  unsigned int memAddr;
   sscanf(params, "%x", &memAddr);
   memAddr &= ~3;
   do {
@@ -151,12 +179,12 @@ int doCmdDis(char *params) {
       if(darm_armv7_disasm(&d, opcode) == 0 && darm_str2(&d, &str, 0) == 0) {
         sprintf(line + 18, "%s\r\n", str.total);
       }
-      sendString(R1, 0x00, line);
-      sendByte(R1, 0x00);
+      OS_Write0(line);
       memAddr += 4;
     }
-    tube_ReadC(&regs[1]);
-  } while ((regs[0] & CARRY_MASK) == 0);
+    OS_ReadC(&flags);   
+  } while ((flags & CARRY_MASK) == 0);
+  OS_Byte(0x7e, 0x00, 0x00, NULL, NULL);
   return 0;
 }
 
@@ -179,7 +207,6 @@ int doCmdCrc(char *params) {
     }
   }
   sprintf(line, "%04X\r\n", (unsigned short)crc);
-  sendString(R1, 0x00, line);
-  sendByte(R1, 0x00);
+  OS_Write0(line);
   return 0;
 }
