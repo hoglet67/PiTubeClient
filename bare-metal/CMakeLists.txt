@@ -65,6 +65,8 @@ add_executable( tube-client
 	spi.c
 	spi.h
 	debug.h
+	swi.c
+	swi.h
 	tube-env.h
 	tube-lib.h
 	tube-lib.c

@@ -72,7 +72,7 @@ void defaultErrorHandler(ErrorBuffer_type *eb) {
   }
   sendString(R1, 0x00, eb->errorBlock.errorMsg);
   sendString(R1, 0x00, "\n\r");
-  SWI_OS_Exit;
+  OS_Exit();
 }
 
 // Entered with R11 bit 6 as escape status
@@ -106,7 +106,7 @@ void defaultExitHandler() {
   if (DEBUG) {
     printf("Invoking default exit handler\r\n");
   }
-  SWI_OS_EnterOS;
+  OS_EnterOS();
 }
 
 void defaultUndefinedInstructionHandler() {
@@ -183,9 +183,6 @@ void initEnv() {
   env->handler[           MEMORY_LIMIT_HANDLER].handler = (EnvironmentHandler_type) (2 * 1024 * 1024);
   env->handler[      APPLICATION_SPACE_HANDLER].handler = (EnvironmentHandler_type) (3 * 1024 * 1024);
   env->handler[CURRENTLY_ACTIVE_OBJECT_HANDLER].handler = (EnvironmentHandler_type) (0);
-
-
-
 }
 
 /***********************************************************
@@ -193,50 +190,54 @@ void initEnv() {
  ***********************************************************/
 
 void initHardware() {
-  /* Write 1 to the LED init nibble in the Function Select GPIO
-     peripheral register to enable LED pin as an output */
+  // Write 1 to the LED init nibble in the Function Select GPIO
+  // peripheral register to enable LED pin as an output
   RPI_GetGpio()->LED_GPFSEL |= LED_GPFBIT;
 
-  /* Configure our pins as inputs */
+  // Configure our pins as inputs
   RPI_SetGpioPinFunction(IRQ_PIN, FS_INPUT);
   RPI_SetGpioPinFunction(NMI_PIN, FS_INPUT);
   RPI_SetGpioPinFunction(RST_PIN, FS_INPUT);
 
-  /* Configure GPIO to detect a falling edge of the IRQ pin */
+  // Configure GPIO to detect a falling edge of the IRQ pin
   RPI_GetGpio()->GPFEN0 |= IRQ_PIN_MASK;
 
-  /* Make sure there are no pending detections */
+  // Make sure there are no pending detections
   RPI_GetGpio()->GPEDS0 = IRQ_PIN_MASK;
 
-  /* Configure GPIO to detect a rising edge of the RST pin */
+  // Configure GPIO to detect a rising edge of the RST pin
   RPI_GetGpio()->GPREN0 |= RST_PIN_MASK;
 
-  /* Make sure there are no pending detections */
+  // Make sure there are no pending detections
   RPI_GetGpio()->GPEDS0 = RST_PIN_MASK;
 
-  /* Enable gpio_int[0] which is IRQ 49 */
+  // Enable gpio_int[0] which is IRQ 49
   RPI_GetIrqController()->Enable_IRQs_2 = (1 << (49 - 32));
 
-  /* Enable the timer interrupt IRQ */
+  // Enable the timer interrupt IRQ
   // RPI_GetIrqController()->Enable_Basic_IRQs = RPI_BASIC_ARM_TIMER_IRQ;
 
-  /* Setup the system timer interrupt */
-  /* Timer frequency = Clk/256 * 0x400 */
+  // Setup the system timer interrupt
+  // Timer frequency = Clk/256 * 0x400
   RPI_GetArmTimer()->Load = 0x400;
 
-  /* Setup the ARM Timer */
+  // Setup the ARM Timer
   RPI_GetArmTimer()->Control =
     RPI_ARMTIMER_CTRL_23BIT |
     RPI_ARMTIMER_CTRL_ENABLE |
     RPI_ARMTIMER_CTRL_INT_ENABLE |
     RPI_ARMTIMER_CTRL_PRESCALE_256;
 
-  /* Initialise the UART */
+  // Initialise the UART
   RPI_AuxMiniUartInit( 57600, 8 );
 
-  /* Setup SPI*/
+  // Setup SP
   spi_begin();
 }
+
+/***********************************************************
+ * Do the tube reset protocol (in Supervisor Mode)
+ ***********************************************************/
 
 // Tube Reset protocol
 void tube_Reset() {
@@ -255,17 +256,53 @@ void tube_Reset() {
   printf( "Received response\r\n" );
 }
 
+
+/***********************************************************
+ * Initialize the hardware (in User Mode)
+ ***********************************************************/
+
+void cli_loop() {
+  unsigned int flags;
+  int length;
+
+  while( 1 ) {
+
+    // In debug mode, print the mode (which should be user mode...)
+    if (DEBUG) {
+      printf("%08x\r\n", _get_cpsr());
+    }
+
+    // Print the supervisor prompt
+    OS_Write0(prompt);
+
+    // Ask for user input (OSWORD 0)
+    OS_ReadLine(env->commandBuffer, sizeof(env->commandBuffer) - 1, 0x20, 0x7F, &flags, &length);
+
+    // Was it escape
+    if (flags & CARRY_MASK) {
+
+      // Yes, print Escape
+      OS_Write0("\n\rEscape\n\r");
+
+      // Acknowledge escape condition
+      if (DEBUG) {
+        printf("Acknowledging Escape\r\n");
+      }
+      OS_Byte(0x7e, 0x00, 0x00, NULL, NULL);
+
+    } else {
+      // No, so execute the command using OSCLI
+      OS_CLI(env->commandBuffer);
+    }
+  }
+}
+
 /***********************************************************
  * Main function - we'll never return from here
  ***********************************************************/
 
 void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
 {
-  // Register block used to interact with tube_ functions
-  unsigned int block[5];
-  unsigned int *carry = &block[0];
-  unsigned int *reg = &block[1];
-
   // Initialize the environment structure
   initEnv();
 
@@ -279,49 +316,12 @@ void kernel_main( unsigned int r0, unsigned int r1, unsigned int atags )
   // Send reset message
   tube_Reset();
 
-  while( 1 ) {
+  // When SWI OS_EnterOS is called, we return here
+  setjmp(enterOS);
 
-    // When SWI OS_EnterOS is called, we return here
-    setjmp(enterOS);
+  // Enable interrupts!
+  _enable_interrupts();
 
-    // Enable interrupts!
-    _enable_interrupts();
-
-    if (DEBUG) {
-      printf("%08x\r\n", _get_cpsr());
-    }
-
-    // Print the supervisor prompt
-    reg[0] = (unsigned int) prompt;
-    tube_Write0(reg);
-
-    // Ask for user input (OSWORD 0)
-    reg[0] = (unsigned int) env->commandBuffer;
-    reg[1] = 0x7F; // max line length
-    reg[2] = 0x20; // min ascii value
-    reg[3] = 0x7F; // max ascii value
-    tube_ReadLine(reg);
-
-    // Was it escape
-    if ((*carry) & CARRY_MASK) {
-
-      // Yes, print Escape
-      sendString(R1, 0x00, "\n\rEscape\n\r");
-
-      // Acknowledge escape condition
-      if (DEBUG) {
-        printf("Acknowledging Escape\r\n");
-      }
-      reg[0] = 0x7e;
-      reg[1] = 0x00;
-      tube_Byte(reg);
-
-    } else {
-      tube_CLI(reg);
-    }
-  }
-
-  // This never gets called
-  spi_end();
-
+  // Execute cli_loop as a normal user program
+  user_exec((unsigned char *)cli_loop);
 }
