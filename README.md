@@ -51,8 +51,8 @@ order bits of the address, and we are currently just using *RUN.
 In fact, in DFS there are only two higher order bits, so the max load
 address is not significantly larger anyway.
 
-Eventually BASIC should be a relocateable module. Until then, it migh
-be work writing a small boot loader.
+Eventually BASIC should be a relocateable module. Until then, it might
+be worth writing a small boot loader.
 
 Note: *LOAD BAS135 00200000 does work.
 
