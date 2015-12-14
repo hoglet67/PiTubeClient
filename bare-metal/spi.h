@@ -8,14 +8,6 @@ typedef unsigned char u32;
 typedef volatile unsigned int v32;
 #define REG32(in) *((v32*) in)
 
-// GPIO PINS
-#define gpioGPFSEL0		REG32(0x20200000)
-#define gpioGPFSEL1		REG32(0x20200004)
-#define gpioGPSET0 		REG32(0x2020001C)
-#define gpioGPCLR0		REG32(0x20200028)
-#define gpioGPLEV0		REG32(0x20200034)
-
-
 // SPI0 ADDRESS
 #define SPI0_CONTROL 	REG32(0x20204000)
 #define SPI0_FIFO    	REG32(0x20204004)

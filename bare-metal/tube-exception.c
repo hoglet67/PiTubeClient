@@ -111,11 +111,11 @@ void dump_info(unsigned int *context, int offset, char *type) {
   while (1) {
 	for (i = 0; i < 1000000; i++) {
 	  // look for reset being low
-	  if (!(RPI_GetGpio()->GPLEV0 & RST_PIN_MASK)) {
+	  if (!(RPI_GpioBase->GPLEV0 & RST_PIN_MASK)) {
 		rstlow = 1;
 	  }
 	  // then reset on the next rising edge
-	  if (rstlow && (RPI_GetGpio()->GPLEV0 & RST_PIN_MASK)) {
+	  if (rstlow && (RPI_GpioBase->GPLEV0 & RST_PIN_MASK)) {
 		reboot_now();
 	  }
 	}

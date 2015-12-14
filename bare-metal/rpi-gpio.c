@@ -2,84 +2,73 @@
 #include <stdint.h>
 #include "rpi-gpio.h"
 
-static rpi_gpio_t* rpiGpio = (rpi_gpio_t*)RPI_GPIO_BASE;
+rpi_gpio_t* RPI_GpioBase = (rpi_gpio_t*) RPI_GPIO_BASE;
 
-
-rpi_gpio_t* RPI_GetGpio(void)
+void RPI_SetGpioPinFunction(rpi_gpio_pin_t gpio, rpi_gpio_alt_function_t func)
 {
-    return rpiGpio;
-}
+    rpi_reg_rw_t* fsel_reg = &RPI_GpioBase->GPFSEL[gpio / 10];
 
-
-void RPI_SetGpioPinFunction( rpi_gpio_pin_t gpio, rpi_gpio_alt_function_t func )
-{
-    rpi_reg_rw_t* fsel_reg = &((rpi_reg_rw_t*)rpiGpio)[ gpio / 10 ];
     rpi_reg_rw_t fsel_copy = *fsel_reg;
-    fsel_copy &= ~( FS_MASK << ( ( gpio % 10 ) * 3 ) );
-    fsel_copy |= (func << ( ( gpio % 10 ) * 3 ) );
+    fsel_copy &= ~(FS_MASK << ((gpio % 10) * 3));
+    fsel_copy |= (func << ((gpio % 10) * 3));
     *fsel_reg = fsel_copy;
 }
 
-
-void RPI_SetGpioOutput( rpi_gpio_pin_t gpio )
+void RPI_SetGpioOutput(rpi_gpio_pin_t gpio)
 {
-    RPI_SetGpioPinFunction( gpio, FS_OUTPUT );
+    RPI_SetGpioPinFunction(gpio, FS_OUTPUT);
 }
 
-
-void RPI_SetGpioInput( rpi_gpio_pin_t gpio )
+void RPI_SetGpioInput(rpi_gpio_pin_t gpio)
 {
-    RPI_SetGpioPinFunction( gpio, FS_INPUT );
+    RPI_SetGpioPinFunction(gpio, FS_INPUT);
 }
 
-
-rpi_gpio_value_t RPI_GetGpioValue( rpi_gpio_pin_t gpio )
+rpi_gpio_value_t RPI_GetGpioValue(rpi_gpio_pin_t gpio)
 {
     rpi_gpio_value_t result = RPI_IO_UNKNOWN;
 
-    switch( gpio / 32 )
+    switch (gpio / 32)
     {
         case 0:
-            result = rpiGpio->GPLEV0 & ( 1 << gpio );
+            result = RPI_GpioBase->GPLEV0 & (1 << gpio);
             break;
 
         case 1:
-            result = rpiGpio->GPLEV1 & ( 1 << ( gpio - 32 ) );
+            result = RPI_GpioBase->GPLEV1 & (1 << (gpio - 32));
             break;
 
         default:
             break;
     }
 
-    if( result != RPI_IO_UNKNOWN )
+    if (result != RPI_IO_UNKNOWN)
     {
-        if( result )
+        if(result)
             result = RPI_IO_HI;
     }
 
     return result;
 }
 
-
-void RPI_ToggleGpio( rpi_gpio_pin_t gpio )
+void RPI_ToggleGpio(rpi_gpio_pin_t gpio)
 {
-    if( RPI_GetGpioValue( gpio ) )
-        RPI_SetGpioLo( gpio );
+    if (RPI_GetGpioValue(gpio))
+        RPI_SetGpioLo(gpio);
     else
-        RPI_SetGpioHi( gpio );
+        RPI_SetGpioHi(gpio);
 }
 
-
-void RPI_SetGpioHi( rpi_gpio_pin_t gpio )
+void RPI_SetGpioHi(rpi_gpio_pin_t gpio)
 {
-    switch( gpio / 32 )
+    switch (gpio / 32)
     {
         case 0:
-            rpiGpio->GPSET0 = ( 1 << gpio );
+      	  RPI_GpioBase->GPSET0 = (1 << gpio);
             break;
 
         case 1:
-            rpiGpio->GPSET1 = ( 1 << ( gpio - 32 ) );
+      	   RPI_GpioBase->GPSET1 = (1 << (gpio - 32));
             break;
 
         default:
@@ -87,17 +76,16 @@ void RPI_SetGpioHi( rpi_gpio_pin_t gpio )
     }
 }
 
-
-void RPI_SetGpioLo( rpi_gpio_pin_t gpio )
+void RPI_SetGpioLo(rpi_gpio_pin_t gpio)
 {
-    switch( gpio / 32 )
+    switch (gpio / 32)
     {
         case 0:
-            rpiGpio->GPCLR0 = ( 1 << gpio );
+      	  RPI_GpioBase->GPCLR0 = (1 << gpio);
             break;
 
         case 1:
-            rpiGpio->GPCLR1 = ( 1 << ( gpio - 32 ) );
+      	  RPI_GpioBase->GPCLR1 = (1 << (gpio - 32));
             break;
 
         default:
@@ -105,11 +93,10 @@ void RPI_SetGpioLo( rpi_gpio_pin_t gpio )
     }
 }
 
-
-void RPI_SetGpioValue( rpi_gpio_pin_t gpio, rpi_gpio_value_t value )
+void RPI_SetGpioValue(rpi_gpio_pin_t gpio, rpi_gpio_value_t value)
 {
-    if( ( value == RPI_IO_LO ) || ( value == RPI_IO_OFF ) )
-        RPI_SetGpioLo( gpio );
-    else if( ( value == RPI_IO_HI ) || ( value == RPI_IO_ON ) )
-        RPI_SetGpioHi( gpio );
+    if((value == RPI_IO_LO) || (value == RPI_IO_OFF))
+        RPI_SetGpioLo(gpio);
+    else if((value == RPI_IO_HI) || (value == RPI_IO_ON))
+        RPI_SetGpioHi(gpio);
 }
