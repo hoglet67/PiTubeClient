@@ -17,6 +17,16 @@ extern jmp_buf enterOS;
 // The bit position of the carry flag in the ARM PSW
 #define CARRY_MASK (1 << 29)
 
+// The various modes
+#define MODE_USER                 0x10
+#define MODE_FIQ                  0x11
+#define MODE_IRQ                  0x12
+#define MODE_SVR                  0x13
+#define MODE_ABORT                0x17
+#define MODE_UNDEFINED            0x1B
+#define MODE_SYSTEM               0x1F
+
+
 // Macro allowing SWI calls to be made from C
 // Note: stacking lr prevents corruption of lr when invoker in supervisor mode
 #define SWI(NUM) \
@@ -27,8 +37,12 @@ extern jmp_buf enterOS;
 // Type definition for a SWI handler
 typedef void (*SWIHandler_Type) (unsigned int *reg);
 
+// Type definition for a generic function pointer
+typedef int (*FunctionPtr_Type) ();
+
 // Function prototypes
-void user_exec(volatile unsigned char *address);
+int  user_exec_fn(FunctionPtr_Type f, int param);
+void user_exec_raw(volatile unsigned char *address);
 void handler_not_defined(unsigned int num);
 void handler_not_implemented(char *type);
 void tube_SWI_Not_Known(unsigned int *reg);

@@ -214,8 +214,8 @@ SWIHandler_Type SWIHandler_Table[NUM_SWI_HANDLERS] = {
 };
 
 void updateOverflow(unsigned char ovf, unsigned int *reg) {
-  // The PSW is on the stack one word before the registers
-  reg--;
+  // The PSW is on the stack two words before the registers
+  reg-= 2;
   if (ovf) {
     *reg |= OVERFLOW_MASK;
   } else {
@@ -224,14 +224,22 @@ void updateOverflow(unsigned char ovf, unsigned int *reg) {
 }
 
 void updateCarry(unsigned char cyf, unsigned int *reg) {
-  // The PSW is on the stack one word before the registers
-  reg--;
+  // The PSW is on the stack two words before the registers
+  reg-= 2;
   if (cyf) {
     *reg |= CARRY_MASK;
   } else {
     *reg &= ~CARRY_MASK;
   }
 }
+
+void updateMode(unsigned char mode, unsigned int *reg) {
+  // The PSW is on the stack two words before the registers
+  reg-= 2;
+  *reg &= ~0x1f;
+  *reg |= mode;
+}
+
 // For an unimplemented environment handler
 void handler_not_implemented(char *type) {
   printf("Handler %s defined but not implemented\r\n", type);
@@ -253,7 +261,7 @@ void C_SWI_Handler(unsigned int number, unsigned int *reg) {
   unsigned int num = number;
   int errorBit = 0;
   if (DEBUG) {
-    printf("SWI %08x called from %08x\r\n", number, reg[13] - 4);
+    printf("SWI %08x called from %08x cpsr=%08x\r\n", number, reg[13] - 4, _get_cpsr());
   }
   // TODO - We need to switch to a local error handler
   // for the error bit to work as intended.
@@ -280,20 +288,38 @@ void C_SWI_Handler(unsigned int number, unsigned int *reg) {
     }
   }
   if (DEBUG) {
-    printf("SWI %08x complete\r\n", number);
+    printf("SWI %08x complete cpsr=%08x\r\n", number, _get_cpsr());
   }
 }
 
 // Helper functions
 
-void user_exec(volatile unsigned char *address) {
+int user_exec_fn(FunctionPtr_Type f, int param ) {
+  int ret;
   if (DEBUG) {
-    printf("Execution passing to %08x\r\n", (unsigned int)address);
+    printf("Execution passing to %08x cpsr = %08x param = %s\r\n", (unsigned int)f, _get_cpsr(), (unsigned char *)param);
   }
   // setTubeLibDebug(1);
   // The machine code version in armc-startup.S does the real work
   // of dropping down to user mode
-  _user_exec(address);
+  ret = _user_exec((unsigned char *)f, param, 0, 0);
+  if (DEBUG) {
+    printf("Execution returned from %08x ret = %08x cpsr = %08x\r\n", (unsigned int)f, ret, _get_cpsr());
+  }
+  return ret;
+}
+
+void user_exec_raw(volatile unsigned char *address) {
+  if (DEBUG) {
+    printf("Execution passing to %08x cpsr = %08x\r\n", (unsigned int)address, _get_cpsr());
+  }
+  // setTubeLibDebug(1);
+  // The machine code version in armc-startup.S does the real work
+  // of dropping down to user mode
+  _user_exec(address, 0, 0, 0);
+  if (DEBUG) {
+    printf("Execution returned from %08x cpsr = %08x\r\n", (unsigned int)address, _get_cpsr());
+  }
 }
 
 char *write_string(char *ptr) {
@@ -361,7 +387,8 @@ void tube_CLI(unsigned int *reg) {
     sendString(R2, 0x0D, ptr);
     if (receiveByte(R2) & 0x80) {
       // Execution should pass to last transfer address
-      user_exec(address);
+      user_exec_raw(address);
+      // Possibly this will return...
     }
   }
 }
@@ -581,7 +608,8 @@ void tube_IntOff(unsigned int *reg) {
 }
 
 void tube_EnterOS(unsigned int *reg) {
-  longjmp(enterOS, 1);
+  // Set the mode on return from the call to be SVR mode
+  updateMode(MODE_SVR, reg);
 }
 
 void tube_Mouse(unsigned int *reg) {

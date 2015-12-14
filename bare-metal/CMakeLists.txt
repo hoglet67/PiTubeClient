@@ -41,6 +41,8 @@ set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O1" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
 
+
+
 # Set the linker flags so that we use our "custom" linker script
 set( CMAKE_EXE_LINKER_FLAGS "-Wl,-T,${PROJECT_SOURCE_DIR}/rpi.x" )
 
@@ -63,6 +65,8 @@ add_executable( tube-client
 	spi.c
 	spi.h
 	debug.h
+	swi.c
+	swi.h
 	tube-env.h
 	tube-lib.h
 	tube-lib.c
@@ -72,7 +76,24 @@ add_executable( tube-client
 	tube-swi.c
 	tube-exception.c
 	tube-isr.h
-	tube-isr.c)
+	tube-isr.c
+    darm/armv7.c
+    darm/armv7-tbl.c
+    darm/armv7-tbl.h
+    darm/darm.c
+    darm/darm.h
+    darm/darm-internal.h
+    darm/darm-tbl.c
+    darm/darm-tbl.h
+    darm/thumb2.c
+    darm/thumb2-decoder.c
+    darm/thumb2.h
+    darm/thumb2-tbl.c
+    darm/thumb2-tbl.h
+    darm/thumb.c
+    darm/thumb-tbl.c
+    darm/thumb-tbl.h
+)
 
 add_custom_command(
     TARGET tube-client POST_BUILD

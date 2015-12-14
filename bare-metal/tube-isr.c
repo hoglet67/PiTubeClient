@@ -123,9 +123,7 @@ void TubeInterrupt(void) {
       receiveString(R2, 0x00, eblk->errorMsg);
       in_isr = 0;
       // SWI OS_GenerateError need the error block in R0
-      //asm volatile ("mov r0, %0" : : "r" (eblk));
-      //SWI_OS_GenerateError;
-      SWI_OS_GenerateError_R(eblk);
+      OS_GenerateError(eblk);
     } else {
       unsigned char id = receiveByte(R4);
       if (type <= 4 || type == 6 || type == 7) {

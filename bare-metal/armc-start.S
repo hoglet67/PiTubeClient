@@ -29,7 +29,7 @@
 
 .equ    RELOCATE_TO,      0x01F80000
 .equ    RELOCATE_FROM,    0x00008000
-.equ    RELOCATE_LENGTH,  0x00020000
+.equ    RELOCATE_LENGTH,  0x00040000
 
 .equ    SVR_STACK,        0x01F80000
 .equ    IRQ_STACK,        0x01F70000
@@ -191,11 +191,7 @@ _inf_loop:
 
 
 _get_stack_pointer:
-    // Return the stack pointer value
-    str     sp, [sp]
-    ldr     r0, [sp]
-
-    // Return from the function
+    mov     r0, sp
     mov     pc, lr
 
 _get_cpsr:
@@ -236,31 +232,56 @@ _data_abort_handler_:
     bl       data_abort_handler
 
 _swi_handler_:
-    stmfd    sp!, {r0-r12, lr}    // Store registers.
+    stmfd    sp!, {r0-r11,r12,lr} // Store registers.
     mov      r1, sp               // Set pointer to parameters.
     mrs      r0, spsr             // Get spsr.
-    stmfd    sp!, {r0}            // Store spsr onto stack. This is only really needed in case of nested SWIs.
+    stmfd    sp!, {r0,r3}         // Store spsr onto stack and another register to maintain
+                                  // 8-byte-aligned stack. This is only really needed in case of
+                                  // nested SVCs.
     ldr      r0, [lr, #-4]        // Calculate address of SWI instruction and load it into r0.
     bic      r0, r0, #0xFF000000  // Mask off top 8 bits of instruction to give SWI number.
                                   // r0 now contains SWI number
                                   // r1 now contains pointer to stacked registers
     bl       C_SWI_Handler        // Call C routine to handle the SWI.
-    ldmfd    sp!, {r0}            // Get spsr from stack.
+    ldmfd    sp!, {r0,r3}         // Get spsr from stack.
     msr      spsr_cf, r0          // Restore spsr.
-    ldmfd    sp!, {r0-r12, pc}^   // Restore registers and return.
+    ldmfd    sp!, {r0-r11,r12,pc}^// Restore registers and return.
 
 _user_exec:
 
-    // Move to user mode
-    mov      r1, #(CPSR_MODE_USER | CPSR_FIQ_INHIBIT )
-    msr      cpsr_c, r1
+    // This must only be called from supervisor mode....
+        
+    stmfd    sp!, {r0-r5, lr}     // r0 contains address of the code to execute in user mode
+                                  // r1..r3 contain parameters, r4 is a scratch register
+                                  // r5 is pushed to maintain 8 byte stack alignment
 
-    // Setup the user stack pointer
-    ldr      sp, _user_stack
+    mov      r4, r0               // Save r0 into the scratch register
+        
+    mrs      r0, spsr             // Get spsr    
+    stmfd    sp!, {r0}            // Save spsr, as this (and lr) will be corrupted by nested swis
 
-    // Jump to the address in R0
-    mov      pc, r0
+    mrs      r0, cpsr
+    bic      r0, r0, #0x1f
+    orr      r0, r0, #CPSR_MODE_USER
+    msr      cpsr_c, r0           // Change to user mode
 
+    mov      r0, r1               // Copy the params
+    mov      r1, r2
+    mov      r2, r3
+        
+    blx      r4                   // Call the address of the user program        
+                                  // On return, the exit code is now in R0
+    
+    svc      0x000016             // Change back to supervisor mode (OS_EnterOS)
+
+    str      r0, [sp, #4]         // Save the exit code so it will end up back in r0
+        
+    ldmfd    sp!, {r0}            // Get spsr from stack.
+    msr      spsr_c, r0           // Restore spsr.
+        
+    ldmfd    sp!, {r0-r5, pc}     // Restore registers and return.
+        
+        
     // Called with the error buffer ppointer in R0 and the error handler address in R1
 _error_handler_wrapper:
 
