@@ -4,7 +4,19 @@ A project to turn a Raspberry Pi into a SPI Connected Second Processor
 for the Acorn MMC Micro Model B or Master 128.
 
 See:http://stardot.org.uk/forums/viewtopic.php?f=3&t=10421
- 
+
+# Build in Commands
+
+| Command                     | Description                                        |
+| --------------------------- | -------------------------------------------------- |
+| *HELP ARM                   | Displays the current version and list of commands  |
+| *GO <address>               | Executes code at the given address in user mode    |
+| *MEM <address>              | Displays memory in hex and ascii                   |
+| *DIS <address>              | Disassembles memory                                |
+| *FILL <start> <end> <value> | Fills a block of memory                            | 
+| *CRC <start> <end>          | Calculates the "Atom" CRC over a block of memory   |
+| *TEST                       | Does nothing of significance                       | 
+
 # Current Memory Map
 
 | From     | To       | Size  | Description                 |
