@@ -334,9 +334,9 @@ void dump_mem(int start, int end) {
 }
 
 
-void dump_state(int nmin, int irqn) {
-  printf("PC=%04x A=%02x X=%02x Y=%02x S=%02x P=%02x cycles=%lu irqn=%d nmin=%d\r\n",
-         the_cpu->pc, the_cpu->a, the_cpu->x, the_cpu->y, the_cpu->s, the_cpu->p, the_cpu->cyclesTotal, irqn, nmin);
+void dump_state() {
+  printf("PC=%04x A=%02x X=%02x Y=%02x S=%02x P=%02x cycles=%lu int=%d takeint=%d nmi=%d\r\n",
+         the_cpu->pc, the_cpu->a, the_cpu->x, the_cpu->y, the_cpu->s, the_cpu->p, the_cpu->cyclesTotal, the_cpu->interrupt, the_cpu->takeint, the_cpu->nmi);
 }
 
 
@@ -347,7 +347,6 @@ void copro_6502_init_mem()
 
 void copro_6502_reset()
 {
-  //int i;
   // Re-instate the Tube ROM on reset
   memset(the_cpu, 0, sizeof(M6502));
   memset(the_cpu->mem, 0, 0x10000);
@@ -356,19 +355,14 @@ void copro_6502_reset()
   the_cpu->pc     = *(uint16_t*)&(the_cpu->mem[0xfffc]);
   the_cpu->p     |= FLAG_I;
   the_cpu->nmi    = 0;
-  //printf( "Pausing\r\n" );
-  //for (i=0; i < 10000000; i++);
-  //printf( "Pausing done\r\n" );
-
 }
+
+
 
 void copro_6502_main() {
   unsigned int gpio;
   int rstn;
-  int irqn;
-  int nmin;
   int last_rstn;
-  int last_nmin;
   copro_6502_init_hardware();
 
   printf( "Raspberry Pi 65C102 Tube Client\r\n" );
@@ -382,42 +376,22 @@ void copro_6502_main() {
 
   gpio = RPI_GpioBase->GPLEV0; 
   last_rstn = gpio & RST_PIN_MASK;
-  last_nmin = gpio & NMI_PIN_MASK;
 
   while (1) {
-
     // Poll the interrupt bits
     gpio = RPI_GpioBase->GPLEV0; 
     rstn = gpio & RST_PIN_MASK;
-    irqn = gpio & IRQ_PIN_MASK;
-    nmin = gpio & NMI_PIN_MASK;
-
     if (rstn != 0) {
       // Reset the 6502 on a rising edge of rstn
       if (last_rstn == 0) {
         printf("RST\r\n");
         copro_6502_reset();
       }
+      // This will exit if rst is asserted
       exec6502();
-      //printf("%04x %d %d\r\n", the_cpu->pc, irqn, the_cpu->interrupt);
+      dump_state();
     }
-
-    // IRQ is level sensitive
-    if (irqn) {
-      the_cpu->interrupt = 0;
-    } else {
-      //printf("IRQ\r\n");
-      the_cpu->interrupt = 1;
-    }
-
-    // NMI is edge sensitive
-    if (last_nmin != 0 && nmin == 0) {
-      //printf("NMI\r\n");
-      the_cpu->nmi = 1;
-    }
-
     last_rstn = rstn;
-    last_nmin = nmin;
   } 
 }
 
@@ -508,7 +482,11 @@ void sbc_bcd(M6502* cpu, uint8_t temp) {
 }
 
 void log_undef_opcode(M6502* cpu) {
-  printf("Undefined opciode! pc=%04x\r\n", cpu->pc);
+  printf("Undefined opcode! pc=%04x opcode=%02x\r\n", the_cpu->pc, the_cpu->mem[the_cpu->pc]);
+  dump_state();
+  dump_mem(0x0000, 0x0400);
+  dump_mem(0xf800, 0x10000);
+  while(1);
 }
 
 /*********************************************************
