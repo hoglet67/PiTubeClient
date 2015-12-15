@@ -28,4 +28,6 @@ extern unsigned int _get_stack_pointer();
 
 extern void _enable_unaligned_access();
 
+extern void _enable_l1_cache();
+
 #endif

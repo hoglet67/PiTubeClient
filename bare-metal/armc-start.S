@@ -37,6 +37,10 @@
 .equ    ABORT_STACK,      0x01F50000
 .equ    UNDEFINED_STACK,  0x01F40000
 
+.equ    SCTLR_ENABLE_DATA_CACHE,        0x4
+.equ    SCTLR_ENABLE_BRANCH_PREDICTION, 0x800
+.equ    SCTLR_ENABLE_INSTRUCTION_CACHE, 0x1000
+
 .section ".text.startup"
 
 .global _start
@@ -51,6 +55,7 @@
 .global _exit_handler_wrapper
 .global _get_cpsr
 .global _enable_unaligned_access
+.global _enable_l1_cache
         
 // From the ARM ARM (Architecture Reference Manual). Make sure you get the
 // ARMv5 documentation which includes the ARMv6 documentation which is the
@@ -328,5 +333,22 @@ _enable_unaligned_access:
     bic      r0, r0, #2              // A (no unaligned access fault)
     orr      r0, r0, #1 << 22        // U (v6 unaligned access model)
     mcr      p15, 0, r0, c1, c0, 0   // write SCTLR
+    mov      pc, lr
+        
+    // Enable L1 Cache -------------------------------------------------------
+
+_enable_l1_cache:
+        
+    // R0 = System Control Register
+    mrc p15,0,r0,c1,c0,0
+
+    // Enable caches and branch prediction
+    orr r0,#SCTLR_ENABLE_BRANCH_PREDICTION
+    orr r0,#SCTLR_ENABLE_DATA_CACHE
+    orr r0,#SCTLR_ENABLE_INSTRUCTION_CACHE
+
+    // System Control Register = R0
+    mcr p15,0,r0,c1,c0,0
+
     mov      pc, lr
         
