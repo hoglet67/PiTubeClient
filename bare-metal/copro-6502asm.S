@@ -96,7 +96,9 @@ loop1:
 //    ldr  %r0,[%r4, #CPU_CYCLES]
 //    ldr  %r1, =128
 //    add  %r0, %r0, %r1
-    mov  %r0,#1
+
+// Any biggerthan 4, and it doesn't seem to work well
+    mov  %r0,#4
     str  %r0,[%r4, #CPU_CYCLES]
         
 loop2:

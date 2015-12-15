@@ -290,10 +290,6 @@ unsigned char tuberom_jgh[] = {
   0x02,0x6c,0x0c,0x02,0x6c,0x0a,0x02,0x6c,0x08,0x02,0x0d,0xfe,0x00,0xf8,0xf2,0xfc
 };
 
-
-
-
-
 void copro_6502_init_hardware()
 {
 #ifdef JTAG_DEBUG
@@ -367,12 +363,16 @@ void copro_6502_main() {
 
   printf( "Raspberry Pi 65C102 Tube Client\r\n" );
 
+  _enable_l1_cache();
   _enable_unaligned_access();
 
   printf( "Initialise UART console with standard libc\r\n" );
 
   copro_6502_init_mem();
   copro_6502_reset();
+
+  // This will speed up the SPI transfer code slightly
+  in_isr = 1;
 
   gpio = RPI_GpioBase->GPLEV0; 
   last_rstn = gpio & RST_PIN_MASK;
@@ -390,6 +390,9 @@ void copro_6502_main() {
       // This will exit if rst is asserted
       exec6502();
       dump_state();
+      //dump_mem(0x0000,0x0400);
+      //dump_mem(0x8000,0x8200);
+      //dump_mem(0xf800,0x10000);
     }
     last_rstn = rstn;
   } 
