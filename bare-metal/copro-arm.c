@@ -260,6 +260,7 @@ void initHardware()
 void tube_Reset() {
   // Print to the UART using the standard libc functions
   printf( "Raspberry Pi ARMv6 Tube Client\r\n" );
+  _enable_l1_cache();
   printf( "Initialise UART console with standard libc\r\n" );
 
   // Send the reset message
