@@ -50,7 +50,8 @@
 .global _escape_handler_wrapper
 .global _exit_handler_wrapper
 .global _get_cpsr
-
+.global _enable_unaligned_access
+        
 // From the ARM ARM (Architecture Reference Manual). Make sure you get the
 // ARMv5 documentation which includes the ARMv6 documentation which is the
 // correct processor type for the Broadcom BCM2835. The ARMv6-M manuals
@@ -320,4 +321,12 @@ _exit_handler_wrapper:
 
     // Continue execution of the exit handler
     mov      pc, r1
+        
+_enable_unaligned_access:
+
+    mrc      p15, 0, r0, c1, c0, 0   // read SCTLR
+    bic      r0, r0, #2              // A (no unaligned access fault)
+    orr      r0, r0, #1 << 22        // U (v6 unaligned access model)
+    mcr      p15, 0, r0, c1, c0, 0   // write SCTLR
+    mov      pc, lr
         

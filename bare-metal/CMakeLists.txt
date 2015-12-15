@@ -48,6 +48,8 @@ set( CMAKE_EXE_LINKER_FLAGS "-Wl,-T,${PROJECT_SOURCE_DIR}/rpi.ld" )
 
 add_executable( tube-client
     tube-client.c
+    copro-arm.h
+    copro-arm.c
     armc-cstartup.c
     armc-cstubs.c
     armc-start.S
@@ -77,6 +79,7 @@ add_executable( tube-client
 	tube-exception.c
 	tube-isr.h
 	tube-isr.c
+# DARM DIsassembler Core
     darm/armv7.c
     darm/armv7-tbl.c
     darm/armv7-tbl.h
@@ -93,6 +96,10 @@ add_executable( tube-client
     darm/thumb.c
     darm/thumb-tbl.c
     darm/thumb-tbl.h
+# 6502 Co Processor
+    copro-6502.h
+    copro-6502.c
+    copro-6502asm.S
 )
 
 add_custom_command(
