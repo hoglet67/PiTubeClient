@@ -845,8 +845,8 @@ void M6502_trace(M6502 *mpu)
   previousPC = mpu->registers->pc;
 }
 
-//void M6502_run(M6502 *mpu, M6502_PollInterruptsCallback poll)
-void M6502_run(M6502 *mpu)
+void M6502_run(M6502 *mpu, M6502_PollInterruptsCallback poll)
+//void M6502_run(M6502 *mpu)
 {
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 
@@ -872,10 +872,11 @@ void M6502_run(M6502 *mpu)
 
   int instrcount=0;
 
+# define pollints()             externalise(); poll(mpu); internalise()
 # define begin()				fetch();  next()
-# define fetch()				tpc= itabp[memory[PC++]]
+# define fetch()				if (((instrcount++)&7)==0) {pollints();} tpc= itabp[memory[PC++]]
 # define next()				    goto *tpc
-# define dispatch(num, name, mode, cycles)	_##num: if ((tracing==1) && ((instrcount++)%1==0)){externalise(); M6502_trace(mpu);} ; name(cycles, mode) oops();  next()
+# define dispatch(num, name, mode, cycles)	_##num: name(cycles, mode) oops();  next()
 # define end()
 
 #else /* (!__GNUC__) || (__STRICT_ANSI__) */

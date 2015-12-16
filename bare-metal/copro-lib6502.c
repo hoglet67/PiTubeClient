@@ -55,6 +55,7 @@ void copro_lib6502_init_hardware()
 }
 
 static void copro_lib6502_reset(M6502 *mpu) {
+  memset(mpu->memory, 0, 0x10000);
   // Re-instate the Tube ROM on reset
   memcpy(mpu->memory + 0xf800, tuberom_6502_orig, 0x800);
   // Reset lib6502
@@ -71,9 +72,8 @@ static int copro_lib6502_tube_write(M6502 *mpu, uint16_t addr, uint8_t data)	{
 }
 
 static void copro_lib6502_poll(M6502 *mpu) {
-  static unsigned int last_irqn;
-  static unsigned int last_nmin;
-  static unsigned int last_rstn;
+  static unsigned int last_nmin = 1;
+  static unsigned int last_rstn = 1;
   unsigned int gpio = RPI_GpioBase->GPLEV0; 
   unsigned int irqn = gpio & IRQ_PIN_MASK;
   unsigned int nmin = gpio & NMI_PIN_MASK;
@@ -83,15 +83,15 @@ static void copro_lib6502_poll(M6502 *mpu) {
     copro_lib6502_reset(mpu);
   }
   // IRQ is level sensitive
-  if (irqn == 0 && last_irqn != 0) {
-    M6502_irq(mpu);
+  if (irqn == 0 ) {
+    if (!(mpu->registers->p & 4)) {
+      M6502_irq(mpu);
+    }
   }
   // NMI is edge sensitive
   if (nmin == 0 && last_nmin != 0) {
     M6502_nmi(mpu);
   }
-    
-  last_irqn = irqn;
   last_nmin = nmin;
   last_rstn = rstn;
 }
@@ -116,7 +116,7 @@ void copro_lib6502_main() {
 
   copro_lib6502_reset(mpu);
 
-  //M6502_run(mpu, copro_lib6502_poll);
-  M6502_run(mpu);
+  M6502_run(mpu, copro_lib6502_poll);
+  //M6502_run(mpu);
   M6502_delete(mpu);
 }
