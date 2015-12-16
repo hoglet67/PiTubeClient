@@ -96,10 +96,18 @@ add_executable( tube-client
     darm/thumb.c
     darm/thumb-tbl.c
     darm/thumb-tbl.h
-# 6502 Co Processor
+# 6502 Co Processor using BeebDroid ARM 6502 Implementation
     copro-6502.h
     copro-6502.c
     copro-6502asm.S
+# 6502 Co Processor using lib6502 Implementation
+    copro-lib6502.h
+    copro-lib6502.c
+    lib6502.c
+    lib6502.h
+# Shared
+    tuberom_6502.h
+    tuberom_6502.c
 )
 
 add_custom_command(

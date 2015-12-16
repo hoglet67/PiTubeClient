@@ -40,9 +40,9 @@ typedef struct {
   uint16_t tapeon; //+54
   uint32_t tapecyc;	// +56
   uint32_t cyclesTotal;	// +60
-} M6502;
+} BeebDroid6502;
 
-extern M6502* the_cpu;
+extern BeebDroid6502* the_cpu;
 
 #define readmem(x)  (((x)<0xfef8 || (x)>=0xff00) ? the_cpu->mem[x] : readmem_ex(x))
 #define readword(x) (((x)<0xfef8 || (x)>=0xff00) ? (*((uint16_t*)&(the_cpu->mem[x]))) : (readmem_ex(x) | (readmem_ex(x+1)<<8)))
