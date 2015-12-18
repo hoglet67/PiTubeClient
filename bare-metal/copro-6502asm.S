@@ -75,7 +75,55 @@ CPU_CYCLES_TOTAL=60
 
 tube_address:   .word 0xfef8
 
+
+.align 6
+        
+gpio_toggle_test:
+        
+    mov   %r0, #1
+    mov   %r3, #2
+    ldr   %r1, =0x2020001C  // GPSET0
+    ldr   %r2, =0x20200028  // GPCLR0
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+        
+gpio_toggle_test1:
+
+    str   %r3, [%r1]
+
+    str   %r0, [%r1]
+    str   %r0, [%r2]
+
+    str   %r0, [%r1]
+    str   %r0, [%r2]
+
+    str   %r0, [%r1]
+    str   %r0, [%r2]
+
+    str   %r0, [%r1]
+    str   %r0, [%r2]
+        
+    str   %r0, [%r1]
+    str   %r0, [%r2]
+        
+    str   %r0, [%r1]
+    str   %r0, [%r2]
+        
+    str   %r3, [%r2]
+    b     gpio_toggle_test1
+
 exec6502:
+
     push {%r4-%r12,lr}
 
     @ Keep CPU* in safe register
@@ -102,6 +150,13 @@ loop1:
     str  %r0,[%r4, #CPU_CYCLES]
         
 loop2:
+
+    // Blip GPIO0 at the start of an instruction
+    mov   %r0, #1
+    ldr   %r1, =0x2020001C  // GPSET0
+    ldr   %r2, =0x20200028  // GPCLR0
+    str   %r0, [%r1]
+    str   %r0, [%r2]
         
     @ Set r12 to the address of the tube registers for fast comparisons
     ldr %r12, tube_address

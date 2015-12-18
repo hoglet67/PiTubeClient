@@ -8,11 +8,10 @@
 #define COPRO_6502 1
 #define COPRO_LIB6502 2
 
-#define COPRO COPRO_ARM
+#define COPRO COPRO_LIB6502
 
 void kernel_main(unsigned int r0, unsigned int r1, unsigned int atags)
 {
-
   if (COPRO == COPRO_ARM) {
     copro_arm_main(r0, r1, atags);
   } else if (COPRO == COPRO_6502) {

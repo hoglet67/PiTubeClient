@@ -50,6 +50,11 @@ void copro_6502_init_hardware()
   RPI_SetGpioPinFunction(NMI_PIN, FS_INPUT);
   RPI_SetGpioPinFunction(RST_PIN, FS_INPUT);
 
+  // For testing, configure GPIO0 as an output
+  RPI_SetGpioPinFunction(RPI_GPIO0, FS_OUTPUT);
+  RPI_SetGpioPinFunction(RPI_GPIO1, FS_OUTPUT);
+
+
   // Initialise the UART
   RPI_AuxMiniUartInit( 57600, 8 );
 
@@ -90,17 +95,43 @@ void copro_6502_reset()
   the_cpu->nmi    = 0;
 }
 
+int sum_integers() {
+  int i,j;
+  RPI_GpioBase->GPSET0 = 1;
+  j=0;
+  for (i=0; i < 1000000; i++) j+=i;
+  RPI_GpioBase->GPCLR0 = 1;
+  return j;
+}
+
 void copro_6502_main() {
   unsigned int gpio;
   int rstn;
   int last_rstn;
+  int j;
+  int k = 0;
   copro_6502_init_hardware();
 
-  printf( "Raspberry Pi 65C102 Tube Client\r\n" );
+  j = sum_integers();
+  k += j;
 
-  _enable_l1_cache();
+  //_enable_l1_cache();
+  //j = sum_integers();
+  //k += j;
+
+  enable_MMU_and_IDCaches();
+  j = sum_integers();
+  k += j;
+
   _enable_unaligned_access();
 
+  j = sum_integers();
+  k += j;
+
+  printf("%d %d\r\n",j, k);
+
+  printf( "Raspberry Pi 65C102 Tube Client\r\n" );
+  
   printf( "Initialise UART console with standard libc\r\n" );
 
   copro_6502_init_mem();

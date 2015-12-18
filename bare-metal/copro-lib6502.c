@@ -102,7 +102,8 @@ void copro_lib6502_main() {
   copro_lib6502_init_hardware();
   
   printf( "Raspberry Pi lib6502 Tube Client\r\n" );
-  
+
+  enable_MMU_and_IDCaches();
   _enable_unaligned_access();
   
   printf( "Initialise UART console with standard libc\r\n" );
