@@ -113,5 +113,5 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 */
 void __attribute__((interrupt("FIQ"))) fast_interrupt_vector(void)
 {
-
+	printf("FIQ PIN!!!\r\n");
 }
