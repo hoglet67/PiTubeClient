@@ -260,7 +260,7 @@ void initHardware()
 void tube_Reset() {
   // Print to the UART using the standard libc functions
   printf( "Raspberry Pi ARMv6 Tube Client\r\n" );
-  _enable_l1_cache();
+  //_enable_l1_cache();
   printf( "Initialise UART console with standard libc\r\n" );
 
   // Send the reset message
@@ -322,6 +322,9 @@ int cli_loop() {
 
 void copro_arm_main(unsigned int r0, unsigned int r1, unsigned int atags)
 {
+  // Enable all the caches
+  enable_MMU_and_IDCaches();
+
   // Initialize the environment structure
   initEnv();
 

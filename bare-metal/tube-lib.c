@@ -142,15 +142,16 @@ void enable_MMU_and_IDCaches (void)
   static volatile __attribute__ ((aligned (0x4000))) unsigned PageTable[4096];
 
   unsigned base;
+  // bits 11..10 are the AP bits, and setting them to 11 enables user mode access as well
   for (base = 0; base < 512; base++)
     {
       // outer and inner write back, write allocate, shareable
-      PageTable[base] = base << 20 | 0x1140E;
+      PageTable[base] = base << 20 | 0x11C0E;
     }
   for (; base < 4096; base++)
     {
       // shared device, never execute
-      PageTable[base] = base << 20 | 0x10416;
+      PageTable[base] = base << 20 | 0x10C16;
     }
 
   // restrict cache size to 16K (no page coloring)
