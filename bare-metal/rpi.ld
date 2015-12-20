@@ -7,7 +7,7 @@ SEARCH_DIR("=/usr/local/lib"); SEARCH_DIR("=/lib"); SEARCH_DIR("=/usr/lib");
 SECTIONS
 {
   /* Read-only sections, merged into text segment: */
-  PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x01F80000)); . = SEGMENT_START("text-segment", 0x01F80000);
+  PROVIDE (__executable_start = SEGMENT_START("text-segment", 0x01F00000)); . = SEGMENT_START("text-segment", 0x01F00000);
   .interp         : { *(.interp) }
   .note.gnu.build-id : { *(.note.gnu.build-id) }
   .hash           : { *(.hash) }

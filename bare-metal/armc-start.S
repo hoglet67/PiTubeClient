@@ -27,15 +27,15 @@
 
 //  Relocate to just below 32MB
 
-.equ    RELOCATE_TO,      0x01F80000
+.equ    RELOCATE_TO,      0x01F00000
 .equ    RELOCATE_FROM,    0x00008000
-.equ    RELOCATE_LENGTH,  0x00080000
+.equ    RELOCATE_LENGTH,  0x00100000
 
-.equ    SVR_STACK,        0x01F80000
-.equ    IRQ_STACK,        0x01F70000
-.equ    USER_STACK,       0x01F60000
-.equ    ABORT_STACK,      0x01F50000
-.equ    UNDEFINED_STACK,  0x01F40000
+.equ    SVR_STACK,        0x01F00000
+.equ    IRQ_STACK,        0x01EF0000
+.equ    USER_STACK,       0x01EE0000
+.equ    ABORT_STACK,      0x01ED0000
+.equ    UNDEFINED_STACK,  0x01EC0000
 
 .equ    SCTLR_ENABLE_DATA_CACHE,        0x4
 .equ    SCTLR_ENABLE_BRANCH_PREDICTION, 0x800
