@@ -23,7 +23,9 @@
 #include "tuberom_6502.h"
 #include "copro-65tube.h"
 
-unsigned char mpu_memory[0x10000];
+// This must be aligned on a 256 byte boundary, so ensure the LS byte
+// of r9 (the 6502 SP) has the value it would in a read system
+unsigned char mpu_memory[0x10000] __attribute__((aligned(0x100))) ;
 
 void copro_65tube_init_hardware()
 {
@@ -54,11 +56,10 @@ void copro_65tube_init_hardware()
 }
 
 static void copro_65tube_reset() {
+  // Wipe memory
   memset(mpu_memory, 0, 0x10000);
   // Re-instate the Tube ROM on reset
   memcpy(mpu_memory + 0xf800, tuberom_6502_orig, 0x800);
-  // Reset lib6502
-  //M6502_reset(mpu);
 }
 
 int copro_65tube_tube_read(uint16_t addr, uint8_t data) {
@@ -81,47 +82,41 @@ int copro_65tube_tube_write(uint16_t addr, uint8_t data)	{
   return 0;
 }
 
-//static void copro_lib6502_poll(M6502 *mpu) {
-//  static unsigned int last_nmin = 1;
-//  static unsigned int last_rstn = 1;
-//  unsigned int gpio = RPI_GpioBase->GPLEV0; 
-//  unsigned int irqn = gpio & IRQ_PIN_MASK;
-//  unsigned int nmin = gpio & NMI_PIN_MASK;
-//  unsigned int rstn = gpio & RST_PIN_MASK;
-//  // Reset the 6502 on a rising edge of rstn
-//  if (rstn != 0 && last_rstn == 0) {
-//    copro_lib6502_reset(mpu);
-//  }
-//  // IRQ is level sensitive
-//  if (irqn == 0 ) {
-//    if (!(mpu->registers->p & 4)) {
-//      M6502_irq(mpu);
-//    }
-//  }
-//  // NMI is edge sensitive
-//  if (nmin == 0 && last_nmin != 0) {
-//    M6502_nmi(mpu);
-//  }
-//  last_nmin = nmin;
-//  last_rstn = rstn;
-//}
-
 int copro_65tube_trace(unsigned char *addr, unsigned char data) {
   printf("%04x %02x\r\n", (addr - mpu_memory), data);
   return 0;
 }
+
+void copro_65tube_dump_mem(int start, int end) {
+  int i;
+  for (i = start; i < end; i++) {
+    if (i % 16 == 0) {
+      printf("\r\n%04x ", i);
+    }
+    printf("%02x ", mpu_memory[i]);
+  }
+  printf("\r\n");
+}
+
 void copro_65tube_main() {
   copro_65tube_init_hardware();
   
-  printf( "Raspberry Pi 65Tube Client\r\n" );
+  printf("Raspberry Pi 65Tube Client\r\n" );
 
   enable_MMU_and_IDCaches();
   _enable_unaligned_access();
   
-  printf( "Initialise UART console with standard libc\r\n" );
+  printf("Initialise UART console with standard libc\r\n" );
 
-  copro_65tube_reset();
-
-  exec_65tube(mpu_memory);
-
+  while (1) {
+    // Wait for reset to go high
+    while ((RPI_GpioBase->GPLEV0 & RST_PIN_MASK) == 0);
+    printf("RST!\r\n");
+    // Reinitialize the 6502 memory
+    copro_65tube_reset();
+    // Start executing code, this will return when reset goes low
+    exec_65tube(mpu_memory);
+    // Dump memory
+    copro_65tube_dump_mem(0x0000, 0x0400);
+  }
 }

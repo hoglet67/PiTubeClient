@@ -8,7 +8,7 @@
 // Register usage
 // r0       = scratch register
 // r1       = scratch register
-// r2        =scratch register
+// r2       = scratch register
 // r3       = scratch register
 // r4       = 6502 flags (only D and I bits maintained here, CVZN use ARM flags)
 // r5       = a constant value of zero
@@ -39,22 +39,27 @@
 
 // Macro for fetching the next instruction
 .macro FETCH_NEXT
-
-//        push    {r0-r12, lr}
-//        mrs     r3, CPSR
-//        push    {r3,lr}
-//        mov     r0, sl
-//        ldrb    r1, [sl]
-//        bl      copro_65tube_trace
-//        pop     {r3,lr}
-//        msr     CPSR_flg, r3
-//        pop    {r0-r12, lr}
-
-        ldrb    r0, [sl], #1
-        add     pc, ip, r0, lsl #I_ALIGN
-       .ltorg
+        mov     pc, lr
+        // Insert the current literal pool, otherwise constants are to far away and you get a build error
+        .ltorg
 .endm
 
+// FETCH_NEXT used to be just this, which jumps direct to the next instruction
+//        ldrb    r0, [sl], #1
+//        add     pc, ip, r0, lsl #I_ALIGN
+        
+.macro TRACE_65TUBE
+        push    {r0-r12, lr}
+        mrs     r3, CPSR
+        push    {r3,lr}
+        mov     r0, sl
+        ldrb    r1, [sl]
+        bl      copro_65tube_trace
+        pop     {r3,lr}
+        msr     CPSR_flg, r3
+        pop     {r0-r12, lr}
+.endm
+        
 // Macros for reading/writing memory
 //.macro LOAD_ABSOLUTE
 //        ldrb    r1, [fp, r0]
@@ -63,18 +68,24 @@
 //        strb    r1, [fp, r0]
 //.endm
 
+// TODO Optimise this
 .macro LOAD_ABSOLUTE
+        push {r3, lr}
         ldr  r3, =copro_65tube_load_handlers
         add  r3, r3, r0, lsl #2
         ldr  r3, [r3]
         blx  r3
+        pop  {r3, lr}
 .endm
 
+// TODO Optimise this
 .macro STORE_ABSOLUTE
+        push {r3, lr}
         ldr  r3, =copro_65tube_store_handlers
         add  r3, r3, r0, lsl #2
         ldr  r3, [r3]
         blx  r3
+        pop  {r3, lr}
 .endm
 
 // Macros for additional Rockwell 65C02 and WDC 65C02 instructions
@@ -490,13 +501,13 @@ opcode_24:
         ldrb    r1, [fp, r0]
         lsl     r0, r1, #24
         tst     r0, r6
-        and     r0, r0, #BIT_6
+        asr     r0, r0, #2
+        and     r0, r0, #(N_FLAG + V_FLAG)
         mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r0, asr #2
+        bic     r1, r1, #(N_FLAG + V_FLAG)
+        orr     r1, r1, r0
         msr     CPSR_flg, r1
         FETCH_NEXT
-
 
 // Opcode 25 - AND     $00
 .align I_ALIGN
@@ -567,10 +578,11 @@ opcode_2C:
         LOAD_ABSOLUTE
         lsl     r0, r1, #24
         tst     r0, r6
-        and     r0, r0, #BIT_6
+        asr     r0, r0, #2
+        and     r0, r0, #(N_FLAG + V_FLAG)
         mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r0, asr #2
+        bic     r1, r1, #(N_FLAG + V_FLAG)
+        orr     r1, r1, r0
         msr     CPSR_flg, r1
         FETCH_NEXT
 
@@ -650,10 +662,11 @@ opcode_34:
         ldrb    r1, [fp, r0, lsr #24]
         lsl     r0, r1, #24
         tst     r0, r6
-        and     r0, r0, #BIT_6
+        asr     r0, r0, #2
+        and     r0, r0, #(N_FLAG + V_FLAG)
         mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r0, asr #2
+        bic     r1, r1, #(N_FLAG + V_FLAG)
+        orr     r1, r1, r0
         msr     CPSR_flg, r1
         FETCH_NEXT
 
@@ -727,10 +740,11 @@ opcode_3C:
         LOAD_ABSOLUTE
         lsl     r0, r1, #24
         tst     r0, r6
-        and     r0, r0, #BIT_6
+        asr     r0, r0, #2
+        and     r0, r0, #(N_FLAG + V_FLAG)
         mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r0, asr #2
+        bic     r1, r1, #(N_FLAG + V_FLAG)
+        orr     r1, r1, r0
         msr     CPSR_flg, r1
         FETCH_NEXT
 
@@ -1424,10 +1438,11 @@ opcode_89:
         ldrb    r1, [sl], #1
         lsl     r0, r1, #24
         tst     r0, r6
-        and     r0, r0, #BIT_6
+        asr     r0, r0, #2
+        and     r0, r0, #(N_FLAG + V_FLAG)
         mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r0, asr #2
+        bic     r1, r1, #(N_FLAG + V_FLAG)
+        orr     r1, r1, r0
         msr     CPSR_flg, r1
         FETCH_NEXT
 
@@ -2619,7 +2634,9 @@ tube_load_abs_handler:
         bl      copro_65tube_tube_read
         pop     {r3,lr}
         msr     CPSR_flg, r3
+        str     r0, [sp, #0]              // save result to r1 on the stack
         str     r0, [sp, #4]              // save result to r1 on the stack
+        str     r0, [sp, #8]              // save result to r1 on the stack
         pop     {r0-r3,r12,lr}
         mov     pc, lr
 
@@ -2647,8 +2664,8 @@ handle_rst:
         FETCH_NEXT
         
 handle_irq:
+        msr     CPSR_flg, r3    // Restore the 6502 flags
         sub     r1, sl, fp
-        add     r1, r1, #1
         lsr     r0, r1, #8
         strb    r0, [r9], #-1
         strb    r1, [r9], #-1
@@ -2658,17 +2675,19 @@ handle_irq:
         orrcs   r0, r0, #1
         orreq   r0, r0, #2
         orr     r0, r0, r4
+        bic     r0, r0, #0x10    // Make sure B is clear
         strb    r0, [r9], #-1
         orr     r4, r4, #4       // Set the I bit
         bic     r4, r4, #8       // Clear the D bit
         add     r0, fp, #0x10000
-        ldrh    r0, [r0, #-2]
-        add     sl, fp, r0, lsr #16
+        ldrh    r0, [r0, #-2]    // Fetch the address in FFFE,FFFF
+        add     sl, fp, r0       // Point to this instruction in memory
+        mrs     r3, CPSR         // Preserve the updated flags
         FETCH_NEXT
 
 handle_nmi:
+        msr     CPSR_flg, r3    // Restore the 6502 flags
         sub     r1, sl, fp
-        add     r1, r1, #1
         lsr     r0, r1, #8
         strb    r0, [r9], #-1
         strb    r1, [r9], #-1
@@ -2678,25 +2697,55 @@ handle_nmi:
         orrcs   r0, r0, #1
         orreq   r0, r0, #2
         orr     r0, r0, r4
+        bic     r0, r0, #0x10    // Make sure B is clear
         strb    r0, [r9], #-1
         orr     r4, r4, #4       // Set the I bit
         bic     r4, r4, #8       // Clear the D bit
         add     r0, fp, #0x10000
-        ldrh    r0, [r0, #-6]
-        add     sl, fp, r0, lsr #16
+        ldrh    r0, [r0, #-6]    // Fetch the address in FFFA,FFFB
+        add     sl, fp, r0       // Point to this instruction in memory
+        mrs     r3, CPSR         // Preserve the updated flags
         FETCH_NEXT
-        
+
 exec_65tube:
 
         push     {r0-r12,lr}
 
-// r11 (fp) = base address of 64KB of flat memory
-// r12 (ip) = base address of 64-byte aligned instruction implementations
+        mov      fp, r0                   // set fp (r11) to the 64K 6502 memory array
+        ldr      ip, =opcode_00           // set ip (r12) to the base address of the 6502 instruction handler
+        mov      r5, #0                   // initialize the "0" constant in r5
+        bl       handle_rst               // start by resetting the 6502
 
-        mov      fp, r0
-        ldr      ip, =opcode_00
-        b        handle_rst
+// execute N instructions
+        
+exec_65tube_loop:
 
+.rept 4
+        // TRACE_65TUBE
+        ldrb    r0, [sl], #1              // Fetch the next instruction
+        add     r0, ip, r0, lsl #I_ALIGN  // Compute the address of the handler
+        blx     r0                        // Call the handler
+.endr        
+
+// Test RST_n, IRQ_n, and NMI_n and update interrupt state accordingly
+        
+        mrs     r3, CPSR                  // preserve the 6502 flags
+        
+        ldr     r0, =0x20200034           // TODO: This address is different on a RPI2
+        ldr     r0, [r0]                  // Read GPLEV0 GPIO register
+
+        tst     r0, #(1 << 7)             // Test for RST (GPIO7)
+        beq     exec_65tube_exit          // exit immediatly if low
+
+        tst     r4, #4                    // Test whether interrupts are enabled (bit 2 = 0)
+        tsteq   r0, #(1 << 17)            // Test for IRQ (GPIO17) (level sensitive, active low)
+        bleq    handle_irq                // Take the interrupts
+
+// TODO Handle NMI
+        
+        msr     CPSR_flg, r3              // restore the 6502 flags
+        b       exec_65tube_loop          // execute the next block of N instructions
+        
 exec_65tube_exit:
         pop      {r0-r12,lr}
         mov      pc, lr
@@ -2704,39 +2753,16 @@ exec_65tube_exit:
 // ************************************************
 // Code below this point is not integrated yet
 // ************************************************
-
-// Test RST_n, IRQ_n, and NMI_n and update interrupt state accordingly
-poll_65tube:
-
-        push  {r0-r1}
-        ldr   r0, =0x20200034          // TODO: This address is different on a RPI2
-        ldr   r0, [r0]                 // Read GPLEV0 GPIO register
-
-        tst   r0, #(1 << 7)            // Test for RST (GPIO7)
-        popeq {r0,r1}
-
-        beq   exec_65tube_exit         // exit immediatly if low
-
-        ldr   r1, state_irq            // r1 = current interrupt state
-        bic   r1, #1                   // clear bit 0 to indicate no interrupts
-        tst   r0, #(1 << 17)           // Test for IRQ (GPIO17) (level sensitive)
-        orreq r1, #1                   // set bit 0 if IRQ_n is low
-        str   r1, state_irq            // save the irq state back again
-
-        ldr   r1, state_nmi            // bit 1 = last NMI_n, bit 0 = falling edge detected
-        tst   r0, #(1 << 18)           // Test for NMI (GPIO18) (edge sensitive)
-        orrne r1, #2                   // Set bit 1 (== current NMI value)
-        bne   poll_65tube_update_nmi   // NMI is high, so nothing further to do
-        tst   r1, #2                   // NMI is low, and if bit 1 (last NMI) is high then we have an edge
-        orrne r1, #1                   // Set bit 0 to indicate an edge
-        bicne r1, #2                   // Clear bit 1 (== current NMI value)
-poll_65tube_update_nmi:
-        str   r1, state_nmi       // save the nmi state back again
-        pop   {r0-r1}
-        mov   pc, lr
         
-state_irq:
-        .word 0
+        ldr   r1, state_nmi               // bit 1 = last NMI_n, bit 0 = falling edge detected
+        tst   r0, #(1 << 18)              // Test for NMI (GPIO18) (edge sensitive)
+        orrne r1, #2                      // Set bit 1 (== current NMI value)
+        bne   poll_65tube_update_nmi      // NMI is high, so nothing further to do
+        tst   r1, #2                      // NMI is low, and if bit 1 (last NMI) is high then we have an edge
+        orrne r1, #1                      // Set bit 0 to indicate an edge
+        bicne r1, #2                      // Clear bit 1 (== current NMI value)
+poll_65tube_update_nmi:
+        str   r1, state_nmi               // save the nmi state back again
 
 state_nmi:
         .word 0
