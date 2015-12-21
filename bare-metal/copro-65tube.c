@@ -25,7 +25,9 @@
 
 // This must be aligned on a 256 byte boundary, so ensure the LS byte
 // of r9 (the 6502 SP) has the value it would in a read system
-unsigned char mpu_memory[0x10000] __attribute__((aligned(0x100))) ;
+unsigned char mpu_memory[0x10000] __attribute__((aligned(0x10000))) ;
+
+unsigned int debug;
 
 void copro_65tube_init_hardware()
 {
@@ -74,7 +76,10 @@ int copro_65tube_tube_read(uint16_t addr, uint8_t data) {
 
 int copro_65tube_tube_write(uint16_t addr, uint8_t data)	{
   //if (addr >= 0xfef8 && addr < 0xff00) {
-    tubeWrite(addr & 7, data);
+  tubeWrite(addr & 7, data);
+  if ((addr & 7) == 6) {
+    debug = data;
+  }
   //} else {
   //  mpu_memory[addr] = data;
   //}
@@ -83,7 +88,9 @@ int copro_65tube_tube_write(uint16_t addr, uint8_t data)	{
 }
 
 int copro_65tube_trace(unsigned char *addr, unsigned char data) {
-  printf("%04x %02x\r\n", (addr - mpu_memory), data);
+  if (debug) {
+    printf("%04x %02x\r\n", (addr - mpu_memory), data);
+  }
   return 0;
 }
 
@@ -109,6 +116,7 @@ void copro_65tube_main() {
   printf("Initialise UART console with standard libc\r\n" );
 
   while (1) {
+    debug = 0;
     // Wait for reset to go high
     while ((RPI_GpioBase->GPLEV0 & RST_PIN_MASK) == 0);
     printf("RST!\r\n");
