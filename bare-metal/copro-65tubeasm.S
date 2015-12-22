@@ -469,10 +469,10 @@ opcode_1F:
 .align I_ALIGN
 opcode_20:
         ldrb    r0, [sl], #1
-        sub     r2, sl, fp
-        lsr     r1, r2, #8
+        //sub     r2, sl, fp      // unnecessary as fp is 64KB aligned
+        lsr     r1, sl, #8
         SPUSH   r1
-        SPUSH   r2
+        SPUSH   sl
         ldrb    r1, [sl], #1
         add     sl, r0, r1, lsl #8
         add     sl, sl, fp
