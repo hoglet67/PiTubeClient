@@ -77,6 +77,15 @@
         msr     CPSR_flg, r3
         pop     {r0-r12, lr}
 .endm
+
+// Update a histogram of opcodes in memory
+.macro HISTOGRAM_65TUBE
+        ldr     r1, =histogram_memory
+        add     r1, r0, lsl #2        
+        ldr     r2, [r1]
+        add     r2, #1
+        str     r2, [r1]
+.endm        
         
 // Macros for reading/writing memory
 //.macro LOAD_ABSOLUTE
@@ -2673,6 +2682,7 @@ exec_65tube_loop:
 .rept 16
         // TRACE_65TUBE
         ldrb    r0, [sl], #1              // Fetch the next instruction
+        // HISTOGRAM_65TUBE
         add     r0, ip, r0, lsl #I_ALIGN  // Compute the address of the handler
         blx     r0                        // Call the handler
 .endr        

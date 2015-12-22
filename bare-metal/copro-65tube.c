@@ -29,6 +29,22 @@ unsigned char mpu_memory[0x10000] __attribute__((aligned(0x10000))) ;
 
 unsigned int debug;
 
+unsigned int histogram_memory[0x100];
+
+void copro_65tube_init_histogram() {
+  int i;
+  for (i = 0; i < 256; i++) {
+    histogram_memory[i] = 0;
+  }
+}
+
+void copro_65tube_dump_histogram() {
+  int i;
+  for (i = 0; i < 256; i++) {
+    printf("%02x %u\r\n", i, histogram_memory[i]);
+  }
+}
+
 void copro_65tube_init_hardware()
 {
 #ifdef JTAG_DEBUG
@@ -78,7 +94,11 @@ int copro_65tube_tube_write(uint16_t addr, uint8_t data)	{
   //if (addr >= 0xfef8 && addr < 0xff00) {
   tubeWrite(addr & 7, data);
   if ((addr & 7) == 6) {
-    debug = data;
+    debug = data & 1;
+    if (data & 2) {
+      copro_65tube_dump_histogram();
+      copro_65tube_init_histogram();      
+    }
   }
   //} else {
   //  mpu_memory[addr] = data;
