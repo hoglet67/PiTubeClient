@@ -88,12 +88,13 @@
 .endm        
         
 // Macros for reading/writing memory
-//.macro LOAD_ABSOLUTE
-//        ldrb    r1, [fp, r0]
-//.endm
-//.macro STORE_ABSOLUTE
-//        strb    r1, [fp, r0]
-//.endm
+.macro LOAD_INDIRECT
+        ldrb    r1, [fp, r0]
+.endm
+
+.macro STORE_INDIRECT
+        strb    r1, [fp, r0]
+.endm
 
 .macro LOAD_ABSOLUTE              // r0 holds the absolute address
         mrs     r2, CPSR          // preserve the 6502 flags
@@ -176,7 +177,7 @@ opcode_01:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         lsl     r1, r1, #24
         orrs    r6, r6, r1
         FETCH_NEXT
@@ -323,7 +324,7 @@ opcode_11:
         add     r0, r1, r0, lsl #8
         add     r0, r0, r8, lsr #24
         bic     r0, r0, #0x10000
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         lsl     r1, r1, #24
         orrs    r6, r6, r1
         FETCH_NEXT
@@ -335,7 +336,7 @@ opcode_12:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         lsl     r1, r1, #24
         orrs    r6, r6, r1
         FETCH_NEXT
@@ -488,7 +489,7 @@ opcode_21:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         lsl     r1, r1, #24
         ands    r6, r6, r1
         FETCH_NEXT
@@ -642,7 +643,7 @@ opcode_31:
         add     r0, r1, r0, lsl #8
         add     r0, r0, r8, lsr #24
         bic     r0, r0, #0x10000
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         lsl     r1, r1, #24
         ands    r6, r6, r1
         FETCH_NEXT
@@ -654,7 +655,7 @@ opcode_32:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         lsl     r1, r1, #24
         ands    r6, r6, r1
         FETCH_NEXT
@@ -804,7 +805,7 @@ opcode_41:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         lsl     r1, r1, #24
         eors    r6, r6, r1
         FETCH_NEXT
@@ -936,7 +937,7 @@ opcode_51:
         add     r0, r1, r0, lsl #8
         add     r0, r0, r8, lsr #24
         bic     r0, r0, #0x10000
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         lsl     r1, r1, #24
         eors    r6, r6, r1
         FETCH_NEXT
@@ -948,7 +949,7 @@ opcode_52:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         lsl     r1, r1, #24
         eors    r6, r6, r1
         FETCH_NEXT
@@ -1080,7 +1081,7 @@ opcode_61:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_adc
         orrcs   r1, r1, r5
@@ -1227,7 +1228,7 @@ opcode_71:
         add     r0, r1, r0, lsl #8
         add     r0, r0, r8, lsr #24
         bic     r0, r0, #0x10000
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_adc
         orrcs   r1, r1, r5
@@ -1241,7 +1242,7 @@ opcode_72:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_adc
         orrcs   r1, r1, r5
@@ -1392,7 +1393,7 @@ opcode_81:
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
         lsr     r1, r6, #24
-        STORE_ABSOLUTE
+        STORE_INDIRECT
         FETCH_NEXT
 
 // Opcode 82 - NOP #$00
@@ -1521,7 +1522,7 @@ opcode_91:
         add     r0, r0, r8, lsr #24
         bic     r0, r0, #0x10000
         lsr     r1, r6, #24
-        STORE_ABSOLUTE
+        STORE_INDIRECT
         FETCH_NEXT
 
 // Opcode 92 - STA ($00)
@@ -1532,7 +1533,7 @@ opcode_92:
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
         lsr     r1, r6, #24
-        STORE_ABSOLUTE
+        STORE_INDIRECT
         FETCH_NEXT
 
 // Opcode 93 - NOP
@@ -1656,7 +1657,7 @@ opcode_A1:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         lsl     r6, r1, #24
         teq     r6, #0
         FETCH_NEXT
@@ -1787,7 +1788,7 @@ opcode_B1:
         add     r0, r1, r0, lsl #8
         add     r0, r0, r8, lsr #24
         bic     r0, r0, #0x10000
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         lsl     r6, r1, #24
         teq     r6, #0
         FETCH_NEXT
@@ -1799,7 +1800,7 @@ opcode_B2:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         lsl     r6, r1, #24
         teq     r6, #0
         FETCH_NEXT
@@ -1943,7 +1944,7 @@ opcode_C1:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         mrs     r2, CPSR
         and     r2, r2, #V_FLAG
         cmp     r6, r1, lsl #24
@@ -2109,7 +2110,7 @@ opcode_D1:
         add     r0, r1, r0, lsl #8
         add     r0, r0, r8, lsr #24
         bic     r0, r0, #0x10000
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         mrs     r2, CPSR
         and     r2, r2, #V_FLAG
         cmp     r6, r1, lsl #24
@@ -2126,7 +2127,7 @@ opcode_D2:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         mrs     r2, CPSR
         and     r2, r2, #V_FLAG
         cmp     r6, r1, lsl #24
@@ -2282,7 +2283,7 @@ opcode_E1:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_sbc
         orrcc   r1, r1, r5
@@ -2433,7 +2434,7 @@ opcode_F1:
         add     r0, r1, r0, lsl #8
         add     r0, r0, r8, lsr #24
         bic     r0, r0, #0x10000
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_sbc
         orrcc   r1, r1, r5
@@ -2447,7 +2448,7 @@ opcode_F2:
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
-        LOAD_ABSOLUTE
+        LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_sbc
         orrcc   r1, r1, r5
