@@ -47,9 +47,9 @@
                 
 // Macro for pushing to the stack, whilst correctly handing wrapping
 // This relies on the 6502 memory being 64KB aligned
+// Optimisations from dp11 on stardot
 .macro SPUSH reg
         strb    \reg, [r9], #-1
-        bic     r9, #0xFF00
         orr     r9, #0x0100
         // The original code was just this:
         // strb    \reg, [r9], #-1
@@ -57,11 +57,11 @@
         
 // Macro for poping from the stack, whilst correctly handing wrapping
 // This relies on the 6502 memory being 64KB aligned
+// Optimisations from dp11 on stardot
 .macro SPOP reg
         add     r9, r9, #1
         bic     r9, #0xFF00
-        orr     r9, #0x0100        
-        ldrb    \reg, [r9]
+        ldrb    \reg, [r9,#0x0100]!
         // The original code was just this:
         // ldrb    \reg, [r9, #1]!
 .endm
