@@ -29,7 +29,6 @@
 .equ    N_FLAG,      0x80000000
 .equ    Z_FLAG,      0x40000000
 .equ    C_FLAG,      0x20000000
-.equ    V_FLAG,      0x10000000
 
 // Align start each instruction on a 64-byte boundary
 .equ    I_ALIGN,     7
@@ -236,7 +235,6 @@ opcode_07:
 opcode_08:
         movpl   r0, #0x30
         movmi   r0, #0xB0
-        orrvs   r0, r0, #0x40
         orrcs   r0, r0, #1
         orreq   r0, r0, #2
         orr     r0, r0, r4
@@ -512,10 +510,12 @@ opcode_24:
         ldrb    r1, [fp, r0]
         lsl     r0, r1, #24
         tst     r0, r6
-        asr     r0, r0, #2
-        and     r0, r0, #(N_FLAG + V_FLAG)
+        and     r1, r1, #0x40
+        bic     r4, r4, #0x40
+        orr     r4, r4, r1
+        and     r0, r0, #N_FLAG
         mrs     r1, CPSR
-        bic     r1, r1, #(N_FLAG + V_FLAG)
+        bic     r1, r1, #N_FLAG
         orr     r1, r1, r0
         msr     CPSR_flg, r1
         FETCH_NEXT
@@ -548,13 +548,11 @@ opcode_27:
 .align I_ALIGN
 opcode_28:
         SPOP    r0
-        and     r4, r0, #12
+        and     r4, r0, #0x4C
         mrs     r2, CPSR
-        bic     r2, #(N_FLAG + Z_FLAG + C_FLAG + V_FLAG)
+        bic     r2, #(N_FLAG + Z_FLAG + C_FLAG)
         and     r1, r0, #0x80
         orr     r2, r2, r1, lsl #24
-        and     r1, r0, #0x40
-        orr     r2, r2, r1, lsl #22
         and     r1, r0, #0x03
         orr     r2, r2, r1, lsl #29
         msr     CPSR_flg, r2
@@ -589,10 +587,12 @@ opcode_2C:
         LOAD_ABSOLUTE
         lsl     r0, r1, #24
         tst     r0, r6
-        asr     r0, r0, #2
-        and     r0, r0, #(N_FLAG + V_FLAG)
+        and     r1, r1, #0x40
+        bic     r4, r4, #0x40
+        orr     r4, r4, r1
+        and     r0, r0, #N_FLAG
         mrs     r1, CPSR
-        bic     r1, r1, #(N_FLAG + V_FLAG)
+        bic     r1, r1, #N_FLAG
         orr     r1, r1, r0
         msr     CPSR_flg, r1
         FETCH_NEXT
@@ -673,10 +673,12 @@ opcode_34:
         ldrb    r1, [fp, r0, lsr #24]
         lsl     r0, r1, #24
         tst     r0, r6
-        asr     r0, r0, #2
-        and     r0, r0, #(N_FLAG + V_FLAG)
+        and     r1, r1, #0x40
+        bic     r4, r4, #0x40
+        orr     r4, r4, r1
+        and     r0, r0, #N_FLAG
         mrs     r1, CPSR
-        bic     r1, r1, #(N_FLAG + V_FLAG)
+        bic     r1, r1, #N_FLAG
         orr     r1, r1, r0
         msr     CPSR_flg, r1
         FETCH_NEXT
@@ -751,10 +753,12 @@ opcode_3C:
         LOAD_ABSOLUTE
         lsl     r0, r1, #24
         tst     r0, r6
-        asr     r0, r0, #2
-        and     r0, r0, #(N_FLAG + V_FLAG)
+        and     r1, r1, #0x40
+        bic     r4, r4, #0x40
+        orr     r4, r4, r1
+        and     r0, r0, #N_FLAG
         mrs     r1, CPSR
-        bic     r1, r1, #(N_FLAG + V_FLAG)
+        bic     r1, r1, #N_FLAG
         orr     r1, r1, r0
         msr     CPSR_flg, r1
         FETCH_NEXT
@@ -922,10 +926,13 @@ opcode_4F:
 // Opcode 50 - BVC
 .align I_ALIGN
 opcode_50:
-        ldrvcb  r0, [sl], #1
-        lslvc   r0, r0, #24
-        addvc   sl, sl, r0, asr #24
-        addvs   sl, sl, #1
+        mrs     r2, CPSR
+        tst     r4, #0x40
+        ldreqb  r0, [sl], #1
+        lsleq   r0, r0, #24
+        addeq   sl, sl, r0, asr #24
+        addne   sl, sl, #1
+        msr     CPSR_flg, r2
         FETCH_NEXT
 
 // Opcode 51 - EOR ($00),Y
@@ -1086,6 +1093,8 @@ opcode_61:
         bne     decimal_mode_adc
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode 62 - NOP #$00
@@ -1115,6 +1124,8 @@ opcode_65:
         bne     decimal_mode_adc
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode 66 - ROR $00
@@ -1150,6 +1161,8 @@ opcode_69:
         bne     decimal_mode_adc
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode 6A - ROR A
@@ -1189,6 +1202,8 @@ opcode_6D:
         bne     decimal_mode_adc
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode 6E - ROR $0000
@@ -1213,10 +1228,13 @@ opcode_6F:
 // Opcode 70 - BVS
 .align I_ALIGN
 opcode_70:
-        ldrvsb  r0, [sl], #1
-        lslvs   r0, r0, #24
-        addvs   sl, sl, r0, asr #24
-        addvc   sl, sl, #1
+        mrs     r2, CPSR
+        tst     r4, #0x40
+        ldrneb  r0, [sl], #1
+        lslne   r0, r0, #24
+        addne   sl, sl, r0, asr #24
+        addeq   sl, sl, #1
+        msr     CPSR_flg, r2
         FETCH_NEXT
 
 // Opcode 71 - ADC ($00),Y
@@ -1233,6 +1251,8 @@ opcode_71:
         bne     decimal_mode_adc
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode 72 - ADC ($00)
@@ -1247,6 +1267,8 @@ opcode_72:
         bne     decimal_mode_adc
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode 73 - NOP
@@ -1272,6 +1294,8 @@ opcode_75:
         bne     decimal_mode_adc
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode 76 - ROR $00,X
@@ -1311,6 +1335,8 @@ opcode_79:
         bne     decimal_mode_adc
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode 7A - PLY
@@ -1352,6 +1378,8 @@ opcode_7D:
         bne     decimal_mode_adc
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode 7E - ROR $0000,X
@@ -1848,9 +1876,7 @@ opcode_B7:
 // Opcode B8 - CLV
 .align I_ALIGN
 opcode_B8:
-        mrs     r0, CPSR
-        bic     r0, r0, #V_FLAG
-        msr     CPSR_flg, r0
+        bic     r4, #0x40
         FETCH_NEXT
 
 // Opcode B9 - LDA $0000,Y
@@ -1926,13 +1952,7 @@ opcode_BF:
 .align I_ALIGN
 opcode_C0:
         ldrb    r0, [sl], #1
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r8, r0, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode C1 - CMP ($00,X)
@@ -1945,13 +1965,7 @@ opcode_C1:
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
         LOAD_INDIRECT
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r6, r1, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode C2 - NOP #$00
@@ -1970,13 +1984,7 @@ opcode_C3:
 opcode_C4:
         ldrb    r0, [sl], #1
         ldrb    r1, [fp, r0]
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r8, r1, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode C5 - CMP $00
@@ -1984,13 +1992,7 @@ opcode_C4:
 opcode_C5:
         ldrb    r0, [sl], #1
         ldrb    r1, [fp, r0]
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r6, r1, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode C6 - DEC $00
@@ -2020,13 +2022,7 @@ opcode_C8:
 .align I_ALIGN
 opcode_C9:
         ldrb    r0, [sl], #1
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r6, r0, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode CA - DEX
@@ -2049,13 +2045,7 @@ opcode_CC:
         ldrb    r1, [sl], #1
         add     r0, r0, r1, lsl #8
         LOAD_ABSOLUTE
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r8, r1, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode CD - CMP $0000
@@ -2065,13 +2055,7 @@ opcode_CD:
         ldrb    r1, [sl], #1
         add     r0, r0, r1, lsl #8
         LOAD_ABSOLUTE
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r6, r1, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode CE - DEC $0000
@@ -2111,13 +2095,7 @@ opcode_D1:
         add     r0, r0, r8, lsr #24
         bic     r0, r0, #0x10000
         LOAD_INDIRECT
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r6, r1, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode D2 - CMP ($00)
@@ -2128,13 +2106,7 @@ opcode_D2:
         ldrb    r0, [r0, #1]
         add     r0, r1, r0, lsl #8
         LOAD_INDIRECT
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r6, r1, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode D3 - NOP
@@ -2154,13 +2126,7 @@ opcode_D5:
         ldrb    r0, [sl], #1
         add     r0, r7, r0, lsl #24
         ldrb    r0, [fp, r0, lsr #24]
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r6, r0, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode D6 - DEC $00,X
@@ -2195,13 +2161,7 @@ opcode_D9:
         add     r0, r0, r8, lsr #24
         bic     r0, r0, #0x10000
         LOAD_ABSOLUTE
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r6, r1, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode DA - PHX
@@ -2232,13 +2192,7 @@ opcode_DD:
         add     r0, r0, r7, lsr #24
         bic     r0, r0, #0x10000
         LOAD_ABSOLUTE
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r6, r1, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode DE - DEX $0000,X
@@ -2265,13 +2219,7 @@ opcode_DF:
 .align I_ALIGN
 opcode_E0:
         ldrb    r1, [sl], #1
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r7, r1, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode E1 - SBC ($00,X)
@@ -2288,6 +2236,8 @@ opcode_E1:
         bne     decimal_mode_sbc
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode E2 - NOP #$00
@@ -2306,13 +2256,7 @@ opcode_E3:
 opcode_E4:
         ldrb    r0, [sl], #1
         ldrb    r1, [fp, r0]
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r7, r1, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode E5 - SBC $00
@@ -2324,6 +2268,8 @@ opcode_E5:
         bne     decimal_mode_sbc
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode E6 - INC $00
@@ -2357,6 +2303,8 @@ opcode_E9:
         bne     decimal_mode_sbc
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode EA - NOP
@@ -2376,13 +2324,7 @@ opcode_EC:
         ldrb    r1, [sl], #1
         add     r0, r0, r1, lsl #8
         LOAD_ABSOLUTE
-        mrs     r2, CPSR
-        and     r2, r2, #V_FLAG
         cmp     r7, r1, lsl #24
-        mrs     r1, CPSR
-        bic     r1, r1, #V_FLAG
-        orr     r1, r1, r2
-        msr     CPSR_flg, r1
         FETCH_NEXT
 
 // Opcode ED - SBC $0000
@@ -2396,6 +2338,8 @@ opcode_ED:
         bne     decimal_mode_sbc
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode EE - INC $0000
@@ -2439,6 +2383,8 @@ opcode_F1:
         bne     decimal_mode_sbc
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode F2 - SBC ($00)
@@ -2453,6 +2399,8 @@ opcode_F2:
         bne     decimal_mode_sbc
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode F3 - NOP
@@ -2476,6 +2424,8 @@ opcode_F5:
         bne     decimal_mode_sbc
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode F6 - INC $00,X
@@ -2514,6 +2464,8 @@ opcode_F9:
         bne     decimal_mode_sbc
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode FA - PLX
@@ -2548,6 +2500,8 @@ opcode_FD:
         bne     decimal_mode_sbc
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 // Opcode FE - INC $0000,X
@@ -2584,7 +2538,6 @@ handle_brk:
         SPUSH   r1
         movpl   r0, #0x30
         movmi   r0, #0xB0
-        orrvs   r0, r0, #0x40
         orrcs   r0, r0, #1
         orreq   r0, r0, #2
         orr     r0, r0, r4
@@ -2596,13 +2549,11 @@ handle_brk:
 
 handle_rti:
         SPOP    r0
-        and     r4, r0, #12
+        and     r4, r0, #0x4C
         mrs     r2, CPSR
-        bic     r2, #(N_FLAG + Z_FLAG + C_FLAG + V_FLAG)
+        bic     r2, #(N_FLAG + Z_FLAG + C_FLAG)
         and     r1, r0, #0x80
         orr     r2, r2, r1, lsl #24
-        and     r1, r0, #0x40
-        orr     r2, r2, r1, lsl #22
         and     r1, r0, #0x03
         orr     r2, r2, r1, lsl #29
         msr     CPSR_flg, r2
@@ -2625,6 +2576,8 @@ decimal_mode_adc:
         subcs   r6, r6, #10
         orr     r6, r2, r6, lsl #28
         teq     r6, #0
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 decimal_mode_sbc:
@@ -2638,6 +2591,8 @@ decimal_mode_sbc:
         orr     r6, r2, r6, lsl #4
         lsl     r6, r6, #24
         teq     r6, #0
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
         FETCH_NEXT
 
 tube_load_handler:
@@ -2725,7 +2680,6 @@ exec_65tube_handle_irq:
         SPUSH   r1
         movpl   r0, #0
         movmi   r0, #0x80
-        orrvs   r0, r0, #0x40
         orrcs   r0, r0, #1
         orreq   r0, r0, #2
         orr     r0, r0, r4
@@ -2746,7 +2700,6 @@ exec_65tube_handle_nmi:
         SPUSH   r1
         movpl   r0, #0x20
         movmi   r0, #0xA0
-        orrvs   r0, r0, #0x40
         orrcs   r0, r0, #1
         orreq   r0, r0, #2
         orr     r0, r0, r4
