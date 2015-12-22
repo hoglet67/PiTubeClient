@@ -8,8 +8,8 @@
 // Register usage
 // r0       = scratch register
 // r1       = scratch register
-// r2       = scratch register
-// r3       = scratch register
+// r2       = scratch register (used to hold CPRS normally)
+// r3       = a constant value 0f 0x0000FEF7 (for tube register address checking)
 // r4       = 6502 flags (only D and I bits maintained here, CVZN use ARM flags)
 // r5       = a constant value of 0xFFFFFF00
 // r6       = 6502 A
@@ -40,7 +40,11 @@
         // Insert the current literal pool, otherwise constants are to far away and you get a build error
         .ltorg
 .endm
-
+        
+// FETCH_NEXT used to be just this, which jumps direct to the next instruction
+//        ldrb    r0, [sl], #1
+//        add     pc, ip, r0, lsl #I_ALIGN
+                
 // Macro for pushing to the stack, whilst correctly handing wrapping
 // This relies on the 6502 memory being 64KB aligned
 .macro SPUSH reg
@@ -62,11 +66,6 @@
         // ldrb    \reg, [r9, #1]!
 .endm
 
-        
-// FETCH_NEXT used to be just this, which jumps direct to the next instruction
-//        ldrb    r0, [sl], #1
-//        add     pc, ip, r0, lsl #I_ALIGN
-        
 .macro TRACE_65TUBE
         push    {r0-r12, lr}
         mrs     r3, CPSR
@@ -87,24 +86,26 @@
 //        strb    r1, [fp, r0]
 //.endm
 
-// TODO Optimise this
-.macro LOAD_ABSOLUTE
-        push {r3, lr}
-        ldr  r3, =copro_65tube_load_handlers
-        add  r3, r3, r0, lsl #2
-        ldr  r3, [r3]
-        blx  r3
-        pop  {r3, lr}
+.macro LOAD_ABSOLUTE              // r0 holds the absolute address
+        mrs     r2, CPSR          // preserve the 6502 flags
+        cmp     r3, r0            // r3 holds the constant 0xFEF7
+        cmplt   r0, #0xFF00       // after this, the "lt" condition means 0xFEF7 < r0 < 0xFF00
+        pushlt  {lr}              // tube memory access
+        bllt    tube_load_handler // tube memory access - must preserve current flags
+        poplt   {lr}              // tube memory access
+        ldrgeb  r1, [fp, r0]      // normal memory read
+        msr     CPSR_flg, r2      // restore 6502 flags
 .endm
 
-// TODO Optimise this
-.macro STORE_ABSOLUTE
-        push {r3, lr}
-        ldr  r3, =copro_65tube_store_handlers
-        add  r3, r3, r0, lsl #2
-        ldr  r3, [r3]
-        blx  r3
-        pop  {r3, lr}
+.macro STORE_ABSOLUTE              // r0 holds the absolute address
+        mrs     r2, CPSR           // preserve the 6502 flags
+        cmp     r3, r0             // r3 holds the constant 0xFEF7
+        cmplt   r0, #0xFF00        // after this, the "lt" condition means 0xFEF7 < r0 < 0xFF00
+        pushlt  {lr}               // tube memory access
+        bllt    tube_store_handler // tube memory access - must preserve current flags
+        poplt   {lr}               // tube memory access
+        strgeb  r1, [fp, r0]       // normal memory write
+        msr     CPSR_flg, r2       // restore 6502 flags
 .endm
 
 // Macros for additional Rockwell 65C02 and WDC 65C02 instructions
@@ -148,29 +149,10 @@
         FETCH_NEXT
 .endm
 
-copro_65tube_load_handlers:
-.rept   0xfef8
-        .word default_load_abs_handler
-.endr
-.rept   0x0008
-        .word tube_load_abs_handler
-.endr
-.rept   0x0100
-        .word default_load_abs_handler
-.endr
-
-copro_65tube_store_handlers:
-.rept   0xfef8
-        .word default_store_abs_handler
-.endr
-.rept   0x0008
-        .word tube_store_abs_handler
-.endr
-.rept   0x0100
-        .word default_store_abs_handler
-.endr
-
-
+// **********************************************
+// Start of opcode implementations
+// **********************************************
+        
 // Opcode 00 - BRK
 .align I_ALIGN
 opcode_00:
@@ -2579,6 +2561,11 @@ opcode_FF:
         BBS 7
 
 .align I_ALIGN
+        
+// **********************************************
+// Start of opcode implementations
+// **********************************************
+        
 handle_brk:
         sub     r1, sl, fp
         add     r1, r1, #1
@@ -2643,37 +2630,24 @@ decimal_mode_sbc:
         teq     r6, #0
         FETCH_NEXT
 
-default_load_abs_handler:
-        ldrb    r1, [fp, r0]
-        mov     pc, lr
-
-tube_load_abs_handler:
+tube_load_handler:
         push    {r0-r3,r12,lr}
         mrs     r3, CPSR
-        push    {r3,lr}
+        push    {r3}
         bl      copro_65tube_tube_read
-        pop     {r3,lr}
+        pop     {r3}
         msr     CPSR_flg, r3
-        str     r0, [sp, #0]              // save result to r1 on the stack
         str     r0, [sp, #4]              // save result to r1 on the stack
-        str     r0, [sp, #8]              // save result to r1 on the stack
-        pop     {r0-r3,r12,lr}
-        mov     pc, lr
+        pop     {r0-r3,r12,pc}
 
-default_store_abs_handler:
-        strb    r1, [fp, r0]
-        mov     pc, lr
-
-tube_store_abs_handler:
+tube_store_handler:
         push    {r0-r3,r12,lr}
         mrs     r3, CPSR
-        push    {r3,lr}
+        push    {r3}
         bl      copro_65tube_tube_write
-        pop     {r3,lr}
+        pop     {r3}
         msr     CPSR_flg, r3
-        pop     {r0-r3,r12,lr}
-        mov     pc, lr
-
+        pop     {r0-r3,r12,pc}   
 
 handle_rst:
         orr     r4, r4, #4       // Set the I bit
@@ -2681,15 +2655,14 @@ handle_rst:
         add     r0, fp, #0x10000
         ldrh    r0, [r0, #-4]    // Fetch the address in FFFC,FFFD
         add     sl, fp, r0       // Point to this instruction in memory
-        FETCH_NEXT
-        
+        FETCH_NEXT        
 
 exec_65tube:
 
         push     {r0-r12,lr}
-
         mov      fp, r0                   // set fp (r11) to the 64K 6502 memory array
         ldr      ip, =opcode_00           // set ip (r12) to the base address of the 6502 instruction handler
+        ldr      r3, =0x0000fef7          // initialize the constant in r3
         ldr      r5, =0xffffff00          // initialize the constant in r5
         bl       handle_rst               // start by resetting the 6502
 
@@ -2707,7 +2680,7 @@ exec_65tube_loop:
 // Test RST_n, IRQ_n, and NMI_n and update interrupt state accordingly
 
 exec_65tube_test:
-        mrs     r3, CPSR                  // preserve the 6502 flags
+        mrs     r2, CPSR                  // preserve the 6502 flags
         
         ldr     r0, =0x20200034           // TODO: This address is different on a RPI2
         ldr     r0, [r0]                  // Read GPLEV0 GPIO register
@@ -2726,7 +2699,7 @@ exec_65tube_test:
         tsteq   r0, #(1 << 17)            // Test for IRQ (GPIO17) (level sensitive, active low)
         beq     exec_65tube_handle_irq    // Take the IRQ interrupt
         
-        msr     CPSR_flg, r3              // restore the 6502 flags
+        msr     CPSR_flg, r2              // restore the 6502 flags
         b       exec_65tube_loop          // execute the next block of N instructions
         
 exec_65tube_exit:
@@ -2734,7 +2707,7 @@ exec_65tube_exit:
         mov      pc, lr
 
 exec_65tube_handle_irq:
-        msr     CPSR_flg, r3              // Restore the 6502 flags
+        msr     CPSR_flg, r2              // Restore the 6502 flags
         sub     r1, sl, fp
         lsr     r0, r1, #8
         SPUSH   r0
@@ -2755,7 +2728,7 @@ exec_65tube_handle_irq:
         b       exec_65tube_loop          // Execute N more instructions
 
 exec_65tube_handle_nmi:
-        msr     CPSR_flg, r3              // Restore the 6502 flags
+        msr     CPSR_flg, r2              // Restore the 6502 flags
         sub     r1, sl, fp
         lsr     r0, r1, #8
         SPUSH   r0
