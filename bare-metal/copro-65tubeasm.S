@@ -9,7 +9,7 @@
 // r0       = scratch register
 // r1       = scratch register
 // r2       = scratch register (used to hold CPRS normally)
-// r3       = a constant value 0f 0x0000FEF7 (for tube register address checking)
+// r3       = a constant value 0f 0x0000FEF8 >> 3 (for tube register address checking)
 // r4       = 6502 flags (only D and I bits maintained here, CVZN use ARM flags)
 // r5       = a constant value of 0xFFFFFF00
 // r6       = 6502 A
@@ -95,25 +95,23 @@
         strb    r1, [fp, r0]
 .endm
 
-.macro LOAD_ABSOLUTE              // r0 holds the absolute address
-        mrs     r2, CPSR          // preserve the 6502 flags
-        cmp     r3, r0            // r3 holds the constant 0xFEF7
-        cmplt   r0, #0xFF00       // after this, the "lt" condition means 0xFEF7 < r0 < 0xFF00
-        pushlt  {lr}              // tube memory access
-        bllt    tube_load_handler // tube memory access - must preserve current flags
-        poplt   {lr}              // tube memory access
-        ldrgeb  r1, [fp, r0]      // normal memory read
-        msr     CPSR_flg, r2      // restore 6502 flags
+.macro LOAD_ABSOLUTE               // r0 holds the absolute address
+        mrs     r2, CPSR           // preserve the 6502 flags
+        cmp     r3, r0, lsr #3     // r3 holds the constant 0xFEF8 >> 3
+        pusheq  {lr}               // after this, the "eq" condition means 0xFEF8 <= r0 <= 0xFEFF
+        bleq    tube_load_handler  // tube memory access - must preserve current flags
+        popeq   {lr}               // tube memory access
+        ldrneb  r1, [fp, r0]       // normal memory read
+        msr     CPSR_flg, r2       // restore 6502 flags
 .endm
 
 .macro STORE_ABSOLUTE              // r0 holds the absolute address
         mrs     r2, CPSR           // preserve the 6502 flags
-        cmp     r3, r0             // r3 holds the constant 0xFEF7
-        cmplt   r0, #0xFF00        // after this, the "lt" condition means 0xFEF7 < r0 < 0xFF00
-        pushlt  {lr}               // tube memory access
-        bllt    tube_store_handler // tube memory access - must preserve current flags
-        poplt   {lr}               // tube memory access
-        strgeb  r1, [fp, r0]       // normal memory write
+        cmp     r3, r0, lsr #3     // r3 holds the constant 0xFEF8 >> 3
+        pusheq  {lr}               // after this, the "eq" condition means 0xFEF8 <= r0 <= 0xFEFF
+        bleq    tube_store_handler // tube memory access - must preserve current flags
+        popeq   {lr}               // tube memory access
+        strneb  r1, [fp, r0]       // normal memory write
         msr     CPSR_flg, r2       // restore 6502 flags
 .endm
 
@@ -2627,7 +2625,7 @@ exec_65tube:
         push     {r0-r12,lr}
         mov      fp, r0                   // set fp (r11) to the 64K 6502 memory array
         ldr      ip, =opcode_00           // set ip (r12) to the base address of the 6502 instruction handler
-        ldr      r3, =0x0000fef7          // initialize the constant in r3
+        ldr      r3, =(0x0000fef8 >> 3)   // initialize the constant in r3
         ldr      r5, =0xffffff00          // initialize the constant in r5
         bl       handle_rst               // start by resetting the 6502
 
