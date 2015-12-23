@@ -39,11 +39,11 @@
         // Insert the current literal pool, otherwise constants are to far away and you get a build error
         .ltorg
 .endm
-        
+
 // FETCH_NEXT used to be just this, which jumps direct to the next instruction
 //        ldrb    r0, [sl], #1
 //        add     pc, ip, r0, lsl #I_ALIGN
-                
+
 // Macro for pushing to the stack, whilst correctly handing wrapping
 // This relies on the 6502 memory being 64KB aligned
 // Optimisations from dp11 on stardot
@@ -53,7 +53,7 @@
         // The original code was just this:
         // strb    \reg, [r9], #-1
 .endm
-        
+
 // Macro for poping from the stack, whilst correctly handing wrapping
 // This relies on the 6502 memory being 64KB aligned
 // Optimisations from dp11 on stardot
@@ -80,12 +80,21 @@
 // Update a histogram of opcodes in memory
 .macro HISTOGRAM_65TUBE
         ldr     r1, =histogram_memory
-        add     r1, r0, lsl #2        
+        add     r1, r0, lsl #2
         ldr     r2, [r1]
         add     r2, #1
         str     r2, [r1]
-.endm        
-        
+.endm
+
+// Macros for calculating effective address
+.macro EA_ABSOLUTE_INDEXED reg
+        ldrb    r0, [sl], #1
+        ldrb    r1, [sl], #1
+        add     r0, r0, \reg, lsr #24
+        add     r0, r0, r1, lsl #8
+        bic     r0, r0, #0x10000
+.endm
+
 // Macros for reading/writing memory
 .macro LOAD_INDIRECT
         ldrb    r1, [fp, r0]
@@ -159,7 +168,7 @@
 // **********************************************
 // Start of opcode implementations
 // **********************************************
-        
+
 // Opcode 00 - BRK
 .align I_ALIGN
 opcode_00:
@@ -391,11 +400,7 @@ opcode_18:
 // Opcode 19 - ORA $0000,Y
 .align I_ALIGN
 opcode_19:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
         lsl     r1, r1, #24
         orrs    r6, r6, r1
@@ -432,11 +437,7 @@ opcode_1C:
 // Opcode 1D - ORA $0000,X
 .align I_ALIGN
 opcode_1D:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         lsl     r1, r1, #24
         orrs    r6, r6, r1
@@ -445,11 +446,7 @@ opcode_1D:
 // Opcode 1E - ASL $0000,X
 .align I_ALIGN
 opcode_1E:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         lsl     r1, r1, #1
         STORE_ABSOLUTE
@@ -714,11 +711,7 @@ opcode_38:
 // Opcode 39 - AND     $0000,Y
 .align I_ALIGN
 opcode_39:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
         lsl     r1, r1, #24
         ands    r6, r6, r1
@@ -739,11 +732,7 @@ opcode_3B:
 // Opcode 3C - BIT $0000,X
 .align I_ALIGN
 opcode_3C:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         lsl     r0, r1, #24
         tst     r0, r6
@@ -760,11 +749,7 @@ opcode_3C:
 // Opcode 3D - AND     $0000,X
 .align I_ALIGN
 opcode_3D:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         lsl     r1, r1, #24
         ands    r6, r6, r1
@@ -773,11 +758,7 @@ opcode_3D:
 // Opcode 3E - ROL $0000,X
 .align I_ALIGN
 opcode_3E:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         adc     r1, r1, r1
         STORE_ABSOLUTE
@@ -1000,11 +981,7 @@ opcode_58:
 // Opcode 59 - EOR $0000,Y
 .align I_ALIGN
 opcode_59:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
         lsl     r1, r1, #24
         eors    r6, r6, r1
@@ -1031,11 +1008,7 @@ opcode_5C:
 // Opcode 5D - EOR $0000,X
 .align I_ALIGN
 opcode_5D:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         lsl     r1, r1, #24
         eors    r6, r6, r1
@@ -1044,11 +1017,7 @@ opcode_5D:
 // Opcode 5E - LSR $0000,X
 .align I_ALIGN
 opcode_5E:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         lsrs    r1, r1, #1
         STORE_ABSOLUTE
@@ -1315,11 +1284,7 @@ opcode_78:
 // Opcode 79 - ADC $0000,Y
 .align I_ALIGN
 opcode_79:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
         tst     r4, #8
         bne     decimal_mode_adc
@@ -1345,10 +1310,7 @@ opcode_7B:
 // Opcode 7C - JMP ($0000,X)
 .align I_ALIGN
 opcode_7C:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
+        EA_ABSOLUTE_INDEXED r7
         ldrb    r1, [r0, fp]!
         ldrb    r0, [r0, #1]
         add     sl, r1, r0, lsl #8
@@ -1358,11 +1320,7 @@ opcode_7C:
 // Opcode 7D - ADC $0000,X
 .align I_ALIGN
 opcode_7D:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         tst     r4, #8
         bne     decimal_mode_adc
@@ -1375,11 +1333,7 @@ opcode_7D:
 // Opcode 7E - ROR $0000,X
 .align I_ALIGN
 opcode_7E:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         orrcs   r1, r1, #0x100
         lsrs    r1, r1, #1
@@ -1597,11 +1551,7 @@ opcode_98:
 // Opcode 99 - STA $0000,Y
 .align I_ALIGN
 opcode_99:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r8
         lsr     r1, r6, #24
         STORE_ABSOLUTE
         FETCH_NEXT
@@ -1630,11 +1580,7 @@ opcode_9C:
 // Opcode 9D - STA $0000,X
 .align I_ALIGN
 opcode_9D:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         lsr     r1, r6, #24
         STORE_ABSOLUTE
         FETCH_NEXT
@@ -1642,11 +1588,7 @@ opcode_9D:
 // Opcode 9E - STZ $0000,X
 .align I_ALIGN
 opcode_9E:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         strb    r5, [fp, r0]
         FETCH_NEXT
 
@@ -1867,11 +1809,7 @@ opcode_B8:
 // Opcode B9 - LDA $0000,Y
 .align I_ALIGN
 opcode_B9:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
         lsl     r6, r1, #24
         teq     r6, #0
@@ -1892,11 +1830,7 @@ opcode_BB:
 // Opcode BC - LDY $0000,X
 .align I_ALIGN
 opcode_BC:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         lsl     r8, r1, #24
         teq     r8, #0
@@ -1905,11 +1839,7 @@ opcode_BC:
 // Opcode BD - LDA $0000,X
 .align I_ALIGN
 opcode_BD:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         lsl     r6, r1, #24
         teq     r6, #0
@@ -1918,11 +1848,7 @@ opcode_BD:
 // Opcode BE - LDX $0000,Y
 .align I_ALIGN
 opcode_BE:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
         lsl     r7, r1, #24
         teq     r7, #0
@@ -2138,11 +2064,7 @@ opcode_D8:
 // Opcode D9 - CMP $0000,Y
 .align I_ALIGN
 opcode_D9:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
         cmp     r6, r1, lsl #24
         FETCH_NEXT
@@ -2169,11 +2091,7 @@ opcode_DC:
 // Opcode DD - CMP $0000,X
 .align I_ALIGN
 opcode_DD:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         cmp     r6, r1, lsl #24
         FETCH_NEXT
@@ -2181,11 +2099,7 @@ opcode_DD:
 // Opcode DE - DEX $0000,X
 .align I_ALIGN
 opcode_DE:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         sub     r1, r1, #1
         STORE_ABSOLUTE
@@ -2435,11 +2349,7 @@ opcode_F8:
 // Opcode F9 - SBC $0000,Y
 .align I_ALIGN
 opcode_F9:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
         tst     r4, #8
         bne     decimal_mode_sbc
@@ -2471,11 +2381,7 @@ opcode_FC:
 // Opcode FD - SBC $0000,X
 .align I_ALIGN
 opcode_FD:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         tst     r4, #8
         bne     decimal_mode_sbc
@@ -2488,11 +2394,7 @@ opcode_FD:
 // Opcode FE - INC $0000,X
 .align I_ALIGN
 opcode_FE:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
-        add     r0, r0, r7, lsr #24
-        bic     r0, r0, #0x10000
+        EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         add     r1, r1, #1
         STORE_ABSOLUTE
@@ -2506,11 +2408,11 @@ opcode_FF:
         BBS 7
 
 .align I_ALIGN
-        
+
 // **********************************************
 // Start of opcode implementations
 // **********************************************
-        
+
 handle_brk:
         sub     r1, sl, fp
         add     r1, r1, #1
@@ -2593,7 +2495,7 @@ tube_store_handler:
         bl      copro_65tube_tube_write
         pop     {r3}
         msr     CPSR_flg, r3
-        pop     {r0-r3,r12,pc}   
+        pop     {r0-r3,r12,pc}
 
 handle_rst:
         orr     r4, r4, #4       // Set the I bit
@@ -2601,7 +2503,7 @@ handle_rst:
         add     r0, fp, #0x10000
         ldrh    r0, [r0, #-4]    // Fetch the address in FFFC,FFFD
         add     sl, fp, r0       // Point to this instruction in memory
-        FETCH_NEXT        
+        FETCH_NEXT
 
 exec_65tube:
 
@@ -2613,7 +2515,7 @@ exec_65tube:
         bl       handle_rst               // start by resetting the 6502
 
 // execute N instructions
-        
+
 exec_65tube_loop:
 
 .rept 16
@@ -2622,18 +2524,18 @@ exec_65tube_loop:
         // HISTOGRAM_65TUBE
         add     r0, ip, r0, lsl #I_ALIGN  // Compute the address of the handler
         blx     r0                        // Call the handler
-.endr        
+.endr
 
 // Test RST_n, IRQ_n, and NMI_n and update interrupt state accordingly
 
 exec_65tube_test:
         mrs     r2, CPSR                  // preserve the 6502 flags
-        
+
         ldr     r0, =0x20200034           // TODO: This address is different on a RPI2
         ldr     r0, [r0]                  // Read GPLEV0 GPIO register
         ldr     r1, last_gplev0           // Read the previous value (so we can do edge detection)
         str     r0, last_gplev0           // remember gplev0 for next time
-        
+
         tst     r0, #(1 << 7)             // Test for RST (GPIO7)
         beq     exec_65tube_exit          // exit immediatly if low
 
@@ -2641,14 +2543,14 @@ exec_65tube_test:
         orr     r1, r1, r0                // r1 (bit 18) = !lastNMIn OR NMIn
         tst     r1, #(1 << 18)            // r1 (bit 18) = 0 then we have seen an edge
         beq     exec_65tube_handle_nmi    // Take the NMI interrupt
-        
+
         tst     r4, #4                    // Test whether interrupts are enabled (bit 2 = 0)
         tsteq   r0, #(1 << 17)            // Test for IRQ (GPIO17) (level sensitive, active low)
         beq     exec_65tube_handle_irq    // Take the IRQ interrupt
-        
+
         msr     CPSR_flg, r2              // restore the 6502 flags
         b       exec_65tube_loop          // execute the next block of N instructions
-        
+
 exec_65tube_exit:
         pop      {r0-r12,lr}
         mov      pc, lr
@@ -2692,7 +2594,7 @@ exec_65tube_handle_nmi:
         ldrh    r0, [r0, #-6]             // Fetch the address in FFFA,FFFB
         add     sl, fp, r0                // Point to this instruction in memory
         b       exec_65tube_loop          // Execute N more instructions
-        
+
 last_gplev0:
         .word 0
-        
+
