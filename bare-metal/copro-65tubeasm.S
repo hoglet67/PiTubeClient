@@ -87,6 +87,12 @@
 .endm
 
 // Macros for calculating effective address in r0
+
+.macro EA_ABSOLUTE
+        ldrb    r0, [sl], #1
+        ldrb    r1, [sl], #1
+        add     r0, r0, r1, lsl #8
+.endm
         
 .macro EA_ABSOLUTE_INDEXED reg
         ldrb    r0, [sl], #1
@@ -291,9 +297,7 @@ opcode_0B:
 // Opcode 0C - TSB $0000
 .align I_ALIGN
 opcode_0C:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         mrs     r2, CPSR
         tst     r1, r6, lsr #24
@@ -307,9 +311,7 @@ opcode_0C:
 // Opcode 0D - ORA $0000
 .align I_ALIGN
 opcode_0D:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         lsl     r1, r1, #24
         orrs    r6, r6, r1
@@ -318,9 +320,7 @@ opcode_0D:
 // Opcode 0E - ASL $0000
 .align I_ALIGN
 opcode_0E:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         lsl     r1, r1, #1
         STORE_ABSOLUTE
@@ -434,9 +434,7 @@ opcode_1B:
 // Opcode 1C - TRB $0000
 .align I_ALIGN
 opcode_1C:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         mrs     r2, CPSR
         tst     r1, r6, lsr #24
@@ -582,9 +580,7 @@ opcode_2B:
 // Opcode 2C - BIT $0000
 .align I_ALIGN
 opcode_2C:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         lsl     r0, r1, #24
         tst     r0, r6
@@ -601,9 +597,7 @@ opcode_2C:
 // Opcode 2D - AND     $0000
 .align I_ALIGN
 opcode_2D:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         lsl     r1, r1, #24
         ands    r6, r6, r1
@@ -612,9 +606,7 @@ opcode_2D:
 // Opcode 2E - ROL $0000
 .align I_ALIGN
 opcode_2E:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         adc     r1, r1, r1
         STORE_ABSOLUTE
@@ -708,7 +700,7 @@ opcode_38:
         msr     CPSR_flg, r0
         FETCH_NEXT
 
-// Opcode 39 - AND     $0000,Y
+// Opcode 39 - AND $0000,Y
 .align I_ALIGN
 opcode_39:
         EA_ABSOLUTE_INDEXED r8
@@ -746,7 +738,7 @@ opcode_3C:
         msr     CPSR_flg, r1
         FETCH_NEXT
 
-// Opcode 3D - AND     $0000,X
+// Opcode 3D - AND $0000,X
 .align I_ALIGN
 opcode_3D:
         EA_ABSOLUTE_INDEXED r7
@@ -857,18 +849,14 @@ opcode_4B:
 // Opcode 4C - JMP $0000
 .align I_ALIGN
 opcode_4C:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #0
-        add     sl, r0, r1, lsl #8
-        add     sl, sl, fp
+        EA_ABSOLUTE
+        add     sl, r0, fp
         FETCH_NEXT
 
 // Opcode 4D - EOR $0000
 .align I_ALIGN
 opcode_4D:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         lsl     r1, r1, #24
         eors    r6, r6, r1
@@ -877,9 +865,7 @@ opcode_4D:
 // Opcode 4E - LSR $0000
 .align I_ALIGN
 opcode_4E:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         lsrs    r1, r1, #1
         STORE_ABSOLUTE
@@ -1137,9 +1123,7 @@ opcode_6C:
 // Opcode 6D - ADC $0000
 .align I_ALIGN
 opcode_6D:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         tst     r4, #8
         bne     decimal_mode_adc
@@ -1152,9 +1136,7 @@ opcode_6D:
 // Opcode 6E - ROR $0000
 .align I_ALIGN
 opcode_6E:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         orrcs   r1, r1, #0x100
         lsrs    r1, r1, #1
@@ -1411,9 +1393,7 @@ opcode_8B:
 // Opcode 8C - STY $0000
 .align I_ALIGN
 opcode_8C:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         lsr     r1, r8, #24
         STORE_ABSOLUTE
         FETCH_NEXT
@@ -1421,9 +1401,7 @@ opcode_8C:
 // Opcode 8D - STA $0000
 .align I_ALIGN
 opcode_8D:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         lsr     r1, r6, #24
         STORE_ABSOLUTE
         FETCH_NEXT
@@ -1431,9 +1409,7 @@ opcode_8D:
 // Opcode 8E - STX $0000
 .align I_ALIGN
 opcode_8E:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         lsr     r1, r7, #24
         STORE_ABSOLUTE
         FETCH_NEXT
@@ -1532,9 +1508,7 @@ opcode_9B:
 // Opcode 9C - STZ $0000
 .align I_ALIGN
 opcode_9C:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         strb    r5, [fp, r0]
         FETCH_NEXT
 
@@ -1648,9 +1622,7 @@ opcode_AB:
 // Opcode AC - LDY $0000
 .align I_ALIGN
 opcode_AC:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         lsl     r8, r1, #24
         teq     r8, #0
@@ -1659,9 +1631,7 @@ opcode_AC:
 // Opcode AD - LDA $0000
 .align I_ALIGN
 opcode_AD:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         lsl     r6, r1, #24
         teq     r6, #0
@@ -1670,9 +1640,7 @@ opcode_AD:
 // Opcode AE - LDX $0000
 .align I_ALIGN
 opcode_AE:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         lsl     r7, r1, #24
         teq     r7, #0
@@ -1895,9 +1863,7 @@ opcode_CB:
 // Opcode CC - CPY $0000
 .align I_ALIGN
 opcode_CC:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         cmp     r8, r1, lsl #24
         FETCH_NEXT
@@ -1905,9 +1871,7 @@ opcode_CC:
 // Opcode CD - CMP $0000
 .align I_ALIGN
 opcode_CD:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         cmp     r6, r1, lsl #24
         FETCH_NEXT
@@ -1915,9 +1879,7 @@ opcode_CD:
 // Opcode CE - DEC $0000
 .align I_ALIGN
 opcode_CE:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         sub     r1, r1, #1
         STORE_ABSOLUTE
@@ -2147,9 +2109,7 @@ opcode_EB:
 // Opcode EC - CPX $0000
 .align I_ALIGN
 opcode_EC:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         cmp     r7, r1, lsl #24
         FETCH_NEXT
@@ -2157,9 +2117,7 @@ opcode_EC:
 // Opcode ED - SBC $0000
 .align I_ALIGN
 opcode_ED:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         tst     r4, #8
         bne     decimal_mode_sbc
@@ -2172,9 +2130,7 @@ opcode_ED:
 // Opcode EE - INC $0000
 .align I_ALIGN
 opcode_EE:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        EA_ABSOLUTE
         LOAD_ABSOLUTE
         add     r1, r1, #1
         STORE_ABSOLUTE
