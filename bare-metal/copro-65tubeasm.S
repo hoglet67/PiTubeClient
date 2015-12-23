@@ -89,40 +89,30 @@
 // Macros for calculating effective address in r0
 
 .macro EA_ABSOLUTE
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
-        add     r0, r0, r1, lsl #8
+        ldrh    r0, [sl], #2
 .endm
         
 .macro EA_ABSOLUTE_INDEXED reg
-        ldrb    r0, [sl], #1
-        ldrb    r1, [sl], #1
+        ldrh    r0, [sl], #2
         add     r0, r0, \reg, lsr #24
-        add     r0, r0, r1, lsl #8
         bic     r0, r0, #0x10000
 .endm
 
 .macro EA_INDIRECT
         ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        ldrh    r0, [r0, fp]
 .endm
         
 .macro EA_INDIRECT_X
         ldrb    r0, [sl], #1
         add     r0, r0, r7, lsr #24
         and     r0, r0, #0xff
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        ldrh    r0, [r0, fp]
 .endm
         
 .macro EA_INDIRECT_Y        
         ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        ldrh    r0, [r0, fp]
         add     r0, r0, r8, lsr #24
         bic     r0, r0, #0x10000
 .endm
