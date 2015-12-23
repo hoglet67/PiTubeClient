@@ -305,10 +305,8 @@ opcode_0F:
 // Opcode 10 - BPL
 .align I_ALIGN
 opcode_10:
-        ldrplb  r0, [sl], #1
-        lslpl   r0, r0, #24
-        addpl   sl, sl, r0, asr #24
-        addmi   sl, sl, #1
+        ldrsb   r0, [sl], #1
+        addpl   sl, sl, r0
         FETCH_NEXT
 
 // Opcode 11 - ORA ($00),Y
@@ -626,10 +624,8 @@ opcode_2F:
 // Opcode 30 - BMI
 .align I_ALIGN
 opcode_30:
-        ldrmib  r0, [sl], #1
-        lslmi   r0, r0, #24
-        addmi   sl, sl, r0, asr #24
-        addpl   sl, sl, #1
+        ldrsb   r0, [sl], #1
+        addmi   sl, sl, r0
         FETCH_NEXT
 
 // Opcode 31 - AND ($00),Y
@@ -924,12 +920,10 @@ opcode_4F:
 // Opcode 50 - BVC
 .align I_ALIGN
 opcode_50:
+        ldrsb   r0, [sl], #1
         mrs     r2, CPSR
         tst     r4, #0x40
-        ldreqb  r0, [sl], #1
-        lsleq   r0, r0, #24
-        addeq   sl, sl, r0, asr #24
-        addne   sl, sl, #1
+        addeq   sl, sl, r0
         msr     CPSR_flg, r2
         FETCH_NEXT
 
@@ -1226,12 +1220,10 @@ opcode_6F:
 // Opcode 70 - BVS
 .align I_ALIGN
 opcode_70:
+        ldrsb   r0, [sl], #1
         mrs     r2, CPSR
         tst     r4, #0x40
-        ldrneb  r0, [sl], #1
-        lslne   r0, r0, #24
-        addne   sl, sl, r0, asr #24
-        addeq   sl, sl, #1
+        addne   sl, sl, r0
         msr     CPSR_flg, r2
         FETCH_NEXT
 
@@ -1404,9 +1396,8 @@ opcode_7F:
 // Opcode 80 - BRA
 .align I_ALIGN
 opcode_80:
-        ldrb    r0, [sl], #1
-        lsl     r0, r0, #24
-        add     sl, sl, r0, asr #24
+        ldrsb   r0, [sl], #1
+        add     sl, sl, r0
         FETCH_NEXT
 
 // Opcode 81 - STA ($00,X)
@@ -1532,10 +1523,8 @@ opcode_8F:
 // Opcode 90 - BCC
 .align I_ALIGN
 opcode_90:
-        ldrccb  r0, [sl], #1
-        lslcc   r0, r0, #24
-        addcc   sl, sl, r0, asr #24
-        addcs   sl, sl, #1
+        ldrsb   r0, [sl], #1
+        addcc   sl, sl, r0
         FETCH_NEXT
 
 // Opcode 91 - STA ($00),Y
@@ -1799,10 +1788,8 @@ opcode_AF:
 // Opcode B0 - BCS
 .align I_ALIGN
 opcode_B0:
-        ldrcsb  r0, [sl], #1
-        lslcs   r0, r0, #24
-        addcs   sl, sl, r0, asr #24
-        addcc   sl, sl, #1
+        ldrsb   r0, [sl], #1
+        addcs   sl, sl, r0
         FETCH_NEXT
 
 // Opcode B1 - LDA ($00),Y
@@ -2077,10 +2064,8 @@ opcode_CF:
 // Opcode D0 - BNE
 .align I_ALIGN
 opcode_D0:
-        ldrneb  r0, [sl], #1
-        lslne   r0, r0, #24
-        addne   sl, sl, r0, asr #24
-        addeq   sl, sl, #1
+        ldrsb   r0, [sl], #1
+        addne   sl, sl, r0
         FETCH_NEXT
 
 // Opcode D1 - CMP ($00),Y
@@ -2361,10 +2346,8 @@ opcode_EF:
 // Opcode F0 - BEQ
 .align I_ALIGN
 opcode_F0:
-        ldreqb  r0, [sl], #1
-        lsleq   r0, r0, #24
-        addeq   sl, sl, r0, asr #24
-        addne   sl, sl, #1
+        ldrsb   r0, [sl], #1
+        addeq   sl, sl, r0
         FETCH_NEXT
 
 // Opcode F1 - SBC ($00),Y
