@@ -462,14 +462,11 @@ opcode_1F:
 // Opcode 20 - JSR $0000
 .align I_ALIGN
 opcode_20:
-        ldrb    r0, [sl], #1
-        //sub     r2, sl, fp      // unnecessary as fp is 64KB aligned
+        ldrh    r0, [sl], #1
         lsr     r1, sl, #8
         SPUSH   r1
         SPUSH   sl
-        ldrb    r1, [sl], #1
-        add     sl, r0, r1, lsl #8
-        add     sl, sl, fp
+        add     sl, fp, r0
         FETCH_NEXT
 
 // Opcode 21 - AND ($00,X)
