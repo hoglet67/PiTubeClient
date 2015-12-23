@@ -44,7 +44,7 @@
 //        ldrb    r0, [sl], #1
 //        add     pc, ip, r0, lsl #I_ALIGN
 
-// Macro for pushing to the stack, whilst correctly handing wrapping
+// Macro for pushing a byte to the stack, whilst correctly handing wrapping
 // This relies on the 6502 memory being 64KB aligned
 // Optimisations from dp11 on stardot
 .macro SPUSH reg
@@ -54,7 +54,7 @@
         // strb    \reg, [r9], #-1
 .endm
 
-// Macro for poping from the stack, whilst correctly handing wrapping
+// Macro for poping a byte from the stack, whilst correctly handing wrapping
 // This relies on the 6502 memory being 64KB aligned
 // Optimisations from dp11 on stardot
 .macro SPOP reg
@@ -65,6 +65,25 @@
         // ldrb    \reg, [r9, #1]!
 .endm
 
+// Macro for pushing a half word to the stack, whilst correctly handing wrapping
+// This relies on the 6502 memory being 64KB aligned
+// Note: Doesn't deal with the case where SP is 0x100 - locations 0xFF is incorrectly written instead of 0x1FF
+.macro SPUSHH reg
+        sub     r9, r9, #1        
+        strh    \reg, [r9], #-1
+        orr     r9, #0x0100
+.endm
+
+// Macro for poping a half word from the stack, whilst correctly handing wrapping
+// This relies on the 6502 memory being 64KB aligned
+// Note: Doesn't deal with the case where SP is 0x1FF - locations 0x200 and 0x201 are read
+.macro SPOPH reg
+        add     r9, r9, #1
+        ldrh    \reg, [r9], #1
+        bic     r9, #0xFF00
+        orr     r9, #0x0100
+.endm
+        
 .macro TRACE_65TUBE
         push    {r0-r12, lr}
         mrs     r3, CPSR
@@ -463,9 +482,7 @@ opcode_1F:
 .align I_ALIGN
 opcode_20:
         ldrh    r0, [sl], #1
-        lsr     r1, sl, #8
-        SPUSH   r1
-        SPUSH   sl
+        SPUSHH  sl
         add     sl, fp, r0
         FETCH_NEXT
 
@@ -993,9 +1010,7 @@ opcode_5F:
 // Opcode 60 - RTS
 .align I_ALIGN
 opcode_60:
-        SPOP    r0
-        SPOP    r1
-        add     r0, r0, r1, lsl #8
+        SPOPH   r0
         add     sl, r0, #1
         add     sl, sl, fp
         FETCH_NEXT
