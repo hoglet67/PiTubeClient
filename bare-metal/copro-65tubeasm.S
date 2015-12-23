@@ -86,7 +86,8 @@
         str     r2, [r1]
 .endm
 
-// Macros for calculating effective address
+// Macros for calculating effective address in r0
+        
 .macro EA_ABSOLUTE_INDEXED reg
         ldrb    r0, [sl], #1
         ldrb    r1, [sl], #1
@@ -95,6 +96,31 @@
         bic     r0, r0, #0x10000
 .endm
 
+.macro EA_INDIRECT
+        ldrb    r0, [sl], #1
+        ldrb    r1, [r0, fp]!
+        ldrb    r0, [r0, #1]
+        add     r0, r1, r0, lsl #8
+.endm
+        
+.macro EA_INDIRECT_X
+        ldrb    r0, [sl], #1
+        add     r0, r0, r7, lsr #24
+        and     r0, r0, #0xff
+        ldrb    r1, [r0, fp]!
+        ldrb    r0, [r0, #1]
+        add     r0, r1, r0, lsl #8
+.endm
+        
+.macro EA_INDIRECT_Y        
+        ldrb    r0, [sl], #1
+        ldrb    r1, [r0, fp]!
+        ldrb    r0, [r0, #1]
+        add     r0, r1, r0, lsl #8
+        add     r0, r0, r8, lsr #24
+        bic     r0, r0, #0x10000
+.endm
+        
 // Macros for reading/writing memory
 .macro LOAD_INDIRECT
         ldrb    r1, [fp, r0]
@@ -177,12 +203,7 @@ opcode_00:
 // Opcode 01 - ORA ($00,X)
 .align I_ALIGN
 opcode_01:
-        ldrb    r0, [sl], #1
-        add     r0, r0, r7, lsr #24
-        and     r0, r0, #0xff
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT_X
         LOAD_INDIRECT
         lsl     r1, r1, #24
         orrs    r6, r6, r1
@@ -321,12 +342,7 @@ opcode_10:
 // Opcode 11 - ORA ($00),Y
 .align I_ALIGN
 opcode_11:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_INDIRECT_Y
         LOAD_INDIRECT
         lsl     r1, r1, #24
         orrs    r6, r6, r1
@@ -335,10 +351,7 @@ opcode_11:
 // Opcode 12 - ORA ($00)
 .align I_ALIGN
 opcode_12:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT
         LOAD_INDIRECT
         lsl     r1, r1, #24
         orrs    r6, r6, r1
@@ -474,12 +487,7 @@ opcode_20:
 // Opcode 21 - AND ($00,X)
 .align I_ALIGN
 opcode_21:
-        ldrb    r0, [sl], #1
-        add     r0, r0, r7, lsr #24
-        and     r0, r0, #0xff
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT_X
         LOAD_INDIRECT
         lsl     r1, r1, #24
         ands    r6, r6, r1
@@ -628,12 +636,7 @@ opcode_30:
 // Opcode 31 - AND ($00),Y
 .align I_ALIGN
 opcode_31:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_INDIRECT_Y
         LOAD_INDIRECT
         lsl     r1, r1, #24
         ands    r6, r6, r1
@@ -642,10 +645,7 @@ opcode_31:
 // Opcode 32 - AND ($00)
 .align I_ALIGN
 opcode_32:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT
         LOAD_INDIRECT
         lsl     r1, r1, #24
         ands    r6, r6, r1
@@ -778,12 +778,7 @@ opcode_40:
 // Opcode 41 - EOR ($00,X)
 .align I_ALIGN
 opcode_41:
-        ldrb    r0, [sl], #1
-        add     r0, r0, r7, lsr #24
-        and     r0, r0, #0xff
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT_X
         LOAD_INDIRECT
         lsl     r1, r1, #24
         eors    r6, r6, r1
@@ -911,12 +906,7 @@ opcode_50:
 // Opcode 51 - EOR ($00),Y
 .align I_ALIGN
 opcode_51:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_INDIRECT_Y
         LOAD_INDIRECT
         lsl     r1, r1, #24
         eors    r6, r6, r1
@@ -925,10 +915,7 @@ opcode_51:
 // Opcode 52 - EOR ($00)
 .align I_ALIGN
 opcode_52:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT
         LOAD_INDIRECT
         lsl     r1, r1, #24
         eors    r6, r6, r1
@@ -1043,12 +1030,7 @@ opcode_60:
 // Opcode 61 - ADC ($00,X)
 .align I_ALIGN
 opcode_61:
-        ldrb    r0, [sl], #1
-        add     r0, r0, r7, lsr #24
-        and     r0, r0, #0xff
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT_X
         LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_adc
@@ -1199,12 +1181,7 @@ opcode_70:
 // Opcode 71 - ADC ($00),Y
 .align I_ALIGN
 opcode_71:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_INDIRECT_Y
         LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_adc
@@ -1217,10 +1194,7 @@ opcode_71:
 // Opcode 72 - ADC ($00)
 .align I_ALIGN
 opcode_72:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT
         LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_adc
@@ -1357,12 +1331,7 @@ opcode_80:
 // Opcode 81 - STA ($00,X)
 .align I_ALIGN
 opcode_81:
-        ldrb    r0, [sl], #1
-        add     r0, r0, r7, lsr #24
-        and     r0, r0, #0xff
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT_X
         lsr     r1, r6, #24
         STORE_INDIRECT
         FETCH_NEXT
@@ -1484,12 +1453,7 @@ opcode_90:
 // Opcode 91 - STA ($00),Y
 .align I_ALIGN
 opcode_91:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_INDIRECT_Y
         lsr     r1, r6, #24
         STORE_INDIRECT
         FETCH_NEXT
@@ -1497,10 +1461,7 @@ opcode_91:
 // Opcode 92 - STA ($00)
 .align I_ALIGN
 opcode_92:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT
         lsr     r1, r6, #24
         STORE_INDIRECT
         FETCH_NEXT
@@ -1608,12 +1569,7 @@ opcode_A0:
 // Opcode A1 - LDA ($00,X)
 .align I_ALIGN
 opcode_A1:
-        ldrb    r0, [sl], #1
-        add     r0, r0, r7, lsr #24
-        and     r0, r0, #0xff
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT_X
         LOAD_INDIRECT
         lsl     r6, r1, #24
         teq     r6, #0
@@ -1737,12 +1693,7 @@ opcode_B0:
 // Opcode B1 - LDA ($00),Y
 .align I_ALIGN
 opcode_B1:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_INDIRECT_Y
         LOAD_INDIRECT
         lsl     r6, r1, #24
         teq     r6, #0
@@ -1751,10 +1702,7 @@ opcode_B1:
 // Opcode B2 - LDA ($00)
 .align I_ALIGN
 opcode_B2:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT
         LOAD_INDIRECT
         lsl     r6, r1, #24
         teq     r6, #0
@@ -1869,12 +1817,7 @@ opcode_C0:
 // Opcode C1 - CMP ($00,X)
 .align I_ALIGN
 opcode_C1:
-        ldrb    r0, [sl], #1
-        add     r0, r0, r7, lsr #24
-        and     r0, r0, #0xff
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT_X
         LOAD_INDIRECT
         cmp     r6, r1, lsl #24
         FETCH_NEXT
@@ -1997,12 +1940,7 @@ opcode_D0:
 // Opcode D1 - CMP ($00),Y
 .align I_ALIGN
 opcode_D1:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_INDIRECT_Y
         LOAD_INDIRECT
         cmp     r6, r1, lsl #24
         FETCH_NEXT
@@ -2010,10 +1948,7 @@ opcode_D1:
 // Opcode D2 - CMP ($00)
 .align I_ALIGN
 opcode_D2:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT
         LOAD_INDIRECT
         cmp     r6, r1, lsl #24
         FETCH_NEXT
@@ -2122,12 +2057,7 @@ opcode_E0:
 // Opcode E1 - SBC ($00,X)
 .align I_ALIGN
 opcode_E1:
-        ldrb    r0, [sl], #1
-        add     r0, r0, r7, lsr #24
-        and     r0, r0, #0xff
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT_X
         LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_sbc
@@ -2267,12 +2197,7 @@ opcode_F0:
 // Opcode F1 - SBC ($00),Y
 .align I_ALIGN
 opcode_F1:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
-        add     r0, r0, r8, lsr #24
-        bic     r0, r0, #0x10000
+        EA_INDIRECT_Y
         LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_sbc
@@ -2285,10 +2210,7 @@ opcode_F1:
 // Opcode F2 - SBC ($00)
 .align I_ALIGN
 opcode_F2:
-        ldrb    r0, [sl], #1
-        ldrb    r1, [r0, fp]!
-        ldrb    r0, [r0, #1]
-        add     r0, r1, r0, lsl #8
+        EA_INDIRECT
         LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_sbc
