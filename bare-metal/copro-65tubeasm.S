@@ -81,6 +81,7 @@
 
 // Macro for fetching the next instruction
 .macro FETCH_NEXT
+        // TRACE_65TUBE
         ldrb    r0, [sl], #1
         add     pc, ip, r0, lsl #I_ALIGN
         // Insert the current literal pool, otherwise constants are to far away and you get a build error
@@ -142,16 +143,21 @@
         orr     r9, #0x0100
 .endm
 
+// TODO - This macro is currently broken two reasons
+// 1. Some of the instructions overflow
+// 2. There is a race condition with interrupts and ip (which needs to be stacked as its corrputed by printf()
 .macro TRACE_65TUBE
-        push    {r0-r12, lr}
-        mrs     r2, CPSR
-        push    {r2,lr}
         mov     r0, sl
         ldrb    r1, [sl]
+        mrs     r2, CPSR
+        push    {r2}
+        orr     r2, r2, #0x80
+        msr     CPSR_c, r2        
+        push    {r3-r12}
         bl      copro_65tube_trace
-        pop     {r2,lr}
-        msr     CPSR_flg, r2
-        pop     {r0-r12, lr}
+        pop     {r3-r12}
+        pop     {r2}
+        msr     CPSR, r2
 .endm
 
 // Update a histogram of opcodes in memory
@@ -206,21 +212,17 @@
 .macro LOAD_ABSOLUTE               // r0 holds the absolute address
         mrs     r2, CPSR           // preserve the 6502 flags
         cmp     r3, r0, lsr #3     // r3 holds the constant 0xFEF8 >> 3
-        pusheq  {lr}               // after this, the "eq" condition means 0xFEF8 <= r0 <= 0xFEFF
-        bleq    tube_load_handler  // tube memory access - must preserve current flags
-        popeq   {lr}               // tube memory access
         ldrneb  r1, [fp, r0]       // normal memory read
-        msr     CPSR_flg, r2       // restore 6502 flags
+        bleq    tube_load_handler  // tube memory access
+        msr     CPSR, r2           // restore 6502 flags, including ARM interrupts
 .endm
 
 .macro STORE_ABSOLUTE              // r0 holds the absolute address
         mrs     r2, CPSR           // preserve the 6502 flags
         cmp     r3, r0, lsr #3     // r3 holds the constant 0xFEF8 >> 3
-        pusheq  {lr}               // after this, the "eq" condition means 0xFEF8 <= r0 <= 0xFEFF
-        bleq    tube_store_handler // tube memory access - must preserve current flags
-        popeq   {lr}               // tube memory access
         strneb  r1, [fp, r0]       // normal memory write
-        msr     CPSR_flg, r2       // restore 6502 flags
+        bleq    tube_store_handler // tube memory access
+        msr     CPSR, r2           // restore 6502 flags, including ARM interrupts
 .endm
 
 // Macros for additional Rockwell 65C02 and WDC 65C02 instructions
@@ -374,37 +376,23 @@ decimal_mode_sbc:
         FETCH_NEXT
 
 tube_load_handler:
-        push    {r0-r3,lr}
-        mrs     r3, CPSR
-        push    {r3}
-        orr     r3, r3, #0x80             // disable ARM interrupts
-        msr     CPSR_c, r3
-        push    {ip}
+        push    {r0-r3,lr}                // r0 = address, r2 = current cpsr
+        orr     r2, r2, #0x80             // disable ARM interrupts
+        msr     CPSR_c, r2
+        push    {ip}                      // push ip after disabling interrupts to avoid a race condition
         bl      copro_65tube_tube_read
         pop     {ip}
-        mrs     r3, CPSR
-        bic     r3, r3, #0x80             // re-enable ARM interrupts
-        msr     CPSR_c, r3        
-        pop     {r3}
-        msr     CPSR_flg, r3
         str     r0, [sp, #4]              // save result to r1 on the stack
-        pop     {r0-r3,pc}
+        pop     {r0-r3,pc}                // r2 (cpsr) is preserved
 
 tube_store_handler:
-        push    {r0-r3,lr}
-        mrs     r3, CPSR
-        push    {r3}
-        orr     r3, r3, #0x80             // disable ARM interrupts
-        msr     CPSR_c, r3
-        push    {ip}
+        push    {r0-r3,lr}                // r0 = address, r1 = data, r2 = current cpsr
+        orr     r2, r2, #0x80             // disable ARM interrupts
+        msr     CPSR_c, r2
+        push    {ip}                      // push ip after disabling interrupts to avoid a race condition
         bl      copro_65tube_tube_write
         pop     {ip}
-        mrs     r3, CPSR
-        bic     r3, r3, #0x80             // re-enable ARM interrupts
-        msr     CPSR_c, r3        
-        pop     {r3}
-        msr     CPSR_flg, r3
-        pop     {r0-r3,pc}
+        pop     {r0-r3,pc}                // r2 (cpsr) is preserved
 
 handle_irq:
         msr     CPSR, r2                  // Restore the 6502 flags and re-enable ARM interrupts
@@ -446,6 +434,22 @@ handle_nmi:
         add     sl, fp, r0                // Point to this instruction in memory
         FETCH_NEXT
 
+handle_rti:
+        SPOP    r0
+        and     r4, r0, #0x4C
+        mrs     r2, CPSR
+        bic     r2, #(N_FLAG + Z_FLAG + C_FLAG)
+        and     r1, r0, #0x80
+        orr     r2, r2, r1, lsl #24
+        and     r1, r0, #0x03
+        orr     r2, r2, r1, lsl #29
+        msr     CPSR_flg, r2
+        SPOP    r0
+        SPOP    r1
+        add     sl, r0, r1, lsl #8
+        add     sl, sl, fp
+        FETCH_NEXT_CHECK_IRQ
+                
 .balign 0x10000
 mpu_memory:
 .rept 16384
@@ -1029,20 +1033,7 @@ opcode_3F:
 // Opcode 40 - RTI
 .align I_ALIGN
 opcode_40:
-        SPOP    r0
-        and     r4, r0, #0x4C
-        mrs     r2, CPSR
-        bic     r2, #(N_FLAG + Z_FLAG + C_FLAG)
-        and     r1, r0, #0x80
-        orr     r2, r2, r1, lsl #24
-        and     r1, r0, #0x03
-        orr     r2, r2, r1, lsl #29
-        msr     CPSR_flg, r2
-        SPOP    r0
-        SPOP    r1
-        add     sl, r0, r1, lsl #8
-        add     sl, sl, fp
-        FETCH_NEXT_CHECK_IRQ
+        b       handle_rti
 
 // Opcode 41 - EOR ($00,X)
 .align I_ALIGN

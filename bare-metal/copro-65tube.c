@@ -24,7 +24,7 @@
 #include "tuberom_6502.h"
 #include "copro-65tube.h"
 
-unsigned int debug;
+volatile unsigned int debug;
 
 unsigned int histogram_memory[0x100];
 
@@ -115,9 +115,7 @@ int copro_65tube_tube_write(uint16_t addr, uint8_t data)	{
 
 int copro_65tube_trace(unsigned char *addr, unsigned char data) {
   if (debug) {
-    _disable_interrupts();
     printf("%04x %02x\r\n", (addr - mpu_memory), data);
-    _enable_interrupts();
   }
   return 0;
 }
