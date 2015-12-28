@@ -139,15 +139,14 @@
 // This relies on the 6502 memory being 64KB aligned
 // Note: Doesn't deal with the case where SP is 0x1FF - locations 0x200 and 0x201 are read
 .macro SPOPH reg
+        ldrh    \reg, [r9, #1]!
         add     r9, r9, #1
-        ldrh    \reg, [r9], #1
         bic     r9, #0xFF00
         orr     r9, #0x0100
 .endm
 
-// TODO - This macro is currently broken two reasons
-// 1. Some of the instructions overflow
-// 2. There is a race condition with interrupts and ip (which needs to be stacked as its corrputed by printf()
+// Macro for tracing execution
+// Add to FETCH_NEXT
 .macro TRACE_65TUBE
         mov     r0, sl
         ldrb    r1, [sl]
@@ -162,7 +161,8 @@
         msr     CPSR, r2
 .endm
 
-// Update a histogram of opcodes in memory
+// Macro to maintain a histogram of opcodes in memory
+// Add to FETCH_NEXT
 .macro HISTOGRAM_65TUBE
         ldr     r1, =histogram_memory
         add     r1, r0, lsl #2
