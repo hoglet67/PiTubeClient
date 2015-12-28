@@ -487,7 +487,8 @@ opcode_00:
 opcode_01:
         EA_INDIRECT_X
         LOAD_INDIRECT
-        orrs    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        orrs    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 02 - NOP #$00
@@ -518,7 +519,8 @@ opcode_04:
 .align I_ALIGN
 opcode_05:
         ldrb    r1, [fp, r0]
-        orrs    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        orrs    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 06 - ASL $00
@@ -549,7 +551,8 @@ opcode_08:
 // Opcode 09 - ORA #$00
 .align I_ALIGN
 opcode_09:
-        orrs    r6, r6, r0, lsl #24
+        lsl     r0, r0, #24
+        orrs    r6, r6, r0
         FETCH_NEXT
 
 // Opcode 0A - ASL A
@@ -584,7 +587,8 @@ opcode_0C:
 opcode_0D:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
-        orrs    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        orrs    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 0E - ASL $0000
@@ -613,7 +617,8 @@ opcode_10:
 opcode_11:
         EA_INDIRECT_Y
         LOAD_INDIRECT
-        orrs    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        orrs    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 12 - ORA ($00)
@@ -621,7 +626,8 @@ opcode_11:
 opcode_12:
         EA_INDIRECT
         LOAD_INDIRECT
-        orrs    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        orrs    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 13 - NOP
@@ -648,7 +654,8 @@ opcode_14:
 opcode_15:
         add     r0, r7, r0, lsl #24
         ldrb    r1, [fp, r0, lsr #24]
-        orrs    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        orrs    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 16 - ASL $00, X
@@ -680,7 +687,8 @@ opcode_18:
 opcode_19:
         EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
-        orrs    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        orrs    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 1A - INC A
@@ -716,7 +724,8 @@ opcode_1C:
 opcode_1D:
         EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
-        orrs    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        orrs    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 1E - ASL $0000,X
@@ -747,7 +756,8 @@ opcode_20:
 opcode_21:
         EA_INDIRECT_X
         LOAD_INDIRECT
-        ands    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        ands    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 22 - NOP #$00
@@ -781,7 +791,8 @@ opcode_24:
 .align I_ALIGN
 opcode_25:
         ldrb    r1, [fp, r0]
-        ands    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        ands    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 26 - ROL $00
@@ -816,7 +827,8 @@ opcode_28:
 // Opcode 29 - AND     #$00
 .align I_ALIGN
 opcode_29:
-        ands    r6, r6, r0, lsl #24
+        lsl     r0, r0, #24
+        ands    r6, r6, r0
         FETCH_NEXT
 
 // Opcode 2A - ROL A
@@ -855,7 +867,8 @@ opcode_2C:
 opcode_2D:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
-        ands    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        ands    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 2E - ROL $0000
@@ -884,7 +897,8 @@ opcode_30:
 opcode_31:
         EA_INDIRECT_Y
         LOAD_INDIRECT
-        ands    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        ands    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 32 - AND ($00)
@@ -892,7 +906,8 @@ opcode_31:
 opcode_32:
         EA_INDIRECT
         LOAD_INDIRECT
-        ands    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        ands    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 33 - NOP
@@ -923,7 +938,8 @@ opcode_34:
 opcode_35:
         add     r0, r7, r0, lsl #24
         ldrb    r1, [fp, r0, lsr #24]
-        ands    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        ands    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 36 - ROL $00,X
@@ -955,7 +971,8 @@ opcode_38:
 opcode_39:
         EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
-        ands    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        ands    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 3A - DEC A
@@ -994,7 +1011,8 @@ opcode_3C:
 opcode_3D:
         EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
-        ands    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        ands    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 3E - ROL $0000,X
@@ -1022,7 +1040,8 @@ opcode_40:
 opcode_41:
         EA_INDIRECT_X
         LOAD_INDIRECT
-        eors    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        eors    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 42 - NOP #$00
@@ -1045,7 +1064,8 @@ opcode_44:
 .align I_ALIGN
 opcode_45:
         ldrb    r1, [fp, r0]
-        eors    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        eors    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 46 - LSR $00
@@ -1074,7 +1094,8 @@ opcode_48:
 // Opcode 49 - EOR #$00
 .align I_ALIGN
 opcode_49:
-        eors    r6, r6, r0, lsl #24
+        lsl     r0, r0, #24
+        eors    r6, r6, r0
         FETCH_NEXT
 
 // Opcode 4A - LSR A
@@ -1104,7 +1125,8 @@ opcode_4C:
 opcode_4D:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
-        eors    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        eors    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 4E - LSR $0000
@@ -1138,7 +1160,8 @@ opcode_50:
 opcode_51:
         EA_INDIRECT_Y
         LOAD_INDIRECT
-        eors    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        eors    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 52 - EOR ($00)
@@ -1146,7 +1169,8 @@ opcode_51:
 opcode_52:
         EA_INDIRECT
         LOAD_INDIRECT
-        eors    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        eors    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 53 - NOP
@@ -1165,7 +1189,8 @@ opcode_54:
 opcode_55:
         add     r0, r7, r0, lsl #24
         ldrb    r1, [fp, r0, lsr #24]
-        eors    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        eors    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 56 - LSR $00,X
@@ -1196,7 +1221,8 @@ opcode_58:
 opcode_59:
         EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
-        eors    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        eors    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 5A - PHY
@@ -1224,7 +1250,8 @@ opcode_5C:
 opcode_5D:
         EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
-        eors    r6, r6, r1, lsl #24
+        lsl     r1, r1, #24
+        eors    r6, r6, r1
         FETCH_NEXT
 
 // Opcode 5E - LSR $0000,X
@@ -1603,9 +1630,10 @@ opcode_88:
 // Opcode 89 - BIT #$00
 .align I_ALIGN
 opcode_89:
+        lsl     r0, r0, #24
         mrs     r2, CPSR
         and     r2, r2, #N_FLAG
-        tst     r6, r0, lsl #24
+        tst     r0, r6
         mrs     r1, CPSR
         bic     r1, r1, #N_FLAG
         orr     r1, r1, r2
