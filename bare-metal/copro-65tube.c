@@ -20,12 +20,9 @@
 #include "tube-isr.h"
 #include "rpi-gpio.h"
 #include "rpi-aux.h"
+#include "rpi-interrupts.h"
 #include "tuberom_6502.h"
 #include "copro-65tube.h"
-
-// This must be aligned on a 256 byte boundary, so ensure the LS byte
-// of r9 (the 6502 SP) has the value it would in a read system
-unsigned char mpu_memory[0x10000] __attribute__((aligned(0x10000))) ;
 
 unsigned int debug;
 
@@ -65,6 +62,15 @@ void copro_65tube_init_hardware()
   RPI_SetGpioPinFunction(IRQ_PIN, FS_INPUT);
   RPI_SetGpioPinFunction(NMI_PIN, FS_INPUT);
   RPI_SetGpioPinFunction(RST_PIN, FS_INPUT);
+
+  // Configure GPIO to detect a falling edge of the IRQ, NMI, RST pins
+  RPI_GpioBase->GPFEN0 |= IRQ_PIN_MASK | NMI_PIN_MASK | RST_PIN_MASK;
+
+  // Make sure there are no pending detections
+  RPI_GpioBase->GPEDS0 = IRQ_PIN_MASK | NMI_PIN_MASK | RST_PIN_MASK;
+
+  // Enable gpio_int[0] which is IRQ 49
+  RPI_GetIrqController()->Enable_IRQs_2 = (1 << (49 - 32));
 
   // Initialise the UART
   RPI_AuxMiniUartInit( 57600, 8 );
@@ -109,7 +115,9 @@ int copro_65tube_tube_write(uint16_t addr, uint8_t data)	{
 
 int copro_65tube_trace(unsigned char *addr, unsigned char data) {
   if (debug) {
+    _disable_interrupts();
     printf("%04x %02x\r\n", (addr - mpu_memory), data);
+    _enable_interrupts();
   }
   return 0;
 }
@@ -127,13 +135,16 @@ void copro_65tube_dump_mem(int start, int end) {
 
 void copro_65tube_main() {
   copro_65tube_init_hardware();
-  
+
   printf("Raspberry Pi 65Tube Client\r\n" );
 
   enable_MMU_and_IDCaches();
   _enable_unaligned_access();
-  
+
   printf("Initialise UART console with standard libc\r\n" );
+
+  // This ensures interrupts are not re-enabled in tube-lib.c
+  in_isr = 1;
 
   while (1) {
     debug = 0;

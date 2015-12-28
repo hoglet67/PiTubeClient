@@ -23,8 +23,54 @@
 // r14 (lr) = normal ARM usage
 // r15 (pc) = normal ARM usage
 
+// Interrupt / Event Handling code by dp11
+// this code is not for profit
+
+// We have three external events that we need to get into the 6502 instruction path
+//
+// RST GPIO07
+// NMI GPIO18 (falling edge sensitive)
+// IRQ GPIO17 level sensitive
+
+// If we get a reset we should stay in the reset handler until the reset line goes high we can
+// ignore all other events
+
+// If we get an NMI falling edge we can service it  The hardware will set the signal high again
+
+// The IRQ is the most difficult case as is may be low and interrupts may be disabled
+// So when interrupts are next enabled we need explicitly check the IRQ line
+// CLI PLP RTI for instance
+// Then we need to fire off the IRQ handler again if IRQ is low
+
+//
+// at the end of each 6502 instruction we currently do :
+// // FETCH_NEXT this jumps direct to the next instruction
+//        ldrb    r0, [sl], #1
+//        add     pc, ip, r0, lsl #I_ALIGN
+//
+// This gives us a nice hook into the instruction handler
+// When the ARM IRQ detects a valid interrupt
+// it adds a constant ( 256 << I_ALIGN) to ip to move into a second instruction handler
+// This instruction handler can just be 256 Branches to the Event handler
+// this code is executed so rarely absolute performance isn.t an issue and we aren.t worried about it fitting in the cache
+
+
+// A check needs to be that more than than one event isn.t being added. This can be
+// simplified if we align the code to a 0 boundary and just orr ip,ip,#256<<I_ALIGN
+//
+// once we are in the event handler we do
+// disable arm IRQs // this prevents us missing events
+// bic ip,ip,#256<<I_ALIGN
+// reenable IRQs // now if another event happens we will service it at the next instruction boundary
+// sub sl,sl,#1 // set instruction pointer ready to be stacked
+// check for reset ( if we have a reset we are happy to drop any other outstanding events
+// Check for NMI ( if there is also an IRQ present is will get checked for at the RTI)
+// Check for IRQs enabled ( R4)
+// if so check if we have an IRQ
+
 .text
 .global exec_65tube
+.global mpu_memory
 
 .equ    N_FLAG,      0x80000000
 .equ    Z_FLAG,      0x40000000
@@ -35,14 +81,26 @@
 
 // Macro for fetching the next instruction
 .macro FETCH_NEXT
-        mov     pc, lr
+        ldrb    r0, [sl], #1
+        add     pc, ip, r0, lsl #I_ALIGN
         // Insert the current literal pool, otherwise constants are to far away and you get a build error
         .ltorg
 .endm
 
-// FETCH_NEXT used to be just this, which jumps direct to the next instruction
-//        ldrb    r0, [sl], #1
-//        add     pc, ip, r0, lsl #I_ALIGN
+// Macro for fetching the next instruction and also checking for any pending IRQs
+// Used for instructions that can enable interrupts: CLI, PLP, RTI
+.macro FETCH_NEXT_CHECK_IRQ
+        mrs     r2, CPSR                  // Preserve the 6502 flags
+        tst     r4, #4                    // Test whether interrupts are enabled (bit 2 = 0)
+        ldreq   r0, =0x20200034           // TODO: This address is different on a RPI2
+        ldreq   r0, [r0]
+        tsteq   r0, #(1 << 17)            // Test for IRQ
+        beq     handle_irq
+        msr     CPSR_flg, r2              // Restore the 6502 flags
+        FETCH_NEXT
+        // Insert the current literal pool, otherwise constants are to far away and you get a build error
+        .ltorg
+.endm
 
 // Macro for pushing a byte to the stack, whilst correctly handing wrapping
 // This relies on the 6502 memory being 64KB aligned
@@ -69,7 +127,7 @@
 // This relies on the 6502 memory being 64KB aligned
 // Note: Doesn't deal with the case where SP is 0x100 - locations 0xFF is incorrectly written instead of 0x1FF
 .macro SPUSHH reg
-        sub     r9, r9, #1        
+        sub     r9, r9, #1
         strh    \reg, [r9], #-1
         orr     r9, #0x0100
 .endm
@@ -83,16 +141,16 @@
         bic     r9, #0xFF00
         orr     r9, #0x0100
 .endm
-        
+
 .macro TRACE_65TUBE
         push    {r0-r12, lr}
-        mrs     r3, CPSR
-        push    {r3,lr}
+        mrs     r2, CPSR
+        push    {r2,lr}
         mov     r0, sl
         ldrb    r1, [sl]
         bl      copro_65tube_trace
-        pop     {r3,lr}
-        msr     CPSR_flg, r3
+        pop     {r2,lr}
+        msr     CPSR_flg, r2
         pop     {r0-r12, lr}
 .endm
 
@@ -110,7 +168,7 @@
 .macro EA_ABSOLUTE
         ldrh    r0, [sl], #2
 .endm
-        
+
 .macro EA_ABSOLUTE_INDEXED reg
         ldrh    r0, [sl], #2
         add     r0, r0, \reg, lsr #24
@@ -121,21 +179,21 @@
         ldrb    r0, [sl], #1
         ldrh    r0, [r0, fp]
 .endm
-        
+
 .macro EA_INDIRECT_X
         ldrb    r0, [sl], #1
         add     r0, r0, r7, lsr #24
         and     r0, r0, #0xff
         ldrh    r0, [r0, fp]
 .endm
-        
-.macro EA_INDIRECT_Y        
+
+.macro EA_INDIRECT_Y
         ldrb    r0, [sl], #1
         ldrh    r0, [r0, fp]
         add     r0, r0, r8, lsr #24
         bic     r0, r0, #0x10000
 .endm
-        
+
 // Macros for reading/writing memory
 .macro LOAD_INDIRECT
         ldrb    r1, [fp, r0]
@@ -206,6 +264,194 @@
         FETCH_NEXT
 .endm
 
+exec_65tube:
+        push    {r0-r12,lr}
+
+        mov     fp, r0                  // set fp (r11) to the 64K 6502 memory array
+        ldr     ip, =opcode_00          // set ip (r12) to the base address of the 6502 instruction handler
+        ldr     r3, =(0x0000fef8 >> 3)  // initialize the constant in r3
+        ldr     r5, =0xffffff00         // initialize the constant in r5
+
+        mov     r0, #0                  // initialize Event register
+        str     r0, events
+
+        ldr     r0, =arm_irq_handler    // Install the ARM interrupt handler
+        mov     r1, #0x38
+        str     r0, [r1]
+        
+        mrs     r0, CPSR                // Enable ARM interrupts
+        bic     r0, r0, #0x80
+        msr     CPSR_c, r0
+
+handle_rst:
+        orr     r4, r4, #4              // Set the I bit
+        bic     r4, r4, #8              // Clear the D bit
+        add     r0, fp, #0x10000
+        ldrh    r0, [r0, #-4]           // Fetch the address in FFFC,FFFD
+        add     sl, fp, r0              // Point to this instruction in memory
+        FETCH_NEXT                      // Start executing instructions
+
+exec_65tube_exit:                       // We get here from the Event handler when RST is detected
+        pop      {r0-r12,pc}
+
+events:
+        .word 0
+
+// ARM IRQ handler
+
+arm_irq_handler:
+        push    {r0, r1, r2}
+        ldr     r0, =0x20200040         // any falling events? GPEDS0 TODO:Address is different on a RPI2
+        ldr     r2, [r0]
+        mov     r1, #1<<7               // mask our events
+        orr     r1, r1, #1<<18 + 1<<17
+        and     r2, r2, r1
+        str     r2, [r0]                // clear Pin events
+        ldr     r1, events
+        orr     r1, r1, r2              // add our events in
+        str     r1, events
+        orr     ip, ip, #256<<I_ALIGN   // signal event to 6502 instruction flow
+        pop     {r0, r1, r2}
+        subs    pc, lr, #4
+
+// 6502 Event handler
+// We have come here via a branch from the second instruction table
+Event_Handler:
+        mrs     r2, CPSR                // preserve the 6502 flags
+        orr     r1, r2, #0x80           // disable ARM IRQs
+        msr     CPSR_c, r1
+        
+        ldr     r0, events
+        bic     ip, ip, #256<<I_ALIGN   // ack events
+        sub     sl, sl, #1              // set the instruction back one as we haven't executed it
+        mov     r1, #0
+        str     r1, events              // ack all events
+        tst     r0, #(1 << 7)           // Test for RST (GPIO7)
+        bne     exec_65tube_exit        // exit immediately if active edge seen
+
+        tst     r0, #(1 << 18)          // events (bit 18) = 1 then we have seen a falling NMI edge
+        bne     handle_nmi              // Take the NMI interrupt
+
+        tst     r4, #4                  // Test whether interrupts are enabled (bit 2 = 0)
+        bne     noirq
+        tst     r0, #(1 << 17)          // events (bit 17) = 1 then we have seen a falling IRQ edge
+        bne     handle_irq              // Take the IRQ interrupt
+
+noirq:
+        msr     CPSR, r2                // restore the 6502 flags and re-enable ARM interrupts
+        FETCH_NEXT                      // go back to executing 6502 instructions
+
+decimal_mode_adc:
+        and     r2, r1, #15
+        and     r0, r6, #0xf000000
+        adc     r2, r2, r0, lsr #24
+        cmp     r2, #10
+        subcs   r2, r2, #10
+        lsl     r2, r2, #24
+        lsr     r1, r1, #4
+        adc     r6, r1, r6, lsr #28
+        cmp     r6, #10
+        subcs   r6, r6, #10
+        orr     r6, r2, r6, lsl #28
+        teq     r6, #0
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
+        FETCH_NEXT
+
+decimal_mode_sbc:
+        and     r2, r1, #15
+        and     r0, r6, #0xf000000
+        rscs    r2, r2, r0, lsr #24
+        addcc   r2, r2, #10
+        lsr     r1, r1, #4
+        rscs    r6, r1, r6, lsr #28
+        addcc   r6, r6, #10
+        orr     r6, r2, r6, lsl #4
+        lsl     r6, r6, #24
+        teq     r6, #0
+        bicvc   r4, #0x40
+        orrvs   r4, #0x40
+        FETCH_NEXT
+
+tube_load_handler:
+        push    {r0-r3,lr}
+        mrs     r3, CPSR
+        push    {r3}
+        orr     r3, r3, #0x80             // disable ARM interrupts
+        msr     CPSR_c, r3
+        push    {ip}
+        bl      copro_65tube_tube_read
+        pop     {ip}
+        mrs     r3, CPSR
+        bic     r3, r3, #0x80             // re-enable ARM interrupts
+        msr     CPSR_c, r3        
+        pop     {r3}
+        msr     CPSR_flg, r3
+        str     r0, [sp, #4]              // save result to r1 on the stack
+        pop     {r0-r3,pc}
+
+tube_store_handler:
+        push    {r0-r3,lr}
+        mrs     r3, CPSR
+        push    {r3}
+        orr     r3, r3, #0x80             // disable ARM interrupts
+        msr     CPSR_c, r3
+        push    {ip}
+        bl      copro_65tube_tube_write
+        pop     {ip}
+        mrs     r3, CPSR
+        bic     r3, r3, #0x80             // re-enable ARM interrupts
+        msr     CPSR_c, r3        
+        pop     {r3}
+        msr     CPSR_flg, r3
+        pop     {r0-r3,pc}
+
+handle_irq:
+        msr     CPSR, r2                  // Restore the 6502 flags and re-enable ARM interrupts
+        sub     r1, sl, fp
+        lsr     r0, r1, #8
+        SPUSH   r0
+        SPUSH   r1
+        movpl   r0, #0
+        movmi   r0, #0x80
+        orrcs   r0, r0, #1
+        orreq   r0, r0, #2
+        orr     r0, r0, r4
+        bic     r0, r0, #0x10             // Make sure B is clear
+        SPUSH   r0
+        orr     r4, r4, #4                // Set the I bit
+        bic     r4, r4, #8                // Clear the D bit
+        add     r0, fp, #0x10000
+        ldrh    r0, [r0, #-2]             // Fetch the address in FFFE,FFFF
+        add     sl, fp, r0                // Point to this instruction in memory
+        FETCH_NEXT
+
+handle_nmi:
+        msr     CPSR, r2                  // Restore the 6502 flags and re-enable ARM interrupts
+        sub     r1, sl, fp
+        lsr     r0, r1, #8
+        SPUSH   r0
+        SPUSH   r1
+        movpl   r0, #0x20
+        movmi   r0, #0xA0
+        orrcs   r0, r0, #1
+        orreq   r0, r0, #2
+        orr     r0, r0, r4
+        bic     r0, r0, #0x10             // Make sure B is clear
+        SPUSH   r0
+        orr     r4, r4, #4                // Set the I bit
+        bic     r4, r4, #8                // Clear the D bit
+        add     r0, fp, #0x10000
+        ldrh    r0, [r0, #-6]             // Fetch the address in FFFA,FFFB
+        add     sl, fp, r0                // Point to this instruction in memory
+        FETCH_NEXT
+
+.balign 0x10000
+mpu_memory:
+.rept 16384
+.word 0
+.endr
+
 // **********************************************
 // Start of opcode implementations
 // **********************************************
@@ -213,7 +459,21 @@
 // Opcode 00 - BRK
 .align I_ALIGN
 opcode_00:
-        b       handle_brk
+        sub     r1, sl, fp
+        add     r1, r1, #1
+        lsr     r0, r1, #8
+        SPUSH   r0
+        SPUSH   r1
+        movpl   r0, #0x30
+        movmi   r0, #0xB0
+        orrcs   r0, r0, #1
+        orreq   r0, r0, #2
+        orr     r0, r0, r4
+        SPUSH   r0
+        add     r0, fp, #0x10000
+        ldr     r0, [r0, #-4]
+        add     sl, fp, r0, lsr #16
+        FETCH_NEXT
 
 // Opcode 01 - ORA ($00,X)
 .align I_ALIGN
@@ -559,7 +819,7 @@ opcode_28:
         and     r1, r0, #0x03
         orr     r2, r2, r1, lsl #29
         msr     CPSR_flg, r2
-        FETCH_NEXT
+        FETCH_NEXT_CHECK_IRQ
 
 // Opcode 29 - AND     #$00
 .align I_ALIGN
@@ -769,7 +1029,20 @@ opcode_3F:
 // Opcode 40 - RTI
 .align I_ALIGN
 opcode_40:
-        b       handle_rti
+        SPOP    r0
+        and     r4, r0, #0x4C
+        mrs     r2, CPSR
+        bic     r2, #(N_FLAG + Z_FLAG + C_FLAG)
+        and     r1, r0, #0x80
+        orr     r2, r2, r1, lsl #24
+        and     r1, r0, #0x03
+        orr     r2, r2, r1, lsl #29
+        msr     CPSR_flg, r2
+        SPOP    r0
+        SPOP    r1
+        add     sl, r0, r1, lsl #8
+        add     sl, sl, fp
+        FETCH_NEXT_CHECK_IRQ
 
 // Opcode 41 - EOR ($00,X)
 .align I_ALIGN
@@ -953,7 +1226,7 @@ opcode_57:
 .align I_ALIGN
 opcode_58:
         bic     r4, r4, #4
-        FETCH_NEXT
+        FETCH_NEXT_CHECK_IRQ
 
 // Opcode 59 - EOR $0000,Y
 .align I_ALIGN
@@ -2287,194 +2560,11 @@ opcode_FE:
 opcode_FF:
         BBS 7
 
+// **********************************************
+// End of opcode implementations
+// **********************************************
+
+.rept 256
 .align I_ALIGN
-
-// **********************************************
-// Start of opcode implementations
-// **********************************************
-
-handle_brk:
-        sub     r1, sl, fp
-        add     r1, r1, #1
-        lsr     r0, r1, #8
-        SPUSH   r0
-        SPUSH   r1
-        movpl   r0, #0x30
-        movmi   r0, #0xB0
-        orrcs   r0, r0, #1
-        orreq   r0, r0, #2
-        orr     r0, r0, r4
-        SPUSH   r0
-        add     r0, fp, #0x10000
-        ldr     r0, [r0, #-4]
-        add     sl, fp, r0, lsr #16
-        FETCH_NEXT
-
-handle_rti:
-        SPOP    r0
-        and     r4, r0, #0x4C
-        mrs     r2, CPSR
-        bic     r2, #(N_FLAG + Z_FLAG + C_FLAG)
-        and     r1, r0, #0x80
-        orr     r2, r2, r1, lsl #24
-        and     r1, r0, #0x03
-        orr     r2, r2, r1, lsl #29
-        msr     CPSR_flg, r2
-        SPOP    r0
-        SPOP    r1
-        add     sl, r0, r1, lsl #8
-        add     sl, sl, fp
-        FETCH_NEXT
-
-decimal_mode_adc:
-        and     r2, r1, #15
-        and     r0, r6, #0xf000000
-        adc     r2, r2, r0, lsr #24
-        cmp     r2, #10
-        subcs   r2, r2, #10
-        lsl     r2, r2, #24
-        lsr     r1, r1, #4
-        adc     r6, r1, r6, lsr #28
-        cmp     r6, #10
-        subcs   r6, r6, #10
-        orr     r6, r2, r6, lsl #28
-        teq     r6, #0
-        bicvc   r4, #0x40
-        orrvs   r4, #0x40
-        FETCH_NEXT
-
-decimal_mode_sbc:
-        and     r2, r1, #15
-        and     r0, r6, #0xf000000
-        rscs    r2, r2, r0, lsr #24
-        addcc   r2, r2, #10
-        lsr     r1, r1, #4
-        rscs    r6, r1, r6, lsr #28
-        addcc   r6, r6, #10
-        orr     r6, r2, r6, lsl #4
-        lsl     r6, r6, #24
-        teq     r6, #0
-        bicvc   r4, #0x40
-        orrvs   r4, #0x40
-        FETCH_NEXT
-
-tube_load_handler:
-        push    {r0-r3,r12,lr}
-        mrs     r3, CPSR
-        push    {r3}
-        bl      copro_65tube_tube_read
-        pop     {r3}
-        msr     CPSR_flg, r3
-        str     r0, [sp, #4]              // save result to r1 on the stack
-        pop     {r0-r3,r12,pc}
-
-tube_store_handler:
-        push    {r0-r3,r12,lr}
-        mrs     r3, CPSR
-        push    {r3}
-        bl      copro_65tube_tube_write
-        pop     {r3}
-        msr     CPSR_flg, r3
-        pop     {r0-r3,r12,pc}
-
-handle_rst:
-        orr     r4, r4, #4       // Set the I bit
-        bic     r4, r4, #8       // Clear the D bit
-        add     r0, fp, #0x10000
-        ldrh    r0, [r0, #-4]    // Fetch the address in FFFC,FFFD
-        add     sl, fp, r0       // Point to this instruction in memory
-        FETCH_NEXT
-
-exec_65tube:
-
-        push     {r0-r12,lr}
-        mov      fp, r0                   // set fp (r11) to the 64K 6502 memory array
-        ldr      ip, =opcode_00           // set ip (r12) to the base address of the 6502 instruction handler
-        ldr      r3, =(0x0000fef8 >> 3)   // initialize the constant in r3
-        ldr      r5, =0xffffff00          // initialize the constant in r5
-        bl       handle_rst               // start by resetting the 6502
-
-// execute N instructions
-
-exec_65tube_loop:
-
-.rept 16
-        // TRACE_65TUBE
-        ldrb    r0, [sl], #1              // Fetch the next instruction
-        // HISTOGRAM_65TUBE
-        add     r0, ip, r0, lsl #I_ALIGN  // Compute the address of the handler
-        blx     r0                        // Call the handler
+        B        Event_Handler
 .endr
-
-// Test RST_n, IRQ_n, and NMI_n and update interrupt state accordingly
-
-exec_65tube_test:
-        mrs     r2, CPSR                  // preserve the 6502 flags
-
-        ldr     r0, =0x20200034           // TODO: This address is different on a RPI2
-        ldr     r0, [r0]                  // Read GPLEV0 GPIO register
-        ldr     r1, last_gplev0           // Read the previous value (so we can do edge detection)
-        str     r0, last_gplev0           // remember gplev0 for next time
-
-        tst     r0, #(1 << 7)             // Test for RST (GPIO7)
-        beq     exec_65tube_exit          // exit immediatly if low
-
-        eor     r1, r1, #(1 << 18)        // Test for NMI (GPIO18) (edge sensitive)
-        orr     r1, r1, r0                // r1 (bit 18) = !lastNMIn OR NMIn
-        tst     r1, #(1 << 18)            // r1 (bit 18) = 0 then we have seen an edge
-        beq     exec_65tube_handle_nmi    // Take the NMI interrupt
-
-        tst     r4, #4                    // Test whether interrupts are enabled (bit 2 = 0)
-        tsteq   r0, #(1 << 17)            // Test for IRQ (GPIO17) (level sensitive, active low)
-        beq     exec_65tube_handle_irq    // Take the IRQ interrupt
-
-        msr     CPSR_flg, r2              // restore the 6502 flags
-        b       exec_65tube_loop          // execute the next block of N instructions
-
-exec_65tube_exit:
-        pop      {r0-r12,lr}
-        mov      pc, lr
-
-exec_65tube_handle_irq:
-        msr     CPSR_flg, r2              // Restore the 6502 flags
-        sub     r1, sl, fp
-        lsr     r0, r1, #8
-        SPUSH   r0
-        SPUSH   r1
-        movpl   r0, #0
-        movmi   r0, #0x80
-        orrcs   r0, r0, #1
-        orreq   r0, r0, #2
-        orr     r0, r0, r4
-        bic     r0, r0, #0x10             // Make sure B is clear
-        SPUSH   r0
-        orr     r4, r4, #4                // Set the I bit
-        bic     r4, r4, #8                // Clear the D bit
-        add     r0, fp, #0x10000
-        ldrh    r0, [r0, #-2]             // Fetch the address in FFFE,FFFF
-        add     sl, fp, r0                // Point to this instruction in memory
-        b       exec_65tube_loop          // Execute N more instructions
-
-exec_65tube_handle_nmi:
-        msr     CPSR_flg, r2              // Restore the 6502 flags
-        sub     r1, sl, fp
-        lsr     r0, r1, #8
-        SPUSH   r0
-        SPUSH   r1
-        movpl   r0, #0x20
-        movmi   r0, #0xA0
-        orrcs   r0, r0, #1
-        orreq   r0, r0, #2
-        orr     r0, r0, r4
-        bic     r0, r0, #0x10             // Make sure B is clear
-        SPUSH   r0
-        orr     r4, r4, #4                // Set the I bit
-        bic     r4, r4, #8                // Clear the D bit
-        add     r0, fp, #0x10000
-        ldrh    r0, [r0, #-6]             // Fetch the address in FFFA,FFFB
-        add     sl, fp, r0                // Point to this instruction in memory
-        b       exec_65tube_loop          // Execute N more instructions
-
-last_gplev0:
-        .word 0
-

@@ -10,7 +10,7 @@
 #define COPRO_LIB6502 2
 #define COPRO_65TUBE  3
 
-#define COPRO COPRO_ARM
+#define COPRO COPRO_65TUBE
 
 void kernel_main(unsigned int r0, unsigned int r1, unsigned int atags)
 {
