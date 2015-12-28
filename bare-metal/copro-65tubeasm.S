@@ -540,11 +540,10 @@ opcode_07:
 // Opcode 08 - PHP
 .align I_ALIGN
 opcode_08:
-        movpl   r0, #0x30
-        movmi   r0, #0xB0
+        orr     r0, r4, #0x30
+        orrmi   r0, r0, #0x80
         orrcs   r0, r0, #1
         orreq   r0, r0, #2
-        orr     r0, r0, r4
         SPUSH   r0
         FETCH_NEXT
 
