@@ -82,9 +82,8 @@
 // Macro for fetching the next instruction
 .macro FETCH_NEXT
         // TRACE_65TUBE
-        ldrb    r2, [sl], #1               // 4 cycle pipeline latency
-        ldrb    r0, [sl]                   // 1 free cycle for most instructions
-        ldrsb   r1, [sl], #1               // 1 free cycle ( for BEQ BNE etc)
+        ldrb    r2, [sl], #1               // 3 cycle pipeline latency
+        ldrb    r0, [sl], #1               // 1 free cycle for most instructions
         add     pc, ip, r2, lsl #I_ALIGN   // 7 cycles
         // Insert the current literal pool, otherwise constants are to far away and you get a build error
         .ltorg
@@ -609,7 +608,7 @@ opcode_0F:
 // Opcode 10 - BPL
 .align I_ALIGN
 opcode_10:
-        addpl   sl, sl, r1
+        sxtabpl sl, sl, r0
         FETCH_NEXT
 
 // Opcode 11 - ORA ($00),Y
@@ -889,7 +888,7 @@ opcode_2F:
 // Opcode 30 - BMI
 .align I_ALIGN
 opcode_30:
-        addmi   sl, sl, r1
+        sxtabmi sl, sl, r0
         FETCH_NEXT
 
 // Opcode 31 - AND ($00),Y
@@ -1151,7 +1150,7 @@ opcode_4F:
 opcode_50:
         mrs     r2, CPSR
         tst     r4, #0x40
-        addeq   sl, sl, r1
+        sxtabeq sl, sl, r0
         msr     CPSR_flg, r2
         FETCH_NEXT
 
@@ -1420,7 +1419,7 @@ opcode_6F:
 opcode_70:
         mrs     r2, CPSR
         tst     r4, #0x40
-        addne   sl, sl, r1
+        sxtabne sl, sl, r0
         msr     CPSR_flg, r2
         FETCH_NEXT
 
@@ -1571,7 +1570,7 @@ opcode_7F:
 // Opcode 80 - BRA
 .align I_ALIGN
 opcode_80:
-        add     sl, sl, r1
+        sxtab   sl, sl, r0
         FETCH_NEXT
 
 // Opcode 81 - STA ($00,X)
@@ -1685,7 +1684,7 @@ opcode_8F:
 // Opcode 90 - BCC
 .align I_ALIGN
 opcode_90:
-        addcc   sl, sl, r1
+        sxtabcc sl, sl, r0
         FETCH_NEXT
 
 // Opcode 91 - STA ($00),Y
@@ -1915,7 +1914,7 @@ opcode_AF:
 // Opcode B0 - BCS
 .align I_ALIGN
 opcode_B0:
-        addcs   sl, sl, r1
+        sxtabcs sl, sl, r0
         FETCH_NEXT
 
 // Opcode B1 - LDA ($00),Y
@@ -2154,7 +2153,7 @@ opcode_CF:
 // Opcode D0 - BNE
 .align I_ALIGN
 opcode_D0:
-        addne   sl, sl, r1
+        sxtabne sl, sl, r0
         FETCH_NEXT
 
 // Opcode D1 - CMP ($00),Y
@@ -2404,7 +2403,7 @@ opcode_EF:
 // Opcode F0 - BEQ
 .align I_ALIGN
 opcode_F0:
-        addeq   sl, sl, r1
+        sxtabeq sl, sl, r0
         FETCH_NEXT
 
 // Opcode F1 - SBC ($00),Y
