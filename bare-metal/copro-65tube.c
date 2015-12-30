@@ -154,6 +154,6 @@ void copro_65tube_main() {
     // Start executing code, this will return when reset goes low
     exec_65tube(mpu_memory);
     // Dump memory
-    copro_65tube_dump_mem(0x0000, 0x0400);
+    // copro_65tube_dump_mem(0x0000, 0x0400);
   }
 }
