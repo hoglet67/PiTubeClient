@@ -107,7 +107,7 @@
 
 .macro FETCH_NEXT_STAGE_1_I
         // TRACE_65TUBE
-        ldrb    r2, [sl, #-1]               // 4 cycle pipeline latency
+        mov     r2, r0
 .endm
 
 .macro FETCH_NEXT_STAGE_2_I
