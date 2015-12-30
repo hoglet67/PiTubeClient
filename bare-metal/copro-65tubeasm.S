@@ -160,15 +160,6 @@
         // ldrb    \reg, [r9, #1]!
 .endm
 
-// Macro for pushing a half word to the stack, whilst correctly handing wrapping
-// This relies on the 6502 memory being 64KB aligned
-// Note: Doesn't deal with the case where SP is 0x100 - locations 0xFF is incorrectly written instead of 0x1FF
-.macro SPUSHH reg
-        sub     r9, r9, #1
-        strh    \reg, [r9], #-1
-        orr     r9, #0x0100
-.endm
-
 // Macro for tracing execution
 // Add to FETCH_NEXT
 .macro TRACE_65TUBE
@@ -793,10 +784,13 @@ opcode_1F:
 // Opcode 20 - JSR $0000
 .align I_ALIGN
 opcode_20:
-        ldrh    r0, [sl, #-1]
-        SPUSHH  sl
-        add     sl, fp, r0
-        FETCH_NEXT
+        ldrh    r1, [sl, #-1]
+        sub     r9, r9, #1
+        strh    sl, [r9], #-1
+        add     sl, fp, r1
+        FETCH_NEXT_STAGE_1_L
+        orr     r9, #0x0100
+        FETCH_NEXT_STAGE_2_L
 
 // Opcode 21 - AND ($00,X)
 .align I_ALIGN
