@@ -169,16 +169,6 @@
         orr     r9, #0x0100
 .endm
 
-// Macro for poping a half word from the stack, whilst correctly handing wrapping
-// This relies on the 6502 memory being 64KB aligned
-// Note: Doesn't deal with the case where SP is 0x1FF - locations 0x200 and 0x201 are read
-.macro SPOPH reg
-        ldrh    \reg, [r9, #1]!
-        add     r9, r9, #1
-        bic     r9, #0xFF00
-        orr     r9, #0x0100
-.endm
-
 // Macro for tracing execution
 // Add to FETCH_NEXT
 .macro TRACE_65TUBE
@@ -1351,10 +1341,14 @@ opcode_5F:
 // Opcode 60 - RTS
 .align I_ALIGN
 opcode_60:
-        SPOPH   r0
+        ldrh    r0, [r9, #1]
+        add     r9, r9, #2
+        bic     r9, #0xFF00
         add     sl, r0, #1
         add     sl, sl, fp
-        FETCH_NEXT
+        FETCH_NEXT_STAGE_1_L
+        orr     r9, #0x0100
+        FETCH_NEXT_STAGE_2_L
 
 // Opcode 61 - ADC ($00,X)
 .align I_ALIGN
