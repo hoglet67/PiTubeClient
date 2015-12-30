@@ -58,7 +58,7 @@ ErrorBuffer_type defaultErrorBuffer;
 
 Environment_type *env = &defaultEnvironment;
 
-const char *banner = "Raspberry Pi ARMv6 Co Processor 900MHz\r\n\n";
+const char *banner = "Raspberry Pi ARM1176 Co Processor 700MHz\r\n\n";
 
 const char *prompt = "arm>*";
 
