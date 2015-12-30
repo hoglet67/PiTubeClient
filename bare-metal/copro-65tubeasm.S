@@ -1343,10 +1343,10 @@ opcode_5F:
 opcode_60:
         ldrh    r0, [r9, #1]
         add     r9, r9, #2
-        bic     r9, #0xFF00
-        add     sl, r0, #1
-        add     sl, sl, fp
+        add     sl, fp, #1
+        add     sl, sl, r0
         FETCH_NEXT_STAGE_1_L
+        bic     r9, #0xFF00
         orr     r9, #0x0100
         FETCH_NEXT_STAGE_2_L
 
