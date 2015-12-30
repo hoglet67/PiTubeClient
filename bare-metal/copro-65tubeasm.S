@@ -1400,10 +1400,8 @@ opcode_66:
         ldrb    r1, [fp, r0]
         FETCH_NEXT_STAGE_1_S
         orrcs   r1, r1, #0x100
-        lsrs    r1, r1, #1
+        rrxs    r1, r1
         strb    r1, [fp, r0]
-        lsl     r0, r1, #24
-        teq     r0, #0
         FETCH_NEXT_STAGE_2_S
 
 // Opcode 67 - RMB6 $00
@@ -1479,12 +1477,9 @@ opcode_6E:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
         orrcs   r1, r1, #0x100
-        lsrs    r1, r1, #1
+        rrxs    r1, r1
         STORE_ABSOLUTE
-        FETCH_NEXT_STAGE_1_S
-        lsl     r0, r1, #24
-        teq     r0, #0
-        FETCH_NEXT_STAGE_2_S
+        FETCH_NEXT
 
 // Opcode 6F - BBR6
 .align I_ALIGN
@@ -1562,10 +1557,8 @@ opcode_76:
         ldrb    r1, [fp, r0, lsr #24]
         FETCH_NEXT_STAGE_1_S
         orrcs   r1, r1, #0x100
-        lsrs    r1, r1, #1
+        rrxs    r1, r1
         strb    r1, [fp, r0, lsr #24]
-        lsl     r0, r1, #24
-        teq     r0, #0
         FETCH_NEXT_STAGE_2_S
 
 // Opcode 77 - RMB7 $00
@@ -1638,12 +1631,9 @@ opcode_7E:
         EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
         orrcs   r1, r1, #0x100
-        lsrs    r1, r1, #1
+        rrxs    r1, r1
         STORE_ABSOLUTE
-        FETCH_NEXT_STAGE_1_S
-        lsl     r0, r1, #24
-        teq     r0, #0
-        FETCH_NEXT_STAGE_2_S
+        FETCH_NEXT
 
 // Opcode 7F - BBR7
 .align I_ALIGN
