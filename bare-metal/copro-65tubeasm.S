@@ -107,12 +107,12 @@
 
 .macro FETCH_NEXT_STAGE_1_I
         // TRACE_65TUBE
-        mov     r2, r0
+        add     lr, ip, r0, lsl #I_ALIGN   // 7 cycles
 .endm
 
 .macro FETCH_NEXT_STAGE_2_I
         ldrb    r0, [sl], #1               // 1 free cycle single cycle instructions
-        add     pc, ip, r2, lsl #I_ALIGN   // 7 cycles
+        mov     pc, lr
         // Insert the current literal pool, otherwise constants are to far away and you get a build error
         .ltorg
 .endm
