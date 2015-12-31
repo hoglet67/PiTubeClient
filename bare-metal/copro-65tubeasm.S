@@ -81,16 +81,25 @@
 
 // Macros for fetching the next instruction
 
-.macro FETCH_NEXT_STAGE_1_L
-        // TRACE_65TUBE
-        ldrb    r2, [sl], #1               // 4 cycle pipeline latency
-        ldrb    r0, [sl], #1               // 1 free cycle single cycle instructions   
+.macro FETCH_NEXT_STAGE_0_L
+        ldrb    r2, [sl], #1
 .endm
 
+.macro FETCH_NEXT_STAGE_1_L
+        ldrb    r0, [sl], #1
+        add     lr, ip, r2, lsl #I_ALIGN
+.endm
+        
 .macro FETCH_NEXT_STAGE_2_L
-        add     pc, ip, r2, lsl #I_ALIGN   // 7 cycles
+        mov     pc, lr
         // Insert the current literal pool, otherwise constants are to far away and you get a build error
         .ltorg
+.endm
+
+.macro FETCH_NEXT_STAGE_12_L
+        add     lr, ip, r2, lsl #I_ALIGN
+        ldrb    r0, [sl], #1
+        mov     pc, lr
 .endm
 
 .macro FETCH_NEXT_STAGE_1_S
@@ -120,6 +129,7 @@
 
         
 .macro FETCH_NEXT
+        FETCH_NEXT_STAGE_0_L
         FETCH_NEXT_STAGE_1_L
         FETCH_NEXT_STAGE_2_L
 .endm
@@ -384,9 +394,10 @@ decimal_mode_adc:
         cmp     r6, #10
         subcs   r6, r6, #10
         orr     r6, r2, r6, lsl #28
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         teq     r6, #0
         bicvc   r4, #0x40
+        FETCH_NEXT_STAGE_1_L
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
 
@@ -399,9 +410,10 @@ decimal_mode_sbc:
         rscs    r6, r1, r6, lsr #28
         addcc   r6, r6, #10
         orr     r6, r2, r6, lsl #4
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r6, r6, #24
         teq     r6, #0
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -514,6 +526,7 @@ opcode_00:
 .align I_ALIGN
 opcode_01:
         EA_INDIRECT_X
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         lsl     r1, r1, #24
@@ -547,6 +560,7 @@ opcode_04:
 // Opcode 05 - ORA $00
 .align I_ALIGN
 opcode_05:
+        FETCH_NEXT_STAGE_0_L
         ldrb    r1, [fp, r0]
         FETCH_NEXT_STAGE_1_L
         lsl     r1, r1, #24
@@ -618,9 +632,10 @@ opcode_0C:
 opcode_0D:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r1, r1, #24
         orrs    r6, r6, r1
+        FETCH_NEXT_STAGE_1_L
         FETCH_NEXT_STAGE_2_L
 
 // Opcode 0E - ASL $0000
@@ -649,6 +664,7 @@ opcode_10:
 .align I_ALIGN
 opcode_11:
         EA_INDIRECT_Y
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         lsl     r1, r1, #24
@@ -659,6 +675,7 @@ opcode_11:
 .align I_ALIGN
 opcode_12:
         EA_INDIRECT
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         lsl     r1, r1, #24
@@ -687,6 +704,7 @@ opcode_14:
 // Opcode 15 - ORA $00,X
 .align I_ALIGN
 opcode_15:
+        FETCH_NEXT_STAGE_0_L
         add     r0, r7, r0, lsl #24
         ldrb    r1, [fp, r0, lsr #24]
         FETCH_NEXT_STAGE_1_L
@@ -724,9 +742,10 @@ opcode_18:
 opcode_19:
         EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r1, r1, #24
         orrs    r6, r6, r1
+        FETCH_NEXT_STAGE_1_L
         FETCH_NEXT_STAGE_2_L
 
 // Opcode 1A - INC A
@@ -761,9 +780,10 @@ opcode_1C:
 opcode_1D:
         EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r1, r1, #24
         orrs    r6, r6, r1
+        FETCH_NEXT_STAGE_1_L
         FETCH_NEXT_STAGE_2_L
 
 // Opcode 1E - ASL $0000,X
@@ -789,14 +809,15 @@ opcode_20:
         sub     r9, r9, #1
         strh    sl, [r9], #-1
         add     sl, fp, r1
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orr     r9, #0x0100
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode 21 - AND ($00,X)
 .align I_ALIGN
 opcode_21:
         EA_INDIRECT_X
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         lsl     r1, r1, #24
@@ -833,6 +854,7 @@ opcode_24:
 // Opcode 25 - AND     $00
 .align I_ALIGN
 opcode_25:
+        FETCH_NEXT_STAGE_0_L
         ldrb    r1, [fp, r0]
         FETCH_NEXT_STAGE_1_L
         lsl     r1, r1, #24
@@ -913,10 +935,10 @@ opcode_2C:
 opcode_2D:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r1, r1, #24
         ands    r6, r6, r1
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode 2E - ROL $0000
 .align I_ALIGN
@@ -944,6 +966,7 @@ opcode_30:
 .align I_ALIGN
 opcode_31:
         EA_INDIRECT_Y
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         lsl     r1, r1, #24
@@ -954,6 +977,7 @@ opcode_31:
 .align I_ALIGN
 opcode_32:
         EA_INDIRECT
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         lsl     r1, r1, #24
@@ -986,6 +1010,7 @@ opcode_34:
 // Opcode 35 - AND $00,X
 .align I_ALIGN
 opcode_35:
+        FETCH_NEXT_STAGE_0_L
         add     r0, r7, r0, lsl #24
         ldrb    r1, [fp, r0, lsr #24]
         FETCH_NEXT_STAGE_1_L
@@ -1023,10 +1048,10 @@ opcode_38:
 opcode_39:
         EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r1, r1, #24
         ands    r6, r6, r1
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode 3A - DEC A
 .align I_ALIGN
@@ -1064,10 +1089,10 @@ opcode_3C:
 opcode_3D:
         EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r1, r1, #24
         ands    r6, r6, r1
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode 3E - ROL $0000,X
 .align I_ALIGN
@@ -1094,6 +1119,7 @@ opcode_40:
 .align I_ALIGN
 opcode_41:
         EA_INDIRECT_X
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         lsl     r1, r1, #24
@@ -1118,6 +1144,7 @@ opcode_44:
 // Opcode 45 - EOR $00
 .align I_ALIGN
 opcode_45:
+        FETCH_NEXT_STAGE_0_L
         ldrb    r1, [fp, r0]
         FETCH_NEXT_STAGE_1_L
         lsl     r1, r1, #24
@@ -1182,10 +1209,10 @@ opcode_4C:
 opcode_4D:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r1, r1, #24
         eors    r6, r6, r1
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode 4E - LSR $0000
 .align I_ALIGN
@@ -1218,6 +1245,7 @@ opcode_50:
 .align I_ALIGN
 opcode_51:
         EA_INDIRECT_Y
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         lsl     r1, r1, #24
@@ -1228,6 +1256,7 @@ opcode_51:
 .align I_ALIGN
 opcode_52:
         EA_INDIRECT
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         lsl     r1, r1, #24
@@ -1247,6 +1276,7 @@ opcode_54:
 // Opcode 55 - EOR $00,X
 .align I_ALIGN
 opcode_55:
+        FETCH_NEXT_STAGE_0_L
         add     r0, r7, r0, lsl #24
         ldrb    r1, [fp, r0, lsr #24]
         FETCH_NEXT_STAGE_1_L
@@ -1283,10 +1313,10 @@ opcode_58:
 opcode_59:
         EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r1, r1, #24
         eors    r6, r6, r1
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode 5A - PHY
 .align I_ALIGN
@@ -1311,10 +1341,10 @@ opcode_5C:
 opcode_5D:
         EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r1, r1, #24
         eors    r6, r6, r1
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode 5E - LSR $0000,X
 .align I_ALIGN
@@ -1340,10 +1370,10 @@ opcode_60:
         add     r9, r9, #2
         add     sl, fp, #1
         add     sl, sl, r0
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         bic     r9, #0xFF00
         orr     r9, #0x0100
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode 61 - ADC ($00,X)
 .align I_ALIGN
@@ -1352,9 +1382,10 @@ opcode_61:
         LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_adc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -1382,9 +1413,10 @@ opcode_65:
         ldrb    r1, [fp, r0]
         tst     r4, #8
         bne     decimal_mode_adc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -1419,9 +1451,10 @@ opcode_69:
         mov     r1, r0  // TODO - could probably optimise this away
         tst     r4, #8
         bne     decimal_mode_adc   
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -1459,9 +1492,10 @@ opcode_6D:
         LOAD_ABSOLUTE
         tst     r4, #8
         bne     decimal_mode_adc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -1497,9 +1531,10 @@ opcode_71:
         LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_adc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -1511,9 +1546,10 @@ opcode_72:
         LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_adc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -1538,9 +1574,10 @@ opcode_75:
         ldrb    r1, [fp, r0, lsr #24]
         tst     r4, #8
         bne     decimal_mode_adc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -1575,9 +1612,10 @@ opcode_79:
         LOAD_ABSOLUTE
         tst     r4, #8
         bne     decimal_mode_adc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -1613,9 +1651,10 @@ opcode_7D:
         LOAD_ABSOLUTE
         tst     r4, #8
         bne     decimal_mode_adc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcs   r1, r1, r5
         adcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -1707,9 +1746,9 @@ opcode_89:
         mrs     r1, CPSR
         bic     r1, r1, #N_FLAG
         orr     r1, r1, r2
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         msr     CPSR_flg, r1
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode 8A - TXA
 .align I_ALIGN
@@ -1882,6 +1921,7 @@ opcode_A0:
 .align I_ALIGN
 opcode_A1:
         EA_INDIRECT_X
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         lsl     r6, r1, #24
@@ -1904,6 +1944,7 @@ opcode_A3:
 // Opcode A4 - LDY $00
 .align I_ALIGN
 opcode_A4:
+        FETCH_NEXT_STAGE_0_L
         ldrb    r8, [fp, r0]
         FETCH_NEXT_STAGE_1_L
         lsl     r8, r8, #24
@@ -1913,6 +1954,7 @@ opcode_A4:
 // Opcode A5 - LDA $00
 .align I_ALIGN
 opcode_A5:
+        FETCH_NEXT_STAGE_0_L
         ldrb    r6, [fp, r0]
         FETCH_NEXT_STAGE_1_L
         lsl     r6, r6, #24
@@ -1922,6 +1964,7 @@ opcode_A5:
 // Opcode A6 - LDX $00
 .align I_ALIGN
 opcode_A6:
+        FETCH_NEXT_STAGE_0_L
         ldrb    r7, [fp, r0]
         FETCH_NEXT_STAGE_1_L
         lsl     r7, r7, #24
@@ -1965,30 +2008,30 @@ opcode_AB:
 opcode_AC:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r8, r1, #24
         teq     r8, #0
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode AD - LDA $0000
 .align I_ALIGN
 opcode_AD:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r6, r1, #24
         teq     r6, #0
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode AE - LDX $0000
 .align I_ALIGN
 opcode_AE:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r7, r1, #24
         teq     r7, #0
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode AF - BBS2
 .align I_ALIGN
@@ -2005,6 +2048,7 @@ opcode_B0:
 .align I_ALIGN
 opcode_B1:
         EA_INDIRECT_Y
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         lsl     r6, r1, #24
@@ -2015,6 +2059,7 @@ opcode_B1:
 .align I_ALIGN
 opcode_B2:
         EA_INDIRECT
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         lsl     r6, r1, #24
@@ -2031,14 +2076,16 @@ opcode_B3:
 opcode_B4:
         add     r0, r7, r0, lsl #24
         ldrb    r8, [fp, r0, lsr #24]
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r8, r8, #24
         teq     r8, #0
+        FETCH_NEXT_STAGE_1_L
         FETCH_NEXT_STAGE_2_L
 
 // Opcode B5 - LDA $00,X
 .align I_ALIGN
 opcode_B5:
+        FETCH_NEXT_STAGE_0_L
         add     r0, r7, r0, lsl #24
         ldrb    r6, [fp, r0, lsr #24]
         FETCH_NEXT_STAGE_1_L
@@ -2049,6 +2096,7 @@ opcode_B5:
 // Opcode B6 - LDX $00,Y
 .align I_ALIGN
 opcode_B6:
+        FETCH_NEXT_STAGE_0_L
         add     r0, r8, r0, lsl #24
         ldrb    r7, [fp, r0, lsr #24]
         FETCH_NEXT_STAGE_1_L
@@ -2073,10 +2121,10 @@ opcode_B8:
 opcode_B9:
         EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r6, r1, #24
         teq     r6, #0
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode BA - TSX
 .align I_ALIGN
@@ -2096,9 +2144,10 @@ opcode_BB:
 opcode_BC:
         EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r8, r1, #24
         teq     r8, #0
+        FETCH_NEXT_STAGE_1_L
         FETCH_NEXT_STAGE_2_L
 
 // Opcode BD - LDA $0000,X
@@ -2106,20 +2155,20 @@ opcode_BC:
 opcode_BD:
         EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r6, r1, #24
         teq     r6, #0
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode BE - LDX $0000,Y
 .align I_ALIGN
 opcode_BE:
         EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         lsl     r7, r1, #24
         teq     r7, #0
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode BF - BBS3
 .align I_ALIGN
@@ -2137,6 +2186,7 @@ opcode_C0:
 .align I_ALIGN
 opcode_C1:
         EA_INDIRECT_X
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         cmp     r6, r1, lsl #24
@@ -2155,6 +2205,7 @@ opcode_C3:
 // Opcode C4 - CPY $00
 .align I_ALIGN
 opcode_C4:
+        FETCH_NEXT_STAGE_0_L
         ldrb    r1, [fp, r0]
         FETCH_NEXT_STAGE_1_L
         cmp     r8, r1, lsl #24
@@ -2163,6 +2214,7 @@ opcode_C4:
 // Opcode C5 - CMP $00
 .align I_ALIGN
 opcode_C5:
+        FETCH_NEXT_STAGE_0_L
         ldrb    r1, [fp, r0]
         FETCH_NEXT_STAGE_1_L
         cmp     r6, r1, lsl #24
@@ -2219,18 +2271,18 @@ opcode_CB:
 opcode_CC:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         cmp     r8, r1, lsl #24
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode CD - CMP $0000
 .align I_ALIGN
 opcode_CD:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         cmp     r6, r1, lsl #24
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode CE - DEC $0000
 .align I_ALIGN
@@ -2259,6 +2311,7 @@ opcode_D0:
 .align I_ALIGN
 opcode_D1:
         EA_INDIRECT_Y
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         cmp     r6, r1, lsl #24
@@ -2268,6 +2321,7 @@ opcode_D1:
 .align I_ALIGN
 opcode_D2:
         EA_INDIRECT
+        FETCH_NEXT_STAGE_0_L
         LOAD_INDIRECT
         FETCH_NEXT_STAGE_1_L
         cmp     r6, r1, lsl #24
@@ -2286,6 +2340,7 @@ opcode_D4:
 // Opcode D5 - CMP $00,X
 .align I_ALIGN
 opcode_D5:
+        FETCH_NEXT_STAGE_0_L
         add     r0, r7, r0, lsl #24
         ldrb    r1, [fp, r0, lsr #24]
         FETCH_NEXT_STAGE_1_L
@@ -2321,9 +2376,9 @@ opcode_D8:
 opcode_D9:
         EA_ABSOLUTE_INDEXED r8
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         cmp     r6, r1, lsl #24
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode DA - PHX
 .align I_ALIGN
@@ -2350,9 +2405,9 @@ opcode_DC:
 opcode_DD:
         EA_ABSOLUTE_INDEXED r7
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         cmp     r6, r1, lsl #24
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode DE - DEX $0000,X
 .align I_ALIGN
@@ -2385,9 +2440,10 @@ opcode_E1:
         LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_sbc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -2405,6 +2461,7 @@ opcode_E3:
 // Opcode E4 - CPX $00
 .align I_ALIGN
 opcode_E4:
+        FETCH_NEXT_STAGE_0_L
         ldrb    r1, [fp, r0]
         FETCH_NEXT_STAGE_1_L
         cmp     r7, r1, lsl #24
@@ -2416,9 +2473,10 @@ opcode_E5:
         ldrb    r1, [fp, r0]
         tst     r4, #8
         bne     decimal_mode_sbc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -2453,9 +2511,10 @@ opcode_E9:
         mov     r1, r0   // TODO - could probably optimise this away
         tst     r4, #8
         bne     decimal_mode_sbc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -2475,9 +2534,9 @@ opcode_EB:
 opcode_EC:
         EA_ABSOLUTE
         LOAD_ABSOLUTE
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         cmp     r7, r1, lsl #24
-        FETCH_NEXT_STAGE_2_L
+        FETCH_NEXT_STAGE_12_L
 
 // Opcode ED - SBC $0000
 .align I_ALIGN
@@ -2486,9 +2545,10 @@ opcode_ED:
         LOAD_ABSOLUTE
         tst     r4, #8
         bne     decimal_mode_sbc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -2523,9 +2583,10 @@ opcode_F1:
         LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_sbc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -2537,9 +2598,10 @@ opcode_F2:
         LOAD_INDIRECT
         tst     r4, #8
         bne     decimal_mode_sbc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -2561,9 +2623,10 @@ opcode_F5:
         ldrb    r1, [fp, r0, lsr #24]
         tst     r4, #8
         bne     decimal_mode_sbc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -2599,9 +2662,10 @@ opcode_F9:
         LOAD_ABSOLUTE
         tst     r4, #8
         bne     decimal_mode_sbc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
@@ -2633,9 +2697,10 @@ opcode_FD:
         LOAD_ABSOLUTE
         tst     r4, #8
         bne     decimal_mode_sbc
-        FETCH_NEXT_STAGE_1_L
+        FETCH_NEXT_STAGE_0_L
         orrcc   r1, r1, r5
         sbcs    r6, r6, r1, ror #8
+        FETCH_NEXT_STAGE_1_L
         bicvc   r4, #0x40
         orrvs   r4, #0x40
         FETCH_NEXT_STAGE_2_L
