@@ -40,7 +40,7 @@ ssd=${tmp}/basic${version}_new.ssd
 
 rm -f $ssd
 ../not_in_git/mmb_utils/blank_ssd.pl $ssd
-../not_in_git/mmb_utils/putfile.pl $ssd $path $path64 samples/CLOCKSP
+../not_in_git/mmb_utils/putfile.pl $ssd $path $path64 samples/*
 ../not_in_git/mmb_utils/info.pl $ssd
 ../not_in_git/mmb_utils/dkill.pl -f $mmb -y $new_disk
 ../not_in_git/mmb_utils/dput_ssd.pl -f $mmb $new_disk $ssd
@@ -52,7 +52,7 @@ ssd=${tmp}/basic${version}_orig.ssd
 
 rm -f $ssd
 ../not_in_git/mmb_utils/blank_ssd.pl $ssd
-../not_in_git/mmb_utils/putfile.pl $ssd original/BAS135 samples/CLOCKSP
+../not_in_git/mmb_utils/putfile.pl $ssd original/BAS135 samples/*
 ../not_in_git/mmb_utils/info.pl $ssd
 ../not_in_git/mmb_utils/dkill.pl -f $mmb -y $orig_disk
 ../not_in_git/mmb_utils/dput_ssd.pl -f $mmb $orig_disk $ssd
