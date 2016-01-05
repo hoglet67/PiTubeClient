@@ -185,9 +185,9 @@ void copro_arm2_main(unsigned int r0, unsigned int r1, unsigned int atags) {
     }
 
     // TODO: IRQ is level sensitive
-    if (irqn == 0 && last_irqn != 0) {
+    if (irqn != last_irqn) {
       //printf("IRQ!!\r\n");
-      arm2_execute_set_input(ARM_IRQ_LINE, 1);
+      arm2_execute_set_input(ARM_IRQ_LINE, irqn ? 0 : 1);
     }
 
     // NMI is edge sensitive
