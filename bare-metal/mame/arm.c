@@ -21,6 +21,15 @@
 #include <string.h>
 #include "arm.h"
 
+// #define TRACE 1
+
+#ifdef TRACE
+#include "../darm/darm.h"
+darm_t d;
+darm_str_t str;
+int    m_trace;
+#endif
+
 int    m_icount;
 
 UINT32 m_sArmRegister[27];
@@ -265,11 +274,17 @@ void arm2_device_reset()
   
   /* start up in SVC mode with interrupts disabled. */
   R15 = eARM_MODE_SVC|I_MASK|F_MASK;
+#ifdef TRACE
+  m_trace = 0;
+#endif
 }
 
 
 void arm2_execute_run(int n)
 {
+#ifdef TRACE
+  int i;
+#endif
   UINT32 pc;
   UINT32 insn;
   m_icount = n;
@@ -282,6 +297,32 @@ void arm2_execute_run(int n)
       pc = R15;
       insn = cpu_read32( pc & ADDRESS_MASK );
       
+#ifdef TRACE
+      if ((pc & ADDRESS_MASK) == 0xa060) {
+        m_trace = 1;
+      }
+      if (m_trace) {
+        printf("%08X %08X ", pc, insn);
+        for (i = eR0; i <= eR7; i++) {
+          printf("%08X ", m_sArmRegister[i]);
+        }
+        if(darm_armv7_disasm(&d, insn) == 0 && darm_str2(&d, &str, 0) == 0) {
+          printf("%s\r\n", str.total);
+        } else {
+          printf("***\r\n");
+        }
+      }
+      if ((pc & ADDRESS_MASK) == 0xa0c0) {
+        m_trace = 0;
+      }
+      if ((pc & ADDRESS_MASK) == 0xa2ac) {
+        m_trace = 0;
+      }
+      if ((insn & 0x0D900000) == 0x01000000) {
+        printf("S bit not set in %08x at %08x\r\n", insn, pc & ADDRESS_MASK);
+        insn |= INSN_S;
+      }
+#endif
       switch (insn >> INSN_COND_SHIFT)
 		{
 		case COND_EQ:
