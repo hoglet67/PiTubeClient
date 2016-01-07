@@ -1134,7 +1134,7 @@ UINT32 decodeShift(UINT32 insn, UINT32 *pCarry)
 			logerror("%08x:  RegShift ERROR (p36)\n",R15);
 
 		//see p35 for check on this
-		k = GetRegister(k >> 1)&0x1f;
+		k = GetRegister(k >> 1)&0xff;
 		m_icount -= S_CYCLE;
 		if( k == 0 ) /* Register shift by 0 is a no-op */
 		{
