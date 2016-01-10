@@ -36,7 +36,12 @@ UINT8  arm2_rom[0x4000] __attribute__((aligned(0x10000)));
 #define R15 arm2_getR15()
 
 UINT8  copro_arm2_read8(int addr) {
-  int type = (addr >> 24) & 3;
+	if (addr <= RAM_MASK8)
+	{
+		return arm2_ram[addr];
+	}
+
+	int type = (addr >> 24) & 3;
   switch (type) {
   case 0:
     return *(UINT8*)(arm2_ram + (addr & RAM_MASK8));
@@ -51,6 +56,12 @@ UINT8  copro_arm2_read8(int addr) {
 
 UINT32 copro_arm2_read32(int addr) {
   UINT32 result;
+
+  if ((addr & ~RAM_MASK32) == 0)
+  {
+	  return *(UINT32*)(arm2_ram + addr);
+  }
+
   int type = (addr >> 24) & 3;
   switch (type) {
   case 0:
@@ -196,7 +207,7 @@ void copro_arm2_main(unsigned int r0, unsigned int r1, unsigned int atags) {
       arm2_execute_set_input(ARM_FIRQ_LINE, 1);
     }
     if (rstn != 0) {
-      arm2_execute_run(0);
+      arm2_execute_run(16);
       //printf("%08x\r\n", R15);
     } 
     last_irqn = irqn;

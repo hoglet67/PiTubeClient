@@ -30,7 +30,8 @@ darm_str_t str;
 int    m_trace;
 #endif
 
-int    m_icount;
+//int    m_icount;
+#define CYCLE_COUNT(in)
 
 UINT32 m_sArmRegister[27];
 UINT32 m_coproRegister[16];
@@ -238,7 +239,12 @@ enum
 
 UINT32 GetRegister( int rIndex )
 {
-  return m_sArmRegister[sRegisterTable[MODE][rIndex]];
+	if (MODE == 0)
+	{
+		return m_sArmRegister[rIndex];
+	}
+
+	return m_sArmRegister[sRegisterTable[MODE][rIndex]];
 }
 
 void SetRegister( int rIndex, UINT32 value )
@@ -280,14 +286,14 @@ void arm2_device_reset()
 }
 
 
-void arm2_execute_run(int n)
+void arm2_execute_run(int number)
 {
 #ifdef TRACE
   int i;
 #endif
   UINT32 pc;
   UINT32 insn;
-  m_icount = n;
+  //int m_icount = number;
 
   do
     {
@@ -409,19 +415,21 @@ void arm2_execute_run(int n)
           R15 = eARM_MODE_SVC;    /* Set SVC mode so PC is saved to correct R14 bank */
           SetRegister( 14, pc );    /* save PC */
           R15 = (pc&PSR_MASK)|(pc&IRQ_MASK)|0x8|eARM_MODE_SVC|I_MASK|(pc&MODE_MASK);
-          m_icount -= 2 * S_CYCLE + N_CYCLE;
+          CYCLE_COUNT(2 * S_CYCLE + N_CYCLE);
         }
       else /* Undefined */
         {
           logerror("%08x:  Undefined instruction\n",R15);
         L_Next:
-          m_icount -= S_CYCLE;
+		  	 CYCLE_COUNT(S_CYCLE);
           R15 += 4;
         }
       
-      arm2_check_irq_state();
+      //arm2_check_irq_state();
       
-    } while( m_icount > 0 );
+    }
+  	 //while( m_icount > 0 );
+  	  while (number--);
 } /* arm_execute */
 
 
@@ -506,7 +514,7 @@ void HandleBranch( UINT32 insn )
     {
       R15 += off + 8;
     }
-  m_icount -= 2 * S_CYCLE + N_CYCLE;
+  CYCLE_COUNT(2 * S_CYCLE + N_CYCLE);
 }
 
 
@@ -576,7 +584,7 @@ void HandleMemSingle( UINT32 insn )
   if (insn & INSN_SDT_L)
     {
       /* Load */
-      m_icount -= S_CYCLE + I_CYCLE + N_CYCLE;
+      CYCLE_COUNT(S_CYCLE + I_CYCLE + N_CYCLE);
       if (insn & INSN_SDT_B)
         {
           if (ARM_DEBUG_CORE && rd == eR15)
@@ -600,7 +608,7 @@ void HandleMemSingle( UINT32 insn )
               if ((cpu_read32(rnv)&3)==0)
                 R15 -= 4;
               
-              m_icount -= S_CYCLE + N_CYCLE;
+              CYCLE_COUNT(S_CYCLE + N_CYCLE);
             }
           else
             {
@@ -611,7 +619,7 @@ void HandleMemSingle( UINT32 insn )
   else
     {
       /* Store */
-      m_icount -= 2 * N_CYCLE;
+	  CYCLE_COUNT(2 * N_CYCLE);
       if (insn & INSN_SDT_B)
         {
           if (ARM_DEBUG_CORE && rd==eR15)
@@ -711,7 +719,7 @@ void HandleALU( UINT32 insn )
   UINT32 by, rdn;
   
   opcode = (insn & INSN_OPCODE) >> INSN_OPCODE_SHIFT;
-  m_icount -= S_CYCLE;
+  CYCLE_COUNT(S_CYCLE);
   
   rd = 0;
   rn = 0;
@@ -825,7 +833,7 @@ void HandleALU( UINT32 insn )
         {
           /* Merge the old NZCV flags into the new PC value */
           R15 = (rd & ADDRESS_MASK) | (R15 & PSR_MASK) | (R15 & IRQ_MASK) | (R15&MODE_MASK);
-          m_icount -= S_CYCLE + N_CYCLE;
+          CYCLE_COUNT(S_CYCLE + N_CYCLE);
         }
       else
         {
@@ -840,7 +848,7 @@ void HandleALU( UINT32 insn )
                 {
                   SetRegister(rdn,(rd&ADDRESS_MASK) | (rd&PSR_MASK) | (R15&IRQ_MASK) | (R15&MODE_MASK));
                 }
-              m_icount -= S_CYCLE + N_CYCLE;
+              CYCLE_COUNT(S_CYCLE + N_CYCLE);
             }
           else
             {
@@ -866,7 +874,7 @@ void HandleALU( UINT32 insn )
           rd |= (R15 & ADDRESS_MASK); // RD = address part of R15
           SetRegister(rdn,(rd&ADDRESS_MASK) | (rd&PSR_MASK) | (R15&IRQ_MASK) | (R15&MODE_MASK));
         }
-      m_icount -= S_CYCLE + N_CYCLE;
+      CYCLE_COUNT(S_CYCLE + N_CYCLE);
     }
  }
       
@@ -874,7 +882,7 @@ void HandleMul( UINT32 insn)
 {
     UINT32 r;
 
-    m_icount -= S_CYCLE + I_CYCLE;
+    CYCLE_COUNT(S_CYCLE + I_CYCLE);
     /* should be:
             Range of Rs            Number of cycles
 
@@ -1039,7 +1047,7 @@ void HandleMemBlock( UINT32 insn )
             if (insn & 0x8000)
             {
                 R15-=4;
-                m_icount -= S_CYCLE + N_CYCLE;
+                CYCLE_COUNT(S_CYCLE + N_CYCLE);
             }
 
             if (insn & INSN_BDT_W)
@@ -1092,11 +1100,11 @@ void HandleMemBlock( UINT32 insn )
 
             if (insn & 0x8000)
             {
-                m_icount -= S_CYCLE + N_CYCLE;
+            	CYCLE_COUNT(S_CYCLE + N_CYCLE);
                 R15-=4;
             }
         }
-        m_icount -= result * S_CYCLE + N_CYCLE + I_CYCLE;
+        CYCLE_COUNT(result * S_CYCLE + N_CYCLE + I_CYCLE);
     } /* Loading */
     else
     {
@@ -1144,7 +1152,7 @@ void HandleMemBlock( UINT32 insn )
         if( insn & (1<<eR15) )
             R15 -= 12;
 
-        m_icount -= (result - 1) * S_CYCLE + 2 * N_CYCLE;
+        CYCLE_COUNT((result - 1) * S_CYCLE + 2 * N_CYCLE);
     }
 } /* HandleMemBlock */
 
@@ -1176,7 +1184,7 @@ UINT32 decodeShift(UINT32 insn, UINT32 *pCarry)
 
         //see p35 for check on this
         k = GetRegister(k >> 1)&0xff;
-        m_icount -= S_CYCLE;
+        CYCLE_COUNT(S_CYCLE);
         if( k == 0 ) /* Register shift by 0 is a no-op */
         {
 //          logerror("%08x:  NO-OP Regshift\n",R15);
@@ -1289,7 +1297,7 @@ void HandleCoProVL86C020( UINT32 insn )
     UINT32 rn=(insn>>12)&0xf;
     UINT32 crn=(insn>>16)&0xf;
 
-    m_icount -= S_CYCLE;
+    CYCLE_COUNT(S_CYCLE);
 
     /* MRC - transfer copro register to main register */
     if( (insn&0x0f100010)==0x0e100010 )
@@ -1329,7 +1337,7 @@ void HandleCoPro( UINT32 insn )
     UINT32 rn=(insn>>12)&0xf;
     UINT32 crn=(insn>>16)&0xf;
 
-    m_icount -= S_CYCLE;
+    CYCLE_COUNT(S_CYCLE);
 
     /* MRC - transfer copro register to main register */
     if( (insn&0x0f100010)==0x0e100010 )
