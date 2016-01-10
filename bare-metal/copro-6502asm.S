@@ -5,7 +5,8 @@
 @ Written by Reuben Scratton for Little Fluffy Toys Ltd before, after, and almost during getting married on June 25th 2011.
 @
 
-
+#include "rpi-base.h"
+        
 .text
 .global exec6502
 
@@ -82,8 +83,8 @@ gpio_toggle_test:
         
     mov   %r0, #1
     mov   %r3, #2
-    ldr   %r1, =0x2020001C  // GPSET0
-    ldr   %r2, =0x20200028  // GPCLR0
+    ldr   %r1, =(PERIPHERAL_BASE + 0x20001C)  // GPSET0
+    ldr   %r2, =(PERIPHERAL_BASE + 0x200028)  // GPCLR0
     nop
     nop
     nop
@@ -153,8 +154,8 @@ loop2:
 
     // Blip GPIO0 at the start of an instruction
     mov   %r0, #1
-    ldr   %r1, =0x2020001C  // GPSET0
-    ldr   %r2, =0x20200028  // GPCLR0
+    ldr   %r1, =(PERIPHERAL_BASE + 0x20001C)  // GPSET0
+    ldr   %r2, =(PERIPHERAL_BASE + 0x200028)  // GPCLR0
     str   %r0, [%r1]
     str   %r0, [%r2]
         
@@ -263,7 +264,7 @@ no_interrupt:
         
 // Test RST_n, IRQ_n, and NMI_n and update interrupt state accordingly
 
-    ldr   %r0, =0x20200034           // TODO: This address is different on a RPI2
+    ldr   %r0, =(PERIPHERAL_BASE + 0x200034)
     ldr   %r0, [%r0]                 // Read GPLEV0 GPIO register
 
     tst   %r0, #(1 << 7)             // Test for RST (GPIO7)

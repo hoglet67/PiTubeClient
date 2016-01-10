@@ -68,6 +68,8 @@
 // Check for IRQs enabled ( R4)
 // if so check if we have an IRQ
 
+#include "rpi-base.h"
+        
 .text
 .global exec_65tube
 .global mpu_memory
@@ -129,7 +131,7 @@
 .macro FETCH_NEXT_CHECK_IRQ
         mrs     r2, CPSR                  // Preserve the 6502 flags
         tst     r4, #4                    // Test whether interrupts are enabled (bit 2 = 0)
-        ldreq   r0, =0x20200034           // TODO: This address is different on a RPI2
+        ldreq   r0, =(PERIPHERAL_BASE + 0x200034)
         ldreq   r0, [r0]
         tsteq   r0, #(1 << 17)            // Test for IRQ
         beq     handle_irq
@@ -331,7 +333,7 @@ events:
 
 arm_irq_handler:
         push    {r0, r1, r2}
-        ldr     r0, =0x20200040         // any falling events? GPEDS0 TODO:Address is different on a RPI2
+        ldr     r0, =(PERIPHERAL_BASE + 0x200040) // any falling events?
         ldr     r2, [r0]
         mov     r1, #1<<7               // mask our events
         orr     r1, r1, #1<<18 + 1<<17

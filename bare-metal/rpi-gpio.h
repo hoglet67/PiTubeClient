@@ -35,7 +35,7 @@
 #define RPI_GPIO_BASE       (PERIPHERAL_BASE + 0x200000UL)
 
 #if defined(RPIBPLUS) || defined(RPI2)
-    #define LED_GPFSEL      GPFSEL4
+    #define LED_GPFSEL      GPFSEL[4]
     #define LED_GPFBIT      21
     #define LED_GPSET       GPSET1
     #define LED_GPCLR       GPCLR1

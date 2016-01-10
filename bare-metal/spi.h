@@ -3,18 +3,20 @@
 #ifndef SPI_H
 #define SPI_H
 
+#include "rpi-gpio.h"
+
 typedef unsigned char u8;
 typedef unsigned char u32;
 typedef volatile unsigned int v32;
-#define REG32(in) *((v32*) in)
+#define REG32(in) *((v32*) (in))
 
 // SPI0 ADDRESS
-#define SPI0_CONTROL 	REG32(0x20204000)
-#define SPI0_FIFO    	REG32(0x20204004)
-#define SPI0_CLK     	REG32(0x20204008)
-#define SPI0_DLEN    	REG32(0x2020400C)
-#define SPI0_LTOH    	REG32(0x20204010)
-#define SPI0_DC      	REG32(0x20204014)
+#define SPI0_CONTROL 	REG32(RPI_GPIO_BASE + 0x4000)
+#define SPI0_FIFO    	REG32(RPI_GPIO_BASE + 0x4004)
+#define SPI0_CLK     	REG32(RPI_GPIO_BASE + 0x4008)
+#define SPI0_DLEN    	REG32(RPI_GPIO_BASE + 0x400C)
+#define SPI0_LTOH    	REG32(RPI_GPIO_BASE + 0x4010)
+#define SPI0_DC      	REG32(RPI_GPIO_BASE + 0x4014)
 
 // Bitfields in spi_C
 #define SPI_C_LEN_LONG	25

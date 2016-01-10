@@ -70,10 +70,14 @@
 .equ    CPSR_MODE_IRQ,          0x12
 .equ    CPSR_MODE_SVR,          0x13
 .equ    CPSR_MODE_ABORT,        0x17
+.equ    CPSR_MODE_HYP,          0x1A
 .equ    CPSR_MODE_UNDEFINED,    0x1B
 .equ    CPSR_MODE_SYSTEM,       0x1F
 
+.equ    CPSR_MODE_MASK,         0x1F
+
 // See ARM section A2.5 (Program status registers)
+.equ    CPSR_A_BIT,             0x100
 .equ    CPSR_IRQ_INHIBIT,       0x80
 .equ    CPSR_FIQ_INHIBIT,       0x40
 .equ    CPSR_THUMB,             0x20
@@ -126,6 +130,27 @@ _copy_loop:
 
     // execution resumes here in high memory
 _reset_:
+
+    // On a Raspberry Pi 2 we enter in HYP mode, and need to force a switch to supervisor mode
+    // This should be safe on a older Pi
+#ifdef RPI2
+    mrs     r0, cpsr
+    eor     r0, r0, #CPSR_MODE_HYP
+    tst     r0, #CPSR_MODE_MASK
+    bic     r0 , r0 , #CPSR_MODE_MASK
+    orr     r0 , r0 , #CPSR_IRQ_INHIBIT | CPSR_FIQ_INHIBIT | CPSR_MODE_SVR
+    bne     _not_in_hyp_mode
+    orr     r0, r0, #CPSR_A_BIT
+    adr     lr, _reset_continue
+    msr     spsr_cxsf, r0
+    .word 0xE12EF30E  // msr_elr_hyp lr
+    .word 0xE160006E  // eret
+_not_in_hyp_mode:
+    msr    cpsr_c, r0
+_reset_continue:
+#endif
+        
+        
     // We enter execution in supervisor mode. For more information on
     // processor modes see ARM Section A2.2 (Processor Modes)
 
