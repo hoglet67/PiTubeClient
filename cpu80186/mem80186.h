@@ -1,5 +1,9 @@
+#ifdef WIN32
+#define DECLARE_RAM
+#endif
+
 #define SIXTEEN_K		0x04000
-#define ONE_MEG     0x100000
+#define ONE_MEG		0x100000
 #define ROM_SIZE		SIXTEEN_K
 
 // Modify this to change the Range of ROM Mirroring

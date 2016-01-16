@@ -46,16 +46,24 @@ void portout(uint16_t portnum, uint8_t value)
 {
 	if (TUBE_ACCESS(portnum))
 	{
+#ifdef WIN32
+		printf("Tube Write @%X =%X\n", portnum, value);
+#else
 		tubeWrite(TUBE_CONVERT(portnum), value);
+#endif
 	}
 }
 
 uint8_t portin(uint16_t portnum)
 {
+#ifdef WIN32
+	printf("Tube Read @%X\n", portnum);
+#else
 	if (TUBE_ACCESS(portnum))
 	{
 		return tubeRead(TUBE_CONVERT(portnum));
 	}
+#endif
 
 	return 0xFF;
 }

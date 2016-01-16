@@ -25,6 +25,7 @@
 #include <string.h>
 #include "cpu80186.h"
 #include "mem80186.h"
+#include "Client86_v1_01.h"
 
 #ifdef DECLARE_RAM
 uint8_t RAM[ONE_MEG];
@@ -63,8 +64,8 @@ void RomCopy(void)
 {
   uint32_t Base;
 
-  for (Base = MirrorBase; Base < ONE_MEG; Base += ROM_SIZE)
+  for (Base = MirrorBase; Base < ONE_MEG; Base += sizeof(Client86_v1_01))
   {
-    memcpy((void*) &RAM[Base], (void*) m186_RomBase, ROM_SIZE);
+	  memcpy((void*)&RAM[Base], (void*)Client86_v1_01, sizeof(Client86_v1_01));
   }
 }

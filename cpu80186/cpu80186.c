@@ -34,17 +34,13 @@ uint8_t byteregtable[8] =
   { regal, regcl, regdl, regbl, regah, regch, regdh, regbh };
 
 static const uint8_t parity[0x100] =
-  { 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1,
-      0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0,
-      0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0,
-      1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1,
-      0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0,
-      1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1,
-      1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0,
-      1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0,
-      0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0,
-      1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1,
-      1, 0, 1, 0, 0, 1 };
+  { 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0,
+      1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0,
+      1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1,
+      0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0,
+      1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1,
+      0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1,
+      0, 0, 1 };
 
 uint8_t opcode, segoverride, reptype, bootdrive = 0, hdcount = 0;
 uint16_t segregs[4], savecs, saveip, ip, useseg, oldsp;
@@ -150,7 +146,7 @@ void flag_add8(uint8_t v1, uint8_t v2)					// v1 = destination operand, v2 = sou
   af = (((v1 ^ v2 ^ dst) & 0x10) == 0x10) ? 1 : 0;
 }
 
-void flag_add16(uint16_t v1, uint16_t v2)					// v1 = destination operand, v2 = source operand
+void flag_add16(uint16_t v1, uint16_t v2)          // v1 = destination operand, v2 = source operand
 {
   uint32_t dst;
 
@@ -1197,8 +1193,7 @@ void op_grp5()
       push(ip);
       getea(rm);
       ip = (uint16_t) read86(ea) + (uint16_t) read86(ea + 1) * 256;
-      segregs[regcs] = (uint16_t) read86(ea + 2)
-          + (uint16_t) read86(ea + 3) * 256;
+      segregs[regcs] = (uint16_t) read86(ea + 2) + (uint16_t) read86(ea + 3) * 256;
       break;
 
     case 4: /* JMP Ev */
@@ -1208,8 +1203,7 @@ void op_grp5()
     case 5: /* JMP Mp */
       getea(rm);
       ip = (uint16_t) read86(ea) + (uint16_t) read86(ea + 1) * 256;
-      segregs[regcs] = (uint16_t) read86(ea + 2)
-          + (uint16_t) read86(ea + 3) * 256;
+      segregs[regcs] = (uint16_t) read86(ea + 2) + (uint16_t) read86(ea + 3) * 256;
       break;
 
     case 6: /* PUSH Ev */
@@ -1226,14 +1220,13 @@ uint8_t printops = 0;
 extern void nethandler();
 #endif
 extern void diskhandler();
-extern void readdisk(uint8_t drivenum, uint16_t dstseg, uint16_t dstoff,
-                     uint16_t cyl, uint16_t sect, uint16_t head,
+extern void readdisk(uint8_t drivenum, uint16_t dstseg, uint16_t dstoff, uint16_t cyl, uint16_t sect, uint16_t head,
                      uint16_t sectcount);
 
 void intcall86(uint8_t intnum)
 {
   static uint16_t lastint10ax;
-  uint16_t oldregax;
+//  uint16_t oldregax;
   didintr = 1;
 
   if (intnum == 0x19)
@@ -1320,6 +1313,12 @@ uint64_t lastcountertimer = 0, counterticks = 10000;
 
 extern void timing();
 
+void reset(void)
+{
+	ip = 0xFFF0;
+	segregs[regcs] = 0xF000;
+}
+
 void exec86(uint32_t execloops)
 {
   uint8_t docontinue;
@@ -1328,8 +1327,9 @@ void exec86(uint32_t execloops)
 
   counterticks = (uint64_t)((double) timerfreq / (double) 65536.0);
 
-#warning To Do Interrupts
+
 #if 0
+  #warning To Do Interrupts
   if (!trap_toggle && (ifl && (i8259.irr & (~i8259.imr))))
   {
     intcall86(nextintr()); /* get next interrupt from the i8259, if any */
@@ -3682,7 +3682,7 @@ void exec86(uint32_t execloops)
         default:
 #ifdef CPU_V20
         intcall86 (6); /* trip invalid opcode exception (this occurs on the 80186+, 8086/8088 CPUs treat them as NOPs. */
-        /* technically they aren't exactly like NOPs in most cases, but for our pursoses, that's accurate enough. */
+        /* technically they aren't exactly like NOPs in most cases, but for our purposes, that's accurate enough. */
 #endif
         if (verbose)
         {
