@@ -28,7 +28,11 @@
 //  Relocate to just below 32MB
 
 .equ    RELOCATE_TO,      0x01F00000
+#ifdef RPI2
+.equ    RELOCATE_FROM,    0x00000000
+#else
 .equ    RELOCATE_FROM,    0x00008000
+#endif
 .equ    RELOCATE_LENGTH,  0x00100000
 
 .equ    SVR_STACK,        0x01F00000
@@ -134,6 +138,12 @@ _reset_:
     // On a Raspberry Pi 2 we enter in HYP mode, and need to force a switch to supervisor mode
     // This should be safe on a older Pi
 #ifdef RPI2
+    // Test which core we are running on
+    mrc     p15, 0, r0, c0, c0, 5
+    ands    r0, #3
+    // Put cores 1-3 into a tight loop
+    bne     _core_loop
+
     mrs     r0, cpsr
     eor     r0, r0, #CPSR_MODE_HYP
     tst     r0, #CPSR_MODE_MASK
@@ -145,6 +155,8 @@ _reset_:
     msr     spsr_cxsf, r0
     .word 0xE12EF30E  // msr_elr_hyp lr
     .word 0xE160006E  // eret
+_core_loop:
+    b       _core_loop    
 _not_in_hyp_mode:
     msr    cpsr_c, r0
 _reset_continue:
@@ -195,6 +207,16 @@ _reset_continue:
 
     // Enable VFP ------------------------------------------------------------
 
+#ifdef RPI2
+    //1. Set the CPACR for access to CP10 and CP11, and clear the ASEDIS and D32DIS bits:
+    ldr     r0, =(0xf << 20)
+    mcr     p15, 0, r0, c1, c0, 2
+
+    // 2. Set the FPEXC EN bit to enable the NEON MPE:
+    mov     r0, #0x40000000 
+    vmsr    fpexc, r0
+        
+#else   
     // r1 = Access Control Register
     MRC p15, #0, r1, c1, c0, #2
     // enable full access for p10,11
@@ -209,7 +231,8 @@ _reset_continue:
     MOV r0,#0x40000000
     // FPEXC = r0
     FMXR FPEXC, r0
-
+#endif
+        
     // The c-startup function which we never return from. This function will
     // initialise the ro data section (most things that have the const
     // declaration) and initialise the bss section variables to 0 (generally
