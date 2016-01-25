@@ -22,6 +22,9 @@
 // Soft 80186 Second Processor
 // Copyright (C)2015-2016 Simon R. Ellwood BEng (FordP)
 //#include "config.h"
+
+#define CPU_V20
+
 #include <stdint.h>
 #include <stdio.h>
 #include "cpu80186.h"
@@ -2127,7 +2130,7 @@ void exec86(uint32_t execloops)
 			break;
 
 		case 0x54: /* 54 PUSH eSP */
-			push(getreg16(regsp) - 2);
+			push(getreg16(regsp));
 			break;
 
 		case 0x55: /* 55 PUSH eBP */
