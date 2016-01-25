@@ -50,6 +50,8 @@ Debug/
 .settings/
 .cproject
 .project
+ConsoleApplication1/
+i186/
 
 *.d
 *.map

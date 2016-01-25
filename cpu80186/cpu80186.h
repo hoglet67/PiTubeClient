@@ -76,4 +76,5 @@ union _bytewordregs_ {
 #define putsegreg(regid, writeval)	segregs[regid] = writeval
 #define segbase(x)	((uint32_t) x << 4)
 
+extern void reset(void);
 extern void exec86(uint32_t execloops);

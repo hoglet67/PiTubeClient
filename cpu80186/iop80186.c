@@ -40,32 +40,40 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 // &88 Tube R3 Status
 // &8A Tube R3 Data
 // &8C Tube R4 Status
-//&8E Tube R4 Data
+// &8E Tube R4 Data
 
-void	portout (uint16_t portnum, uint8_t value)
+void portout(uint16_t portnum, uint8_t value)
 {
 	if (TUBE_ACCESS(portnum))
 	{
+#ifdef WIN32
+		printf("Tube Write @%X =%X\n", portnum, value);
+#else
 		tubeWrite(TUBE_CONVERT(portnum), value);
+#endif
 	}
 }
 
-uint8_t	portin (uint16_t portnum)
+uint8_t portin(uint16_t portnum)
 {
+#ifdef WIN32
+	printf("Tube Read @%X\n", portnum);
+#else
 	if (TUBE_ACCESS(portnum))
 	{
 		return tubeRead(TUBE_CONVERT(portnum));
 	}
+#endif
 
 	return 0xFF;
 }
 
-uint16_t portin16 (uint16_t portnum)
+uint16_t portin16(uint16_t portnum)
 {
 	return ((uint16_t) portin(portnum) | (uint16_t) (portin(portnum + 1) << 8));
 }
 
-void portout16 (uint16_t portnum, uint16_t value)
+void portout16(uint16_t portnum, uint16_t value)
 {
 	portout(portnum, (uint8_t) value);
 	portout(portnum + 1, (uint8_t) (value >> 8));
