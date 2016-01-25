@@ -35,7 +35,10 @@ uint8_t* RAM = (uint8_t*) m186_RamBase;
 
 void write86(uint32_t addr32, uint8_t value)
 {
-  RAM[addr32 & 0xFFFFF] = value;
+  addr32 &= 0xFFFFFF;
+  if (addr32 < 0xF0000) {
+    RAM[addr32] = value;
+  }
 }
 
 void writew86(uint32_t addr32, uint16_t value)

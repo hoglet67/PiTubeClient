@@ -48,6 +48,16 @@ set( CMAKE_EXE_LINKER_FLAGS "-Wl,-T,${PROJECT_SOURCE_DIR}/rpi.ld" )
 
 add_executable( tube-client
     tube-client.c
+# 80186 Co Pro
+    copro-80186.c
+    copro-80186.h
+    ../cpu80186/cpu80186.c
+    ../cpu80186/cpu80186.h
+    ../cpu80186/mem80186.c
+    ../cpu80186/mem80186.h
+    ../cpu80186/iop80186.c
+    ../cpu80186/iop80186.h
+    ../cpu80186/Client86_v1_01.h
 # ARM2 Co Pro
     mame/arm.c
     mame/arm.h

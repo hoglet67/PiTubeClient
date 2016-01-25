@@ -62,10 +62,13 @@ static void copro_i80186_reset()
   // Wipe memory
   Cleari80186Ram();
   RomCopy();
-
+  reset();
   // Reset the ARM device
   //arm2_device_reset();
 }
+
+extern uint16_t ip;
+extern uint16_t segregs[];
 
 void copro_80186_main(unsigned int r0, unsigned int r1, unsigned int atags)
 {
@@ -90,6 +93,9 @@ void copro_80186_main(unsigned int r0, unsigned int r1, unsigned int atags)
 
   while (1)
   {
+
+    printf("%04x:%04x\r\n", segregs[1], ip);
+
     exec86(16);
 
     gpio = RPI_GpioBase->GPLEV0;
