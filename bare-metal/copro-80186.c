@@ -67,6 +67,7 @@ static void copro_i80186_reset()
   //arm2_device_reset();
 }
 
+extern uint8_t ifl;
 extern uint16_t ip;
 extern uint16_t segregs[];
 
@@ -93,9 +94,18 @@ void copro_80186_main(unsigned int r0, unsigned int r1, unsigned int atags)
 
   while (1)
   {
-
-    printf("%04x:%04x\r\n", segregs[1], ip);
-
+#if 0
+    int log = 0;
+    if (ip == 0x0a00) {
+      log = 1;
+    }
+    if (log) {
+      printf("%04x:%04x\r\n", segregs[1], ip);
+    }
+    if (ip == 0xfe70) {
+      log = 0;
+    }
+#endif
     exec86(16);
 
     gpio = RPI_GpioBase->GPLEV0;
@@ -122,19 +132,19 @@ void copro_80186_main(unsigned int r0, unsigned int r1, unsigned int atags)
       while ((gpio & RST_PIN_MASK) == 0);          // Wait for Reset to go high
     }
 
-#if 0
-    // TODO: IRQ is level sensitive
-    if ((gpio ^ last_gpio) & IRQ_PIN_MASK)
+    // IRQ is level sensitive
+    if (((gpio & IRQ_PIN_MASK) == 0) & ifl)
     {
-      i80186_execute_set_input(0, (gpio & IRQ_PIN_MASK) ? 0 : 1);
+      //printf("IRQ\r\n");
+      intcall86(12);
     }
 
     // NMI is edge sensitive
     if (((gpio & NMI_PIN_MASK) == 0) && (last_gpio & NMI_PIN_MASK))
     {
-      i80186_execute_set_input(1, 1);
+      //printf("NMI\r\n");
+      intcall86(2);
     }
-#endif
 
     last_gpio = gpio;
   }
