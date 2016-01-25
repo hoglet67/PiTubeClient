@@ -95,7 +95,7 @@ void copro_80186_main(unsigned int r0, unsigned int r1, unsigned int atags)
   while (1)
   {
 #if 0
-    int log = 0;
+    int log;
     if (ip == 0x0a00) {
       log = 1;
     }
@@ -106,14 +106,15 @@ void copro_80186_main(unsigned int r0, unsigned int r1, unsigned int atags)
       log = 0;
     }
 #endif
-    exec86(16);
+    exec86(1);
 
     gpio = RPI_GpioBase->GPLEV0;
 
-    if (gpio == last_gpio)
-    {
-      continue;
-    }
+    // DMB: This prevents the level sensitive interrupt from working
+    //if (gpio == last_gpio)
+    //{
+    //  continue;
+    //}
 
     if ((gpio & RST_PIN_MASK) == 0)
     {
