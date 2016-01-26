@@ -78,3 +78,4 @@ union _bytewordregs_ {
 
 extern void reset(void);
 extern void exec86(uint32_t execloops);
+extern void intcall86(uint8_t intnum);

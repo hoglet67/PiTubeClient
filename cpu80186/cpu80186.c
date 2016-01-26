@@ -23,6 +23,8 @@
 // Copyright (C)2015-2016 Simon R. Ellwood BEng (FordP)
 //#include "config.h"
 
+// #define TRACE_LAST_N 1000
+
 #define CPU_V20
 
 #include <stdint.h>
@@ -66,6 +68,14 @@ extern uint8_t vidmode;
 extern uint8_t verbose;
 
 extern void vidinterrupt();
+
+#ifdef TRACE_LAST_N
+extern int i386_dasm_one();
+unsigned int trace_ip[TRACE_LAST_N];
+unsigned int trace_cs[TRACE_LAST_N];
+unsigned int trace_opcode[TRACE_LAST_N];
+int trace_index = 0;
+#endif
 
 void intcall86(uint8_t intnum);
 
@@ -1228,7 +1238,7 @@ extern void readdisk(uint8_t drivenum, uint16_t dstseg, uint16_t dstoff, uint16_
 
 void intcall86(uint8_t intnum)
 {
-	static uint16_t lastint10ax;
+	//  static uint16_t lastint10ax;
 	//  uint16_t oldregax;
 	didintr = 1;
 
@@ -1370,6 +1380,15 @@ void exec86(uint32_t execloops)
 			savecs = segregs[regcs];
 			saveip = ip;
 			opcode = getmem8(segregs[regcs], ip);
+#ifdef TRACE_LAST_N
+			trace_cs[trace_index] = savecs;
+			trace_ip[trace_index] = saveip;
+			trace_opcode[trace_index] = opcode;
+			trace_index++;
+			if (trace_index == TRACE_LAST_N) {
+				trace_index = 0;
+			};
+#endif
 			StepIP(1);
 
 			switch (opcode)
@@ -3689,6 +3708,31 @@ void exec86(uint32_t execloops)
 			if (verbose)
 			{
 				printf("Illegal opcode: %02X @ %04X:%04X\n", opcode, savecs, saveip);
+#ifdef TRACE_LAST_N
+				{
+					int i, j;
+					int len;
+					char buffer[256];
+					for (i = 0; i < TRACE_LAST_N; i++) {
+						int addr = (trace_cs[trace_index] << 4) + trace_ip[trace_index];
+						len = i386_dasm_one(buffer, addr, 0, 0);
+						len = len & 0xf;
+						printf("%04x:%04x - ", trace_cs[trace_index], trace_ip[trace_index]);
+						for (j = 0; j < 8; j++) {
+							if (j < len) {
+								printf("%02x ", RAM[addr + j]);
+							} else {
+								 printf("	 ");		
+							}
+						}
+						printf(" : %s\r\n", buffer);
+						trace_index++;
+						if (trace_index == TRACE_LAST_N) {
+							trace_index = 0;
+						}
+					}
+				}
+#endif
 			}
 			break;
 		}

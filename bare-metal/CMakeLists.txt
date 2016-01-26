@@ -58,6 +58,7 @@ add_executable( tube-client
     ../cpu80186/iop80186.c
     ../cpu80186/iop80186.h
     ../cpu80186/Client86_v1_01.h
+    ../cpu80186/i386dasm.c
 # ARM2 Co Pro
     mame/arm.c
     mame/arm.h
