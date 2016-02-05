@@ -322,14 +322,14 @@ int cli_loop() {
 
 void copro_arm_main(unsigned int r0, unsigned int r1, unsigned int atags)
 {
-  // Enable all the caches
-  enable_MMU_and_IDCaches();
-
   // Initialize the environment structure
   initEnv();
 
   // Initialize the hardware
   initHardware();
+
+  // Enable all the caches (after stuff like the UART is enabled)
+  enable_MMU_and_IDCaches();
 
   // If the default exit handler is called during tube_Reset(), we return here
   // This should not be necessary, but I've seen a couple of cases
