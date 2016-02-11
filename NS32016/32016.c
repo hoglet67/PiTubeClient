@@ -5,6 +5,7 @@
 #include <string.h>
 #include "32016.h"
 #include "../bare-metal/tube-lib.h"
+#include "PandoraV0_61.h"
 
 static int nsoutput = 0;
 #define r ns_r
@@ -72,13 +73,13 @@ static uint32_t popd()
 	return temp;
 }
 
-static uint8_t *ns32016rom, *ns32016ram;
+static uint8_t *ns32016ram;
 
 void n32016_reset()
 {
 	pc = 0;
 	psr = 0;
-	memcpy(ns32016ram, ns32016rom, 16);
+	memcpy(ns32016ram, PandoraV0_61, 16);
 }
 
 void n32016_init()
@@ -132,7 +133,7 @@ static uint8_t readmemb(uint32_t addr)
 
 	if ((addr & ~0x7FFF) == 0xF00000)
 	{
-		return ns32016rom[addr & 0x7FFF];
+		return PandoraV0_61[addr & 0x7FFF];
 	}
 
 	if (addr == 0xF90000)
@@ -170,7 +171,8 @@ static uint16_t readmemw(uint32_t addr)
 
 	if ((addr & ~0x7FFF) == 0xF00000)
 	{
-		return ns32016rom[addr & 0x7FFF] | (ns32016rom[(addr + 1) & 0x7FFF] << 8);
+		return PandoraV0_61[addr & 0x7FFF]
+				| (PandoraV0_61[(addr + 1) & 0x7FFF] << 8);
 	}
 
 	printf("Bad readmemw %08X\n", addr);
