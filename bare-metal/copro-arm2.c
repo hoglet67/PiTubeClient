@@ -207,7 +207,7 @@ void copro_arm2_main(unsigned int r0, unsigned int r1, unsigned int atags) {
       arm2_execute_set_input(ARM_FIRQ_LINE, 1);
     }
     if (rstn != 0) {
-      arm2_execute_run(16);
+      arm2_execute_run(8);
       //printf("%08x\r\n", R15);
     } 
     last_irqn = irqn;
