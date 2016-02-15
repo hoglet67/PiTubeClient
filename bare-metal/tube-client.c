@@ -12,6 +12,7 @@
 #define COPRO_LIB6502 3
 #define COPRO_65TUBE  4
 #define COPRO_80186   5
+#define COPRO_32016   6
 
 #define COPRO COPRO_ARM2
 
