@@ -52,6 +52,7 @@ Debug/
 .project
 ConsoleApplication1/
 i186/
+Pandora/
 
 *.d
 *.map

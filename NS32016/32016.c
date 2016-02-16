@@ -1,5 +1,8 @@
 /*B-em v2.2 by Tom Walker
  32016 parasite processor emulation (not working yet)*/
+
+// And Simon R. Ellwood
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -23,6 +26,7 @@ static int nsoutput = 0;
 #define readmemw ns_readmemw
 #define writememw ns_writememw
 
+uint8_t ns32016ram[MEG16];
 static uint16_t readmemw(uint32_t addr);
 static void writememw(uint32_t addr, uint16_t val);
 
@@ -72,8 +76,6 @@ static uint32_t popd()
 	sp[SP] += 4;
 	return temp;
 }
-
-static uint8_t *ns32016ram;
 
 void n32016_reset()
 {
@@ -217,7 +219,7 @@ static void writememw(uint32_t addr, uint16_t val)
 	{
 //    printf("Write %08X %04X  ",addr,val);
 
-		ns32016ram[addr] = val;
+		ns32016ram[addr] = val & 0xFF;
 		ns32016ram[addr + 1] = val >> 8;
 
 //    printf("%02X %02X\n",ns32016ram[addr],ns32016ram[addr+1]);
@@ -1504,7 +1506,7 @@ void n32016_exec(uint32_t tubecycles)
 				temp3 = temp64 % temp;
 				writegenl(1, temp3)
 				;
-				temp3 = temp64 / temp;
+				temp3 = (uint32_t) (temp64 / temp);
 				if (gentype[1])
 					*(uint32_t *) (genaddr[1] + 4) = temp3;
 				else
