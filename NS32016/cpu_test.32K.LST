@@ -1,0 +1,1711 @@
+00000000  	br BEGIN
+00000002   .WORD 13
+00000004  L0001:  .BYTE 'Failcode : '
+0000000F   .WORD 18
+00000011  L0002:  .BYTE ' Tests correct.'
+          ; No test of all address modes
+          ; No test of CXP and CXPD
+          BEGIN: 
+          ; R7 contains Failcode
+00000020      movqd 0,r7
+00000022      lprd sp,x'10000
+          ; LOGICAL AND BOOLEAN
+00000028      movw 1,r7             ; ANDB
+0000002A      movd x'FFFFFFAA,r0
+00000030      ANDB x'CC,r0
+00000033      cmpd x'FFFFFF88,r0
+00000039      bne error
+0000003C      movw 2,r7             ; ANDW
+0000003E      movd x'FFFF5555,r0
+00000044      ANDW x'3333,r0
+00000048      cmpd x'FFFF1111,r0
+0000004E      bne error
+00000051      movw 3,r7             ; ANDD
+00000053      movd x'AAAAAAAA,r0
+00000059      ANDD x'CCCCCCCC,r0
+0000005F      cmpd x'88888888,r0
+00000065      bne error
+00000068      movw 4,r7             ; BICB
+0000006A      movd x'FFFFFFAA,r0
+00000070      BICB x'CC,r0
+00000073      cmpd x'FFFFFF22,r0
+00000079      bne error
+0000007C      movw 5,r7             ; BICW
+0000007E      movd x'FFFF5555,r0
+00000084      BICW x'3333,r0
+00000088      cmpd x'FFFF4444,r0
+0000008E      bne error
+00000091      movw 6,r7             ; BICD
+00000093      movd x'AAAAAAAA,r0
+00000099      BICD x'CCCCCCCC,r0
+0000009F      cmpd r0,x'22222222    
+000000A5      bne error
+000000A8      movw 7,r7             ; ORB
+000000AA      movd x'000000CC,r0
+000000B0      ORB  x'AA,r0
+000000B3      cmpd x'000000EE,r0
+000000B9      bne error
+000000BC      movw 8,r7             ; ORW
+000000C0      movd x'00003333,r0
+000000C6      ORW  x'5555,r0
+000000CA      cmpd x'00007777,r0
+000000D0      bne error
+000000D3      movw 9,r7             ; ORD
+000000D7      movd x'C35AA53C,r0
+000000DD      ORD  x'A53CC35A,r0
+000000E3      cmpd x'E77EE77E,r0
+000000E9      bne error
+000000EC      movw 10,r7            ; XORB
+000000F0      movd x'FFFFFFAA,r0
+000000F6      XORB x'CC,r0
+000000F9      cmpd x'FFFFFF66,r0
+000000FF      bne error
+00000102      movw 11,r7            ; XORW
+00000106      movd x'FFFF5555,r0
+0000010C      XORW x'3333,r0
+00000110      cmpd x'FFFF6666,r0
+00000116      bne error
+00000119      movw 12,r7            ; XORD
+0000011D      movd x'AC5335CA,r0
+00000123      XORD x'CA3553AC,r0
+00000129      cmpd x'66666666,r0
+0000012F      bne error
+00000132      movw 13,r7            ; COMB
+00000136      movd x'55555555,r1
+0000013C      movd x'00000000,r0
+0000013E      COMB r1,r0
+00000141      cmpd x'000000AA,r0
+00000147      bne error
+0000014A      movw 14,r7            ; COMW
+0000014E      movd x'00000000,r0
+00000150      COMW r1,r0
+00000153      cmpd x'0000AAAA,r0
+00000159      bne error
+0000015C      movw 15,r7            ; COMD
+00000160      movd x'00000000,r0
+00000162      COMD r1,r0
+00000165      cmpd x'AAAAAAAA,r0
+0000016B      bne error
+0000016E      movw 16,r7            ; COMB 2
+00000172      movd x'AAAAAAAA,r1
+00000178      movd x'00000000,r0
+0000017A      COMB r1,r0
+0000017D      cmpd x'00000055,r0
+00000183      bne error
+00000186      movw 17,r7            ; COMW 2
+0000018A      movd x'00000000,r0
+0000018C      COMW r1,r0
+0000018F      cmpd x'00005555,r0
+00000195      bne error
+00000198      movw 18,r7            ; COMD 2
+0000019C      movd x'00000000,r0
+0000019E      COMD r1,r0
+000001A1      cmpd x'55555555,r0
+000001A7      bne error
+000001AA      movw 19,r7            ; NOTB
+000001AE      movd x'00000000,r1
+000001B0      movd x'FFFFFFFF,r0
+000001B2      NOTB r1,r0
+000001B5      cmpd x'FFFFFF01,r0
+000001BB      bne error
+000001BE      movw 20,r7            ; NOTW
+000001C2      movd x'FFFFFFFF,r0
+000001C4      NOTW r1,r0
+000001C7      cmpd x'FFFF0001,r0
+000001CD      bne error
+000001D0      movw 21,r7            ; NOTD
+000001D4      movd x'FFFFFFFF,r0
+000001D6      NOTD r1,r0
+000001D9      cmpd x'00000001,r0
+000001DB      bne error
+000001DE      movw 22,r7            ; NOTB 2
+000001E2      movd x'FFFFFFFF,r1
+000001E4      movd x'00000000,r0
+000001E6      NOTB r1,r0
+000001E9      cmpd x'000000FE,r0
+000001EF      bne error
+000001F2      movw 23,r7            ; NOTW 2
+000001F6      movd x'00000000,r0
+000001F8      NOTW r1,r0
+000001FB      cmpd x'0000FFFE,r0
+00000201      bne error
+00000204      movw 24,r7            ; NOTD 2
+00000208      movd x'00000000,r0
+0000020A      NOTD r1,r0
+0000020D      cmpd x'FFFFFFFE,r0
+0000020F      bne error
+00000212      movw 25,r7            ; SEQB
+00000216      bicpsrb x'FF          ; lprb psr,x'40 is privileged !
+00000219      bispsrb x'40
+0000021C      movd x'AAAAAAAA,r0
+00000222      SEQB r0
+00000224      cmpd x'AAAAAA01,r0
+0000022A      bne error
+0000022D      movw 26,r7            ; SEQW
+00000231      bispsrb x'40
+00000234      movd x'AAAAAAAA,r0
+0000023A      SEQW r0
+0000023C      cmpd x'AAAA0001,r0
+00000242      bne error
+00000245      movw 27,r7            ; SEQD
+00000249      bispsrb x'40
+0000024C      movd x'AAAAAAAA,r0
+00000252      SEQD r0
+00000254      cmpd x'00000001,r0
+00000256      bne error
+          ; Assumption that BWD recognizing is independent from Condition-Code.
+          ; All combinations of N,Z,L,F and C are testet.
+00000259      addr set_tab,r2
+0000025D      movw 28,r7
+00000261      movb x'1F,r1
+          l0003:
+00000264      bsr psr_code  
+00000267      SEQB r0
+00000269      cmpb 0(r2),r0
+0000026C      bne error
+0000026F      addqb -1,r1
+00000271      addqd 1,r2
+00000273      cmpqb -1,r1
+00000275      bne l0003
+00000277      movw 29,r7
+0000027B      movb x'1F,r1
+          l0004:
+0000027E      bsr psr_code
+00000281      SNEB r0
+00000283      cmpb 0(r2),r0
+00000286      bne error
+00000289      addqb -1,r1
+0000028B      addqd 1,r2
+0000028D      cmpqb -1,r1
+0000028F      bne l0004
+00000291      movw 30,r7
+00000295      movb x'1F,r1
+          l0005:
+00000298      bsr psr_code
+0000029B      SCSB r0
+0000029D      cmpb 0(r2),r0
+000002A0      bne error
+000002A3      addqb -1,r1
+000002A5      addqd 1,r2
+000002A7      cmpqb -1,r1
+000002A9      bne l0005
+000002AB      movw 31,r7
+000002AF      movb x'1F,r1
+          l0006:
+000002B2      bsr psr_code
+000002B5      SCCB r0
+000002B7      cmpb 0(r2),r0
+000002BA      bne error
+000002BD      addqb -1,r1
+000002BF      addqd 1,r2
+000002C1      cmpqb -1,r1
+000002C3      bne l0006
+000002C5      movw 32,r7
+000002C9      movb x'1F,r1
+          l0007:
+000002CC      bsr psr_code
+000002CF      SHIB r0
+000002D1      cmpb 0(r2),r0
+000002D4      bne error
+000002D7      addqb -1,r1
+000002D9      addqd 1,r2
+000002DB      cmpqb -1,r1
+000002DD      bne l0007
+000002DF      movw 33,r7
+000002E3      movb x'1F,r1
+          l0008:
+000002E6      bsr psr_code
+000002E9      SLSB r0
+000002EB      cmpb 0(r2),r0
+000002EE      bne error
+000002F1      addqb -1,r1
+000002F3      addqd 1,r2
+000002F5      cmpqb -1,r1
+000002F7      bne l0008
+000002F9      movw 34,r7
+000002FD      movb x'1F,r1
+          l0009:
+00000300      bsr psr_code
+00000303      SGTB r0
+00000305      cmpb 0(r2),r0
+00000308      bne error
+0000030B      addqb -1,r1
+0000030D      addqd 1,r2
+0000030F      cmpqb -1,r1
+00000311      bne l0009
+00000313      movw 35,r7
+00000317      movb x'1F,r1
+          l0010:
+0000031A      bsr psr_code
+0000031D      SLEB r0
+0000031F      cmpb 0(r2),r0
+00000322      bne error
+00000325      addqb -1,r1
+00000327      addqd 1,r2
+00000329      cmpqb -1,r1
+0000032B      bne l0010
+0000032D      movw 36,r7
+00000331      movb x'1F,r1
+          l0011:
+00000334      bsr psr_code
+00000337      SFSB r0
+00000339      cmpb 0(r2),r0
+0000033C      bne error
+0000033F      addqb -1,r1
+00000341      addqd 1,r2
+00000343      cmpqb -1,r1
+00000345      bne l0011
+00000347      movw 37,r7
+0000034B      movb x'1F,r1
+          l0012:
+0000034E      bsr psr_code
+00000351      SFCB r0
+00000353      cmpb 0(r2),r0
+00000356      bne error
+00000359      addqb -1,r1
+0000035B      addqd 1,r2
+0000035D      cmpqb -1,r1
+0000035F      bne l0012
+00000361      movw 38,r7
+00000365      movb x'1F,r1
+          l0013:
+00000368      bsr psr_code
+0000036B      SLOB r0
+0000036D      cmpb 0(r2),r0
+00000370      bne error
+00000373      addqb -1,r1
+00000375      addqd 1,r2
+00000377      cmpqb -1,r1
+00000379      bne l0013
+0000037B      movw 39,r7
+0000037F      movb x'1F,r1
+          l0014:
+00000382      bsr psr_code
+00000385      SHSB r0
+00000387      cmpb 0(r2),r0
+0000038A      bne error
+0000038D      addqb -1,r1
+0000038F      addqd 1,r2
+00000391      cmpqb -1,r1
+00000393      bne l0014
+00000395      movw 40,r7
+00000399      movb x'1F,r1
+          l0015:
+0000039C      bsr psr_code
+0000039E      SLTB r0
+000003A0      cmpb 0(r2),r0
+000003A3      bne error
+000003A6      addqb -1,r1
+000003A8      addqd 1,r2
+000003AA      cmpqb -1,r1
+000003AC      bne l0015
+000003AE      movw 41,r7
+000003B2      movb x'1F,r1
+          l0016:
+000003B5      bsr psr_code
+000003B7      SGEB r0
+000003B9      cmpb 0(r2),r0
+000003BC      bne error
+000003BF      addqb -1,r1
+000003C1      addqd 1,r2
+000003C3      cmpqb -1,r1
+000003C5      bne l0016
+          
+000003C7      br next
+          
+          psr_code:
+000003CA         movb r1,r3
+000003CC         andb 1,r3
+000003CF         extsb r1,r4,1,1  ; this is compact code !
+000003D3         inssb r4,r3,2,1
+000003D7         extsb r1,r4,2,3
+000003DB         inssb r4,r3,5,3
+000003DF         bicpsrb x'FF
+000003E2         bispsrb r3
+000003E4         movb x'AA,r0
+000003E7         ret 0
+          
+          ; PSR : -N-Z-F-(V)-.-L-(T)-C-
+          
+          set_tab: ; 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+                ;F E D C B A 9 8 7 6 5 4 3 2 1 0 F E D C B A 9 8 7 6 5 4 3 2 1 0
+000003E9   .byte 1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0 ; EQ
+00000409   .byte 0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1 ; NE
+00000429   .byte 1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0 ; CS
+00000449   .byte 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1 ; CC
+00000469   .byte 1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0 ; HI
+00000489   .byte 0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1 ; LS
+000004A9   .byte 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 ; GT
+000004C9   .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 ; LE
+000004E9   .byte 1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0 ; FS
+00000509   .byte 0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1 ; FC
+00000529   .byte 0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1 ; LO
+00000549   .byte 1,1,1,1,1,1,1,1,1,1,0,0,1,1,0,0,1,1,1,1,1,1,1,1,1,1,0,0,1,1,0,0 ; HS
+00000569   .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1 ; LT
+00000589   .byte 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0 ; GE
+          
+          next:  ; SHIFTS
+000005A9      movw 42,r7           ; LSHB
+000005AD      movd x'55555555,r0
+000005B3      LSHB 1,r0
+000005B7      cmpd x'555555AA,r0
+000005BD      bne error
+000005C0      movw 43,r7           ; LSHW
+000005C4      movd x'55555555,r0
+000005CA      LSHW 1,r0
+000005CE      cmpd x'5555AAAA,r0
+000005D4      bne error
+000005D7      movw 44,r7           ; LSHD
+000005DB      movd x'55555555,r0
+000005E1      LSHD 1,r0
+000005E5      cmpd x'AAAAAAAA,r0
+000005EB      bne error
+000005EE      movw 45,r7
+000005F2      movqd 0,r1
+          l0017:
+000005F4      movqd 1,r0
+000005F6      LSHD r1,r0      ; shift to left
+000005F9      cmpd sh_tab[r1:d],r0
+000005FD      bne error
+00000600      addqb 1,r1
+00000602      cmpb r1,x'20 
+00000605      bne l0017
+00000607      movw 46,r7
+0000060B      movb -31,r1
+0000060E      addr sh_tab,r2
+          l0018:
+00000611      movd x'80000000,r0
+00000617      LSHD r1,r0      ; shift to right
+0000061A      cmpd 0(r2),r0
+0000061D      bne error
+00000620      addqd 4,r2
+00000622      acbb 1,r1,l0018  ; 0 already done !
+00000625      br next2
+          
+00000628  sh_tab3: .double x'80000000  ; special for ROT
+          sh_tab:
+0000062C   .double 1,2,4,8,x'10,x'20,x'40,x'80,x'100,x'200,x'400,x'800,x'1000,x'2000
+00000664   .double x'4000,x'8000,x'10000,x'20000,x'40000,x'80000,x'100000,x'200000
+00000684   .double x'400000,x'800000,x'1000000,x'2000000,x'4000000,x'8000000
+0000069C   .double x'10000000,x'20000000,x'40000000,x'80000000
+          
+          next2:
+000006AC      movw 47,r7           ; ASHB
+000006B0      movd x'AAAAAAAA,r0
+000006B6      ASHB -5,r0
+000006BA      cmpd x'AAAAAAFD,r0
+000006C0      bne error
+000006C3      movw 48,r7           ; ASHW
+000006C7      movd x'AAAAAAAA,r0
+000006CD      ASHW -5,r0
+000006D1      cmpd x'AAAAFD55,r0
+000006D7      bne error
+000006DA      movw 49,r7           ; ASHD
+000006DE      movd x'AAAAAAAA,r0
+000006E4      ASHD -5,r0
+000006E8      cmpd x'FD555555,r0
+000006EE      bne error
+000006F1      movw 50,r7           ; ASHB 2
+000006F5      movd x'55555555,r0
+000006FB      ASHB -5,r0
+000006FF      cmpd x'55555502,r0
+00000705      bne error
+00000708      movw 51,r7           ; ASHW 2
+0000070C      movd x'55555555,r0
+00000712      ASHW -5,r0
+00000716      cmpd x'555502AA,r0
+0000071C      bne error
+0000071F      movw 52,r7           ; ASHD 2
+00000723      movd x'55555555,r0
+00000729      ASHD -5,r0
+0000072D      cmpd x'02AAAAAA,r0
+00000733      bne error
+00000736      movw 53,r7
+0000073A      movqd 0,r1
+          l0019:
+0000073C      movqd -1,r0
+0000073E      ASHD r1,r0      ; shift to left like LSHD
+00000741      cmpd sh_tab2[r1:d],r0
+00000745      bne error
+00000748      addqb 1,r1
+0000074A      cmpb x'20,r1
+0000074D      bne l0019
+0000074F      movw 54,r7
+00000753      movb -31,r1
+00000756      addr sh_tab2,r2
+          l0020:
+00000759      movd x'80000000,r0
+0000075F      ASHD r1,r0      ; shift to right
+00000762      cmpd 0(r2),r0
+00000765      bne error
+00000768      addqd 4,r2
+0000076A      acbb 1,r1,l0020  ; 0 already done !
+0000076D      br next3
+          
+          sh_tab2:
+00000770   .double x'FFFFFFFF,x'FFFFFFFE,x'FFFFFFFC,x'FFFFFFF8
+00000780   .double x'FFFFFFF0,x'FFFFFFE0,x'FFFFFFC0,x'FFFFFF80
+00000790   .double x'FFFFFF00,x'FFFFFE00,x'FFFFFC00,x'FFFFF800
+000007A0   .double x'FFFFF000,x'FFFFE000,x'FFFFC000,x'FFFF8000
+000007B0   .double x'FFFF0000,x'FFFE0000,x'FFFC0000,x'FFF80000
+000007C0   .double x'FFF00000,x'FFE00000,x'FFC00000,x'FF800000
+000007D0   .double x'FF000000,x'FE000000,x'FC000000,x'F8000000
+000007E0   .double x'F0000000,x'E0000000,x'C0000000,x'80000000
+          
+          next3:
+000007F0      movw 55,r7           ; ROTB
+000007F4      movd x'AAAAAAAA,r0
+000007FA      ROTB 1,r0
+000007FE      cmpd x'AAAAAA55,r0
+00000804      bne error
+00000807      movw 56,r7           ; ROTW
+0000080B      movd x'AAAAAAAA,r0
+00000811      ROTW 1,r0
+00000815      cmpd x'AAAA5555,r0
+0000081B      bne error
+0000081E      movw 57,r7           ; ROTD
+00000822      movd x'AAAAAAAA,r0
+00000828      ROTD 1,r0
+0000082C      cmpd x'55555555,r0
+00000832      bne error
+00000835      movw 58,r7
+00000839      movqd 0,r1
+          l0021:
+0000083B      movd x'80000000,r0
+00000841      ROTD r1,r0      ; rotate to left
+00000844      cmpd sh_tab3[r1:d],r0
+00000849      bne error
+0000084C      addqb 1,r1
+0000084E      cmpb x'20,r1
+00000851      bne l0021
+00000853      movw 59,r7
+00000857      movb -31,r1
+0000085A      addr sh_tab3,r2
+          l0022:
+0000085E      movd x'40000000,r0
+00000864      ROTD r1,r0      ; rotate to right
+00000867      cmpd 0(r2),r0
+0000086A      bne error
+0000086D      addqd 4,r2
+0000086F      acbb 1,r1,l0022  ; 0 already done !
+          
+          ; PACKED DECIMAL (BCD) ARITHMETIC
+00000872      movw 60,r7
+00000876      bicpsrb x'FF
+00000879      bispsrb 1        ; Carry set : src1+src2+carry !
+0000087C      movd  x'FFFFFF78,r0
+00000882      ADDPB       x'10,r0  ; Carry is 0
+00000886      cmpd  x'FFFFFF89,r0
+0000088C      bne error
+0000088F      movw 61,r7
+00000893      movd  x'FFFF5432,r0
+00000899      ADDPW     x'6399,r0  ; Carry is 1
+0000089E      cmpd  x'FFFF1831,r0
+000008A4      bne error
+000008A7      movw 62,r7
+000008AB      movd  x'12305678,r0
+000008B1      ADDPD x'87858320,r0  ; Carry is 1
+000008B8      cmpd  x'00163999,r0
+000008BE      bne error
+000008C1      movw 63,r7
+000008C5      movd  x'FFFFFF88,r0
+000008CB      SUBPB       x'22,r0  ; Carry is 0
+000008CF      cmpd  x'FFFFFF65,r0
+000008D5      bne error
+000008D8      movw 64,r7
+000008DC      movd  x'FFFF1234,r0
+000008E2      SUBPW     x'5678,r0  ; Carry is 1
+000008E7      cmpd  x'FFFF5556,r0
+000008ED      bne error
+000008F0      movw 65,r7
+000008F4      movd  x'98765432,r0
+000008FA      SUBPD x'88888888,r0
+00000901      cmpd  x'09876543,r0
+00000907      bne error
+          
+          ; MOVES
+0000090A      movw 66,r7
+0000090E      movd   x'5555FF00,r0
+00000914      movqd -1,r1
+00000916      MOVZBW r1,r0
+00000919      cmpd   x'555500FF,r0
+0000091F      bne error
+00000922      movw 67,r7
+00000926      movd   x'FFFFFF00,r0
+0000092C      MOVZBD r1,r0
+0000092F      cmpd   x'000000FF,r0
+00000935      bne error
+00000938      movw 68,r7
+0000093C      movd   x'FFFF0000,r0
+00000942      MOVZWD r1,r0
+00000945      cmpd   x'0000FFFF,r0
+0000094B      bne error
+0000094E      movw 69,r7
+00000952      movd   x'5555FF00,r0
+00000958      MOVXBW r1,r0
+0000095B      cmpd   x'5555FFFF,r0
+00000961      bne error
+00000964      movw 70,r7
+00000968      movd   x'AAAAAA00,r0
+0000096E      MOVXBD r1,r0
+00000971      cmpd   x'FFFFFFFF,r0
+00000973      bne error
+00000976      movw 71,r7
+0000097A      movd   x'AAAA0000,r0
+00000980      MOVXWD r1,r0
+00000983      cmpd   x'FFFFFFFF,r0
+00000985      bne error
+00000988      movw 72,r7
+0000098C      movqd 0,r1
+0000098E      movd   x'5555FFFF,r0
+00000994      MOVXBW r1,r0
+00000997      cmpd   x'55550000,r0
+0000099D      bne error
+000009A0      movw 73,r7
+000009A4      movd   x'AAAAAAFF,r0
+000009AA      MOVXBD r1,r0
+000009AD      cmpd   x'00000000,r0
+000009AF      bne error
+000009B2      movw 74,r7
+000009B6      movd   x'AAAAFFFF,r0
+000009BC      MOVXWD r1,r0
+000009BF      cmpd   x'00000000,r0
+000009C1      bne error
+          
+          ; MOVM Test : (1+16)*8 + (2+16)*4 + (4+16)*2 = 17*8+18*4+20*2 = 136+72+40=248
+000009C4      adjspw 248
+000009C8      addr 0(sp),r0
+000009CB      movb 62,r1
+          l0023:
+000009CE      addqd 4,r0
+000009D0      movqd 0,-4(r0)
+000009D3      acbb -1,r1,l0023
+000009D6      addr bfeld,r0
+          ;   MOVMB 0(r0),0(sp),1   ; ???
+000009DA      movb 0(r0),0(sp)
+000009DE      MOVMB 1(r0),1(sp),2
+000009E4      MOVMB 3(r0),3(sp),3
+000009EA      MOVMB 6(r0),6(sp),4
+000009F0      MOVMB 10(r0),10(sp),5
+000009F6      MOVMB 15(r0),15(sp),6
+000009FC      MOVMB 21(r0),21(sp),7
+00000A02      MOVMB 28(r0),28(sp),8
+00000A08      MOVMB 36(r0),36(sp),9
+00000A0E      MOVMB 45(r0),45(sp),10
+00000A14      MOVMB 55(r0),55(sp),11
+00000A1A      MOVMB 66(r0),66(sp),12
+00000A22      MOVMB 78(r0),78(sp),13
+00000A2A      MOVMB 91(r0),91(sp),14
+00000A32      MOVMB 105(r0),105(sp),15
+00000A3A      MOVMB 120(r0),120(sp),16
+          ;   MOVMW 136(r0),136(sp),1
+00000A42      movw 136(r0),136(sp)
+00000A48      MOVMW 138(r0),138(sp),2
+00000A50      MOVMW 142(r0),142(sp),3
+00000A58      MOVMW 148(r0),148(sp),4
+00000A60      MOVMW 156(r0),156(sp),5
+00000A68      MOVMW 166(r0),166(sp),6
+00000A70      MOVMW 178(r0),178(sp),7
+00000A78      MOVMW 192(r0),192(sp),8
+          ;   MOVMD 208(r0),208(sp),1
+00000A80      movd 208(r0),208(sp)
+00000A86      MOVMD 212(r0),212(sp),2
+00000A8E      MOVMD 220(r0),220(sp),3
+00000A96      MOVMD 232(r0),232(sp),4
+          
+00000A9E      movw 75,r7
+00000AA2      movqd 1,r1
+00000AA4      addr 0(sp),r0
+          l0024:
+00000AA7      cmpb r1,0(r0)
+00000AAA      bne error1   ; SP correction !!!
+00000AAD      addqb 1,r1
+00000AAF      addqd 1,r0
+00000AB1      cmpw 249,r1
+00000AB5      bne l0024
+          
+00000AB7      movw 76,r7
+00000ABB      addr bfeld,r0
+          ;   CMPMB 0(r0),0(sp),1   bne error1
+00000ABF  00000AC5      CMPMB 1(r0),1(sp),2   bne error1
+00000AC8  00000ACE      CMPMB 3(r0),3(sp),3   bne error1
+00000AD1  00000AD7      CMPMB 6(r0),6(sp),4   bne error1
+00000ADA  00000AE0      CMPMB 10(r0),10(sp),5   bne error1
+00000AE3  00000AE9      CMPMB 15(r0),15(sp),6   bne error1
+00000AEC  00000AF2      CMPMB 21(r0),21(sp),7   bne error1
+00000AF5  00000AFB      CMPMB 28(r0),28(sp),8   bne error1
+00000AFE  00000B04      CMPMB 36(r0),36(sp),9   bne error1
+00000B07  00000B0D      CMPMB 45(r0),45(sp),10   bne error1
+00000B10  00000B16      CMPMB 55(r0),55(sp),11   bne error1
+00000B19  00000B21      CMPMB 66(r0),66(sp),12   bne error1
+00000B24  00000B2C      CMPMB 78(r0),78(sp),13   bne error1
+00000B2F  00000B37      CMPMB 91(r0),91(sp),14   bne error1
+00000B3A  00000B42      CMPMB 105(r0),105(sp),15   bne error1
+00000B45  00000B4D      CMPMB 120(r0),120(sp),16   bne error1
+          ;   CMPMW 136(r0),136(sp),1   bne error1
+00000B50  00000B58      CMPMW 138(r0),138(sp),2   bne error1
+00000B5B  00000B63      CMPMW 142(r0),142(sp),3   bne error1
+00000B66  00000B6E      CMPMW 148(r0),148(sp),4   bne error1
+00000B71  00000B79      CMPMW 156(r0),156(sp),5   bne error1
+00000B7C  00000B84      CMPMW 166(r0),166(sp),6   bne error1
+00000B87  00000B8F      CMPMW 178(r0),178(sp),7   bne error1
+00000B92  00000B9A      CMPMW 192(r0),192(sp),8   bne error1
+          ;   CMPMD 208(r0),208(sp),1   bne error1
+00000B9D  00000BA5      CMPMD 212(r0),212(sp),2   bne error1
+00000BA8  00000BB0      CMPMD 220(r0),220(sp),3   bne error1
+00000BB3  00000BBB      CMPMD 232(r0),232(sp),4   bne error1
+          
+          ;   CMPMB 0(r0),1(sp),1   beq error1
+00000BBE  00000BC4      CMPMB 1(r0),0(sp),2   beq error1
+00000BC7  00000BCD      CMPMB 3(r0),2(sp),3   beq error1
+00000BD0  00000BD6      CMPMB 6(r0),5(sp),4   beq error1
+00000BD9  00000BDF      CMPMB 10(r0), 9(sp),5   beq error1
+00000BE2  00000BE8      CMPMB 15(r0),14(sp),6   beq error1
+00000BEB  00000BF1      CMPMB 21(r0),20(sp),7   beq error1
+00000BF4  00000BFA      CMPMB 28(r0),27(sp),8   beq error1
+00000BFD  00000C03      CMPMB 36(r0),35(sp),9   beq error1
+00000C06  00000C0C      CMPMB 45(r0),44(sp),10   beq error1
+00000C0F  00000C15      CMPMB 55(r0),54(sp),11   beq error1
+00000C18  00000C20      CMPMB 66(r0),65(sp),12   beq error1
+00000C23  00000C2B      CMPMB 78(r0),77(sp),13   beq error1
+00000C2E  00000C36      CMPMB 91(r0),90(sp),14   beq error1
+00000C39  00000C41      CMPMB 105(r0),104(sp),15   beq error1
+00000C44  00000C4C      CMPMB 120(r0),121(sp),16   beq error1
+          ;   CMPMW 136(r0),135(sp),1   beq error1
+00000C4F  00000C57      CMPMW 138(r0),137(sp),2   beq error1
+00000C5A  00000C62      CMPMW 142(r0),141(sp),3   beq error1
+00000C65  00000C6D      CMPMW 148(r0),147(sp),4   beq error1
+00000C70  00000C78      CMPMW 156(r0),155(sp),5   beq error1
+00000C7B  00000C83      CMPMW 166(r0),165(sp),6   beq error1
+00000C86  00000C8E      CMPMW 178(r0),177(sp),7   beq error1
+00000C91  00000C99      CMPMW 192(r0),191(sp),8   beq error1
+          ;   CMPMD 208(r0),207(sp),1   beq error1
+00000C9C  00000CA4      CMPMD 212(r0),211(sp),2   beq error1
+00000CA7  00000CAF      CMPMD 220(r0),221(sp),3   beq error1
+00000CB2  00000CBA      CMPMD 232(r0),231(sp),4   beq error1
+          
+00000CBD      adjspw -248
+00000CC1      br next4
+              .align 4
+          bfeld:
+00000CC4     .double x'04030201,x'08070605,x'0C0B0A09,x'100F0E0D
+00000CD4     .double x'14131211,x'18171615,x'1C1B1A19,x'201F1E1D
+00000CE4     .double x'24232221,x'28272625,x'2C2B2A29,x'302F2E2D
+00000CF4     .double x'34333231,x'38373635,x'3C3B3A39,x'403F3E3D
+00000D04     .double x'44434241,x'48474645,x'4C4B4A49,x'504F4E4D
+00000D14     .double x'54535251,x'58575655,x'5C5B5A59,x'605F5E5D
+00000D24     .double x'64636261,x'68676665,x'6C6B6A69,x'706F6E6D
+00000D34     .double x'74737271,x'78777675,x'7C7B7A79,x'807F7E7D
+00000D44     .double x'84838281,x'88878685,x'8C8B8A89,x'908F8E8D
+00000D54     .double x'94939291,x'98979695,x'9C9B9A99,x'A09F9E9D
+00000D64     .double x'A4A3A2A1,x'A8A7A6A5,x'ACABAAA9,x'B0AFAEAD
+00000D74     .double x'B4B3B2B1,x'B8B7B6B5,x'BCBBBAB9,x'C0BFBEBD
+00000D84     .double x'C4C3C2C1,x'C8C7C6C5,x'CCCBCAC9,x'D0CFCECD
+00000D94     .double x'D4D3D2D1,x'D8D7D6D5,x'DCDBDAD9,x'E0DFDEDD
+00000DA4     .double x'E4E3E2E1,x'E8E7E6E5,x'ECEBEAE9,x'F0EFEEED
+00000DB4     .double x'F4F3F2F1,x'F8F7F6F5
+          
+          next4:
+          ; INTEGER ARITHMETIC
+00000DBC      movw 77,r7
+00000DC0      bispsrb 1
+00000DC3      movd x'FFFFFF68,r0
+00000DC9      ADDB x'C3,r0
+00000DCC      cmpd x'FFFFFF2B,r0
+00000DD2      bne error
+00000DD5      movw 78,r7
+00000DD9      ADDCB x'DA,r0
+00000DDC      cmpd x'FFFFFF06,r0
+00000DE2      bne error
+00000DE5      movw 79,r7
+00000DE9      movd x'FFFF9877,r0
+00000DEF      ADDW x'7654,r0
+00000DF3      cmpd x'FFFF0ECB,r0
+00000DF9      bne error
+00000DFC      movw 80,r7
+00000E00      ADDCW x'4444,r0
+00000E04      cmpd x'FFFF5310,r0
+00000E0A      bne error
+00000E0D      movw 81,r7
+00000E11      bispsrb 1
+00000E14      movd x'A9876544,r0
+00000E1A      ADDD x'B0E1F2D3,r0
+00000E20      cmpd x'5A695817,r0
+00000E26      bne error
+00000E29      movw 82,r7
+00000E2D      ADDCD x'12345678,r0
+00000E33      cmpd  x'6C9DAE90,r0
+00000E39      bne error
+00000E3C      movw 83,r7
+00000E40      bicpsrb 1
+00000E43      movd x'FFFFFF67,r0
+00000E49      ADDB x'23,r0
+00000E4C      cmpd x'FFFFFF8A,r0
+00000E52      bne error
+00000E55      movw 84,r7
+00000E59      ADDCB x'33,r0
+00000E5C      cmpd x'FFFFFFBD,r0
+00000E62      bne error
+00000E65      movw 85,r7
+00000E69      movd x'FFFF9876,r0
+00000E6F      ADDW x'1234,r0
+00000E73      cmpd x'FFFFAAAA,r0
+00000E79      bne error
+00000E7C      movw 86,r7
+00000E80      ADDCW x'4444,r0
+00000E84      cmpd x'FFFFEEEE,r0
+00000E8A      bne error
+00000E8D      movw 87,r7
+00000E91      bicpsrb 1
+00000E94      movd x'12345678,r0
+00000E9A      ADDD x'23456789,r0
+00000EA0      cmpd x'3579BE01,r0
+00000EA6      bne error
+00000EA9      movw 88,r7
+00000EAD      ADDCD x'12345678,r0
+00000EB3      cmpd  x'47AE1479,r0
+00000EB9      bne error
+          
+00000EBC      movw 89,r7
+00000EC0      bispsrb 1
+00000EC3      movd x'FFFFFF68,r0
+00000EC9      SUBB x'C3,r0
+00000ECC      cmpd x'FFFFFFA5,r0
+00000ED2      bne error
+00000ED5      movw 90,r7
+00000ED9      SUBCB x'DA,r0
+00000EDC      cmpd x'FFFFFFCA,r0
+00000EE2      bne error
+00000EE5      movw 91,r7
+00000EE9      movd x'FFFF7877,r0
+00000EEF      SUBW x'9654,r0
+00000EF3      cmpd x'FFFFE223,r0
+00000EF9      bne error
+00000EFC      movw 92,r7
+00000F00      SUBCW x'4444,r0
+00000F04      cmpd x'FFFF9DDE,r0
+00000F0A      bne error
+00000F0D      movw 93,r7
+00000F11      bispsrb 1
+00000F14      movd x'A9876544,r0
+00000F1A      SUBD x'B0E1F2D3,r0
+00000F20      cmpd x'F8A57271,r0
+00000F26      bne error
+00000F29      movw 94,r7
+00000F2D      SUBCD x'12345678,r0
+00000F33      cmpd  x'E6711BF8,r0
+00000F39      bne error
+00000F3C      movw 95,r7
+00000F40      bicpsrb 1
+00000F43      movd x'FFFFFF67,r0
+00000F49      SUBB x'23,r0
+00000F4C      cmpd x'FFFFFF44,r0
+00000F52      bne error
+00000F55      movw 96,r7
+00000F59      SUBCB x'33,r0
+00000F5C      cmpd x'FFFFFF11,r0
+00000F62      bne error
+00000F65      movw 97,r7
+00000F69      movd x'FFFF9876,r0
+00000F6F      SUBW x'1234,r0
+00000F73      cmpd x'FFFF8642,r0
+00000F79      bne error
+00000F7C      movw 98,r7
+00000F80      SUBCW x'4444,r0
+00000F84      cmpd x'FFFF41FE,r0
+00000F8A      bne error
+00000F8D      movw 99,r7
+00000F91      bicpsrb 1
+00000F94      movd x'32345678,r0
+00000F9A      SUBD x'13456789,r0
+00000FA0      cmpd x'1EEEEEEF,r0
+00000FA6      bne error
+00000FA9      movw 100,r7
+00000FAD      SUBCD x'12345678,r0
+00000FB3      cmpd  x'0CBA9877,r0
+00000FB9      bne error
+          
+00000FBC      movw 101,r7
+00000FC0      movd x'FFFFFFFF,r0
+00000FC2      movd x'FFFFFF55,r1
+00000FC8      NEGB r1,r0
+00000FCB      cmpd x'FFFFFFAB,r0
+00000FD1      bne error
+00000FD4      movw 102,r7
+00000FD8      movd x'FFFFFFFF,r0
+00000FDA      ABSB r1,r0
+00000FDD      cmpd x'FFFFFF55,r0
+00000FE3      bne error
+00000FE6      movw 103,r7
+00000FEA      movd x'FFFFFFFF,r0
+00000FEC      movd x'FFFFFFB6,r1
+00000FF2      NEGB r1,r0
+00000FF5      cmpd x'FFFFFF4A,r0
+00000FFB      bne error
+00000FFE      movw 104,r7
+00001002      movd x'FFFFFFFF,r0
+00001004      ABSB r1,r0
+00001007      cmpd x'FFFFFF4A,r0
+0000100D      bne error
+00001010      movw 105,r7
+00001014      movd x'FFFFFFFF,r0
+00001016      movd x'FFFF1234,r1
+0000101C      NEGW r1,r0
+0000101F      cmpd x'FFFFEDCC,r0
+00001025      bne error
+00001028      movw 106,r7
+0000102C      movd x'FFFFFFFF,r0
+0000102E      ABSW r1,r0
+00001031      cmpd x'FFFF1234,r0
+00001037      bne error
+0000103A      movw 107,r7
+0000103E      movd x'FFFFFFFF,r0
+00001040      movd x'FFFF9876,r1
+00001046      NEGW r1,r0
+00001049      cmpd x'FFFF678A,r0
+0000104F      bne error
+00001052      movw 108,r7
+00001056      movd x'FFFFFFFF,r0
+00001058      ABSW r1,r0
+0000105B      cmpd x'FFFF678A,r0
+00001061      bne error
+00001064      movw 109,r7
+00001068      movd x'FFFFFFFF,r0
+0000106A      movd x'12345678,r1
+00001070      NEGD r1,r0
+00001073      cmpd x'EDCBA988,r0
+00001079      bne error
+0000107C      movw 110,r7
+00001080      movd x'FFFFFFFF,r0
+00001082      ABSD r1,r0
+00001085      cmpd x'12345678,r0
+0000108B      bne error
+0000108E      movw 111,r7
+00001092      movd x'FFFFFFFF,r0
+00001094      movd x'EDCBA988,r1
+0000109A      NEGD r1,r0
+0000109D      cmpd x'12345678,r0
+000010A3      bne error
+000010A6      movw 112,r7
+000010AA      movd x'FFFFFFFF,r0
+000010AC      ABSD r1,r0
+000010AF      cmpd x'12345678,r0
+000010B5      bne error
+          
+000010B8      movw 113,r7
+000010BC      movd x'FFFFFF05,r0
+000010C2      MULB 12,r0
+000010C6      cmpd x'FFFFFF3C,r0
+000010CC      bne error
+000010CF      movw 114,r7
+000010D3      movd x'FFFF0015,r0
+000010D9      MULW 120,r0
+000010DE      cmpd x'FFFF09D8,r0
+000010E4      bne error
+000010E7      movw 115,r7
+000010EB      movd x'0000FF05,r0
+000010F1      MULD 1200,r0
+000010F8      cmpd x'04AB6770,r0
+000010FE      bne error
+00001101      movw 116,r7
+00001105      movd x'000001F0,r0
+0000110B      QUOB 3,r0
+0000110F      cmpd x'000001FB,r0
+00001115      bne error
+00001118      movw 117,r7
+0000111C      movd x'0001FC00,r0
+00001122      QUOW 5,r0
+00001127      cmpd x'0001FF34,r0
+0000112D      bne error
+00001130      movw 118,r7
+00001134      movd x'FF800000,r0
+0000113A      QUOD 7,r0
+00001141      cmpd x'FFEDB6DC,r0
+00001147      bne error
+0000114A      movw 119,r7
+0000114E      movd x'000001F0,r0
+00001154      REMB 3,r0
+00001158      cmpd x'000001FF,r0
+0000115E      bne error
+00001161      movw 120,r7
+00001165      movd x'0001FC00,r0
+0000116B      REMW 5,r0
+00001170      cmpd x'0001FFFC,r0
+00001176      bne error
+00001179      movw 121,r7
+0000117D      movd x'FF800001,r0
+00001183      REMD 7,r0
+0000118A      cmpd x'FFFFFFFD,r0
+0000118C      bne error
+0000118F      movw 122,r7
+00001193      movd x'000001F0,r0
+00001199      DIVB 3,r0
+0000119D      cmpd x'000001FA,r0
+000011A3      bne error
+000011A6      movw 123,r7
+000011AA      movd x'0001FC00,r0
+000011B0      DIVW 5,r0
+000011B5      cmpd x'0001FF33,r0
+000011BB      bne error
+000011BE      movw 124,r7
+000011C2      movd x'FF800000,r0
+000011C8      DIVD 7,r0
+000011CF      cmpd x'FFEDB6DB,r0
+000011D5      bne error
+000011D8      movw 125,r7
+000011DC      movd x'000001F0,r0
+000011E2      MODB 3,r0
+000011E6      cmpd x'00000102,r0
+000011EC      bne error
+000011EF      movw 126,r7
+000011F3      movd x'0001FC00,r0
+000011F9      MODW 5,r0
+000011FE      cmpd x'00010001,r0
+00001204      bne error
+00001207      movw 127,r7
+0000120B      movd x'FF800001,r0
+00001211      MODD 7,r0
+00001218      cmpd x'00000004,r0
+0000121A      bne error
+0000121D      movw 128,r7
+00001221      movd x'FFFFFF14,r0
+00001227      movd x'FFFFFFFF,r1
+00001229      MEIB 15,r0
+0000122D      cmpd x'FFFFFF2C,r0
+00001233      bne error
+00001236      cmpd x'FFFFFF01,r1
+0000123C      bne error
+0000123F      movw 129,r7
+00001243      movd x'FFFF0123,r0
+00001249      movd x'FFFFFFFF,r1
+0000124B      MEIW 400,r0
+00001250      cmpd x'FFFFC6B0,r0
+00001256      bne error
+00001259      cmpd x'FFFF0001,r1
+0000125F      bne error
+00001262      movw 130,r7
+00001266      movd x'00012345,r0
+0000126C      movd x'FFFFFFFF,r1
+0000126E      MEID 200000,r0
+00001275      cmpd x'78E25240,r0
+0000127B      bne error
+0000127E      cmpd x'00000003,r1
+00001280      bne error
+00001283      movw 131,r7
+00001287      DEID x'12345,r0
+0000128E      cmpqd 0,r0
+00001290      bne error
+00001293      cmpd 200000,r1
+00001299      bne error
+0000129C      movw 132,r7
+000012A0      movd x'FFFFC6B0,r0
+000012A6      movd x'FFFF0001,r1
+000012AC      DEIW x'123,r0
+000012B1      cmpd x'FFFF0000,r0
+000012B7      bne error
+000012BA      cmpd x'FFFF0190,r1
+000012C0      bne error
+000012C3      movw 133,r7
+000012C7      movd x'FFFFFF2C,r0
+000012CD      movd x'FFFFFF01,r1
+000012D3      DEIB x'14,r0
+000012D7      cmpd x'FFFFFF00,r0
+000012DD      bne error
+000012E0      cmpd x'FFFFFF0F,r1
+000012E6      bne error
+          
+          ; BITS
+000012E9      movw 134,r7
+000012ED      movd x'00020000,r0
+000012F3      TBITB 17,r0
+000012F6      bfc error
+000012F9      movw 135,r7
+000012FD      TBITW 16,r0
+00001301      bfs error
+00001304      addr -10000(sp),r1  ; no set back necessary
+0000130A      movqb 0,8750(r1)
+00001310      movw 136,r7
+00001314      TBITD 70001,0(r1)
+0000131B      bfs error
+0000131E      movqb 2,8750(r1)
+00001324      movw 137,r7
+00001328      TBITD 70001,0(r1)
+0000132F      bfc error
+00001332      movd x'00010101,r0
+00001338      movw 138,r7
+0000133C      movqb 0,0(r1)
+0000133F      SBITB r0,0(r1)
+00001343      bfs error
+00001346      cmpqb 2,0(r1)
+00001349      bne error
+0000134C      movw 139,r7
+00001350      SBITB r0,0(r1)
+00001354      bfc error
+00001357      movw 140,r7
+0000135B      movqb 0,32(r1)
+0000135E      SBITW r0,0(r1)
+00001362      bfs error
+00001365      cmpqb 2,32(r1)
+00001368      bne error
+0000136B      movw 141,r7
+0000136F      movqb 0,x'2020(r1)
+00001375      SBITD r0,0(r1)
+00001379      bfs error
+0000137C      cmpqb 2,x'2020(r1)
+00001382      bne error
+00001385      movw 142,r7
+00001389      CBITB r0,0(r1)
+0000138D      bfc error
+00001390      cmpqb 0,0(r1)
+00001393      bne error
+00001396      movw 143,r7
+0000139A      CBITB r0,0(r1)
+0000139E      bfs error
+000013A1      movw 144,r7
+000013A5      CBITW r0,0(r1)
+000013A9      bfc error
+000013AC      cmpqb 0,32(r1)
+000013AF      bne error
+000013B2      movw 145,r7
+000013B6      CBITD r0,0(r1)
+000013BA      bfc error
+000013BD      cmpqb 0,x'2020(r1)
+000013C3      bne error
+000013C6      movqb 2,r0    ; new bit position in Byte
+000013C8      movw 146,r7
+000013CC      SBITIB r0,0(r1)
+000013D0      bfs error
+000013D3      cmpqb 4,0(r1)
+000013D6      bne error
+000013D9      movw 147,r7
+000013DD      SBITIB r0,0(r1)
+000013E1      bfc error
+000013E4      movw 148,r7
+000013E8      SBITIW r0,0(r1)
+000013EC      bfs error
+000013EF      cmpqb 4,32(r1)
+000013F2      bne error
+000013F5      movw 149,r7
+000013F9      SBITID r0,0(r1)
+000013FD      bfs error
+00001400      cmpqb 4,x'2020(r1)
+00001406      bne error
+00001409      movw 150,r7
+0000140D      CBITIB r0,0(r1)
+00001411      bfc error
+00001414      cmpqb 0,0(r1)
+00001417      bne error
+0000141A      movw 151,r7
+0000141E      CBITIB r0,0(r1)
+00001422      bfs error
+00001425      movw 152,r7
+00001429      CBITIW r0,0(r1)
+0000142D      bfc error
+00001430      cmpqb 0,32(r1)
+00001433      bne error
+00001436      movw 153,r7
+0000143A      CBITID r0,0(r1)
+0000143E      bfc error
+00001441      cmpqb 0,x'2020(r1)
+00001447      bne error
+0000144A      movw 154,r7
+0000144E      movd x'00010101,r0
+00001454      IBITB 0,r0
+00001458      bfc error
+0000145B      cmpd x'00010100,r0
+00001461      bne error
+00001464      IBITB 1,r0
+00001468      bfs error
+0000146B      cmpd x'00010102,r0
+00001471      bne error
+00001474      IBITW 8,r0
+00001479      bfc error
+0000147C      cmpd x'00010002,r0
+00001482      bne error
+00001485      IBITD 16,r0
+0000148C      bfc error
+0000148F      cmpd x'00000002,r0
+00001491      bne error
+00001494      movw 155,r7
+00001498      movd x'00000080,r0
+0000149E      movd x'FFFFFF01,r1
+000014A4      FFSB r0,r1
+000014A7      bfs error
+000014AA      movw 156,r7
+000014AE      cmpd x'FFFFFF07,r1
+000014B4      bne error
+000014B7      movw 157,r7
+000014BB      movd x'FFFF0000,r0
+000014C1      FFSW r0,r1
+000014C4      bfc error
+000014C7      movw 158,r7
+000014CB      cmpd x'FFFFFF00,r1
+000014D1      bne error
+000014D4      movw 159,r7
+000014D8      movd x'10000000,r0
+000014DE      FFSD r0,r1
+000014E1      bfs error
+000014E4      cmpd x'FFFFFF1C,r1
+000014EA      bne error
+          
+          ; BIT FIELDS
+000014ED      movw 160,r7
+000014F1      movd x'01E0380C,-4(sp)
+000014F8      movqd -1,r0
+000014FA      EXTSB -4(sp),r0,1,4
+000014FF      cmpd x'FFFFFF06,r0
+00001505      bne error
+00001508      movqd -1,r0
+0000150A      EXTSW -3(sp),r0,2,5
+0000150F      cmpd x'FFFF000E,r0
+00001515      bne error
+00001518      movqd -1,r0
+0000151A      EXTSD -2(sp),r0,4,7
+0000151F      cmpd x'0000001E,r0
+00001525      bne error
+00001528      movw 161,r7
+0000152C      movqd -1,-4(sp)
+0000152F      movd x'FFFFFF0A,r0
+00001535      INSSB r0,-4(sp),1,5
+0000153A      cmpd x'FFFFFFD5,-4(sp)
+00001541      bne error
+00001544      movd x'FFFFFF12,r0
+0000154A      INSSW r0,-3(sp),2,6
+0000154F      cmpd x'FFFF4BD5,-4(sp)
+00001556      bne error
+00001559      movd x'FFFFFE44,r0
+0000155F      INSSD r0,-2(sp),4,9
+00001564      cmpd x'E44F4BD5,-4(sp)
+0000156B      bne error
+0000156E      movw 162,r7
+00001572      movd x'01E0380C,-4(sp)
+00001579      movqd -1,r0
+0000157B      movqd 1,r1
+0000157D      EXTB r1,-4(sp),r0,4
+00001582      cmpd x'FFFFFF06,r0
+00001588      bne error
+0000158B      movqd -1,r0
+0000158D      movqd 2,r1
+0000158F      EXTW r1,-3(sp),r0,5
+00001594      cmpd x'FFFF000E,r0
+0000159A      bne error
+0000159D      movqd -1,r0
+0000159F      movqd 4,r1
+000015A1      EXTD r1,-2(sp),r0,7
+000015A6      cmpd x'0000001E,r0
+000015AC      bne error
+000015AF      movw 163,r7
+000015B3      movqd -1,-4(sp)
+000015B6      movd x'FFFFFF0A,r0
+000015BC      movqd 1,r1
+000015BE      INSB r1,r0,-4(sp),5
+000015C3      cmpd x'FFFFFFD5,-4(sp)
+000015CA      bne error
+000015CD      movd x'FFFFFF12,r0
+000015D3      movqd 2,r1
+000015D5      INSW r1,r0,-3(sp),6
+000015DA      cmpd x'FFFF4BD5,-4(sp)
+000015E1      bne error
+000015E4      movd x'FFFFFE44,r0
+000015EA      movqd 4,r1
+000015EC      INSD r1,r0,-2(sp),9
+000015F1      cmpd x'E44F4BD5,-4(sp)
+000015F8      bne error
+000015FB      movw 164,r7
+000015FF      movqd -1,r0
+00001601      movqd 7,r1
+00001603      CVTP r1,-4(sp),r0
+00001607      addr -4(sp),r2
+0000160A      lshd 3,r2
+0000160E      addqd 7,r2
+00001610      cmpd r2,r0
+00001612      bne error
+          
+          ; ARRAYS
+00001615      movw 165,r7
+00001619      movd x'FFFFFF23,r0
+0000161F      CHECKB r0,chkb,r0    ; Reg , Bounds, Index
+00001624      bfs error
+00001627      cmpd x'00000013,r0
+0000162D      bne error
+00001630      movb x'0F,r1
+00001633      CHECKB r0,chkb,r1
+00001638      bfc error
+0000163B      movw 166,r7
+0000163F      movd x'FFFF1234,r0
+00001645      CHECKW r0,chkw,r0
+0000164A      bfs error
+0000164D      cmpd x'00000233,r0
+00001653      bne error
+00001656      movw x'2001,r1
+0000165A      CHECKW r0,chkw,r1
+0000165E      bfc error
+00001661      movw 167,r7
+00001665      movd x'22334455,r0
+0000166B      CHECKD r0,chkd,r0
+0000166F      bfs error
+00001672      cmpd x'12131415,r0
+00001678      bne error
+0000167B      movd x'30000002,r1
+00001681      CHECKD r0,chkd,r1
+00001685      bfc error
+00001688      br next5
+          
+0000168A  chkb: .byte x'46,x'10
+0000168C  chkw: .word x'2000,x'1001
+00001690  chkd: .double x'30000001,x'10203040
+          
+          next5:
+00001698      movw 168,r7
+0000169C      movqd 5,r0
+0000169E      movd x'FFFFFF07,r1   ; Reg:=Length-1
+000016A4      movd x'FFFFFF13,r2
+000016AA      INDEXB r0,r1,r2      ; Reg, Length, Offset
+000016AD      cmpd 59,r0
+000016B3      bne error
+000016B6      movw 169,r7
+000016BA      movqd 5,r0
+000016BC      movd x'FFFF0030,r1   ; Reg:=Length-1
+000016C2      movd x'FFFF0123,r2
+000016C8      INDEXW r0,r1,r2      ; Reg, Length, Offset
+000016CB      cmpd x'218,r0
+000016D1      bne error
+000016D4      movw 170,r7
+000016D8      movqd 5,r0
+000016DA      movd x'00012344,r1   ; Reg:=Length-1
+000016E0      movd x'00023456,r2
+000016E6      INDEXD r0,r1,r2      ; Reg, Length, Offset
+000016E9      cmpd x'7E4AF,r0
+000016EF      bne error
+          
+          ; MISC
+000016F2      movqd -1,r1
+000016F4      movqd -1,r3
+000016F6      movqd -1,r5
+000016F8      movqd -1,r7
+000016FA      movd x'04030201,r0
+00001700      movd x'08070605,r2
+00001706      movd x'0C0B0A09,r4
+0000170C      movd x'100F0E0D,r6
+00001712      SAVE [r0,r2,r4,r6]
+00001714      movqd -1,r0
+00001716      movqd -1,r2
+00001718      movqd -1,r4
+0000171A      movqd -1,r6
+0000171C      RESTORE [r1,r3,r5,r7]
+0000171E      cmpd x'100F0E0D,r7
+00001724      movd 171,r7
+0000172A      bne error
+0000172D      cmpqd -1,r6
+0000172F      bne error
+00001732      cmpd x'0C0B0A09,r5
+00001738      bne error
+0000173B      cmpqd -1,r4
+0000173D      bne error
+00001740      cmpd x'08070605,r3
+00001746      bne error
+00001749      cmpqd -1,r2
+0000174B      bne error
+0000174E      cmpd x'04030201,r1
+00001754      bne error
+00001757      cmpqd -1,r0
+00001759      bne error
+0000175C      movd x'100F0E0D,r7
+00001762      ENTER [r1,r3,r5,r7], 8
+00001765      cmpd x'100F0E0D,-24(fp)
+0000176C      movd 172,r7
+00001772      bne error
+00001775      cmpd x'0C0B0A09,-20(fp)
+0000177C      bne error
+0000177F      cmpd x'08070605,8(sp)
+00001786      bne error
+00001789      cmpd x'04030201,12(sp)
+00001790      bne error
+00001793      EXIT [r0,r1,r2,r3]
+00001795      movw 173,r7
+00001799      cmpd x'04030201,r0
+0000179F      bne error
+000017A2      cmpd x'08070605,r1
+000017A8      bne error
+000017AB      cmpd x'0C0B0A09,r2
+000017B1      bne error
+000017B4      cmpd x'100F0E0D,r3
+000017BA      bne error
+          
+000017BD      movw 174,r7
+000017C1      movqd 2,r0
+          l0025:
+000017C3      CASEB  l0026[r0:b]
+000017C7  l0027:  addw 16,r0
+000017CB  l0028:  addw 32,r0
+000017CF  l0029:  addw 64,r0
+000017D3  l0030:  addw 128,r0
+000017D7      cmpd 194,r0
+000017DD      bne error
+000017E0      br next6
+          
+000017E2  l0026:  .byte l0027-l0025
+000017E3          .byte l0028-l0025
+000017E4          .byte l0029-l0025
+000017E5          .byte l0030-l0025
+          next6:
+000017E6      movw 175,r7
+000017EA      movqd 2,r0
+          l0031:
+000017EC      CASEW  l0032[r0:W]
+000017F0  l0033:  addw 11,r0
+000017F4  l0034:  addw 33,r0
+000017F8  l0035:  addw 88,r0
+000017FC  l0036:  addw 199,r0
+00001800      cmpd 289,r0
+00001806      bne error
+00001809      br next7
+          
+0000180B  l0032:  .word l0033-l0031
+0000180D          .word l0034-l0031
+0000180F          .word l0035-l0031
+00001811          .word l0036-l0031
+          next7:
+00001813      movw 176,r7
+00001817      movqd 2,r0
+          l0037:
+00001819      CASED  l0038[r0:d]
+0000181D  l0039:  addd 10,r0
+00001823  l0040:  addd 100,r0
+00001829  l0041:  addd 1000,r0
+0000182F  l0042:  addd 10000,r0
+00001835      cmpd 11002,r0
+0000183B      bne error
+0000183E      br next8
+          
+00001840  l0038:  .double l0039-l0037
+00001844          .double l0040-l0037
+00001848          .double l0041-l0037
+0000184C          .double l0042-l0037
+          next8:
+          
+00001850      movw 177,r7
+00001854      movqd -1,r1
+00001856      addr l0043,r0
+00001859      JSR r0
+0000185B      cmpd x'FFFFFF05,r1
+00001861      bne error
+00001864      addr l0044,r0
+00001868      JUMP r0
+          l0043:
+0000186A      movqb 5,r1
+0000186C      ret 0
+          l0044:
+          
+0000186E  	br nofp
+          ; *****************************************
+          
+          ; FLOATING POINT
+00001871      lfsr x'1A8
+00001878      movw 178,r7
+0000187C      SFSR r0
+0000187F      cmpd x'1A8,r0
+00001885      bne error
+00001888      movqd 0,r0     
+0000188A      LFSR r0
+0000188D      movb 16,r0
+00001890      movw 120,r1
+00001894      movd 1987,r2
+0000189A      MOVBF r0,f0
+0000189D      MOVWF r1,f1
+000018A0      MOVDF r2,f2
+000018A3      ADDF f0,f1
+000018A6      SUBF f0,f2
+000018A9      MULF f1,f2
+000018AC      DIVF f0,f2
+000018AF      ROUNDFD f2,r3
+000018B2      TRUNCFD f2,r4
+000018B5      cmpd 16754,r3
+000018BB      bne error
+000018BE      cmpd 16753,r4
+000018C4      bne error
+000018C7      NEGF f2,f3
+000018CA      ABSF f3,f4
+000018CD      ROUNDFW f3,r5
+000018D0      movw 179,r7
+          ;    cmpw -16754,r5
+000018D4      cmpw r5,-16754 
+000018D8      bne error
+000018DB      TRUNCFW f4,r6
+000018DE      cmpw 16753,r6
+000018E2      bne error
+000018E5      movw 180,r7
+000018E9      MOVF -0.125,f0
+000018F0      movqd 0,r0
+000018F2      FLOORFD f0,r0
+000018F5      ABSF f0,f1
+000018F8      movqd -1,r1
+000018FA      FLOORFW f1,r1
+000018FD      cmpqd -1,r0
+000018FF      bne error
+00001902      cmpd x'FFFF0000,r1
+00001908      bne error
+0000190B      movw 181,r7
+0000190F      MOVF 137.0,f0
+00001916      LOGBF f0,f1
+00001919      movqd -1,r0
+0000191B      ROUNDFB f1,r0
+0000191E      cmpd x'FFFFFF07,r0
+00001924      bne error
+00001927      movw 182,r7
+0000192B      MOVF 1.25,f0
+00001932      MOVF 3.0,f1
+00001939      SCALBF f1,f0    ; 10.0 in F0
+0000193C      TRUNCFB f0,r0
+0000193F      cmpd x'FFFFFF0A,r0
+00001945      bne error
+00001948      cmpf 10.0,f0   
+0000194F      bne error
+00001952      movw 183,r7
+00001956      MOVF 5.5,f2
+0000195D      DOTF f1,f2      ; 26.5 in F0
+00001960      FLOORFB f0,r0
+00001963      cmpd x'FFFFFF1A,r0
+00001969      bne error
+0000196C      cmpf f0,26.5  
+00001973      bne error
+00001976      movw 184,r7
+0000197A      POLYF f1,f2
+0000197D      MOVFL f0,tos
+00001980      ROUNDLD tos,r0
+00001983      cmpd 85,r0
+00001989      bne error
+0000198C      movw 185,r7
+00001990      SFSR r0
+00001993      tbitb 16,r0
+00001996      bfc error
+          
+00001999      SFSR r0         ; now LONG
+0000199C      andd x'FFFF,r0  ; Statusbit RMB to 0
+000019A2      LFSR r0
+000019A5      movb 101,r0
+000019A8      movw 1253,r1
+000019AC      movd 19874,r2
+000019B2      MOVBL r0,f0
+000019B5      MOVWL r1,f1
+000019B8      MOVDL r2,f2
+000019BB      ADDL f0,f1
+000019BE      SUBL f0,f2
+000019C1      MULL f1,f2
+000019C4      DIVL f0,f2
+000019C7      ROUNDLD f2,r3
+000019CA      TRUNCLD f2,r4
+000019CD      movw 186,r7
+000019D1      cmpd 265076,r3
+000019D7      bne error
+000019DA      cmpd 265075,r4
+000019E0      bne error
+000019E3      NEGL 503.5,f3
+000019EE      ABSL f3,f4
+000019F1      ROUNDLW f3,r5
+000019F4      movw 187,r7
+000019F8      cmpw -504,r5
+000019FC      bne error
+000019FF      TRUNCLW f4,r6
+00001A02      cmpw 503,r6
+00001A06      bne error
+00001A09      movw 188,r7
+00001A0D      MOVL -0.125,f0
+00001A18      movqd 0,r0
+00001A1A      FLOORLD f0,r0
+00001A1D      ABSL f0,f1
+00001A20      movqd -1,r1
+00001A22      FLOORLW f1,r1
+00001A25      cmpqd -1,r0
+00001A27      bne error
+00001A2A      cmpd x'FFFF0000,r1
+00001A30      bne error
+00001A33      movw 189,r7
+00001A37      MOVL 1370.0,f0
+00001A42      LOGBL f0,f1
+00001A45      movqd -1,r0
+00001A47      ROUNDLB f1,r0
+00001A4A      cmpd x'FFFFFF0A,r0
+00001A50      bne error
+00001A53      movw 190,r7
+00001A57      MOVL 1.25,f0
+00001A62      MOVL 5.0,f1
+00001A6D      SCALBL f1,f0    ; 40.0 in F0
+00001A70      TRUNCLB f0,r0
+00001A73      cmpd x'FFFFFF28,r0
+00001A79      bne error
+00001A7C      CMPL 40.0,f0 
+00001A87      bne error
+00001A8A      movw 191,r7
+00001A8E      MOVL 5.5,f2
+00001A99      DOTL f1,f2      ; 67.5 in F0
+00001A9C      FLOORLB f0,r0
+00001A9F      cmpd x'FFFFFF43,r0
+00001AA5      bne error
+00001AA8      CMPL f0,67.5   
+00001AB3      bne error
+00001AB6      movw 192,r7
+00001ABA      POLYL f1,f2
+00001ABD      MOVLF f0,tos
+00001AC0      ROUNDFD tos,r0
+00001AC3      cmpd 343,r0
+00001AC9      bne error
+00001ACC      movw 193,r7
+00001AD0      SFSR r0
+00001AD3      tbitb 16,r0
+00001AD6      bfc error
+          ;******************************
+          
+          nofp:
+          
+          ; STRINGS
+00001AD9      adjspw 256
+00001ADD      addr 0(sp),r0
+00001AE0      movb 64,r1
+          l0045:
+00001AE3      addqd 4,r0
+00001AE5      movqd 0,-4(r0)
+00001AE8      acbb -1,r1,l0045
+00001AEB      movw 194,r7
+00001AEF      movd 19,r0
+00001AF5      addr bfeld,r1
+00001AF9      addr 0(sp),r2
+00001AFC      MOVSB
+00001AFF      cmpw 19,-1(r2)
+00001B04      bne errors
+00001B07      movw 195,r7
+00001B0B      movb 11,r0
+00001B0E      MOVSW
+00001B11      cmpd x'2928,-2(r2)
+00001B18      bne errors
+00001B1B      movw 196,r7
+00001B1F      movqb 7,r0
+00001B21      MOVSD
+00001B24      cmpd x'45444342,-4(r2)
+00001B2B      bne errors
+00001B2E      cmpqd 0,0(r2)
+00001B31      bne errors
+00001B34      movw 197,r7
+00001B38      addr 252(sp),r2
+00001B3C      addr bfeld,r0
+00001B40      addr 244(r0),r1
+00001B44      movd 13,r0
+00001B4A      MOVSD [B]
+00001B4D      cmpd x'C8C7C6C5,4(r2)
+00001B54      bne errors
+00001B57      cmpqd 0,0(r2)
+00001B5A      bne errors
+00001B5D      movw 198,r7
+00001B61      movb 9,r0
+00001B64      MOVSW [B]
+00001B67      cmpd x'B2B10000,0(r2)
+00001B6E      bne errors
+00001B71      movw 199,r7
+00001B75      movb 15,r0
+00001B78      MOVSB [B]
+00001B7B      cmpw x'A100,0(r2)
+00001B80      bne errors
+00001B83      movw 200,r7
+00001B87      addr 0(sp),r2
+00001B8A      addr bfeld,r1
+00001B8E      addr trans,r3
+00001B92      movqd 4,r0
+00001B94      MOVST
+00001B97      cmpd x'47362514,0(sp)
+00001B9E      bne errors
+00001BA1      movw 201,r7
+00001BA5      addr 4(sp),r1
+00001BA8      addr bfeld,r0
+00001BAC      addr 4(r0),r2
+00001BAF      movd 20,r0
+00001BB5      CMPSB
+00001BB8      bne errors
+00001BBB      cmpqd 0,r0
+00001BBD      bne errors
+00001BC0      movw 202,r7
+00001BC4      negb 10(r2),10(r1)   ; something destroying ...
+00001BC9      movb 12,r0
+00001BCC      CMPSW
+00001BCF      beq errors
+00001BD2      cmpqd 7,r0
+00001BD4      bne errors
+00001BD7      movw 203,r7
+00001BDB      movb 0(r2),0(r1)   ; now repair it
+00001BDF      movqd 4,r0
+00001BE1      CMPSD
+00001BE4      bne errors
+00001BE7      cmpqd 0,r0
+00001BE9      bne errors
+00001BEC      movw 204,r7
+00001BF0      addr 5(sp),r1
+00001BF3      addr 15(sp),r2
+00001BF6      addr trans,r3
+00001BFA      movqb 5,r0
+00001BFC      CMPST
+00001BFF      bne errors
+00001C02      cmpqd 0,r0
+00001C04      bne errors
+00001C07      movw 205,r7
+00001C0B      movd x'20,r0
+00001C11      addr 0(sp),r1
+00001C14      movd x'FFFFFF0D,r4
+00001C1A      SKPSB [U]
+00001C1D      bfc errors
+00001C20      addr x'C(sp),r2
+00001C23      cmpd r1,r2
+00001C25      bne errors
+00001C28      cmpd 20,r0
+00001C2E      bne errors
+00001C31      movw 206,r7
+00001C35      movd 50,r0
+00001C3B      addr x'50(sp),r1
+00001C3F      movd x'FFFF0000,r4
+00001C45      SKPSW [W]
+00001C48      bfc errors
+00001C4B      addr x'A8(sp),r2
+00001C4F      cmpd r1,r2
+00001C51      bne errors
+00001C54      cmpd 6,r0
+00001C56      bne errors
+00001C59      movw 207,r7
+00001C5D      movqd 0,r0
+00001C5F      movd r1,r2
+00001C61      SKPSD [B]
+00001C64      bfs errors
+00001C67      cmpd r1,r2
+00001C69      bne errors
+00001C6C      movw 208,r7
+00001C70      movd 10,r0
+00001C76      addr trans,r1
+00001C79      movd r1,r3
+00001C7B      bispsrb x'20
+00001C7E      SKPST     
+00001C81      bfs errors
+00001C83      subd r3,r1
+00001C85      cmpd 10,r1
+00001C8B      bne errors
+00001C8D      cmpqd 0,r0
+00001C8F      bne errors
+          
+00001C91      adjspw 256
+00001C95      br next9
+          
+00001C97  trans:  .byte x'FF,x'14,x'25,x'36,x'47,0,x'10,x'11,x'12,x'13,x'14,0
+          
+          next9:
+          ; exit if no error
+00001CA3      movd r7,r0 
+00001CA5      ADDR L0002,TOS
+          ; anything what you want here in case of error-free
+00001CA9  ever0:	br ever0
+          
+          errors:
+00001CAB   adjspb -8
+          error1:
+00001CAE   adjspw -248  ; correction of MOVM !
+          ; enter in error case
+          error:
+00001CB2   movd r7,r0
+00001CB4   ADDR L0001,TOS
+          
+00001CB8  ever:	br ever
