@@ -505,12 +505,17 @@ void n32016_exec(uint32_t tubecycles)
 	while (tubecycles > 0)
 	{
 		sdiff[0] = sdiff[1] = 0;
-//                if (pc==0xF00A3C) nsoutput=1;
-//                if (pc==0xF00A73) nsoutput=0;
+		//                if (pc==0xF00A3C) nsoutput=1;
+		//                if (pc==0xF00A73) nsoutput=0;
 		startpc = pc;
 		opcode = readmemb(pc);
 
 		printf("PC:%06X INST:%02X %s\n", startpc, opcode, InstuctionLookup(opcode));
+
+		if (startpc == 0x1CB8)
+		{
+			printf("Epic Fail!\n");
+		}
 //                if (nsoutput && (pc<0xF000A0 || pc>0xF000B3)) printf("%08X %08X %08X %08X %08X %08X %04X : %02X %02X %02X %02X\n",pc,r[0],r[1],r[2],r[3],sp[SP],psr,opcode,readmemb(pc+1),readmemb(pc+2),readmemb(pc+3));
 		pc++;
 		isize = ilook[opcode & 3];
