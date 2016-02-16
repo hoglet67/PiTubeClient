@@ -3,5 +3,11 @@ extern void n32016_reset();
 extern void n32016_exec(uint32_t tubecycles);
 extern void n32016_close();
 
+extern const char* InstuctionLookup(uint32_t opcode);
+
 #define MEG16 0x1000000
 extern uint8_t ns32016ram[MEG16];
+
+#define CASE2(in) case (in): case ((in) | 0x80)
+#define CASE4(in) case (in): case ((in) | 0x40): case ((in) | 0x80): case ((in) | 0xC0)
+

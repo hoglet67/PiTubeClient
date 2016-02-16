@@ -509,12 +509,14 @@ void n32016_exec(uint32_t tubecycles)
 //                if (pc==0xF00A73) nsoutput=0;
 		startpc = pc;
 		opcode = readmemb(pc);
+
+		printf("PC:%06X INST:%02X %s\n", startpc, opcode, InstuctionLookup(opcode));
 //                if (nsoutput && (pc<0xF000A0 || pc>0xF000B3)) printf("%08X %08X %08X %08X %08X %08X %04X : %02X %02X %02X %02X\n",pc,r[0],r[1],r[2],r[3],sp[SP],psr,opcode,readmemb(pc+1),readmemb(pc+2),readmemb(pc+3));
 		pc++;
 		isize = ilook[opcode & 3];
 		switch (opcode)
 		{
-		case 0x0E: /*String instruction*/
+		case 0x0E: // String instruction
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			opcode |= (readmemb(pc) << 16);
@@ -548,6 +550,7 @@ void n32016_exec(uint32_t tubecycles)
 //                                        printf("MOVS %02X %08X %08X %08X %01X\n",temp,r[1],r[2],r[4],temp);
 				}
 				break;
+
 			case 0x03: /*MOVS dword*/
 //                                printf("MOVSD %08X %08X %08X  %08X\n",r[1],r[2],r[0],pc);
 				if (temp2)
@@ -581,8 +584,7 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case 0x1C:
-		case 0x9C: /*CMPQ byte*/
+		CASE2(0x1C): // CMPQ byte
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -590,8 +592,7 @@ void n32016_exec(uint32_t tubecycles)
 			temp2 = (opcode >> 7) & 0xF;
 			if (temp2 & 8)
 				temp2 |= 0xFFFFFFF0;
-			readgenb(0, temp)
-			;
+			readgenb(0, temp);
 //                        if (!temp) nsoutput=1;
 			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
 			if (temp == temp2)
@@ -601,8 +602,8 @@ void n32016_exec(uint32_t tubecycles)
 			if (((signed char) temp2) > ((signed char) temp))
 				psr |= N_FLAG;
 			break;
-		case 0x1F:
-		case 0x9F: /*CMPQ dword*/
+
+		CASE2(0x1F): // CMPQ dword
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -610,8 +611,7 @@ void n32016_exec(uint32_t tubecycles)
 			temp2 = (opcode >> 7) & 0xF;
 			if (temp2 & 8)
 				temp2 |= 0xFFFFFFF0;
-			readgenl(0, temp)
-			;
+			readgenl(0, temp);
 //                        if (!temp) nsoutput=1;
 			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
 			if (temp == temp2)
@@ -620,10 +620,10 @@ void n32016_exec(uint32_t tubecycles)
 				psr |= L_FLAG;
 			if (((signed long) temp2) > ((signed long) temp))
 				psr |= N_FLAG;
-//                        printf("CMPQ %08X %08X %i %i\n",temp,temp2,temp>temp2,((signed long)temp)>((signed long)temp2));
+//       printf("CMPQ %08X %08X %i %i\n",temp,temp2,temp>temp2,((signed long)temp)>((signed long)temp2));
 			break;
-		case 0x5C:
-		case 0xDC: /*MOVQ byte*/
+
+		CASE2(0x5C): // MOVQ byte
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -631,11 +631,10 @@ void n32016_exec(uint32_t tubecycles)
 			temp = (opcode >> 7) & 0xF;
 			if (temp & 8)
 				temp |= 0xFFFFFFF0;
-			writegenb(0, temp)
-			;
+			writegenb(0, temp);
 			break;
-		case 0x5D:
-		case 0xDD: /*MOVQ word*/
+
+		CASE2(0x5D): // MOVQ word
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -643,11 +642,10 @@ void n32016_exec(uint32_t tubecycles)
 			temp = (opcode >> 7) & 0xF;
 			if (temp & 8)
 				temp |= 0xFFFFFFF0;
-			writegenw(0, temp)
-			;
+			writegenw(0, temp);
 			break;
-		case 0x5F:
-		case 0xDF: /*MOVQ dword*/
+
+		CASE2(0x5F): // MOVQ dword
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -655,11 +653,10 @@ void n32016_exec(uint32_t tubecycles)
 			temp = (opcode >> 7) & 0xF;
 			if (temp & 8)
 				temp |= 0xFFFFFFF0;
-			writegenl(0, temp)
-			;
+			writegenl(0, temp);
 			break;
-		case 0x0C:
-		case 0x8C: /*ADDQ byte*/
+
+		CASE2(0x0C): // ADDQ byte
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -667,19 +664,17 @@ void n32016_exec(uint32_t tubecycles)
 			temp2 = (opcode >> 7) & 0xF;
 			if (temp2 & 8)
 				temp2 |= 0xFFFFFFF0;
-			readgenb(0, temp)
-			;
+			readgenb(0, temp);
 			psr &= ~(C_FLAG | V_FLAG);
 			if ((temp + temp2) & 0x100)
 				psr |= C_FLAG;
 			if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
 				psr |= V_FLAG;
 			temp += temp2;
-			writegenb(0, temp)
-			;
+			writegenb(0, temp);
 			break;
-		case 0x0D:
-		case 0x8D: /*ADDQ word*/
+
+		CASE2(0x0D): // ADDQ word
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -687,19 +682,17 @@ void n32016_exec(uint32_t tubecycles)
 			temp2 = (opcode >> 7) & 0xF;
 			if (temp2 & 8)
 				temp2 |= 0xFFFFFFF0;
-			readgenw(0, temp)
-			;
+			readgenw(0, temp);
 			psr &= ~(C_FLAG | V_FLAG);
 			if ((temp + temp2) & 0x10000)
 				psr |= C_FLAG;
 			if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x8000)
 				psr |= V_FLAG;
 			temp += temp2;
-			writegenw(0, temp)
-			;
+			writegenw(0, temp);
 			break;
-		case 0x0F:
-		case 0x8F: /*ADDQ dword*/
+
+		CASE2(0x0F): // ADDQ dword
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -707,19 +700,17 @@ void n32016_exec(uint32_t tubecycles)
 			temp2 = (opcode >> 7) & 0xF;
 			if (temp2 & 8)
 				temp2 |= 0xFFFFFFF0;
-			readgenl(0, temp)
-			;
+			readgenl(0, temp);
 			psr &= ~(C_FLAG | V_FLAG);
 			if ((temp + temp2) < temp)
 				psr |= C_FLAG;
 			if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
 				psr |= V_FLAG;
 			temp += temp2;
-			writegenl(0, temp)
-			;
+			writegenl(0, temp);
 			break;
-		case 0x3C:
-		case 0xBC: /*ScondB*/
+
+		CASE2(0x3C): // ScondB
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -790,11 +781,10 @@ void n32016_exec(uint32_t tubecycles)
 			case 0xF:
 				break;
 			}
-			writegenb(0, temp)
-			;
+			writegenb(0, temp);
 			break;
-		case 0x4C:
-		case 0xCC: /*ACBB*/
+
+		CASE2(0x4C): // ACBB
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -802,17 +792,15 @@ void n32016_exec(uint32_t tubecycles)
 			temp2 = (opcode >> 7) & 0xF;
 			if (temp2 & 8)
 				temp2 |= 0xFFFFFFF0;
-			readgenb(0, temp)
-			;
+			readgenb(0, temp);
 			temp += temp2;
-			writegenb(0, temp)
-			;
+			writegenb(0, temp);
 			temp2 = getdisp();
 			if (temp & 0xFF)
 				pc = startpc + temp2;
 			break;
-		case 0x4F:
-		case 0xCF: /*ACBD*/
+
+		CASE2(0x4F): // ACBD
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -820,76 +808,59 @@ void n32016_exec(uint32_t tubecycles)
 			temp2 = (opcode >> 7) & 0xF;
 			if (temp2 & 8)
 				temp2 |= 0xFFFFFFF0;
-			readgenl(0, temp)
-			;
+			readgenl(0, temp);
 			temp += temp2;
-			writegenl(0, temp)
-			;
+			writegenl(0, temp);
 			temp2 = getdisp();
 			if (temp)
 				pc = startpc + temp2;
 			break;
 
-		case 0x00:
-		case 0x40:
-		case 0x80:
-		case 0xC0: /*ADD byte*/
+		CASE4(0x00): // ADD byte
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenb(0, temp)
-			;
-			readgenb(1, temp2)
-			;
+			readgenb(0, temp);
+			readgenb(1, temp2);
 			psr &= ~(C_FLAG | V_FLAG);
 			if ((temp + temp2) & 0x100)
 				psr |= C_FLAG;
 			if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
 				psr |= V_FLAG;
 			temp2 += temp;
-			writegenb(1, temp2)
-			;
+			writegenb(1, temp2);
 			break;
-		case 0x03:
-		case 0x43:
-		case 0x83:
-		case 0xC3: /*ADD dword*/
+
+		CASE4(0x03): // ADD dword
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenl(0, temp)
-			;
-			readgenl(1, temp2)
-			;
+			readgenl(0, temp);
+			readgenl(1, temp2);
 			psr &= ~(C_FLAG | V_FLAG);
 			if ((temp + temp2) < temp)
 				psr |= C_FLAG;
 			if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
 				psr |= V_FLAG;
 			temp2 += temp;
-			writegenl(1, temp2)
-			;
+			writegenl(1, temp2);
 			break;
-		case 0x04:
-		case 0x44:
-		case 0x84:
-		case 0xC4: /*CMP byte*/
+
+		CASE4(0x04): // CMP byte
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenb(0, temp)
-			;
-			readgenb(1, temp2)
-			;
+			readgenb(0, temp);
+			readgenb(1, temp2);
 			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
 			if (temp == temp2)
 				psr |= Z_FLAG;
@@ -898,10 +869,8 @@ void n32016_exec(uint32_t tubecycles)
 			if (((signed char) temp) > ((signed char) temp2))
 				psr |= N_FLAG;
 			break;
-		case 0x07:
-		case 0x47:
-		case 0x87:
-		case 0xC7: /*CMP dword*/
+
+		CASE4(0x07): // CMP dword
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -910,12 +879,10 @@ void n32016_exec(uint32_t tubecycles)
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
 			nsoutput &= ~2;
-			readgenl(0, temp)
-			;
-			readgenl(1, temp2)
-			;
+			readgenl(0, temp);
+			readgenl(1, temp2);
 
-//                        printf("CMP %08X %08X %i %i\n",temp,temp2,temp>temp2,(((signed long)temp)>((signed long)temp2)));
+//       printf("CMP %08X %08X %i %i\n",temp,temp2,temp>temp2,(((signed long)temp)>((signed long)temp2)));
 			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
 			if (temp == temp2)
 				psr |= Z_FLAG;
@@ -924,77 +891,68 @@ void n32016_exec(uint32_t tubecycles)
 			if (((signed long) temp) > ((signed long) temp2))
 				psr |= N_FLAG;
 			break;
-		case 0x08:
-		case 0x48:
-		case 0x88:
-		case 0xC8: /*BIC byte*/
+
+		CASE4(0x08): // BIC byte
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenb(0, temp)
-			;
-			readgenb(1, temp2)
-			;
+			readgenb(0, temp);
+			readgenb(1, temp2);
 			temp2 &= ~temp;
-			writegenb(1, temp2)
-			;
-			break;
-		case 0x09:
-		case 0x49:
-		case 0x89:
-		case 0xC9: /*BIC word*/
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenw(0, temp)
-			;
-			readgenw(1, temp2)
-			;
-			temp2 &= ~temp;
-			writegenw(1, temp2)
-			;
+			writegenb(1, temp2);
 			break;
 
-		case 0x14:
-		case 0x54:
-		case 0x94:
-		case 0xD4: /*MOV byte*/
+		CASE4(0x09): // BIC word
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenb(0, temp)
-			;
-			writegenb(1, temp)
-			;
+			readgenw(0, temp);
+			readgenw(1, temp2);
+			temp2 &= ~temp;
+			writegenw(1, temp2);
 			break;
-		case 0x15:
-		case 0x55:
-		case 0x95:
-		case 0xD5: /*MOV word*/
+
+		CASE4(0x0B): // BIC dword
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenw(0, temp)
-			;
-			writegenw(1, temp)
-			;
+			readgenl(0, temp);
+			readgenl(1, temp2);
+			temp2 &= ~temp;
+			writegenl(1, temp2);
 			break;
-		case 0x17:
-		case 0x57:
-		case 0x97:
-		case 0xD7: /*MOV dword*/
+
+		CASE4(0x14): // MOV byte
+			opcode |= (readmemb(pc) << 8);
+			pc++;
+			getgen1(opcode >> 11, 0);
+			getgen1(opcode >> 6, 1);
+			getgen(opcode >> 11, 0);
+			getgen(opcode >> 6, 1);
+			readgenb(0, temp);
+			writegenb(1, temp);
+			break;
+		CASE4(0x15): // MOV word
+			opcode |= (readmemb(pc) << 8);
+			pc++;
+			getgen1(opcode >> 11, 0);
+			getgen1(opcode >> 6, 1);
+			getgen(opcode >> 11, 0);
+			getgen(opcode >> 6, 1);
+			readgenw(0, temp);
+			writegenw(1, temp);
+			break;
+
+		CASE4(0x17): // MOV dword
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -1008,29 +966,86 @@ void n32016_exec(uint32_t tubecycles)
 			writegenl(1, temp)
 			;
 			break;
-		case 0x18:
-		case 0x58:
-		case 0x98:
-		case 0xB8: /*OR byte*/
+
+		CASE4(0x18): //OR byte
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenb(0, temp)
-			;
-			readgenb(1, temp2)
-			;
+			readgenb(0, temp);
+			readgenb(1, temp2);
 			temp2 |= temp;
-			writegenb(1, temp2)
-			;
+			writegenb(1, temp2);
 			break;
 
-		case 0x23:
-		case 0x63:
-		case 0xA3:
-		case 0xE3: /*SUB dword*/
+		CASE4(0x19): // OR word
+			opcode |= (readmemb(pc) << 8);
+			pc++;
+			getgen1(opcode >> 11, 0);
+			getgen1(opcode >> 6, 1);
+			getgen(opcode >> 11, 0);
+			getgen(opcode >> 6, 1);
+			readgenw(0, temp);
+			readgenw(1, temp2);
+			temp2 |= temp;
+			writegenw(1, temp2);
+			break;
+
+		CASE4(0x1B): // OR dword
+			opcode |= (readmemb(pc) << 8);
+			pc++;
+			getgen1(opcode >> 11, 0);
+			getgen1(opcode >> 6, 1);
+			getgen(opcode >> 11, 0);
+			getgen(opcode >> 6, 1);
+			readgenl(0, temp);
+			readgenl(1, temp2);
+			temp2 |= temp;
+			writegenl(1, temp2);
+			break;
+
+		CASE4(0x38): // XOR byte
+			opcode |= (readmemb(pc) << 8);
+			pc++;
+			getgen1(opcode >> 11, 0);
+			getgen1(opcode >> 6, 1);
+			getgen(opcode >> 11, 0);
+			getgen(opcode >> 6, 1);
+			readgenb(0, temp);
+			readgenb(1, temp2);
+			temp2 ^= temp;
+			writegenb(1, temp2);
+			break;
+
+		CASE4(0x39): // XOR word
+			opcode |= (readmemb(pc) << 8);
+			pc++;
+			getgen1(opcode >> 11, 0);
+			getgen1(opcode >> 6, 1);
+			getgen(opcode >> 11, 0);
+			getgen(opcode >> 6, 1);
+			readgenw(0, temp);
+			readgenw(1, temp2);
+			temp2 ^= temp;
+			writegenw(1, temp2);
+			break;
+
+		CASE4(0x3B) : // XOR dword
+			opcode |= (readmemb(pc) << 8);
+			pc++;
+			getgen1(opcode >> 11, 0);
+			getgen1(opcode >> 6, 1);
+			getgen(opcode >> 11, 0);
+			getgen(opcode >> 6, 1);
+			readgenl(0, temp);
+			readgenl(1, temp2);
+			temp2 ^= temp;
+			writegenl(1, temp2);
+			break;
+
+		CASE4(0x23): // SUB dword
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -1050,96 +1065,88 @@ void n32016_exec(uint32_t tubecycles)
 			writegenl(1, temp2)
 			;
 			break;
-		case 0x27:
-		case 0x67:
-		case 0xA7:
-		case 0xE7: /*ADDR dword*/
+
+		CASE4(0x27): // ADDR dword
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-//                        printf("Writegenl %08X ",sp[SP]);
-			writegenl(1, genaddr[0])
-			;
-//                        printf("%08X\n",sp[SP]);
+//			printf("Writegenl %08X ",sp[SP]);
+			writegenl(1, genaddr[0]);
+//			printf("%08X\n",sp[SP]);
 			break;
 
-		case 0x28:
-		case 0x68:
-		case 0xA8:
-		case 0xE8: /*AND byte*/
+		CASE4(0x28): // AND byte
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenb(0, temp)
-			;
-			readgenb(1, temp2)
-			;
+			readgenb(0, temp);
+			readgenb(1, temp2);
 			temp2 &= temp;
-			writegenb(1, temp2)
-			;
+			writegenb(1, temp2);
 			break;
-		case 0x2B:
-		case 0x6B:
-		case 0xAB:
-		case 0xEB: /*AND dword*/
+
+		CASE4(0x29): // AND word
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenl(0, temp)
-			;
-			readgenl(1, temp2)
-			;
+			readgenw(0, temp);
+			readgenw(1, temp2);
 			temp2 &= temp;
-			writegenl(1, temp2)
-			;
+			writegenw(1, temp2);
 			break;
-		case 0x34:
-		case 0x74:
-		case 0xB4:
-		case 0xF4: /*TBITB*/
+
+		CASE4(0x2B): // AND dword
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenb(0, temp)
-			;
-			readgenb(1, temp2)
-			;
+			readgenl(0, temp);
+			readgenl(1, temp2);
+			temp2 &= temp;
+			writegenl(1, temp2);
+			break;
+
+		CASE4(0x34): // TBITB
+			opcode |= (readmemb(pc) << 8);
+			pc++;
+			getgen1(opcode >> 11, 0);
+			getgen1(opcode >> 6, 1);
+			getgen(opcode >> 11, 0);
+			getgen(opcode >> 6, 1);
+			readgenb(0, temp);
+			readgenb(1, temp2);
 			psr &= ~F_FLAG;
 			temp &= 7;
 			if (temp2 & (1 << temp))
 				psr |= F_FLAG;
 			break;
-		case 0x37:
-		case 0x77:
-		case 0xB7:
-		case 0xF7: /*TBITD*/
+
+		CASE4(0x37): // TBITD
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenl(0, temp)
-			;
-			readgenl(1, temp2)
-			;
+			readgenl(0, temp);
+			readgenl(1, temp2);
 			psr &= ~F_FLAG;
 			temp &= 31;
 			if (temp2 & (1 << temp))
 				psr |= F_FLAG;
 			break;
+
 		case 0x4E: /*Type 6*/
 			opcode = readmemb(pc);
 			pc++;
@@ -1182,19 +1189,19 @@ void n32016_exec(uint32_t tubecycles)
 				}
 				break;
 			case 0x17: /*LSHD*/
-				readgenb(0, temp)
-				;
+				readgenb(0, temp);
 				if (temp & 0xE0)
 					temp |= 0xE0;
-				readgenl(1, temp2)
-				;
+				readgenl(1, temp2);
 				if (temp & 0xE0)
 					temp2 >>= ((temp ^ 0xFF) + 1);
 				else
 					temp2 <<= temp;
-				writegenl(1, temp2)
-				;
+				writegenl(1, temp2);
 				break;
+
+			//case 0x24: // NOTB
+
 			case 0x30: /*ABSB*/
 				readgenb(0, temp)
 				;
@@ -1203,11 +1210,20 @@ void n32016_exec(uint32_t tubecycles)
 				writegenb(1, temp)
 				;
 				break;
+
 			case 0x34: /*COMB*/
-				readgenb(0, temp)
-				;
-				writegenb(1, ~temp)
-				;
+				readgenb(0, temp);
+				writegenb(1, ~temp);
+				break;
+
+			case 0x35: // COMW
+				readgenw(0, temp);
+				writegenw(1, ~temp);
+				break;
+
+			case 0x37: /// COMD
+				readgenl(0, temp);
+				writegenl(1, ~temp);
 				break;
 
 			default:
@@ -1297,6 +1313,7 @@ void n32016_exec(uint32_t tubecycles)
 				break;
 			}
 			break;
+
 		case 0x7F: /*Type 3 dword*/
 			opcode |= (readmemb(pc) << 8);
 			pc++;
@@ -1340,8 +1357,7 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case 0x2F:
-		case 0xAF: /*SPR*/
+		CASE2(0x2F): // SPR*
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -1349,35 +1365,29 @@ void n32016_exec(uint32_t tubecycles)
 			switch ((opcode >> 7) & 0xF)
 			{
 			case 0x8:
-				writegenl(0, fp)
-				;
+				writegenl(0, fp);
 				break;
 			case 0x9:
-				writegenl(0, sp[SP])
-				;
+				writegenl(0, sp[SP]);
 				break;
 			case 0xA:
-				writegenl(0, sb)
-				;
+				writegenl(0, sb);
 				break;
 			case 0xF:
-				writegenl(0, mod)
-				; /*nsoutput=1; */
+				writegenl(0, mod); /*nsoutput=1; */
 				break;
-
 			default:
 				printf("Bad SPR reg %01X\n", (opcode >> 7) & 0xF);
 				n32016_dumpregs();
 			}
 			break;
-		case 0x6C:
-		case 0xEC: /*LPRB*/
+
+		CASE2(0x6C): // LPRB
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen(opcode >> 11, 0);
-			readgenb(0, temp)
-			;
+			readgenb(0, temp);
 			switch ((opcode >> 7) & 0xF)
 			{
 			case 0:
@@ -1386,33 +1396,30 @@ void n32016_exec(uint32_t tubecycles)
 			case 9:
 				sp[SP] = temp;
 				break;
-
 			default:
 				printf("Bad LPRB reg %01X\n", (opcode >> 7) & 0xF);
 				n32016_dumpregs();
 			}
 			break;
-		case 0x6D:
-		case 0xED: /*LPRW*/
+
+		CASE2(0x6D): // LPRW
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen(opcode >> 11, 0);
-			readgenw(0, temp)
-			;
+			readgenw(0, temp);
 			switch ((opcode >> 7) & 0xF)
 			{
 			case 15:
 				mod = temp;
 				break;
-
 			default:
 				printf("Bad LPRW reg %01X\n", (opcode >> 7) & 0xF);
 				n32016_dumpregs();
 			}
 			break;
-		case 0x6F:
-		case 0xEF: /*LPRD*/
+
+		CASE2(0x6F): // LPRD
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -1492,11 +1499,10 @@ void n32016_exec(uint32_t tubecycles)
 					sdiff[1] = 4;
 				writegenl(1, temp)
 				break;
+
 			case 0x2F: /*DEID*/
-				readgenl(0, temp)
-				;
-				readgenq(1, temp64)
-				;
+				readgenl(0, temp);
+				readgenq(1, temp64);
 				if (!temp)
 				{
 					printf("Divide by zero - DEID CE\n");
@@ -1504,8 +1510,7 @@ void n32016_exec(uint32_t tubecycles)
 					break;
 				}
 				temp3 = temp64 % temp;
-				writegenl(1, temp3)
-				;
+				writegenl(1, temp3);
 				temp3 = (uint32_t) (temp64 / temp);
 				if (gentype[1])
 					*(uint32_t *) (genaddr[1] + 4) = temp3;
@@ -1515,11 +1520,10 @@ void n32016_exec(uint32_t tubecycles)
 					writememw(genaddr[1] + 4 + 2, temp3 >> 16);
 				}
 				break;
+
 			case 0x33: /*QUOD*/
-				readgenl(0, temp)
-				;
-				readgenl(1, temp2)
-				;
+				readgenl(0, temp);
+				readgenl(1, temp2);
 				if (!temp)
 				{
 					printf("Divide by zero - QUOD CE\n");
@@ -1527,14 +1531,13 @@ void n32016_exec(uint32_t tubecycles)
 					break;
 				}
 				temp2 /= temp;
-				writegenl(1, temp2)
-				;
+				writegenl(1, temp2);
 				break;
+
 			case 0x37: /*REMD*/
-				readgenl(0, temp)
-				;
-				readgenl(1, temp2)
-				;
+				readgenl(0, temp);
+				readgenl(1, temp2);
+
 				if (!temp)
 				{
 					printf("Divide by zero - QUOD CE\n");
@@ -1542,10 +1545,8 @@ void n32016_exec(uint32_t tubecycles)
 					break;
 				}
 				temp2 %= temp;
-				writegenl(1, temp2)
-				;
+				writegenl(1, temp2);
 				break;
-
 			default:
 				printf("Bad NS32016 CE opcode %04X %01X\n", opcode, opcode & 0x3F);
 				n32016_dumpregs();
@@ -1553,10 +1554,7 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case 0x2E:
-		case 0x6E:
-		case 0xAE:
-		case 0xEE: /*Type 8*/
+		CASE4(0x2E): // Type 8
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			opcode |= (readmemb(pc) << 16);
@@ -1580,12 +1578,10 @@ void n32016_exec(uint32_t tubecycles)
 					if (temp3 & (1 << ((c + temp) & 31)))
 						temp4 |= (1 << c);
 				}
-				writegenl(1, temp4)
-				;
+				writegenl(1, temp4);
 				break;
 			case 0xC: /*CHECKB*/
-				readgenb(1, temp3)
-				;
+				readgenb(1, temp3);
 				temp = readmemb(genaddr[0]);
 				temp2 = readmemb(genaddr[0] + 1);
 				if (temp >= temp3 && temp3 >= temp2)
@@ -1596,10 +1592,7 @@ void n32016_exec(uint32_t tubecycles)
 				else
 					psr |= F_FLAG;
 				break;
-
-//                                printf("EXT - R%i %08X R%i %08X R%i %08X %08X\n",temp,genaddr[0],((int)genaddr[0]-(int)&r[0])/4,genaddr[1],((int)genaddr[1]-(int)&r[0])/4,temp2,pc);
-//                                exit(-1);
-
+//          printf("EXT - R%i %08X R%i %08X R%i %08X %08X\n",temp,genaddr[0],((int)genaddr[0]-(int)&r[0])/4,genaddr[1],((int)genaddr[1]-(int)&r[0])/4,temp2,pc);
 			default:
 				printf("Bad NS32016 Type 8 opcode %04X %01X %i\n", opcode, temp,
 						(opcode >> 11) & 7);
@@ -1612,11 +1605,13 @@ void n32016_exec(uint32_t tubecycles)
 			pushd(pc);
 			pc = startpc + temp;
 			break;
+
 		case 0x12: /*RET*/
 			temp = getdisp();
 			pc = popd();
 			sp[SP] += temp;
 			break;
+
 		case 0x22: /*CXP*/
 			temp = getdisp();
 			pushw(0);
@@ -1635,6 +1630,7 @@ void n32016_exec(uint32_t tubecycles)
 //                        printf("PC=%08X\n",pc);
 			nsoutput = 1;
 			break;
+
 		case 0x32: /*RXP*/
 //                        nsoutput=1;
 			temp = getdisp();
@@ -1644,6 +1640,7 @@ void n32016_exec(uint32_t tubecycles)
 			sp[SP] += temp;
 			sb = readmemw(mod) | (readmemw(mod + 2) << 16);
 			break;
+
 		case 0x42: /*RETT*/
 			temp = getdisp();
 			pc = popd();
@@ -1652,6 +1649,7 @@ void n32016_exec(uint32_t tubecycles)
 			sp[SP] += temp;
 			sb = readmemw(mod) | (readmemw(mod + 2) << 16);
 			break;
+
 		case 0x62: /*SAVE*/
 			temp = readmemb(pc);
 			pc++;
@@ -1664,6 +1662,7 @@ void n32016_exec(uint32_t tubecycles)
 				}
 			}
 			break;
+
 		case 0x72: /*RESTORE*/
 			temp = readmemb(pc);
 			pc++;
@@ -1676,6 +1675,7 @@ void n32016_exec(uint32_t tubecycles)
 				}
 			}
 			break;
+
 		case 0x82: /*ENTER*/
 			temp = readmemb(pc);
 			pc++;
@@ -1693,6 +1693,7 @@ void n32016_exec(uint32_t tubecycles)
 				}
 			}
 			break;
+
 		case 0x92: /*EXIT*/
 			temp = readmemb(pc);
 			pc++;
@@ -1707,6 +1708,7 @@ void n32016_exec(uint32_t tubecycles)
 			sp[SP] = fp;
 			fp = popd();
 			break;
+
 		case 0xE2: /*SVC*/
 //                        if (startpc<0x8000) nsoutput=1;
 //if (startpc==0xF016D9) nsoutput=1;
@@ -1736,61 +1738,73 @@ void n32016_exec(uint32_t tubecycles)
 			if (psr & Z_FLAG)
 				pc = startpc + temp;
 			break;
+
 		case 0x1A: /*BNE*/
 			temp = getdisp();
 			if (!(psr & Z_FLAG))
 				pc = startpc + temp;
 			break;
+
 		case 0x4A: /*BH*/
 			temp = getdisp();
 			if (psr & L_FLAG)
 				pc = startpc + temp;
 			break;
+
 		case 0x5A: /*BLS*/
 			temp = getdisp();
 			if (!(psr & L_FLAG))
 				pc = startpc + temp;
 			break;
+
 		case 0x6A: /*BGT*/
 			temp = getdisp();
 			if (psr & N_FLAG)
 				pc = startpc + temp;
 			break;
+
 		case 0x7A: /*BLE*/
 			temp = getdisp();
 			if (!(psr & N_FLAG))
 				pc = startpc + temp;
 			break;
+
 		case 0x8A: /*BFS*/
 			temp = getdisp();
 			if (psr & F_FLAG)
 				pc = startpc + temp;
 			break;
+
 		case 0x9A: /*BFC*/
 			temp = getdisp();
 			if (!(psr & F_FLAG))
 				pc = startpc + temp;
 			break;
+
 		case 0xAA: /*BLO*/
 			temp = getdisp();
 			if (!(psr & (L_FLAG | Z_FLAG)))
 				pc = startpc + temp;
 			break;
+
 		case 0xBA: /*BHS*/
 			temp = getdisp();
 			if (psr & (L_FLAG | Z_FLAG))
 				pc = startpc + temp;
 			break;
+
 		case 0xCA: /*BLT*/
 			temp = getdisp();
 			if (!(psr & (N_FLAG | Z_FLAG)))
 				pc = startpc + temp;
 			break;
+
 		case 0xDA: /*BGE*/
 			temp = getdisp();
 			if (psr & (N_FLAG | Z_FLAG))
 				pc = startpc + temp;
 			break;
+
 		case 0xEA: /*BR*/
 			pc = startpc + getdisp();
 			break;
@@ -1800,6 +1814,7 @@ void n32016_exec(uint32_t tubecycles)
 			n32016_dumpregs();
 			break;
 		}
+
 		tubecycles -= 8;
 		if (tube_irq & 2)
 		{
@@ -1821,6 +1836,7 @@ void n32016_exec(uint32_t tubecycles)
 			pc = temp2 + temp3;
 //                        printf("PC = %08X\n",pc);
 		}
+
 		if ((tube_irq & 1) && (psr & 0x800))
 		{
 			temp = psr;
