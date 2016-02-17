@@ -510,10 +510,11 @@ void n32016_exec(uint32_t tubecycles)
 		startpc = pc;
 		opcode = readmemb(pc);
 
-		printf("PC:%06X INST:%02X %s\n", startpc, opcode, InstuctionLookup(opcode));
+		ShowInstruction(startpc);
 
-		if (startpc == 0x1CB8)
+		if (startpc == 0x1CB2)
 		{
+			n32016_dumpregs();
 			printf("Epic Fail!\n");
 		}
 //                if (nsoutput && (pc<0xF000A0 || pc>0xF000B3)) printf("%08X %08X %08X %08X %08X %08X %04X : %02X %02X %02X %02X\n",pc,r[0],r[1],r[2],r[3],sp[SP],psr,opcode,readmemb(pc+1),readmemb(pc+2),readmemb(pc+3));
@@ -1168,8 +1169,7 @@ void n32016_exec(uint32_t tubecycles)
 			switch (opcode & 0x3F)
 			{
 			case 8: /*CBITB*/
-				readgenb(0, temp)
-				;
+				readgenb(0, temp);
 				temp &= 31;
 				if (gentype[1])
 				{
@@ -1207,13 +1207,18 @@ void n32016_exec(uint32_t tubecycles)
 
 			case 0x24: // NOTB
 				{
-					uint8_t a;
-					readgenb(0, a);
-					readgenl(1, temp2);
-					temp2 &= 0xFFFFFF00;
-					a = !a;
-					temp2 |= a;
-					writegenl(1, temp2);
+					int8_t a;
+					//readgenb(0, temp2);
+					readgenl(1, temp);
+					//temp2 &= 0xFFFFFF00;
+					//a = (!a);
+					//temp2 |= a;
+					a = temp;
+					a = ~a;
+					a++;
+					temp &= 0xFFFFFF00;
+					temp |= a;
+					writegenl(1, temp);
 				}	
 				break;
 
