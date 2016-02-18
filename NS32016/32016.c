@@ -10,32 +10,17 @@
 #include "../bare-metal/tube-lib.h"
 #include "PandoraV0_61.h"
 
-static int nsoutput = 0;
-#define r ns_r
-#define pc ns_pc
-#define sp ns_sp
-#define fp ns_fp
-#define sb ns_sb
-#define intbase ns_intbase
-#define psr ns_psr
-#define mod ns_mod
-#define cycles ns_cycles
-
-#define readmemb ns_readmemb
-#define writememb ns_writememb
-#define readmemw ns_readmemw
-#define writememw ns_writememw
+int nsoutput = 0;
+int gentype[2];
+int nscfg;
 
 uint8_t ns32016ram[MEG16];
-static uint16_t readmemw(uint32_t addr);
-static void writememw(uint32_t addr, uint16_t val);
-
 uint32_t tube_irq = 0;
-static uint32_t r[8];
-static uint32_t pc, sp[2], fp, sb, intbase;
-static uint16_t psr, mod;
-static uint32_t startpc;
-static int nscfg;
+uint32_t r[8];
+uint32_t pc, sp[2], fp, sb, intbase;
+uint16_t psr, mod;
+uint32_t startpc;
+uint32_t genaddr[2];
 
 #define C_FLAG 0x01
 #define T_FLAG 0x02
@@ -50,68 +35,15 @@ static int nscfg;
 #define P_FLAG 0x400
 #define I_FLAG 0x800
 
-#define SP ((psr&S_FLAG)>>9)
-
-static void pushw(uint16_t val)
-{
-	sp[SP] -= 2;
-	writememw(sp[SP], val);
-}
-static void pushd(uint32_t val)
-{
-	sp[SP] -= 4;
-//      if (nsoutput) printf("Push %08X to %08X\n",val,sp[SP]);
-	writememw(sp[SP], val);
-	writememw(sp[SP] + 2, val >> 16);
-}
-static uint16_t popw()
-{
-	uint16_t temp = readmemw(sp[SP]);
-	sp[SP] += 2;
-	return temp;
-}
-static uint32_t popd()
-{
-	uint32_t temp = readmemw(sp[SP]) | (readmemw(sp[SP] + 2) << 16);
-	sp[SP] += 4;
-	return temp;
-}
+#define SP ((psr & S_FLAG) >> 9)
 
 void n32016_reset()
 {
 	pc = 0;
 	psr = 0;
-	memcpy(ns32016ram, PandoraV0_61, 16);
 }
 
-void n32016_init()
-{
-#if 0
-	FILE *f;
-	char fn[512];
-	if (!ns32016rom)
-	ns32016rom = malloc(0x8000);
-	if (!ns32016ram)
-	ns32016ram = malloc(0x100000);
-	append_filename(fn, exedir, "roms/tube/Pandora.rom", 511);
-	f = fopen(fn, "rb");
-	fread(ns32016rom, 0x8000, 1, f);
-	fclose(f);
-	memset(ns32016ram, 0, 0x100000);
-#endif
-}
-
-void n32016_close()
-{
-#if 0
-	if (ns32016rom)
-	free(ns32016rom);
-	if (ns32016ram)
-	free(ns32016ram);
-#endif
-}
-
-static void n32016_dumpregs()
+void n32016_dumpregs()
 {
 	//FILE *f = fopen("32016.dmp", "wb");
 	//fwrite(ns32016ram, 1024 * 1024, 1, f);
@@ -124,30 +56,22 @@ static void n32016_dumpregs()
 	//exit(1);
 }
 
-static uint8_t readmemb(uint32_t addr)
-{
-	addr &= 0xFFFFFF;
+#define MEM_MASK 0xFFFFFF
+#define RAM_SIZE 0x100000
+//#define RAM_SIZE 0x400000
 
-	if (addr < 0x100000)
+uint8_t readmemb(uint32_t addr)
+{
+	addr &= MEM_MASK;
+
+	if (addr < RAM_SIZE)
 	{
 		return ns32016ram[addr];
 	}
 
-	if ((addr & ~0x7FFF) == 0xF00000)
-	{
-		return PandoraV0_61[addr & 0x7FFF];
-	}
-
-	if (addr == 0xF90000)
-	{
-		return 0; /*What's here?*/
-	}
-
 	if (addr >= 0xFFFFF0)
 	{
-		uint8_t temp = tubeRead(addr >> 1);
-//    if (addr&2) printf("Read TUBE %08X %02X\n",addr,temp);
-		return temp;
+		return tubeRead(addr >> 1);
 	}
 
 	printf("Bad readmemb %08X\n", addr);
@@ -158,7 +82,7 @@ static uint8_t readmemb(uint32_t addr)
 
 static uint16_t readmemw(uint32_t addr)
 {
-	addr &= 0xFFFFFF;
+	addr &= MEM_MASK;
 	if (addr < 0x100000)
 	{
 //    printf("Read %08X %04X\n",addr,ns32016ram[addr&0xFFFFF]|(ns32016ram[(addr+1)&0xFFFFF]<<8));
@@ -185,10 +109,9 @@ static uint16_t readmemw(uint32_t addr)
 
 static void writememb(uint32_t addr, uint8_t val)
 {
-	addr &= 0xFFFFFF;
+	addr &= MEM_MASK;
 
-// if (addr==0xFFDC8) printf("Writeb %08X %02X %08X\n",addr,val,pc);
-	if (addr < 0x100000)
+	if (addr < RAM_SIZE)
 	{
 		ns32016ram[addr] = val;
 		return;
@@ -202,7 +125,6 @@ static void writememb(uint32_t addr, uint8_t val)
 	if (addr >= 0xFFFFF0)
 	{
 		tubeWrite(addr >> 1, val);
-		/*printf("Write tube %08X %02X %c\n",addr,val,(val<33)?'.':val);*//*if (nsoutput) exit(-1);*//*if (val=='K') { n32016_dumpregs(); exit(-1); } */
 		return;
 	}
 
@@ -212,18 +134,12 @@ static void writememb(uint32_t addr, uint8_t val)
 
 static void writememw(uint32_t addr, uint16_t val)
 {
-	addr &= 0xFFFFFF;
-// if ((addr&~1)==0xFFDC8) printf("Writew %08X %04X %08X\n",addr,val,pc);
+	addr &= MEM_MASK;
 
-	if (addr < 0x100000)
+	if (addr < RAM_SIZE)
 	{
-//    printf("Write %08X %04X  ",addr,val);
-
 		ns32016ram[addr] = val & 0xFF;
 		ns32016ram[addr + 1] = val >> 8;
-
-//    printf("%02X %02X\n",ns32016ram[addr],ns32016ram[addr+1]);
-
 		return;
 	}
 
@@ -236,8 +152,35 @@ static void writememw(uint32_t addr, uint16_t val)
 	n32016_dumpregs();
 }
 
-static uint32_t genaddr[2];
-static int gentype[2];
+static void pushw(uint16_t val)
+{
+	sp[SP] -= 2;
+	writememw(sp[SP], val);
+}
+
+static void pushd(uint32_t val)
+{
+	sp[SP] -= 4;
+
+	writememw(sp[SP], val);
+	writememw(sp[SP] + 2, val >> 16);
+}
+
+static uint16_t popw()
+{
+	uint16_t temp = readmemw(sp[SP]);
+	sp[SP] += 2;
+
+	return temp;
+}
+
+static uint32_t popd()
+{
+	uint32_t temp = readmemw(sp[SP]) | (readmemw(sp[SP] + 2) << 16);
+	sp[SP] += 4;
+
+	return temp;
+}
 
 static uint32_t getdisp()
 {
@@ -245,36 +188,36 @@ static uint32_t getdisp()
 	pc++;
 	if (!(addr & 0x80))
 	{
-//                printf("8 bit addr %08X\n",addr);
 		return addr | ((addr & 0x40) ? 0xFFFFFF80 : 0);
 	}
-	else if (!(addr & 0x40))
+
+	if (!(addr & 0x40))
 	{
 		addr &= 0x3F;
 		addr = (addr << 8) | readmemb(pc);
 		pc++;
-//                printf("16 bit addr %08X\n",addr);
+
 		return addr | ((addr & 0x2000) ? 0xFFFFC000 : 0);
 	}
-	else
-	{
-		addr &= 0x3F;
-		addr = (addr << 24) | (readmemb(pc) << 16);
-		pc++;
-		addr = addr | (readmemb(pc) << 8);
-		pc++;
-		addr = addr | readmemb(pc);
-		pc++;
-//                printf("32 bit addr %08X\n",addr);
-		return addr | ((addr & 0x20000000) ? 0xC0000000 : 0);
-	}
+
+	addr &= 0x3F;
+	addr = (addr << 24) | (readmemb(pc) << 16);
+	pc++;
+	addr = addr | (readmemb(pc) << 8);
+	pc++;
+	addr = addr | readmemb(pc);
+	pc++;
+
+	return addr | ((addr & 0x20000000) ? 0xC0000000 : 0);
 }
 
-static int isize = 0;
-static int ilook[4] =
-{ 1, 2, 0, 4 };
+int isize = 0;
+int ilook[4] =
+{
+	1, 2, 0, 4
+};
 
-static int genindex[2];
+int genindex[2];
 static void getgen1(int gen, int c)
 {
 	if ((gen & 0x1C) == 0x1C)
@@ -284,14 +227,17 @@ static void getgen1(int gen, int c)
 	}
 }
 
-static int sdiff[2] =
-{ 0, 0 };
-static uint32_t nsimm[2];
+int sdiff[2] =
+{
+	0, 0
+};
+
+uint32_t nsimm[2];
 
 static void getgen(int gen, int c)
 {
 	uint32_t temp, temp2;
-//        if (nsoutput&2) printf("Gen %02X %i\n",gen&0x1F,c);
+
 	switch (gen & 0x1F)
 	{
 	case 0:
@@ -305,6 +251,7 @@ static void getgen(int gen, int c)
 		gentype[c] = 1;
 		genaddr[c] = (uint32_t) & r[gen & 7];
 		break;
+
 	case 8:
 	case 9:
 	case 0xA:
@@ -315,39 +262,33 @@ static void getgen(int gen, int c)
 	case 0xF:
 		gentype[c] = 0;
 		genaddr[c] = r[gen & 7] + getdisp();
-//                printf("RDisp %08X\n",genaddr[c]);
 		break;
+
 	case 0x10: /*Frame memory relative*/
 		temp = getdisp();
 		temp2 = getdisp();
-//                if (nsoutput) printf("First addr %08X (%08X+%08X\n",fp+temp,fp,temp);
 		genaddr[c] = readmemw(fp + temp) | (readmemw(fp + temp + 2) << 16);
-//                if (nsoutput) printf("Second addr %08X\n",genaddr[c]);
 		genaddr[c] += temp2;
-//                if (nsoutput) printf("Final addr %08X %08X\n",genaddr[c],temp2);
 		gentype[c] = 0;
 		break;
+
 	case 0x11: /*Stack memory relative*/
 		temp = getdisp();
 		temp2 = getdisp();
-//                if (nsoutput) printf("First addr %08X (%08X+%08X\n",sp[SP]+temp,sp[SP],temp);
 		genaddr[c] = readmemw(sp[SP] + temp)
 				| (readmemw(sp[SP] + temp + 2) << 16);
-//                if (nsoutput) printf("Second addr %08X\n",genaddr[c]);
 		genaddr[c] += temp2;
-//                if (nsoutput) printf("Final addr %08X %08X\n",genaddr[c],temp2);
 		gentype[c] = 0;
 		break;
+
 	case 0x12: /*Static memory relative*/
 		temp = getdisp();
 		temp2 = getdisp();
-//                if (nsoutput) printf("First addr %08X (%08X+%08X\n",sb+temp,sb,temp);
 		genaddr[c] = readmemw(sb + temp) | (readmemw(sb + temp + 2) << 16);
-//                if (nsoutput) printf("Second addr %08X\n",genaddr[c]);
 		genaddr[c] += temp2;
-//                if (nsoutput) printf("Final addr %08X %08X\n",genaddr[c],temp2);
 		gentype[c] = 0;
 		break;
+
 	case 0x14: /*Immediate*/
 		/*                genaddr[c]=pc;
 		 gentype[c]=0;*/
@@ -362,14 +303,13 @@ static void getgen(int gen, int c)
 			nsimm[c] = (readmemb(pc) << 24) | (readmemb(pc + 1) << 16)
 					| (readmemb(pc + 2) << 8) | readmemb(pc + 3);
 		pc += isize;
-//                printf("PC %08X %i\n",pc,isize);
 		break;
 
 	case 0x15: /*Absolute*/
 		gentype[c] = 0;
 		genaddr[c] = getdisp();
-//                printf("Disp %08X\n",genaddr[c]);
 		break;
+
 	case 0x16: /*External*/
 		gentype[c] = 0;
 		temp = readmemw(mod + 4) + (readmemw(mod + 6) << 16);
@@ -377,12 +317,11 @@ static void getgen(int gen, int c)
 		temp2 = readmemw(temp) + (readmemw(temp + 2) << 16);
 		genaddr[c] = temp2 + getdisp();
 		break;
+
 	case 0x17: /*Stack*/
-//                nsoutput=1;
 		gentype[c] = 0;
 		sdiff[c] = isize;
 		genaddr[c] = sp[SP];
-//                printf("TOS %i %i\n",sdiff,isize);
 		/*                if (c)
 		 {
 		 sp[SP]-=isize;
@@ -398,22 +337,18 @@ static void getgen(int gen, int c)
 	case 0x18: /*FP relative*/
 		gentype[c] = 0;
 		genaddr[c] = getdisp() + fp;
-//                printf("FPAddr %08X %08X\n",genaddr[c],fp);
 		break;
 	case 0x19: /*SP relative*/
 		gentype[c] = 0;
 		genaddr[c] = getdisp() + sp[SP];
-//                printf("SPAddr %08X %08X\n",genaddr[c],sp[SP]);
 		break;
 	case 0x1A: /*SB relative*/
 		gentype[c] = 0;
 		genaddr[c] = getdisp() + sb;
-//                if (nsoutput) printf("SBAddr %08X %08X\n",genaddr[c],sb);
 		break;
 	case 0x1B: /*PC relative*/
 		gentype[c] = 0;
 		genaddr[c] = getdisp() + startpc;
-//                printf("Addr %08X %08X %08X\n",genaddr[c],pc,startpc);
 		break;
 
 	case 0x1C: /*EA + Rn*/
@@ -422,7 +357,6 @@ static void getgen(int gen, int c)
 			genaddr[c] += r[genindex[c] & 7];
 		else
 			genaddr[c] = *(uint32_t *) genaddr[c] + r[genindex[c] & 7];
-//                if (nsoutput&2) printf("EA + R%i addr %08X %02X\n",genindex[c]&7,genaddr[c],genindex[c]);
 		gentype[c] = 0;
 		break;
 	case 0x1D: /*EA + Rn*2*/
@@ -431,7 +365,6 @@ static void getgen(int gen, int c)
 			genaddr[c] += (r[genindex[c] & 7] * 2);
 		else
 			genaddr[c] = *(uint32_t *) genaddr[c] + (r[genindex[c] & 7] * 2);
-//                printf("EA + Rn*2 addr %08X\n",genaddr[c]);
 		gentype[c] = 0;
 		break;
 
@@ -478,10 +411,10 @@ static void getgen(int gen, int c)
                                         writememb(genaddr[c],temp); \
                                 }
 
-#define writegenw(c,temp)       if (gentype[c]) *(uint16_t *)genaddr[c]=temp; \
+#define writegenw(c,temp)		if (gentype[c]) *(uint16_t*) genaddr[c]=temp; \
                                 else \
                                 { \
-                                        if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]-sdiff[c]; \
+											if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]-sdiff[c]; \
                                         writememw(genaddr[c],temp); \
                                 }
 
@@ -505,8 +438,6 @@ void n32016_exec(uint32_t tubecycles)
 	while (tubecycles > 0)
 	{
 		sdiff[0] = sdiff[1] = 0;
-		//                if (pc==0xF00A3C) nsoutput=1;
-		//                if (pc==0xF00A73) nsoutput=0;
 		startpc = pc;
 		opcode = readmemb(pc);
 
@@ -517,7 +448,7 @@ void n32016_exec(uint32_t tubecycles)
 			n32016_dumpregs();
 			printf("Epic Fail!\n");
 		}
-//                if (nsoutput && (pc<0xF000A0 || pc>0xF000B3)) printf("%08X %08X %08X %08X %08X %08X %04X : %02X %02X %02X %02X\n",pc,r[0],r[1],r[2],r[3],sp[SP],psr,opcode,readmemb(pc+1),readmemb(pc+2),readmemb(pc+3));
+
 		pc++;
 		isize = ilook[opcode & 3];
 		switch (opcode)
@@ -537,28 +468,26 @@ void n32016_exec(uint32_t tubecycles)
 							opcode, (opcode >> 15) & 0xF);
 					n32016_dumpregs();
 				}
-//                                printf("MOVSB %08X %08X %08X  %08X\n",r[1],r[2],r[0],pc);
+
 				while (r[0])
 				{
 					temp = readmemb(r[1]);
 					r[1]++;
 					if ((temp2 & 0xC) == 0xC && temp == r[4])
-					{ /*printf("Break EQ\n");*/
+					{
 						break;
 					}
 					if ((temp2 & 0xC) == 0x4 && temp != r[4])
-					{ /*printf("Break NE\n");*/
+					{
 						break;
 					}
 					writememb(r[2], temp);
 					r[2]++;
 					r[0]--;
-//                                        printf("MOVS %02X %08X %08X %08X %01X\n",temp,r[1],r[2],r[4],temp);
 				}
 				break;
 
 			case 0x03: /*MOVS dword*/
-//                                printf("MOVSD %08X %08X %08X  %08X\n",r[1],r[2],r[0],pc);
 				if (temp2)
 				{
 					printf("Bad NS32016 MOVS %02X %04X %01X\n", (opcode >> 15) & 0xF,
@@ -599,7 +528,6 @@ void n32016_exec(uint32_t tubecycles)
 			if (temp2 & 8)
 				temp2 |= 0xFFFFFFF0;
 			readgenb(0, temp);
-//                        if (!temp) nsoutput=1;
 			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
 			if (temp == temp2)
 				psr |= Z_FLAG;
@@ -618,7 +546,6 @@ void n32016_exec(uint32_t tubecycles)
 			if (temp2 & 8)
 				temp2 |= 0xFFFFFFF0;
 			readgenl(0, temp);
-//                        if (!temp) nsoutput=1;
 			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
 			if (temp == temp2)
 				psr |= Z_FLAG;
@@ -626,7 +553,6 @@ void n32016_exec(uint32_t tubecycles)
 				psr |= L_FLAG;
 			if (((signed long) temp2) > ((signed long) temp))
 				psr |= N_FLAG;
-//       printf("CMPQ %08X %08X %i %i\n",temp,temp2,temp>temp2,((signed long)temp)>((signed long)temp2));
 			break;
 
 		CASE2(0x5C): // MOVQ byte
@@ -1035,8 +961,6 @@ void n32016_exec(uint32_t tubecycles)
 			nsoutput &= ~2;
 			readgenl(0, temp);
 			readgenl(1, temp2);
-
-//       printf("CMP %08X %08X %i %i\n",temp,temp2,temp>temp2,(((signed long)temp)>((signed long)temp2)));
 			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
 			if (temp == temp2)
 				psr |= Z_FLAG;
@@ -1113,12 +1037,8 @@ void n32016_exec(uint32_t tubecycles)
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-//                      printf("Read from %08X write to %08X\n",genaddr[0],genaddr[1]);
-			readgenl(0, temp)
-			;
-//                        printf("Dat %08X\n",temp);
-			writegenl(1, temp)
-			;
+			readgenl(0, temp);
+			writegenl(1, temp);
 			break;
 
 		CASE4(0x18): //OR byte
@@ -1227,9 +1147,7 @@ void n32016_exec(uint32_t tubecycles)
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-//			printf("Writegenl %08X ",sp[SP]);
 			writegenl(1, genaddr[0]);
-//			printf("%08X\n",sp[SP]);
 			break;
 
 		CASE4(0x28): // AND byte
@@ -1414,26 +1332,21 @@ void n32016_exec(uint32_t tubecycles)
 			switch ((opcode >> 7) & 0xF)
 			{
 			case 2: /*BICPSR*/
-				readgenb(0, temp)
-				;
+				readgenb(0, temp);
 				psr &= ~temp;
 				break;
 			case 6: /*BISPSR*/
-				readgenb(0, temp)
-				;
+				readgenb(0, temp);
 				psr |= temp;
-//                                nsoutput=1;
 				break;
 			case 0xA: /*ADJSP*/
-				readgenb(0, temp2)
-				;
+				readgenb(0, temp2);
 				if (temp2 & 0x80)
 					temp2 |= 0xFFFFFF00;
 				sp[SP] -= temp2;
 				break;
 			case 0xE: /*CASE*/
-				readgenb(0, temp)
-				;
+				readgenb(0, temp);
 				if (temp & 0x80)
 					temp |= 0xFFFFFF00;
 				pc = startpc + temp;
@@ -1455,25 +1368,21 @@ void n32016_exec(uint32_t tubecycles)
 			switch ((opcode >> 7) & 0xF)
 			{
 			case 2: /*BICPSR*/
-				readgenw(0, temp)
-				;
+				readgenw(0, temp);
 				psr &= ~temp;
 				break;
 			case 6: /*BISPSR*/
-				readgenw(0, temp)
-				;
+				readgenw(0, temp);
 				psr |= temp;
 				break;
 			case 0xA: /*ADJSP*/
-				readgenw(0, temp2)
-				;
+				readgenw(0, temp2);
 				if (temp & 0x8000)
 					temp |= 0xFFFF0000;
 				sp[SP] -= temp2;
 				break;
 			case 0xE: /*CASE*/
-				readgenw(0, temp)
-				;
+				readgenw(0, temp);
 				if (temp & 0x8000)
 					temp |= 0xFFFF0000;
 				pc = startpc + temp;
@@ -1495,21 +1404,15 @@ void n32016_exec(uint32_t tubecycles)
 			switch ((opcode >> 7) & 0xF)
 			{
 			case 0: /*CXPD*/
-				readgenl(0, temp)
-				;
-//                                printf("CXPD %08X\n",temp);
+				readgenl(0, temp);
 				pushw(0);
 				pushw(mod);
 				pushd(pc);
 				mod = temp & 0xFFFF;
 				temp3 = temp >> 16;
-//                                printf("MOD %04X OFFSET %04X\n",mod,temp3);
 				sb = readmemw(mod) | (readmemw(mod + 2) << 16);
-//                                printf("SB = %08X\n",sb);
 				temp2 = readmemw(mod + 8) | (readmemw(mod + 10) << 16);
-//                                printf("PC temp2 = %08X\n",temp2);
 				pc = temp2 + temp3;
-//                                printf("PC = %08X\n",pc);
 				break;
 			case 4: /*JUMP*/
 				if (gentype[0])
@@ -1518,8 +1421,7 @@ void n32016_exec(uint32_t tubecycles)
 					pc = genaddr[0];
 				break;
 			case 0xA: /*ADJSP*/
-				readgenl(0, temp2)
-				;
+				readgenl(0, temp2);
 				sp[SP] -= temp2;
 				break;
 
@@ -1547,7 +1449,7 @@ void n32016_exec(uint32_t tubecycles)
 				writegenl(0, sb);
 				break;
 			case 0xF:
-				writegenl(0, mod); /*nsoutput=1; */
+				writegenl(0, mod);
 				break;
 			default:
 				printf("Bad SPR reg %01X\n", (opcode >> 7) & 0xF);
@@ -1681,7 +1583,6 @@ void n32016_exec(uint32_t tubecycles)
 				break;
 
 			case 0x18: /*MOVZBD*/
-//                                printf("Read MOVZ from %08X\n",genaddr[0]);
 				readgenb(0, temp);
 				if (sdiff[1])
 					sdiff[1] = 4;
@@ -1764,8 +1665,7 @@ void n32016_exec(uint32_t tubecycles)
 			case 0: /*EXT*/
 				temp = r[(opcode >> 11) & 7] & 31;
 				temp2 = getdisp();
-				readgenl(0, temp3)
-				;
+				readgenl(0, temp3);
 				temp4 = 0;
 				for (c = 0; c < temp2; c++)
 				{
@@ -1786,7 +1686,6 @@ void n32016_exec(uint32_t tubecycles)
 				else
 					psr |= F_FLAG;
 				break;
-//          printf("EXT - R%i %08X R%i %08X R%i %08X %08X\n",temp,genaddr[0],((int)genaddr[0]-(int)&r[0])/4,genaddr[1],((int)genaddr[1]-(int)&r[0])/4,temp2,pc);
 			default:
 				printf("Bad NS32016 Type 8 opcode %04X %01X %i\n", opcode, temp,
 						(opcode >> 11) & 7);
@@ -1811,22 +1710,14 @@ void n32016_exec(uint32_t tubecycles)
 			pushw(0);
 			pushw(mod);
 			pushd(pc);
-//                        printf("CXP %08X\n",temp);
 			temp2 = readmemw(mod + 4) + (readmemw(mod + 6) << 16) + (4 * temp);
-//                        printf("%08X\n",temp2);
 			temp = readmemw(temp2) + (readmemw(temp2 + 2) << 16);
-//                        printf("%08X\n",temp);
 			mod = temp & 0xFFFF;
-//                        printf("MOD=%04X\n",mod);
 			sb = readmemw(mod) + (readmemw(mod + 2) << 16);
-//                        printf("SB=%08X\n",sb);
 			pc = readmemw(mod + 8) + (readmemw(mod + 10) << 16) + (temp >> 16);
-//                        printf("PC=%08X\n",pc);
-			nsoutput = 1;
 			break;
 
 		case 0x32: /*RXP*/
-//                        nsoutput=1;
 			temp = getdisp();
 			pc = popd();
 			temp2 = popd();
@@ -1852,7 +1743,6 @@ void n32016_exec(uint32_t tubecycles)
 				if (temp & (1 << c))
 				{
 					pushd(r[c]);
-//                                        printf("SAVE R%i\n",c);
 				}
 			}
 			break;
@@ -1865,7 +1755,6 @@ void n32016_exec(uint32_t tubecycles)
 				if (temp & (1 << c))
 				{
 					r[c ^ 7] = popd(r[c]);
-//                                        printf("RESTORE R%i\n",c^7);
 				}
 			}
 			break;
@@ -1877,13 +1766,12 @@ void n32016_exec(uint32_t tubecycles)
 			pushd(fp);
 			fp = sp[SP];
 			sp[SP] -= temp2;
-//                        printf("ENTER - Rlist %02X Disp %08X\n",temp,temp2);
+
 			for (c = 0; c < 8; c++)
 			{
 				if (temp & (1 << c))
 				{
 					pushd(r[c]);
-//                                        printf("ENTER R%i\n",c);
 				}
 			}
 			break;
@@ -1896,7 +1784,6 @@ void n32016_exec(uint32_t tubecycles)
 				if (temp & (1 << c))
 				{
 					r[c ^ 7] = popd(r[c]);
-//                                        printf("EXIT R%i\n",c^7);
 				}
 			}
 			sp[SP] = fp;
@@ -1904,27 +1791,15 @@ void n32016_exec(uint32_t tubecycles)
 			break;
 
 		case 0xE2: /*SVC*/
-//                        if (startpc<0x8000) nsoutput=1;
-//if (startpc==0xF016D9) nsoutput=1;
 			temp = psr;
 			psr &= ~0x700;
-//                        printf("Push %04X\n",temp); pushw(temp);
-//                        printf("Push %04X\n",mod); pushw(mod);
-//                        printf("Push %08X\n",startpc); pushd(startpc);
-//                        printf("SVC!\n");
-//                        n32016_dumpregs();
-//                        exit(-1);
 			temp = readmemw(intbase + (5 * 4))
 					| (readmemw(intbase + (5 * 4) + 2) << 16);
 			mod = temp & 0xFFFF;
 			temp3 = temp >> 16;
-//                        printf("MOD %04X OFFSET %04X\n",mod,temp3);
 			sb = readmemw(mod) | (readmemw(mod + 2) << 16);
-//                        printf("SB = %08X\n",sb);
 			temp2 = readmemw(mod + 8) | (readmemw(mod + 10) << 16);
-//                        printf("PC temp2 = %08X\n",temp2);
 			pc = temp2 + temp3;
-			//printf("PC = %08X\n",pc);
 			break;
 
 		case 0x0A: /*BEQ*/
@@ -2017,18 +1892,13 @@ void n32016_exec(uint32_t tubecycles)
 			pushw(temp);
 			pushw(mod);
 			pushd(pc);
-//                        printf("NMI!\n");
 			temp = readmemw(intbase + (1 * 4))
 					| (readmemw(intbase + (1 * 4) + 2) << 16);
 			mod = temp & 0xFFFF;
 			temp3 = temp >> 16;
-//                        printf("MOD %04X OFFSET %04X\n",mod,temp3);
 			sb = readmemw(mod) | (readmemw(mod + 2) << 16);
-//                        printf("SB = %08X\n",sb);
 			temp2 = readmemw(mod + 8) | (readmemw(mod + 10) << 16);
-//                        printf("PC temp2 = %08X\n",temp2);
 			pc = temp2 + temp3;
-//                        printf("PC = %08X\n",pc);
 		}
 
 		if ((tube_irq & 1) && (psr & 0x800))
@@ -2038,24 +1908,14 @@ void n32016_exec(uint32_t tubecycles)
 			pushw(temp);
 			pushw(mod);
 			pushd(pc);
-//                        printf("Interrupt!\n");
 			temp = readmemw(intbase) | (readmemw(intbase + 2) << 16);
 			mod = temp & 0xFFFF;
 			temp3 = temp >> 16;
-//                        printf("MOD %04X OFFSET %04X\n",mod,temp3);
 			sb = readmemw(mod) | (readmemw(mod + 2) << 16);
-//                        printf("SB = %08X\n",sb);
 			temp2 = readmemw(mod + 8) | (readmemw(mod + 10) << 16);
-//                        printf("PC temp2 = %08X\n",temp2);
 			pc = temp2 + temp3;
-//                        printf("PC = %08X\n",pc);
-//                        nsoutput=1;
 		}
-		/*                if ((oldpsr^psr)&0x800)
-		 {
-		 if (psr&0x800) printf("INT enabled at %08X\n",startpc);
-		 else           printf("INT disabled at %08X\n",startpc);
-		 }*/
+
 		oldpsr = psr;
 	}
 }

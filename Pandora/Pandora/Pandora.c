@@ -23,7 +23,7 @@ unsigned char tubeRead(unsigned char Address)
 void init(void)
 {
 	memset(ns32016ram, 0, sizeof(ns32016ram));
-#if 1
+#if 0
 	memcpy(ns32016ram, boot_rom, sizeof(boot_rom));
 #else
 	memcpy(ns32016ram, PandoraV2_00, sizeof(PandoraV2_00));
@@ -33,8 +33,7 @@ void init(void)
 int _tmain(int argc, _TCHAR* argv[])
 {
 	init();
-
-	n32016_init();
+	n32016_reset();
 
 	while (1)
 	{
