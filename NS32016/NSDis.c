@@ -14,6 +14,8 @@ const char* InstuctionLookup(uint8_t* pPC)
 	CASE2(0x1F):	return "CMPQ dword";
 	CASE2(0x2F):	return "SPR";
 	CASE2(0x3C):	return "ScondB";
+	CASE2(0x3D):	return "ScondW";
+	CASE2(0x3F):   return "ScondD";
 	CASE2(0x4C):	return "ACBB";
 	CASE2(0x4F):	return "ACBD";
 	CASE2(0x5C):	return "MOVQ byte";
@@ -87,6 +89,7 @@ const char* InstuctionLookup(uint8_t* pPC)
 void ShowInstruction(uint32_t startpc)
 {
 	uint8_t opcode = ns32016ram[startpc];
+	uint8_t opcode2 = ns32016ram[startpc + 1];
 
-	printf("PC:%06X INST:%02X %s\n", startpc, opcode, InstuctionLookup(&ns32016ram[startpc]));
+	printf("PC:%06X INST:%02X [%02X] %s\n", startpc, opcode, opcode2, InstuctionLookup(&ns32016ram[startpc]));
 }

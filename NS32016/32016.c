@@ -790,7 +790,155 @@ void n32016_exec(uint32_t tubecycles)
 			writegenb(0, temp);
 			break;
 
-		CASE2(0x4C): // ACBB
+		CASE2(0x3D) : // ScondW
+			opcode |= (readmemb(pc) << 8);
+			pc++;
+			getgen1(opcode >> 11, 0);
+			getgen(opcode >> 11, 0);
+			//                        readgenb(0,temp);
+			temp = 0;
+			switch ((opcode >> 7) & 0xF)
+			{
+			case 0x0:
+				if (psr & Z_FLAG)
+					temp = 1;
+				break;
+			case 0x1:
+				if (!(psr & Z_FLAG))
+					temp = 1;
+				break;
+			case 0x2:
+				if (psr & C_FLAG)
+					temp = 1;
+				break;
+			case 0x3:
+				if (!(psr & C_FLAG))
+					temp = 1;
+				break;
+			case 0x4:
+				if (psr & L_FLAG)
+					temp = 1;
+				break;
+			case 0x5:
+				if (!(psr & L_FLAG))
+					temp = 1;
+				break;
+			case 0x6:
+				if (psr & N_FLAG)
+					temp = 1;
+				break;
+			case 0x7:
+				if (!(psr & N_FLAG))
+					temp = 1;
+				break;
+			case 0x8:
+				if (!(psr & (L_FLAG | Z_FLAG)))
+					temp = 1;
+				break;
+			case 0x9:
+				if (psr & (L_FLAG | Z_FLAG))
+					temp = 1;
+				break;
+			case 0xA:
+				if (!(psr & (N_FLAG | Z_FLAG)))
+					temp = 1;
+				break;
+			case 0xB:
+				if (psr & (N_FLAG | Z_FLAG))
+					temp = 1;
+				break;
+			case 0xC:
+				if (psr & Z_FLAG)
+					temp = 1;
+				break;
+			case 0xD:
+				if (!(psr & Z_FLAG))
+					temp = 1;
+				break;
+			case 0xE:
+				temp = 1;
+				break;
+			case 0xF:
+				break;
+			}
+			writegenw(0, temp);
+			break;
+
+		CASE2(0x3F) : // ScondD
+			opcode |= (readmemb(pc) << 8);
+			pc++;
+			getgen1(opcode >> 11, 0);
+			getgen(opcode >> 11, 0);
+			//                        readgenb(0,temp);
+			temp = 0;
+			switch ((opcode >> 7) & 0xF)
+			{
+			case 0x0:
+				if (psr & Z_FLAG)
+					temp = 1;
+				break;
+			case 0x1:
+				if (!(psr & Z_FLAG))
+					temp = 1;
+				break;
+			case 0x2:
+				if (psr & C_FLAG)
+					temp = 1;
+				break;
+			case 0x3:
+				if (!(psr & C_FLAG))
+					temp = 1;
+				break;
+			case 0x4:
+				if (psr & L_FLAG)
+					temp = 1;
+				break;
+			case 0x5:
+				if (!(psr & L_FLAG))
+					temp = 1;
+				break;
+			case 0x6:
+				if (psr & N_FLAG)
+					temp = 1;
+				break;
+			case 0x7:
+				if (!(psr & N_FLAG))
+					temp = 1;
+				break;
+			case 0x8:
+				if (!(psr & (L_FLAG | Z_FLAG)))
+					temp = 1;
+				break;
+			case 0x9:
+				if (psr & (L_FLAG | Z_FLAG))
+					temp = 1;
+				break;
+			case 0xA:
+				if (!(psr & (N_FLAG | Z_FLAG)))
+					temp = 1;
+				break;
+			case 0xB:
+				if (psr & (N_FLAG | Z_FLAG))
+					temp = 1;
+				break;
+			case 0xC:
+				if (psr & Z_FLAG)
+					temp = 1;
+				break;
+			case 0xD:
+				if (!(psr & Z_FLAG))
+					temp = 1;
+				break;
+			case 0xE:
+				temp = 1;
+				break;
+			case 0xF:
+				break;
+			}
+			writegenl(0, temp);
+			break;
+			
+		CASE2(0x4C) : // ACBB
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -1496,30 +1644,51 @@ void n32016_exec(uint32_t tubecycles)
 			case 0x08: /*INSSB*/
 				temp3 = readmemb(pc);
 				pc++;
-				readgenb(0, temp)
-				;
-				readgenb(1, temp2)
-				;
-				for (c = 0; c <= (temp3 & 31); c++)
+				readgenb(0, temp);
+				readgenb(1, temp2);
+				for (c = 0; c <= (temp3 & 0x1F); c++)
 				{
-					temp2 &= ~(1 << ((c + (temp3 >> 3)) & 7));
+					temp2 &= ~(1 << ((c + (temp3 >> 5)) & 7));
 					if (temp & (1 << c))
-						temp2 |= (1 << ((c + (temp3 >> 3)) & 7));
+						temp2 |= (1 << ((c + (temp3 >> 5)) & 7));
 				}
-				writegenb(1, temp2)
-				;
+				writegenb(1, temp2);
 				break;
+
+			case 0x0C: // EXTSB
+				temp3 = readmemb(pc);
+				pc++;
+				readgenb(0, temp);														// Load the source
+
+				printf("EXTSB Source = %02X Shift = %u Bit Count = %u ", temp, temp3 >> 5, ((temp3 & 0x1F) + 1));
+				temp2 = 0;
+				temp >>= (temp3 >> 5);													// Shift by offset
+				temp3 &= 0x1F;																// Mask off the lower 5 Bits which are number of bits to extract
+
+				temp4 = 1;
+				for (c = 0; c <= temp3; c++)
+				{
+					if (temp & temp4)														// Copy the ones
+					{
+						temp2 |= temp4;
+					}
+
+					temp4 <<= 1;
+				}
+				printf("Result = %02X\n", temp2);
+
+				writegenb(1, temp2);
+				break;
+
 			case 0x18: /*MOVZBD*/
 //                                printf("Read MOVZ from %08X\n",genaddr[0]);
-				readgenb(0, temp)
-				;
+				readgenb(0, temp);
 				if (sdiff[1])
 					sdiff[1] = 4;
 				writegenl(1, temp)
 				break;
 			case 0x19: /*MOVZWD*/
-				readgenw(0, temp)
-				;
+				readgenw(0, temp);
 				if (sdiff[1])
 					sdiff[1] = 4;
 				writegenl(1, temp)
