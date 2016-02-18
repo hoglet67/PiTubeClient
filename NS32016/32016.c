@@ -1207,37 +1207,25 @@ void n32016_exec(uint32_t tubecycles)
 
 			case 0x24: // NOTB
 				{
-					int8_t a;
-					//readgenb(0, temp2);
-					readgenl(1, temp);
-					//temp2 &= 0xFFFFFF00;
-					//a = (!a);
-					//temp2 |= a;
-					a = temp;
-					a = ~a;
-					a++;
-					temp &= 0xFFFFFF00;
-					temp |= a;
-					writegenl(1, temp);
+					readgenb(0, temp);
+					temp ^= 1;
+					writegenb(1, temp);
 				}	
 				break;
 
 			case 0x25: // NOTW
 				{
-					uint16_t a;
-					readgenw(0, a);
-					readgenl(1, temp2);
-					temp2 &= 0xFFFF0000;
-					a = !a;
-					temp2 |= a;
-					writegenl(1, temp2);
+					readgenw(0, temp);
+					temp ^= 1;
+					writegenw(1, temp);
 				}
 				break;
 
 			case 0x27: // NOTD
 				{
 					readgenl(0, temp);
-					writegenl(1, !temp);
+					temp ^= 1;
+					writegenl(1, temp);
 				}
 				break;
 
