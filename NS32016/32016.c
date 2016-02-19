@@ -64,7 +64,7 @@ uint8_t readmemb(uint32_t addr)
 {
 	addr &= MEM_MASK;
 
-	if (addr < RAM_SIZE)
+	//if (addr < RAM_SIZE)
 	{
 		return ns32016ram[addr];
 	}
@@ -83,7 +83,7 @@ uint8_t readmemb(uint32_t addr)
 static uint16_t readmemw(uint32_t addr)
 {
 	addr &= MEM_MASK;
-	if (addr < 0x100000)
+	//if (addr < 0x100000)
 	{
 //    printf("Read %08X %04X\n",addr,ns32016ram[addr&0xFFFFF]|(ns32016ram[(addr+1)&0xFFFFF]<<8));
 		return ns32016ram[addr & 0xFFFFF]
@@ -359,6 +359,7 @@ static void getgen(int gen, int c)
 			genaddr[c] = *(uint32_t *) genaddr[c] + r[genindex[c] & 7];
 		gentype[c] = 0;
 		break;
+
 	case 0x1D: /*EA + Rn*2*/
 		getgen(genindex[c] >> 3, c);
 		if (!gentype[c])

@@ -22,11 +22,16 @@ unsigned char tubeRead(unsigned char Address)
 
 void init(void)
 {
+	uint32_t Address;
+
 	memset(ns32016ram, 0, sizeof(ns32016ram));
 #if 0
 	memcpy(ns32016ram, boot_rom, sizeof(boot_rom));
 #else
-	memcpy(ns32016ram, PandoraV2_00, sizeof(PandoraV2_00));
+	for (Address = 0; Address < 0x1000000; Address += sizeof(PandoraV2_00))
+	{
+		memcpy(&ns32016ram[Address], PandoraV2_00, sizeof(PandoraV2_00));
+	}
 #endif
 }
 
