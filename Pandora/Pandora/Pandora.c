@@ -28,7 +28,7 @@ void init(void)
 #if 0
 	memcpy(ns32016ram, boot_rom, sizeof(boot_rom));
 #else
-	for (Address = 0; Address < 0x1000000; Address += sizeof(PandoraV2_00))
+	for (Address = 0; Address < MEG16; Address += sizeof(PandoraV2_00))
 	{
 		memcpy(&ns32016ram[Address], PandoraV2_00, sizeof(PandoraV2_00));
 	}

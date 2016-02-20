@@ -49,6 +49,10 @@ void sendWord(unsigned char reg, unsigned int word);
 
 unsigned int receiveWord(unsigned char reg);
 
-void enable_MMU_and_IDCaches (void);
+void enable_MMU_and_IDCaches(void);
+
+void enable_JTAG(void);
+
+void enable_SoftTube(void);
 
 #endif

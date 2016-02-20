@@ -10,6 +10,7 @@ void ShowInstruction(uint32_t startpc);
 #define MEG16 0x1000000
 
 extern uint8_t ns32016ram[MEG16];
+extern uint32_t tube_irq;
 
 #define CASE2(in) case (in): case ((in) | 0x80)
 #define CASE4(in) case (in): case ((in) | 0x40): case ((in) | 0x80): case ((in) | 0xC0)

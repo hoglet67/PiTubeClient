@@ -67,10 +67,6 @@ static void copro_i80186_reset()
   //arm2_device_reset();
 }
 
-extern uint8_t ifl;
-extern uint16_t ip;
-extern uint16_t segregs[];
-
 void copro_80186_main(unsigned int r0, unsigned int r1, unsigned int atags)
 {
   register unsigned int gpio;
@@ -96,13 +92,16 @@ void copro_80186_main(unsigned int r0, unsigned int r1, unsigned int atags)
   {
 #if 0
     int log;
-    if (ip == 0x0a00) {
+    if (ip == 0x0a00)
+    {
       log = 1;
     }
-    if (log) {
+    if (log)
+    {
       printf("%04x:%04x\r\n", segregs[1], ip);
     }
-    if (ip == 0xfe70) {
+    if (ip == 0xfe70)
+    {
       log = 0;
     }
 #endif
