@@ -4,7 +4,11 @@ extern void n32016_exec(uint32_t tubecycles);
 
 void ShowInstruction(uint32_t startpc);
 
+#define K640  0x00A0000
+#define MEG1  0x0100000
+#define MEG4  0x0400000
 #define MEG16 0x1000000
+
 extern uint8_t ns32016ram[MEG16];
 
 #define CASE2(in) case (in): case ((in) | 0x80)

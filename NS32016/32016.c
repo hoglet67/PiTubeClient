@@ -119,6 +119,7 @@ static void writememb(uint32_t addr, uint8_t val)
 
 	if (addr == 0xF90000)
 	{
+		memset(ns32016ram, 0, MEG4);
 		return;
 	}
 
