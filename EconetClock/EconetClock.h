@@ -38,7 +38,8 @@
 #define ARM_PWM_STA_STA3  (1 << 11)
 #define ARM_PWM_STA_STA4  (1 << 12)
 
-#define ECONET_ENABLE_PIN RPI_GPIO42
+#define ECONET_ENABLE_PIN RPI_GPIO17
+#define ECONET_CLOCK_PIN  RPI_GPIO18
 
 extern void EconetClock_Init(void);
 extern void EconetClock_Start(uint32_t Speed, uint32_t Duty);

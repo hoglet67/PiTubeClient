@@ -5,6 +5,7 @@
 #include "copro-lib6502.h"
 #include "copro-65tube.h"
 #include "copro-80186.h"
+#include "../EconetClock/EconetClock.h"
 
 #define COPRO_ARM     0
 #define COPRO_ARM2    1
@@ -13,6 +14,7 @@
 #define COPRO_65TUBE  4
 #define COPRO_80186   5
 #define COPRO_32016   6
+#define COPRO_ECO_CLK 7
 
 #define COPRO COPRO_ARM2
 
@@ -41,6 +43,15 @@ void kernel_main(unsigned int r0, unsigned int r1, unsigned int atags)
   else if (COPRO == COPRO_80186)
   {
     copro_80186_main(r0, r1, atags);
+  }
+  else if (COPRO == COPRO_32016)
+  {
+    // Not yet!
+  }
+  else if (COPRO == COPRO_ECO_CLK)
+  {
+    EconetClock_Init();
+    EconetClock_Start(100, 50);
   }
   else
   {

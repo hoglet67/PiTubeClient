@@ -29,38 +29,34 @@
 
 uint32_t read32(uint32_t nAddress)
 {
-  return *(uint32_t*) nAddress;
+  return *((uint32_t*) nAddress);
 }
 
 void write32(uint32_t nAddress, uint32_t nValue)
 {
-  *(uint32_t*) nAddress = nValue;
-}
-
-void EconetClock_Init(void)
-{
-  //RPI_SetGpioPinFunction();
-  //RPI_SetGpioPinFunction();
+  *((uint32_t*) nAddress) = nValue;
 }
 
 void EconetClock_Start(uint32_t Speed, uint32_t Duty)
 {
-  uint32_t nRange = 1;
-  uint32_t nValue = 1;
-
-  write32(ARM_PWM_RNG1, nRange);
-  write32(ARM_PWM_RNG2, nRange);
-
-  write32(ARM_PWM_DAT1, nValue);
-  write32(ARM_PWM_STA, ARM_PWM_STA_BERR);
-
-  write32(ARM_PWM_CTL, ARM_PWM_CTL_PWEN1 | ARM_PWM_CTL_PWEN2 | ARM_PWM_CTL_MSEN1 | ARM_PWM_CTL_MSEN2);
-
+  write32(ARM_PWM_RNG1, Speed);
+  write32(ARM_PWM_DAT1, Duty);
+  write32(ARM_PWM_CTL, ARM_PWM_CTL_PWEN1);
   RPI_SetGpioHi (ECONET_ENABLE_PIN);
 }
 
 void EconetClock_Stop(void)
 {
-  RPI_SetGpioLo (ECONET_ENABLE_PIN);
-  write32(ARM_PWM_CTL, 0);
+  RPI_SetGpioLo (ECONET_ENABLE_PIN);                        // Disable the enable output
+  write32(ARM_PWM_CTL, 0);                                  // Disable the clock output
+}
+
+void EconetClock_Init(void)
+{
+  RPI_SetGpioLo (ECONET_ENABLE_PIN);                        // Disable the clock otput
+  RPI_SetGpioPinFunction(ECONET_ENABLE_PIN, FS_OUTPUT);     // Econet Clock Enable PIN
+  RPI_SetGpioPinFunction(ECONET_CLOCK_PIN, FS_ALT5);        // PWM0 - Econet Clock PIN
+
+  //RPI_SetGpioPinFunction();
+  //RPI_SetGpioPinFunction();
 }
