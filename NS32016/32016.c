@@ -40,305 +40,217 @@ void n32016_build_matrix()
 			}
 			break;
 			
-			CASE2(0x1C) : // CMPQ byte
+			CASE2(0x0C) : // ADDQ byte
+			CASE2(0x0D) : // ADDQ word
+			CASE2(0x0F) : // ADDQ dword
 			{
-				mat[Index].p.Size			= sz8;
-				mat[Index].p.Function	= CMPQ;
+				mat[Index].p.Function	= ADDQ;
+				mat[Index].p.Format		= Format2;
+				mat[Index].p.Size			= Index & 3;
 			}
 			break;
 
+			CASE2(0x1C) : // CMPQ byte
+			CASE2(0x1D) : // CMPQ word
 			CASE2(0x1F) : // CMPQ dword
 			{
-				mat[Index].p.Size = sz16;
-				mat[Index].p.Function = CMPQ;
+				mat[Index].p.Function	= CMPQ;
+				mat[Index].p.Format		= Format2;
+				mat[Index].p.Size			= Index & 3;
+			}
+			break;
+
+			CASE2(0x2C) : // SPR byte
+			CASE2(0x2D) : // SPR word
+			CASE2(0x2F) : // SPR dword
+			{
+				mat[Index].p.Function	= SPR;
+				mat[Index].p.Format		= Format2;
+				mat[Index].p.Size			= Index & 3;
+			}
+			break;
+
+			CASE2(0x3C) : // Scond Byte
+			CASE2(0x3D) : // Scond Word
+			CASE2(0x3F) : // Scond DWord
+			{
+				mat[Index].p.Function	= Scond;
+				mat[Index].p.Format		= Format2;
+				mat[Index].p.Size			= Index & 3;
+			}
+			break;
+
+			CASE2(0x4C) : // ACBB Byte
+			CASE2(0x4D) : // ACCB Word
+			CASE2(0x4F) : // ACCB DWord
+			{
+				mat[Index].p.Function = ACB;
+				mat[Index].p.Format = Format2;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
 			CASE2(0x5C) : // MOVQ byte
-			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = MOVQ;
-			}
-			break;
-
 			CASE2(0x5D) : // MOVQ word
-			{
-				mat[Index].p.Size = sz16;
-				mat[Index].p.Function = MOVQ;
-			}
-			break;
-
 			CASE2(0x5F) : // MOVQ dword
 			{
-				mat[Index].p.Size = sz32;
 				mat[Index].p.Function = MOVQ;
+				mat[Index].p.Format = Format2;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
-			CASE2(0x0C) : // ADDQ byte
+			CASE2(0x6C) : // LPR byte
+			CASE2(0x6D) : // LPR word
+			CASE2(0x6F) : // LPR dword
 			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = ADDQ;
-			}
-			break;
-
-			CASE2(0x0D) : // ADDQ word
-			{
-				mat[Index].p.Size = sz16;
-				mat[Index].p.Function = ADDQ;
-			}
-			break;
-
-			CASE2(0x0F) : // ADDQ dword
-			{
-				mat[Index].p.Size = sz32;
-				mat[Index].p.Function = ADDQ;
-			}
-			break;
-
-			CASE2(0x3C) : // ScondB
-			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = Scond;
-			}
-			break;
-
-
-			CASE2(0x3D) : // ScondW
-			{
-				mat[Index].p.Size = sz16;
-				mat[Index].p.Function = Scond;
-			}
-			break;
-
-			CASE2(0x3F) : // ScondD
-			{
-				mat[Index].p.Size = sz32;
-				mat[Index].p.Function = Scond;
-			}
-			break;
-
-			CASE2(0x4C) : // ACBB
-			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = ACB;
-			}
-			break;
-
-			CASE2(0x4F) : // ACBD
-			{
-				mat[Index].p.Size = sz32;
-				mat[Index].p.Function = ACB;
+				mat[Index].p.Function = LPR;
+				mat[Index].p.Format = Format2;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
 			CASE4(0x00) : // ADD byte
-			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = ADD;
-			}
-			break;
-
+			CASE4(0x01) : // ADD word
 			CASE4(0x03) : // ADD dword
 			{
-				mat[Index].p.Size = sz32;
 				mat[Index].p.Function = ADD;
+				mat[Index].p.Format = Format4;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
 			CASE4(0x04) : // CMP byte
-			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = CMP;
-			}
-			break;
-
+			CASE4(0x05) : // CMP word
 			CASE4(0x07) : // CMP dword
 			{
-				mat[Index].p.Size = sz32;
 				mat[Index].p.Function = CMP;
+				mat[Index].p.Format = Format4;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
 			CASE4(0x08) : // BIC byte
-			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = BIC;
-			}
-			break;
-
+			CASE4(0x09) : // BIC word
 			CASE4(0x0B) : // BIC dword
 			{
-				mat[Index].p.Size = sz32;
 				mat[Index].p.Function = BIC;
+				mat[Index].p.Format = Format4;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
 			CASE4(0x14) : // MOV byte
-			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = MOV;
-			}
-			break;
-
+			CASE4(0x15) : // MOV word
 			CASE4(0x17) : // MOV dword
 			{
-				mat[Index].p.Size = sz32;
 				mat[Index].p.Function = MOV;
+				mat[Index].p.Format = Format4;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
-			CASE4(0x18) : //OR byte
-			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = OR;
-			}
-			break;
-
+			CASE4(0x18) : // OR byte
 			CASE4(0x19) : // OR word
-			{
-				mat[Index].p.Size = sz16;
-				mat[Index].p.Function = OR;
-			}
-			break;
-
 			CASE4(0x1B) : // OR dword
 			{
-				mat[Index].p.Size = sz32;
 				mat[Index].p.Function = OR;
+				mat[Index].p.Format = Format4;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
-			CASE4(0x38) : // XOR byte
-			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = XOR;
-			}
-			break;
-
-			CASE4(0x39) : // XOR word
-			{
-				mat[Index].p.Size = sz16;
-				mat[Index].p.Function = XOR;
-			}
-			break;
-
-			CASE4(0x3B) : // XOR dword
-			{
-				mat[Index].p.Size = sz32;
-				mat[Index].p.Function = XOR;
-			}
-			break;
-
+			CASE4(0x20) : // SUB byte
+			CASE4(0x21) : // SUB word
 			CASE4(0x23) : // SUB dword
 			{
-				mat[Index].p.Size = sz32;
 				mat[Index].p.Function = SUB;
+				mat[Index].p.Format = Format4;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
+			CASE4(0x24) : // ADDR byte
+			CASE4(0x25) : // ADDR word
 			CASE4(0x27) : // ADDR dword
 			{
-				mat[Index].p.Size = sz32;
 				mat[Index].p.Function = ADDR;
+				mat[Index].p.Format = Format4;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
 			CASE4(0x28) : // AND byte
-			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = AND;
-			}
-			break;
-
 			CASE4(0x29) : // AND word
-			{
-				mat[Index].p.Size = sz16;
-				mat[Index].p.Function = AND;
-			}
-			break;
-
 			CASE4(0x2B) : // AND dword
 			{
-				mat[Index].p.Size = sz32;
 				mat[Index].p.Function = AND;
+				mat[Index].p.Format = Format4;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
-			CASE4(0x34) : // TBITB
+			CASE4(0x30) : // SUBC byte
+			CASE4(0x31) : // SUBC word
+			CASE4(0x33) : // SUBC dword
 			{
-				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = SUBC;
+				mat[Index].p.Format = Format4;
+				mat[Index].p.Size = Index & 3;
+			}
+			break;
+
+			CASE4(0x34) : // TBIT byte
+			CASE4(0x35) : // TBIT byte
+			CASE4(0x37) : // TBIT dword
+			{
 				mat[Index].p.Function = TBIT;
+				mat[Index].p.Format = Format4;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
-			CASE4(0x37) : // TBITD
+			CASE4(0x38) : // XOR byte
+			CASE4(0x39) : // XOR word
+			CASE4(0x3B) : // XOR dword
 			{
-				mat[Index].p.Size = sz32;
-				mat[Index].p.Function = TBIT;
+				mat[Index].p.Function = XOR;
+				mat[Index].p.Format = Format4;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
-			case 0x4E: /*Type 6*/
+			case 0x4E: // Type 6
 			{
-				mat[Index].p.Size = szVaries;
 				mat[Index].p.Function = TYPE6;
+				mat[Index].p.Format = Format6;
+				mat[Index].p.Size = szVaries;
 			}
 			break;
 
-			case 0x7C: /*Type 3 byte*/
+
+			CASE2(0x7C): // Type 3 byte
+			CASE2(0x7D): // Type 3 word
+//			CASE2(0x7F): // Type 3 word
 			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = TYPE3;
+				mat[Index].p.Function	= TYPE3;
+				mat[Index].p.Format = Format3;
+				mat[Index].p.Size			= Index & 3;
 			}
 			break;
 
-			case 0x7D: /*Type 3 word*/
+			CASE2(0x7F) : // Type 3 word
 			{
-				mat[Index].p.Size = sz16;
-				mat[Index].p.Function = TYPE3;
-			}
-			break;
-
-			case 0x7F: /*Type 3 dword*/
-			{
-				mat[Index].p.Size = sz32;
 				mat[Index].p.Function = TYPE3MKII;
-			}
-			break;
-
-
-			CASE2(0x2F) : // SPR
-			{
 				mat[Index].p.Size = sz32;
-				mat[Index].p.Function = SPR;
+				mat[Index].p.Size = Index & 3;
 			}
 			break;
 
-			CASE2(0x6C) : // LPRB
-			{
-				mat[Index].p.Size = sz8;
-				mat[Index].p.Function = LPR;
-			}
-			break;
-
-			CASE2(0x6D) : // LPRW
-			{
-				mat[Index].p.Size = sz16;
-				mat[Index].p.Function = LPR;
-			}
-			break;
-
-			CASE2(0x6F) : // LPRD
-			{
-				mat[Index].p.Size = sz32;
-				mat[Index].p.Function = LPR;
-			}
-			break;
-
-			case 0xCE: /*Format 7*/
+			case 0xCE: // Format 7
 			{
 				mat[Index].p.Size = szVaries;
+				mat[Index].p.Format = Format7;
 				mat[Index].p.Function = FORMAT7;
 			}
 			break;
@@ -346,49 +258,64 @@ void n32016_build_matrix()
 			CASE4(0x2E) : // Type 8
 			{
 				mat[Index].p.Size = szVaries;
+				mat[Index].p.Format = Format8;
 				mat[Index].p.Function = TYPE8;
 			}
 			break;
 
-			case 0x02: /*BSR*/
+			case 0x02: // BSR
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BSR;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Function	= BSR;
+				mat[Index].p.Format		= Format1;
 			}
 			break;
 
-			case 0x12: /*RET*/
+			case 0x12: // RET
 			{
 				mat[Index].p.Size = szVaries;
 				mat[Index].p.Function = RET;
+				mat[Index].p.Format = Format1;
 			}
 			break;
 
-			case 0x22: /*CXP*/
+			case 0x22: // CXP
 			{
 				mat[Index].p.Size = szVaries;
 				mat[Index].p.Function = CXP;
+				mat[Index].p.Format = Format1;
 			}
 			break;
 
-			case 0x32: /*RXP*/
+			case 0x32: // RXP
 			{
 				mat[Index].p.Size = szVaries;
 				mat[Index].p.Function = RXP;
+				mat[Index].p.Format = Format1;
 			}
 			break;
 
-			case 0x42: /*RETT*/
+			case 0x42: // RETT
 			{
 				mat[Index].p.Size = szVaries;
 				mat[Index].p.Function = RETT;
+				mat[Index].p.Format = Format1;
 			}
 			break;
 
-			case 0x62: /*SAVE*/
+			case 0x52: // RETI
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = RETI;
+				mat[Index].p.Format = Format1;
+			}
+			break;
+
+			case 0x62: // SAVE
 			{
 				mat[Index].p.Size = szVaries;
 				mat[Index].p.Function = SAVE;
+				mat[Index].p.Format = Format1;
 			}
 			break;
 
@@ -396,6 +323,7 @@ void n32016_build_matrix()
 			{
 				mat[Index].p.Size = szVaries;
 				mat[Index].p.Function = RESTORE;
+				mat[Index].p.Format = Format1;
 			}
 			break;
 
@@ -403,117 +331,151 @@ void n32016_build_matrix()
 			{
 				mat[Index].p.Size = szVaries;
 				mat[Index].p.Function = ENTER;
+				mat[Index].p.Format = Format1;
 			}
 			break;
 
 			case 0x92: /*EXIT*/
 			{
 				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = ENTER;
+				mat[Index].p.Function = EXIT;
+				mat[Index].p.Format = Format1;
 			}
 			break;
 
-			case 0xE2: /*SVC*/
+			case 0xA2: // NOP
 			{
 				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = ENTER;
+				mat[Index].p.Function = NOP;
+				mat[Index].p.Format = Format1;
+			}
+			break;
+
+			case 0xE2: // SVC
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = SVC;
+				mat[Index].p.Format = Format1;
+			}
+			break;
+
+			case 0xF2: // BPT
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BPT;
+				mat[Index].p.Format = Format1;
 			}
 			break;
 
 			case 0x0A: /*BEQ*/
 			{
-				mat[Index].p.Size = szVaries;
 				mat[Index].p.Function = BEQ;
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Format = Format0;
 			}
 			break;
 
 			case 0x1A: /*BNE*/
 			{
-				mat[Index].p.Size = szVaries;
 				mat[Index].p.Function = BNE;
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Format = Format0;
 			}
 			break;
 
 			case 0x4A: /*BH*/
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BH;
+				mat[Index].p.Function	= BH;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Format		= Format0;
 			}
 			break;
 
 			case 0x5A: /*BLS*/
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BLS;
+				mat[Index].p.Function	= BLS;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Format		= Format0;
 			}
 			break;
 
 			case 0x6A: /*BGT*/
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BGT;
+				mat[Index].p.Function	= BGT;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Format		= Format0;
 			}
 			break;
 
 			case 0x7A: /*BLE*/
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BLE;
+				mat[Index].p.Function	= BLE;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Format		= Format0;
 			}
 			break;
 
 			case 0x8A: /*BFS*/
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BFS;
+				mat[Index].p.Function	= BFS;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Format		= Format0;
 			}
 			break;
 
 			case 0x9A: /*BFC*/
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BFC;
+				mat[Index].p.Function	= BFC;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Format		= Format0;
 			}
 			break;
 
 			case 0xAA: /*BLO*/
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BLO;
+				mat[Index].p.Function	= BLO;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Format		= Format0;
 			}
 			break;
 
 			case 0xBA: /*BHS*/
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BHS;
+				mat[Index].p.Function	= BHS;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Format		= Format0;
 			}
 			break;
 
 			case 0xCA: /*BLT*/
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BLT;
+				mat[Index].p.Function	= BLT;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Format		= Format0;
 			}
 			break;
+
 			case 0xDA: /*BGE*/
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BGE;
+				mat[Index].p.Function	= BGE;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Format		= Format0;
 			}
 			break;
 
 			case 0xEA: /*BR*/
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BR;
+				mat[Index].p.Function	= BR;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Format		= Format0;
 			}
 			break;
 
 			default:
 			{
-				mat[Index].p.Size = szVaries;
-				mat[Index].p.Function = BFS;
+				mat[Index].p.Function	= BAD;
+				mat[Index].p.Size			= szVaries;
+				mat[Index].p.Format		= FormatBad;
 			}
 			break;
 		}
@@ -973,6 +935,20 @@ void n32016_exec(uint32_t tubecycles)
 		LookUp = mat[opcode];
 		WriteSize = szVaries;
 
+		switch (LookUp.p.Format)
+		{
+			case Format4:
+			{
+				opcode |= (readmemb(pc) << 8);
+				pc++;
+				getgen1(opcode >> 11, 1);
+				getgen1(opcode >> 6, 0);
+				getgen(opcode >> 11, 1);
+				getgen(opcode >> 6, 0);
+			}
+			break;
+		}
+
 		switch (LookUp.p.Function)
 		{
 		case StrI: // String instruction
@@ -1228,15 +1204,8 @@ void n32016_exec(uint32_t tubecycles)
 			break;
 
 		case ADD: // ADD byte
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-
-			temp	= ReadGen(0, LookUp.p.Size);
-			temp2 = ReadGen(1, LookUp.p.Size);
+			temp2 = ReadGen(0, LookUp.p.Size);
+			temp = ReadGen(1, LookUp.p.Size);
 
 			psr &= ~(C_FLAG | V_FLAG);
 
@@ -1275,15 +1244,8 @@ void n32016_exec(uint32_t tubecycles)
 			break;
 
 		case CMP: // CMP
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			
-			temp = ReadGen(0, LookUp.p.Size);
-			temp2 = ReadGen(1, LookUp.p.Size);
+			temp2 = ReadGen(0, LookUp.p.Size);
+			temp	= ReadGen(1, LookUp.p.Size);
 
 			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
 			if (temp == temp2)
@@ -1303,68 +1265,26 @@ void n32016_exec(uint32_t tubecycles)
 			break;
 
 		case BIC: // BIC byte
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-
-			temp2 = ReadGen(0, LookUp.p.Size);
-			temp = ReadGen(1, LookUp.p.Size);
+			temp	= ReadGen(0, LookUp.p.Size);
+			temp2 = ReadGen(1, LookUp.p.Size);
 
 			temp &= ~temp2;
 			WriteSize = LookUp.p.Size;
 			break;
 
 		case MOV:
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-
-			temp = ReadGen(0, LookUp.p.Size);
+			temp = ReadGen(1, LookUp.p.Size);
 			WriteSize = LookUp.p.Size;
 			break;
 
 		case OR:
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-
 			temp2 = ReadGen(0, LookUp.p.Size);
 			temp = ReadGen(1, LookUp.p.Size);
 			temp |= temp2;
 			WriteSize = LookUp.p.Size;
 			break;
 
-		case XOR:
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-
-			temp2 = ReadGen(0, LookUp.p.Size);
-			temp = ReadGen(1, LookUp.p.Size);
-			temp ^= temp2;
-			WriteSize = LookUp.p.Size;
-			break;
-
 		case SUB:
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-
 			temp2 = ReadGen(0, LookUp.p.Size);
 			temp = ReadGen(1, LookUp.p.Size);
 			psr &= ~(C_FLAG | V_FLAG);
@@ -1377,23 +1297,11 @@ void n32016_exec(uint32_t tubecycles)
 			break;
 
 		case ADDR:
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			writegenl(1, genaddr[0]);
+			temp = genaddr[1];
+			WriteSize = LookUp.p.Size;
 			break;
 
 		case AND:
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-
 			temp2 = ReadGen(0, LookUp.p.Size);
 			temp = ReadGen(1, LookUp.p.Size);
 			temp &= temp2;
@@ -1401,19 +1309,20 @@ void n32016_exec(uint32_t tubecycles)
 			break;
 
 		case TBIT:
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-
-			temp	= ReadGen(0, LookUp.p.Size);
-			temp2 = ReadGen(1, LookUp.p.Size);
-			psr &= ~F_FLAG;
+			temp2 = ReadGen(0, LookUp.p.Size);
+			temp = ReadGen(1, LookUp.p.Size);
 			temp2 &= (LookUp.p.Size == sz8) ? 7 : 31;
+
+			psr &= ~F_FLAG;
 			if (temp & (1 << temp2))
 				psr |= F_FLAG;
+			break;
+
+		case XOR:
+			temp2 = ReadGen(0, LookUp.p.Size);
+			temp = ReadGen(1, LookUp.p.Size);
+			temp ^= temp2;
+			WriteSize = LookUp.p.Size;
 			break;
 
 		case TYPE6:
@@ -1850,19 +1759,19 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case BSR: /*BSR*/
+		case BSR:
 			temp = getdisp();
 			pushd(pc);
 			pc = startpc + temp;
 			break;
 
-		case RET: /*RET*/
+		case RET:
 			temp = getdisp();
 			pc = popd();
 			sp[SP] += temp;
 			break;
 
-		case CXP: /*CXP*/
+		case CXP:
 			temp = getdisp();
 			pushw(0);
 			pushw(mod);
@@ -1874,7 +1783,7 @@ void n32016_exec(uint32_t tubecycles)
 			pc = readmemw(mod + 8) + (readmemw(mod + 10) << 16) + (temp >> 16);
 			break;
 
-		case RXP: /*RXP*/
+		case RXP:
 			temp = getdisp();
 			pc = popd();
 			temp2 = popd();
@@ -1883,7 +1792,7 @@ void n32016_exec(uint32_t tubecycles)
 			sb = readmemw(mod) | (readmemw(mod + 2) << 16);
 			break;
 
-		case RETT: /*RETT*/
+		case RETT:
 			temp = getdisp();
 			pc = popd();
 			mod = popw();
@@ -1892,7 +1801,11 @@ void n32016_exec(uint32_t tubecycles)
 			sb = readmemw(mod) | (readmemw(mod + 2) << 16);
 			break;
 
-		case SAVE: /*SAVE*/
+		case RETI:
+			printf("RETI ????");
+			break;
+
+		case SAVE:
 			temp = readmemb(pc);
 			pc++;
 			for (c = 0; c < 8; c++)
@@ -1904,7 +1817,7 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case RESTORE: /*RESTORE*/
+		case RESTORE:
 			temp = readmemb(pc);
 			pc++;
 			for (c = 0; c < 8; c++)
@@ -1916,7 +1829,7 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case ENTER: /*ENTER*/
+		case ENTER:
 			temp = readmemb(pc);
 			pc++;
 			temp2 = getdisp();
@@ -1933,7 +1846,7 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case EXIT: /*EXIT*/
+		case EXIT:
 			temp = readmemb(pc);
 			pc++;
 			for (c = 0; c < 8; c++)
@@ -1947,7 +1860,12 @@ void n32016_exec(uint32_t tubecycles)
 			fp = popd();
 			break;
 
-		case SVC: /*SVC*/
+		case NOP:
+			//temp = readmemb(pc);
+			//pc++;
+			break;
+
+		case SVC:
 			temp = psr;
 			psr &= ~0x700;
 			temp = readmemw(intbase + (5 * 4))
@@ -1957,6 +1875,12 @@ void n32016_exec(uint32_t tubecycles)
 			sb = readmemw(mod) | (readmemw(mod + 2) << 16);
 			temp2 = readmemw(mod + 8) | (readmemw(mod + 10) << 16);
 			pc = temp2 + temp3;
+			break;
+
+		case BPT:
+			//temp = readmemb(pc);
+			//pc++;
+			printf("BPT ??????\n");
 			break;
 
 		case BEQ: /*BEQ*/
@@ -2057,7 +1981,24 @@ void n32016_exec(uint32_t tubecycles)
 
 			case sz32:
 			{
-				writegenl(0, temp);
+				uint32_t c = 0;
+
+				if (gentype[c])
+				{
+					*((uint32_t*) genaddr[c]) = temp;
+				}
+				else
+				{
+					if (sdiff[c])
+					{
+						genaddr[c]	=
+						sp[SP]		= (sp[SP] - sdiff[c]);
+						writememw(genaddr[c], temp);
+						writememw(genaddr[c] + 2, temp >> 16);
+					}
+				}
+
+				//writegenl(0, temp);
 			}
 			break;
 		}

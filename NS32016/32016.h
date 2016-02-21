@@ -23,6 +23,20 @@
 #define P_FLAG 0x400
 #define I_FLAG 0x800
 
+enum Formats
+{
+	Format0,
+	Format1,
+	Format2,
+	Format3,
+	Format4,
+	Format5,
+	Format6,
+	Format7,
+	Format8,
+	FormatBad
+};
+
 enum Functions
 {
 	StrI,
@@ -34,12 +48,14 @@ enum Functions
 	ADD,
 	CMP,
 	BIC,
+	ADDC,
 	MOV,
 	OR,
 	XOR,
 	SUB,
 	ADDR,
 	AND,
+	SUBC,
 	TBIT,
 	TYPE6,
 	TYPE3,
@@ -53,11 +69,14 @@ enum Functions
 	CXP,
 	RXP,
 	RETT,
+	RETI,
 	SAVE,
 	RESTORE,
 	ENTER,
 	EXIT,
+	NOP,
 	SVC,
+	BPT,
 	BEQ,
 	BNE,
 	BH,
@@ -76,10 +95,10 @@ enum Functions
 
 enum DataSize
 {
-	sz8,
-	sz16,
-	sz32,
-	szVaries
+	sz8		= 0,
+	sz16		= 1,
+	sz32		= 3,
+	szVaries = 0xFF,
 };
 
 typedef union
