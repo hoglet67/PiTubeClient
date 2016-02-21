@@ -21,26 +21,511 @@ uint32_t pc, sp[2], fp, sb, intbase;
 uint16_t psr, mod;
 uint32_t startpc;
 uint32_t genaddr[2];
-
-#define C_FLAG 0x01
-#define T_FLAG 0x02
-#define L_FLAG 0x04
-#define F_FLAG 0x20
-#define V_FLAG 0x20
-#define Z_FLAG 0x40
-#define N_FLAG 0x80
-
-#define U_FLAG 0x100
-#define S_FLAG 0x200
-#define P_FLAG 0x400
-#define I_FLAG 0x800
+DecodeMatrix mat[256];
 
 #define SP ((psr & S_FLAG) >> 9)
+
+void n32016_build_matrix()
+{
+	uint32_t Index;
+
+	for (Index = 0; Index < 256; Index++)
+	{
+		switch (Index)
+		{
+			case 0x0E: // String instruction
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = StrI;
+			}
+			break;
+			
+			CASE2(0x1C) : // CMPQ byte
+			{
+				mat[Index].p.Size			= sz8;
+				mat[Index].p.Function	= CMPQ;
+			}
+			break;
+
+			CASE2(0x1F) : // CMPQ dword
+			{
+				mat[Index].p.Size = sz16;
+				mat[Index].p.Function = CMPQ;
+			}
+			break;
+
+			CASE2(0x5C) : // MOVQ byte
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = MOVQ;
+			}
+			break;
+
+			CASE2(0x5D) : // MOVQ word
+			{
+				mat[Index].p.Size = sz16;
+				mat[Index].p.Function = MOVQ;
+			}
+			break;
+
+			CASE2(0x5F) : // MOVQ dword
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = MOVQ;
+			}
+			break;
+
+			CASE2(0x0C) : // ADDQ byte
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = ADDQ;
+			}
+			break;
+
+			CASE2(0x0D) : // ADDQ word
+			{
+				mat[Index].p.Size = sz16;
+				mat[Index].p.Function = ADDQ;
+			}
+			break;
+
+			CASE2(0x0F) : // ADDQ dword
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = ADDQ;
+			}
+			break;
+
+			CASE2(0x3C) : // ScondB
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = Scond;
+			}
+			break;
+
+
+			CASE2(0x3D) : // ScondW
+			{
+				mat[Index].p.Size = sz16;
+				mat[Index].p.Function = Scond;
+			}
+			break;
+
+			CASE2(0x3F) : // ScondD
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = Scond;
+			}
+			break;
+
+			CASE2(0x4C) : // ACBB
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = ACB;
+			}
+			break;
+
+			CASE2(0x4F) : // ACBD
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = ACB;
+			}
+			break;
+
+			CASE4(0x00) : // ADD byte
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = ADD;
+			}
+			break;
+
+			CASE4(0x03) : // ADD dword
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = ADD;
+			}
+			break;
+
+			CASE4(0x04) : // CMP byte
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = CMP;
+			}
+			break;
+
+			CASE4(0x07) : // CMP dword
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = CMP;
+			}
+			break;
+
+			CASE4(0x08) : // BIC byte
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = BIC;
+			}
+			break;
+
+			CASE4(0x0B) : // BIC dword
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = BIC;
+			}
+			break;
+
+			CASE4(0x14) : // MOV byte
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = MOV;
+			}
+			break;
+
+			CASE4(0x17) : // MOV dword
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = MOV;
+			}
+			break;
+
+			CASE4(0x18) : //OR byte
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = OR;
+			}
+			break;
+
+			CASE4(0x19) : // OR word
+			{
+				mat[Index].p.Size = sz16;
+				mat[Index].p.Function = OR;
+			}
+			break;
+
+			CASE4(0x1B) : // OR dword
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = OR;
+			}
+			break;
+
+			CASE4(0x38) : // XOR byte
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = XOR;
+			}
+			break;
+
+			CASE4(0x39) : // XOR word
+			{
+				mat[Index].p.Size = sz16;
+				mat[Index].p.Function = XOR;
+			}
+			break;
+
+			CASE4(0x3B) : // XOR dword
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = XOR;
+			}
+			break;
+
+			CASE4(0x23) : // SUB dword
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = SUB;
+			}
+			break;
+
+			CASE4(0x27) : // ADDR dword
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = ADDR;
+			}
+			break;
+
+			CASE4(0x28) : // AND byte
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = AND;
+			}
+			break;
+
+			CASE4(0x29) : // AND word
+			{
+				mat[Index].p.Size = sz16;
+				mat[Index].p.Function = AND;
+			}
+			break;
+
+			CASE4(0x2B) : // AND dword
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = AND;
+			}
+			break;
+
+			CASE4(0x34) : // TBITB
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = TBIT;
+			}
+			break;
+
+			CASE4(0x37) : // TBITD
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = TBIT;
+			}
+			break;
+
+			case 0x4E: /*Type 6*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = TYPE6;
+			}
+			break;
+
+			case 0x7C: /*Type 3 byte*/
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = TYPE3;
+			}
+			break;
+
+			case 0x7D: /*Type 3 word*/
+			{
+				mat[Index].p.Size = sz16;
+				mat[Index].p.Function = TYPE3;
+			}
+			break;
+
+			case 0x7F: /*Type 3 dword*/
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = TYPE3;
+			}
+			break;
+
+
+			CASE2(0x2F) : // SPR
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = SPR;
+			}
+			break;
+
+			CASE2(0x6C) : // LPRB
+			{
+				mat[Index].p.Size = sz8;
+				mat[Index].p.Function = LPR;
+			}
+			break;
+
+			CASE2(0x6D) : // LPRW
+			{
+				mat[Index].p.Size = sz16;
+				mat[Index].p.Function = LPR;
+			}
+			break;
+
+			CASE2(0x6F) : // LPRD
+			{
+				mat[Index].p.Size = sz32;
+				mat[Index].p.Function = LPR;
+			}
+			break;
+
+			case 0xCE: /*Format 7*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = FORMAT7;
+			}
+			break;
+
+			CASE4(0x2E) : // Type 8
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = TYPE8;
+			}
+			break;
+
+			case 0x02: /*BSR*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BSR;
+			}
+			break;
+
+			case 0x12: /*RET*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = RET;
+			}
+			break;
+
+			case 0x22: /*CXP*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = CXP;
+			}
+			break;
+
+			case 0x32: /*RXP*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = RXP;
+			}
+			break;
+
+			case 0x42: /*RETT*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = RETT;
+			}
+			break;
+
+			case 0x62: /*SAVE*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = SAVE;
+			}
+			break;
+
+			case 0x72: /*RESTORE*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = RESTORE;
+			}
+			break;
+
+			case 0x82: /*ENTER*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = ENTER;
+			}
+			break;
+
+			case 0x92: /*EXIT*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = ENTER;
+			}
+			break;
+
+			case 0xE2: /*SVC*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = ENTER;
+			}
+			break;
+
+			case 0x0A: /*BEQ*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BEQ;
+			}
+			break;
+
+			case 0x1A: /*BNE*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BNE;
+			}
+			break;
+
+			case 0x4A: /*BH*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BH;
+			}
+			break;
+
+			case 0x5A: /*BLS*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BLS;
+			}
+			break;
+
+			case 0x6A: /*BGT*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BGT;
+			}
+			break;
+
+			case 0x7A: /*BLE*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BLE;
+			}
+			break;
+
+			case 0x8A: /*BFS*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BFS;
+			}
+			break;
+
+			case 0x9A: /*BFC*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BFC;
+			}
+			break;
+
+			case 0xAA: /*BLO*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BLO;
+			}
+			break;
+
+			case 0xBA: /*BHS*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BHS;
+			}
+			break;
+
+			case 0xCA: /*BLT*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BLT;
+			}
+			break;
+			case 0xDA: /*BGE*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BGE;
+			}
+			break;
+
+			case 0xEA: /*BR*/
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BR;
+			}
+			break;
+
+			default:
+			{
+				mat[Index].p.Size = szVaries;
+				mat[Index].p.Function = BFS;
+			}
+			break;
+		}
+	}
+}
 
 void n32016_reset()
 {
 	pc = 0;
 	psr = 0;
+
+	n32016_build_matrix();
 }
 
 void n32016_dumpregs()
@@ -55,10 +540,6 @@ void n32016_dumpregs()
 	printf("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
 	//exit(1);
 }
-
-#define MEM_MASK 0xFFFFFF
-#define RAM_SIZE 0x100000
-//#define RAM_SIZE 0x400000
 
 uint8_t readmemb(uint32_t addr)
 {
