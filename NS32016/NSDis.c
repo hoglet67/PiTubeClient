@@ -76,10 +76,10 @@ const char* InstuctionLookup(uint8_t* pPC)
 	return "Bad NS32016 opcode";
 }
 
-void ShowInstruction(uint32_t startpc)
+void ShowInstruction(uint32_t pc)
 {
-	uint8_t opcode		= ns32016ram[startpc];
-	uint8_t opcode2	= ns32016ram[startpc + 1];
-	uint8_t* pAddr		= &ns32016ram[startpc];
-	printf("PC:%06X INST:%02X [%02X] %s%s\n", startpc, opcode, opcode2, InstuctionLookup(pAddr), SizeLookup(pAddr));
+	uint8_t opcode		= ns32016ram[pc];
+	uint8_t opcode2	= ns32016ram[pc + 1];
+	uint8_t* pAddr		= &ns32016ram[pc];
+	printf("PC:%06X INST:%02X [%02X] %s%s\n", pc, opcode, opcode2, InstuctionLookup(pAddr), SizeLookup(pAddr));
 }
