@@ -56,6 +56,7 @@ const char* InstuctionLookup(uint8_t* pPC)
 	case BGT:		return "BGT";
 	case BLE:		return "BLE";
 	case TYPE3:		return "Type 3";
+	case TYPE3MKII:return "Type 3 MKKI";
 	case FORMAT7:	return "Format 7";
 	case SAVE:		return "SAVE";
 	case RESTORE:	return "RESTORE";
@@ -77,8 +78,8 @@ const char* InstuctionLookup(uint8_t* pPC)
 
 void ShowInstruction(uint32_t startpc)
 {
-	uint8_t opcode = ns32016ram[startpc];
-	uint8_t opcode2 = ns32016ram[startpc + 1];
-
-	printf("PC:%06X INST:%02X [%02X] %s%s\n", startpc, opcode, opcode2, InstuctionLookup(&ns32016ram[startpc]), SizeLookup(&ns32016ram[startpc]));
+	uint8_t opcode		= ns32016ram[startpc];
+	uint8_t opcode2	= ns32016ram[startpc + 1];
+	uint8_t* pAddr		= &ns32016ram[startpc];
+	printf("PC:%06X INST:%02X [%02X] %s%s\n", startpc, opcode, opcode2, InstuctionLookup(pAddr), SizeLookup(pAddr));
 }

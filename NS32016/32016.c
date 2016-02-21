@@ -303,7 +303,7 @@ void n32016_build_matrix()
 			case 0x7F: /*Type 3 dword*/
 			{
 				mat[Index].p.Size = sz32;
-				mat[Index].p.Function = TYPE3;
+				mat[Index].p.Function = TYPE3MKII;
 			}
 			break;
 
@@ -878,6 +878,40 @@ static void getgen(int gen, int c)
                                         if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
                                 }
 
+uint32_t ReadGen(uint32_t c, uint32_t Size)
+{
+	uint32_t temp = 0;
+
+	switch (Size)
+	{
+		case sz8:
+		{
+			readgenb(c, temp)
+		}
+		break;
+
+		case sz16:
+		{
+			readgenw(c, temp)
+		}
+		break;
+
+		case sz32:
+		{
+			readgenl(c, temp)
+		}
+		break;
+
+		default:
+		{
+			printf("Bad call to ReadGen\n");
+		}
+		break;
+	}
+
+	return temp;
+}
+
 #define readgenq(c,temp)        if (gentype[c]) temp=*(uint64_t *)genaddr[c]; \
                                 else \
                                 { \
@@ -913,7 +947,9 @@ static uint16_t oldpsr;
 
 void n32016_exec(uint32_t tubecycles)
 {
-	uint32_t opcode;
+	DecodeMatrix LookUp;
+
+	uint32_t opcode, WriteSize;
 	uint32_t temp = 0, temp2, temp3, temp4;
 	uint64_t temp64;
 	int c;
@@ -934,9 +970,12 @@ void n32016_exec(uint32_t tubecycles)
 
 		pc++;
 		isize = ilook[opcode & 3];
-		switch (opcode)
+		LookUp = mat[opcode];
+		WriteSize = szVaries;
+
+		switch (LookUp.p.Function)
 		{
-		case 0x0E: // String instruction
+		case StrI: // String instruction
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			opcode |= (readmemb(pc) << 16);
@@ -1002,135 +1041,108 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		CASE2(0x1C): // CMPQ byte
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			temp2 = (opcode >> 7) & 0xF;
-			if (temp2 & 8)
-				temp2 |= 0xFFFFFFF0;
-			readgenb(0, temp);
-			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
-			if (temp == temp2)
-				psr |= Z_FLAG;
-			if (temp2 > temp)
-				psr |= L_FLAG;
-			if (((signed char) temp2) > ((signed char) temp))
-				psr |= N_FLAG;
+			case CMPQ: // CMP
+			{
+				opcode |= (readmemb(pc) << 8);
+				pc++;
+				getgen1(opcode >> 11, 0);
+				getgen(opcode >> 11, 0);
+				temp2 = (opcode >> 7) & 0xF;
+				if (temp2 & 8)
+					temp2 |= 0xFFFFFFF0;
+
+				temp = ReadGen(0, LookUp.p.Size);
+
+				psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
+				if (temp == temp2)
+					psr |= Z_FLAG;
+				if (temp2 > temp)
+					psr |= L_FLAG;
+
+				if (LookUp.p.Size == sz8)
+				{
+					if (((signed char) temp2) > ((signed char) temp))
+					{
+						psr |= N_FLAG;
+					}
+				}
+				else if (LookUp.p.Size == sz32)
+				{
+					if (((signed long) temp2) > ((signed long) temp))
+					{
+						psr |= N_FLAG;
+					}
+				}
+			}
 			break;
 
-		CASE2(0x1F): // CMPQ dword
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			temp2 = (opcode >> 7) & 0xF;
-			if (temp2 & 8)
-				temp2 |= 0xFFFFFFF0;
-			readgenl(0, temp);
-			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
-			if (temp == temp2)
-				psr |= Z_FLAG;
-			if (temp2 > temp)
-				psr |= L_FLAG;
-			if (((signed long) temp2) > ((signed long) temp))
-				psr |= N_FLAG;
+			case MOVQ:
+			{
+				opcode |= (readmemb(pc) << 8);
+				pc++;
+				getgen1(opcode >> 11, 0);
+				getgen(opcode >> 11, 0);
+				temp = (opcode >> 7) & 0xF;
+				if (temp & 8)
+					temp |= 0xFFFFFFF0;
+				WriteSize = LookUp.p.Size;
+			}
 			break;
 
-		CASE2(0x5C): // MOVQ byte
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			temp = (opcode >> 7) & 0xF;
-			if (temp & 8)
-				temp |= 0xFFFFFFF0;
-			writegenb(0, temp);
-			break;
+			case ADDQ:
+			{
+				opcode |= (readmemb(pc) << 8);
+				pc++;
+				getgen1(opcode >> 11, 0);
+				getgen(opcode >> 11, 0);
+				temp2 = (opcode >> 7) & 0xF;
+				if (temp2 & 8)
+					temp2 |= 0xFFFFFFF0;
+				temp = ReadGen(0, LookUp.p.Size);
 
-		CASE2(0x5D): // MOVQ word
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			temp = (opcode >> 7) & 0xF;
-			if (temp & 8)
-				temp |= 0xFFFFFFF0;
-			writegenw(0, temp);
-			break;
+				psr &= ~(C_FLAG | V_FLAG);
 
-		CASE2(0x5F): // MOVQ dword
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			temp = (opcode >> 7) & 0xF;
-			if (temp & 8)
-				temp |= 0xFFFFFFF0;
-			writegenl(0, temp);
-			break;
+				switch (LookUp.p.Size)
+				{
+					case sz8:
+					{
+						if ((temp + temp2) & 0x100)
+							psr |= C_FLAG;
+						if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
+							psr |= V_FLAG;
+					}
+					break;
 
-		CASE2(0x0C): // ADDQ byte
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			temp2 = (opcode >> 7) & 0xF;
-			if (temp2 & 8)
-				temp2 |= 0xFFFFFFF0;
-			readgenb(0, temp);
-			psr &= ~(C_FLAG | V_FLAG);
-			if ((temp + temp2) & 0x100)
-				psr |= C_FLAG;
-			if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
-				psr |= V_FLAG;
-			temp += temp2;
-			writegenb(0, temp);
-			break;
+					case sz16:
+					{
+						if ((temp + temp2) & 0x10000)
+							psr |= C_FLAG;
+						if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x8000)
+							psr |= V_FLAG;
+					}
+					break;
 
-		CASE2(0x0D): // ADDQ word
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			temp2 = (opcode >> 7) & 0xF;
-			if (temp2 & 8)
-				temp2 |= 0xFFFFFFF0;
-			readgenw(0, temp);
-			psr &= ~(C_FLAG | V_FLAG);
-			if ((temp + temp2) & 0x10000)
-				psr |= C_FLAG;
-			if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x8000)
-				psr |= V_FLAG;
-			temp += temp2;
-			writegenw(0, temp);
-			break;
+					case sz32:
+					{
+						if ((temp + temp2) < temp)
+							psr |= C_FLAG;
+						if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
+							psr |= V_FLAG;
+					}
+					break;
+				}
 
-		CASE2(0x0F): // ADDQ dword
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			temp2 = (opcode >> 7) & 0xF;
-			if (temp2 & 8)
-				temp2 |= 0xFFFFFFF0;
-			readgenl(0, temp);
-			psr &= ~(C_FLAG | V_FLAG);
-			if ((temp + temp2) < temp)
-				psr |= C_FLAG;
-			if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
-				psr |= V_FLAG;
-			temp += temp2;
-			writegenl(0, temp);
-			break;
+				temp += temp2;
+				WriteSize = LookUp.p.Size;
+				break;
+			}
 
-		CASE2(0x3C): // ScondB
+		case Scond:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen(opcode >> 11, 0);
-//                        readgenb(0,temp);
+
 			temp = 0;
 			switch ((opcode >> 7) & 0xF)
 			{
@@ -1196,158 +1208,10 @@ void n32016_exec(uint32_t tubecycles)
 			case 0xF:
 				break;
 			}
-			writegenb(0, temp);
-			break;
-
-		CASE2(0x3D) : // ScondW
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			//                        readgenb(0,temp);
-			temp = 0;
-			switch ((opcode >> 7) & 0xF)
-			{
-			case 0x0:
-				if (psr & Z_FLAG)
-					temp = 1;
-				break;
-			case 0x1:
-				if (!(psr & Z_FLAG))
-					temp = 1;
-				break;
-			case 0x2:
-				if (psr & C_FLAG)
-					temp = 1;
-				break;
-			case 0x3:
-				if (!(psr & C_FLAG))
-					temp = 1;
-				break;
-			case 0x4:
-				if (psr & L_FLAG)
-					temp = 1;
-				break;
-			case 0x5:
-				if (!(psr & L_FLAG))
-					temp = 1;
-				break;
-			case 0x6:
-				if (psr & N_FLAG)
-					temp = 1;
-				break;
-			case 0x7:
-				if (!(psr & N_FLAG))
-					temp = 1;
-				break;
-			case 0x8:
-				if (!(psr & (L_FLAG | Z_FLAG)))
-					temp = 1;
-				break;
-			case 0x9:
-				if (psr & (L_FLAG | Z_FLAG))
-					temp = 1;
-				break;
-			case 0xA:
-				if (!(psr & (N_FLAG | Z_FLAG)))
-					temp = 1;
-				break;
-			case 0xB:
-				if (psr & (N_FLAG | Z_FLAG))
-					temp = 1;
-				break;
-			case 0xC:
-				if (psr & Z_FLAG)
-					temp = 1;
-				break;
-			case 0xD:
-				if (!(psr & Z_FLAG))
-					temp = 1;
-				break;
-			case 0xE:
-				temp = 1;
-				break;
-			case 0xF:
-				break;
-			}
-			writegenw(0, temp);
-			break;
-
-		CASE2(0x3F) : // ScondD
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			//                        readgenb(0,temp);
-			temp = 0;
-			switch ((opcode >> 7) & 0xF)
-			{
-			case 0x0:
-				if (psr & Z_FLAG)
-					temp = 1;
-				break;
-			case 0x1:
-				if (!(psr & Z_FLAG))
-					temp = 1;
-				break;
-			case 0x2:
-				if (psr & C_FLAG)
-					temp = 1;
-				break;
-			case 0x3:
-				if (!(psr & C_FLAG))
-					temp = 1;
-				break;
-			case 0x4:
-				if (psr & L_FLAG)
-					temp = 1;
-				break;
-			case 0x5:
-				if (!(psr & L_FLAG))
-					temp = 1;
-				break;
-			case 0x6:
-				if (psr & N_FLAG)
-					temp = 1;
-				break;
-			case 0x7:
-				if (!(psr & N_FLAG))
-					temp = 1;
-				break;
-			case 0x8:
-				if (!(psr & (L_FLAG | Z_FLAG)))
-					temp = 1;
-				break;
-			case 0x9:
-				if (psr & (L_FLAG | Z_FLAG))
-					temp = 1;
-				break;
-			case 0xA:
-				if (!(psr & (N_FLAG | Z_FLAG)))
-					temp = 1;
-				break;
-			case 0xB:
-				if (psr & (N_FLAG | Z_FLAG))
-					temp = 1;
-				break;
-			case 0xC:
-				if (psr & Z_FLAG)
-					temp = 1;
-				break;
-			case 0xD:
-				if (!(psr & Z_FLAG))
-					temp = 1;
-				break;
-			case 0xE:
-				temp = 1;
-				break;
-			case 0xF:
-				break;
-			}
-			writegenl(0, temp);
+			WriteSize = LookUp.p.Size;
 			break;
 			
-		CASE2(0x4C) : // ACBB
+		case ACB: // ACB
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -1355,275 +1219,164 @@ void n32016_exec(uint32_t tubecycles)
 			temp2 = (opcode >> 7) & 0xF;
 			if (temp2 & 8)
 				temp2 |= 0xFFFFFFF0;
-			readgenb(0, temp);
+			temp = ReadGen(0, LookUp.p.Size);
 			temp += temp2;
-			writegenb(0, temp);
+			WriteSize = LookUp.p.Size;
 			temp2 = getdisp();
 			if (temp & 0xFF)
 				pc = startpc + temp2;
 			break;
 
-		CASE2(0x4F): // ACBD
+		case ADD: // ADD byte
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
+			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
-			temp2 = (opcode >> 7) & 0xF;
-			if (temp2 & 8)
-				temp2 |= 0xFFFFFFF0;
-			readgenl(0, temp);
+			getgen(opcode >> 6, 1);
+
+			temp	= ReadGen(0, LookUp.p.Size);
+			temp2 = ReadGen(1, LookUp.p.Size);
+
+			psr &= ~(C_FLAG | V_FLAG);
+
+			switch (LookUp.p.Size)
+			{
+				case sz8:
+				{
+					if ((temp + temp2) & 0x100)
+						psr |= C_FLAG;
+					if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
+						psr |= V_FLAG;
+				}
+				break;
+
+				case sz16:
+				{
+					if ((temp + temp2) & 0x10000)
+						psr |= C_FLAG;
+					if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x8000)
+						psr |= V_FLAG;
+				}
+				break;
+
+				case sz32:
+				{
+					if ((temp + temp2) < temp)
+						psr |= C_FLAG;
+					if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
+						psr |= V_FLAG;
+				}
+				break;
+			}
+
 			temp += temp2;
-			writegenl(0, temp);
-			temp2 = getdisp();
-			if (temp)
-				pc = startpc + temp2;
+			WriteSize = LookUp.p.Size;
 			break;
 
-		CASE4(0x00): // ADD byte
+		case CMP: // CMP
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenb(0, temp);
-			readgenb(1, temp2);
-			psr &= ~(C_FLAG | V_FLAG);
-			if ((temp + temp2) & 0x100)
-				psr |= C_FLAG;
-			if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
-				psr |= V_FLAG;
-			temp2 += temp;
-			writegenb(1, temp2);
-			break;
+			
+			temp = ReadGen(0, LookUp.p.Size);
+			temp2 = ReadGen(1, LookUp.p.Size);
 
-		CASE4(0x03): // ADD dword
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenl(0, temp);
-			readgenl(1, temp2);
-			psr &= ~(C_FLAG | V_FLAG);
-			if ((temp + temp2) < temp)
-				psr |= C_FLAG;
-			if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
-				psr |= V_FLAG;
-			temp2 += temp;
-			writegenl(1, temp2);
-			break;
-
-		CASE4(0x04): // CMP byte
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenb(0, temp);
-			readgenb(1, temp2);
 			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
 			if (temp == temp2)
 				psr |= Z_FLAG;
 			if (temp > temp2)
 				psr |= L_FLAG;
-			if (((signed char) temp) > ((signed char) temp2))
-				psr |= N_FLAG;
+			if (LookUp.p.Size == sz8)
+			{
+				if (((signed char) temp) > ((signed char) temp2))
+					psr |= N_FLAG;
+			}
+			else if (LookUp.p.Size == sz32)
+			{
+				if (((signed long) temp) > ((signed long) temp2))
+					psr |= N_FLAG;
+			}
 			break;
 
-		CASE4(0x07): // CMP dword
+		case BIC: // BIC byte
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
-			nsoutput |= 2;
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			nsoutput &= ~2;
-			readgenl(0, temp);
-			readgenl(1, temp2);
-			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
-			if (temp == temp2)
-				psr |= Z_FLAG;
-			if (temp > temp2)
-				psr |= L_FLAG;
-			if (((signed long) temp) > ((signed long) temp2))
-				psr |= N_FLAG;
+
+			temp2 = ReadGen(0, LookUp.p.Size);
+			temp = ReadGen(1, LookUp.p.Size);
+
+			temp &= ~temp2;
+			WriteSize = LookUp.p.Size;
 			break;
 
-		CASE4(0x08): // BIC byte
+		case MOV:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenb(0, temp);
-			readgenb(1, temp2);
-			temp2 &= ~temp;
-			writegenb(1, temp2);
+
+			temp = ReadGen(0, LookUp.p.Size);
+			WriteSize = LookUp.p.Size;
 			break;
 
-		CASE4(0x09): // BIC word
+		case OR:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenw(0, temp);
-			readgenw(1, temp2);
-			temp2 &= ~temp;
-			writegenw(1, temp2);
+
+			temp2 = ReadGen(0, LookUp.p.Size);
+			temp = ReadGen(1, LookUp.p.Size);
+			temp |= temp2;
+			WriteSize = LookUp.p.Size;
 			break;
 
-		CASE4(0x0B): // BIC dword
+		case XOR:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenl(0, temp);
-			readgenl(1, temp2);
-			temp2 &= ~temp;
-			writegenl(1, temp2);
+
+			temp2 = ReadGen(0, LookUp.p.Size);
+			temp = ReadGen(1, LookUp.p.Size);
+			temp ^= temp2;
+			WriteSize = LookUp.p.Size;
 			break;
 
-		CASE4(0x14): // MOV byte
+		case SUB:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenb(0, temp);
-			writegenb(1, temp);
-			break;
-		CASE4(0x15): // MOV word
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenw(0, temp);
-			writegenw(1, temp);
-			break;
 
-		CASE4(0x17): // MOV dword
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenl(0, temp);
-			writegenl(1, temp);
-			break;
-
-		CASE4(0x18): //OR byte
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenb(0, temp);
-			readgenb(1, temp2);
-			temp2 |= temp;
-			writegenb(1, temp2);
-			break;
-
-		CASE4(0x19): // OR word
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenw(0, temp);
-			readgenw(1, temp2);
-			temp2 |= temp;
-			writegenw(1, temp2);
-			break;
-
-		CASE4(0x1B): // OR dword
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenl(0, temp);
-			readgenl(1, temp2);
-			temp2 |= temp;
-			writegenl(1, temp2);
-			break;
-
-		CASE4(0x38): // XOR byte
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenb(0, temp);
-			readgenb(1, temp2);
-			temp2 ^= temp;
-			writegenb(1, temp2);
-			break;
-
-		CASE4(0x39): // XOR word
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenw(0, temp);
-			readgenw(1, temp2);
-			temp2 ^= temp;
-			writegenw(1, temp2);
-			break;
-
-		CASE4(0x3B) : // XOR dword
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenl(0, temp);
-			readgenl(1, temp2);
-			temp2 ^= temp;
-			writegenl(1, temp2);
-			break;
-
-		CASE4(0x23): // SUB dword
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenl(0, temp)
-			;
-			readgenl(1, temp2)
-			;
+			temp2 = ReadGen(0, LookUp.p.Size);
+			temp = ReadGen(1, LookUp.p.Size);
 			psr &= ~(C_FLAG | V_FLAG);
-			if ((temp + temp2) > temp)
+			if ((temp2 + temp) > temp2)
 				psr |= C_FLAG;
-			if ((temp ^ temp2) & (temp ^ (temp + temp2)) & 0x80000000)
+			if ((temp2 ^ temp) & (temp2 ^ (temp2 + temp)) & 0x80000000)
 				psr |= V_FLAG;
-			temp2 -= temp;
-			writegenl(1, temp2)
-			;
+			temp -= temp2;
+			WriteSize = LookUp.p.Size;
 			break;
 
-		CASE4(0x27): // ADDR dword
+		case ADDR:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -1633,76 +1386,37 @@ void n32016_exec(uint32_t tubecycles)
 			writegenl(1, genaddr[0]);
 			break;
 
-		CASE4(0x28): // AND byte
+		case AND:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenb(0, temp);
-			readgenb(1, temp2);
-			temp2 &= temp;
-			writegenb(1, temp2);
+
+			temp2 = ReadGen(0, LookUp.p.Size);
+			temp = ReadGen(1, LookUp.p.Size);
+			temp &= temp2;
+			WriteSize = LookUp.p.Size;
 			break;
 
-		CASE4(0x29): // AND word
+		case TBIT:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
 			getgen(opcode >> 11, 0);
 			getgen(opcode >> 6, 1);
-			readgenw(0, temp);
-			readgenw(1, temp2);
-			temp2 &= temp;
-			writegenw(1, temp2);
-			break;
 
-		CASE4(0x2B): // AND dword
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenl(0, temp);
-			readgenl(1, temp2);
-			temp2 &= temp;
-			writegenl(1, temp2);
-			break;
-
-		CASE4(0x34): // TBITB
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenb(0, temp);
-			readgenb(1, temp2);
+			temp	= ReadGen(0, LookUp.p.Size);
+			temp2 = ReadGen(1, LookUp.p.Size);
 			psr &= ~F_FLAG;
-			temp &= 7;
-			if (temp2 & (1 << temp))
+			temp2 &= (LookUp.p.Size == sz8) ? 7 : 31;
+			if (temp & (1 << temp2))
 				psr |= F_FLAG;
 			break;
 
-		CASE4(0x37): // TBITD
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			readgenl(0, temp);
-			readgenl(1, temp2);
-			psr &= ~F_FLAG;
-			temp &= 31;
-			if (temp2 & (1 << temp))
-				psr |= F_FLAG;
-			break;
-
-		case 0x4E: /*Type 6*/
+		case TYPE6:
 			opcode = readmemb(pc);
 			pc++;
 			opcode |= (readmemb(pc) << 8);
@@ -1807,29 +1521,30 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case 0x7C: /*Type 3 byte*/
+		case TYPE3:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen(opcode >> 11, 0);
+			temp = ReadGen(0, LookUp.p.Size);
+
 			switch ((opcode >> 7) & 0xF)
 			{
 			case 2: /*BICPSR*/
-				readgenb(0, temp);
 				psr &= ~temp;
 				break;
+
 			case 6: /*BISPSR*/
-				readgenb(0, temp);
 				psr |= temp;
 				break;
+
 			case 0xA: /*ADJSP*/
-				readgenb(0, temp2);
-				if (temp2 & 0x80)
-					temp2 |= 0xFFFFFF00;
-				sp[SP] -= temp2;
+				if (temp & 0x80)
+					temp |= 0xFFFFFF00;
+				sp[SP] -= temp;
 				break;
+
 			case 0xE: /*CASE*/
-				readgenb(0, temp);
 				if (temp & 0x80)
 					temp |= 0xFFFFFF00;
 				pc = startpc + temp;
@@ -1843,43 +1558,7 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case 0x7D: /*Type 3 word*/
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			switch ((opcode >> 7) & 0xF)
-			{
-			case 2: /*BICPSR*/
-				readgenw(0, temp);
-				psr &= ~temp;
-				break;
-			case 6: /*BISPSR*/
-				readgenw(0, temp);
-				psr |= temp;
-				break;
-			case 0xA: /*ADJSP*/
-				readgenw(0, temp2);
-				if (temp & 0x8000)
-					temp |= 0xFFFF0000;
-				sp[SP] -= temp2;
-				break;
-			case 0xE: /*CASE*/
-				readgenw(0, temp);
-				if (temp & 0x8000)
-					temp |= 0xFFFF0000;
-				pc = startpc + temp;
-				break;
-
-			default:
-				printf("Bad NS32016 7D opcode %04X %01X\n", opcode,
-						(opcode >> 7) & 0xF);
-				n32016_dumpregs();
-				break;
-			}
-			break;
-
-		case 0x7F: /*Type 3 dword*/
+		case TYPE3MKII:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -1910,12 +1589,12 @@ void n32016_exec(uint32_t tubecycles)
 
 			default:
 				printf("Bad NS32016 7F opcode %04X %01X\n", opcode,
-						(opcode >> 7) & 0xF);
+					(opcode >> 7) & 0xF);
 				n32016_dumpregs();
 			}
 			break;
 
-		CASE2(0x2F): // SPR*
+		case SPR:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
@@ -1940,70 +1619,65 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		CASE2(0x6C): // LPRB
+		case LPR:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			getgen1(opcode >> 11, 0);
 			getgen(opcode >> 11, 0);
-			readgenb(0, temp);
-			switch ((opcode >> 7) & 0xF)
+
+			temp = ReadGen(0, LookUp.p.Size);
+
+			if (LookUp.p.Size == sz8)
 			{
-			case 0:
-				psr = (psr & 0xFF00) | (temp & 0xFF);
+				switch ((opcode >> 7) & 0xF)
+				{
+				case 0:
+					psr = (psr & 0xFF00) | (temp & 0xFF);
+					break;
+				case 9:
+					sp[SP] = temp;
+					break;
+				default:
+					printf("Bad LPRB reg %01X\n", (opcode >> 7) & 0xF);
+					n32016_dumpregs();
+				}
+			}
+			else if(LookUp.p.Size == sz16)
+			{
+				switch ((opcode >> 7) & 0xF)
+				{
+				case 15:
+					mod = temp;
+					break;
+				default:
+					printf("Bad LPRW reg %01X\n", (opcode >> 7) & 0xF);
+					n32016_dumpregs();
+				}
 				break;
-			case 9:
-				sp[SP] = temp;
-				break;
-			default:
-				printf("Bad LPRB reg %01X\n", (opcode >> 7) & 0xF);
-				n32016_dumpregs();
+			}
+			else
+			{
+				switch ((opcode >> 7) & 0xF)
+				{
+				case 9:
+					sp[SP] = temp;
+					break;
+				case 0xA:
+					sb = temp;
+					break;
+				case 0xE:
+					intbase = temp; /*printf("INTBASE %08X %08X\n",temp,pc); */
+					break;
+
+				default:
+					printf("Bad LPRD reg %01X\n", (opcode >> 7) & 0xF);
+					n32016_dumpregs();
+					break;
+				}
 			}
 			break;
 
-		CASE2(0x6D): // LPRW
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			readgenw(0, temp);
-			switch ((opcode >> 7) & 0xF)
-			{
-			case 15:
-				mod = temp;
-				break;
-			default:
-				printf("Bad LPRW reg %01X\n", (opcode >> 7) & 0xF);
-				n32016_dumpregs();
-			}
-			break;
-
-		CASE2(0x6F): // LPRD
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			getgen1(opcode >> 11, 0);
-			getgen(opcode >> 11, 0);
-			readgenl(0, temp)
-			;
-			switch ((opcode >> 7) & 0xF)
-			{
-			case 9:
-				sp[SP] = temp;
-				break;
-			case 0xA:
-				sb = temp;
-				break;
-			case 0xE:
-				intbase = temp; /*printf("INTBASE %08X %08X\n",temp,pc); */
-				break;
-
-			default:
-				printf("Bad LPRD reg %01X\n", (opcode >> 7) & 0xF);
-				n32016_dumpregs();
-				break;
-			}
-			break;
-
-		case 0xCE: /*Format 7*/
+		case FORMAT7:
 			opcode = readmemb(pc);
 			pc++;
 			opcode |= (readmemb(pc) << 8);
@@ -2132,7 +1806,7 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		CASE4(0x2E): // Type 8
+		case TYPE8:
 			opcode |= (readmemb(pc) << 8);
 			pc++;
 			opcode |= (readmemb(pc) << 16);
@@ -2176,19 +1850,19 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case 0x02: /*BSR*/
+		case BSR: /*BSR*/
 			temp = getdisp();
 			pushd(pc);
 			pc = startpc + temp;
 			break;
 
-		case 0x12: /*RET*/
+		case RET: /*RET*/
 			temp = getdisp();
 			pc = popd();
 			sp[SP] += temp;
 			break;
 
-		case 0x22: /*CXP*/
+		case CXP: /*CXP*/
 			temp = getdisp();
 			pushw(0);
 			pushw(mod);
@@ -2200,7 +1874,7 @@ void n32016_exec(uint32_t tubecycles)
 			pc = readmemw(mod + 8) + (readmemw(mod + 10) << 16) + (temp >> 16);
 			break;
 
-		case 0x32: /*RXP*/
+		case RXP: /*RXP*/
 			temp = getdisp();
 			pc = popd();
 			temp2 = popd();
@@ -2209,7 +1883,7 @@ void n32016_exec(uint32_t tubecycles)
 			sb = readmemw(mod) | (readmemw(mod + 2) << 16);
 			break;
 
-		case 0x42: /*RETT*/
+		case RETT: /*RETT*/
 			temp = getdisp();
 			pc = popd();
 			mod = popw();
@@ -2218,7 +1892,7 @@ void n32016_exec(uint32_t tubecycles)
 			sb = readmemw(mod) | (readmemw(mod + 2) << 16);
 			break;
 
-		case 0x62: /*SAVE*/
+		case SAVE: /*SAVE*/
 			temp = readmemb(pc);
 			pc++;
 			for (c = 0; c < 8; c++)
@@ -2230,7 +1904,7 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case 0x72: /*RESTORE*/
+		case RESTORE: /*RESTORE*/
 			temp = readmemb(pc);
 			pc++;
 			for (c = 0; c < 8; c++)
@@ -2242,7 +1916,7 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case 0x82: /*ENTER*/
+		case ENTER: /*ENTER*/
 			temp = readmemb(pc);
 			pc++;
 			temp2 = getdisp();
@@ -2259,7 +1933,7 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case 0x92: /*EXIT*/
+		case EXIT: /*EXIT*/
 			temp = readmemb(pc);
 			pc++;
 			for (c = 0; c < 8; c++)
@@ -2273,7 +1947,7 @@ void n32016_exec(uint32_t tubecycles)
 			fp = popd();
 			break;
 
-		case 0xE2: /*SVC*/
+		case SVC: /*SVC*/
 			temp = psr;
 			psr &= ~0x700;
 			temp = readmemw(intbase + (5 * 4))
@@ -2285,85 +1959,106 @@ void n32016_exec(uint32_t tubecycles)
 			pc = temp2 + temp3;
 			break;
 
-		case 0x0A: /*BEQ*/
+		case BEQ: /*BEQ*/
 			temp = getdisp();
 			if (psr & Z_FLAG)
 				pc = startpc + temp;
 			break;
 
-		case 0x1A: /*BNE*/
+		case BNE: /*BNE*/
 			temp = getdisp();
 			if (!(psr & Z_FLAG))
 				pc = startpc + temp;
 			break;
 
-		case 0x4A: /*BH*/
+		case BH: /*BH*/
 			temp = getdisp();
 			if (psr & L_FLAG)
 				pc = startpc + temp;
 			break;
 
-		case 0x5A: /*BLS*/
+		case BLS: /*BLS*/
 			temp = getdisp();
 			if (!(psr & L_FLAG))
 				pc = startpc + temp;
 			break;
 
-		case 0x6A: /*BGT*/
+		case BGT: /*BGT*/
 			temp = getdisp();
 			if (psr & N_FLAG)
 				pc = startpc + temp;
 			break;
 
-		case 0x7A: /*BLE*/
+		case BLE: /*BLE*/
 			temp = getdisp();
 			if (!(psr & N_FLAG))
 				pc = startpc + temp;
 			break;
 
-		case 0x8A: /*BFS*/
+		case BFS: /*BFS*/
 			temp = getdisp();
 			if (psr & F_FLAG)
 				pc = startpc + temp;
 			break;
 
-		case 0x9A: /*BFC*/
+		case BFC: /*BFC*/
 			temp = getdisp();
 			if (!(psr & F_FLAG))
 				pc = startpc + temp;
 			break;
 
-		case 0xAA: /*BLO*/
+		case BLO: /*BLO*/
 			temp = getdisp();
 			if (!(psr & (L_FLAG | Z_FLAG)))
 				pc = startpc + temp;
 			break;
 
-		case 0xBA: /*BHS*/
+		case BHS: /*BHS*/
 			temp = getdisp();
 			if (psr & (L_FLAG | Z_FLAG))
 				pc = startpc + temp;
 			break;
 
-		case 0xCA: /*BLT*/
+		case BLT: /*BLT*/
 			temp = getdisp();
 			if (!(psr & (N_FLAG | Z_FLAG)))
 				pc = startpc + temp;
 			break;
 
-		case 0xDA: /*BGE*/
+		case BGE: /*BGE*/
 			temp = getdisp();
 			if (psr & (N_FLAG | Z_FLAG))
 				pc = startpc + temp;
 			break;
 
-		case 0xEA: /*BR*/
+		case BR: /*BR*/
 			pc = startpc + getdisp();
 			break;
 
 		default:
 			printf("Bad NS32016 opcode %02X\n", opcode);
 			n32016_dumpregs();
+			break;
+		}
+
+		switch (WriteSize)
+		{
+			case sz8:
+			{
+				writegenb(0, temp);
+			}
+			break;
+
+			case sz16:
+			{
+				writegenw(0, temp);
+			}
+			break;
+
+			case sz32:
+			{
+				writegenl(0, temp);
+			}
 			break;
 		}
 

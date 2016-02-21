@@ -43,6 +43,7 @@ enum Functions
 	TBIT,
 	TYPE6,
 	TYPE3,
+	TYPE3MKII,
 	SPR,
 	LPR,
 	FORMAT7,
