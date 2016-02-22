@@ -1082,6 +1082,13 @@ void n32016_exec(uint32_t tubecycles)
 
 			temp = ReadGen(0, LookUp.p.Size);
 
+			/* Sign extend smaller quantites to 32 bits to match temp2 */
+			if (LookUp.p.Size == sz8) {
+				temp = (signed char) temp;
+			} else if (LookUp.p.Size == sz16) {
+				temp = (signed short) temp;
+			}
+
 			psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
 			if (temp == temp2)
 				psr |= Z_FLAG;
