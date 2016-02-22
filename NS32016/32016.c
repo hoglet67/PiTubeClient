@@ -1452,13 +1452,52 @@ void n32016_exec(uint32_t tubecycles)
 			isize = ilook[opcode & 3];
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
-			if ((opcode & 0x2C) == 0x04) /* LSH and ASH */
+			if ((opcode & 0x3C) == 0x00 || (opcode & 0x3C) == 0x04 || (opcode & 0x3C) == 0x14) /* ROT/ASH/LSH */
 				isize = 1;
 			getgen(opcode >> 11, 0);
 			isize = ilook[opcode & 3];
 			getgen(opcode >> 6, 1);
 			switch (opcode & 0x3F)
 			{
+			case 0x00: /*ROTB*/
+			{
+				readgenb(0, temp);
+				if (temp & 0xE0) {
+					temp |= 0xE0;
+					temp = ((temp ^ 0xFF) + 1);
+					temp = 8 - temp;
+				}
+				readgenb(1, temp2);
+				temp2 = (temp2 << temp) | (temp2 >> (8 - temp));
+				writegenb(1, temp2);
+			}
+			break;
+			case 0x01: /*ROTW*/
+			{
+				readgenb(0, temp);
+				if (temp & 0xE0) {
+					temp |= 0xE0;
+					temp = ((temp ^ 0xFF) + 1);
+					temp = 16 - temp;
+				}
+				readgenw(1, temp2);
+				temp2 = (temp2 << temp) | (temp2 >> (16 - temp));
+				writegenw(1, temp2);
+			}
+			break;
+			case 0x03: /*ROTD*/
+			{
+				readgenb(0, temp);
+				if (temp & 0xE0) {
+					temp |= 0xE0;
+					temp = ((temp ^ 0xFF) + 1);
+					temp = 32 - temp;
+				}
+				readgenl(1, temp2);
+				temp2 = (temp2 << temp) | (temp2 >> (32 - temp));
+				writegenl(1, temp2);
+			}
+			break;
 			case 0x04: /*ASHB*/
 			{
 				readgenb(0, temp);
