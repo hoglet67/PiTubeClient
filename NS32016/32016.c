@@ -822,6 +822,24 @@ static void getgen(int gen, int c)
 		gentype[c] = 0;
 		break;
 
+	case 0x1E: /*EA + Rn*4*/
+		getgen(genindex[c] >> 3, c);
+		if (!gentype[c])
+			genaddr[c] += (r[genindex[c] & 7] * 4);
+		else
+			genaddr[c] = *(uint32_t *) genaddr[c] + (r[genindex[c] & 7] * 4);
+		gentype[c] = 0;
+		break;
+
+	case 0x1F: /*EA + Rn*8*/
+		getgen(genindex[c] >> 3, c);
+		if (!gentype[c])
+			genaddr[c] += (r[genindex[c] & 7] * 8);
+		else
+			genaddr[c] = *(uint32_t *) genaddr[c] + (r[genindex[c] & 7] * 8);
+		gentype[c] = 0;
+		break;
+
 	default:
 		printf("Bad NS32016 gen mode %02X\n", gen & 0x1F);
 		n32016_dumpregs();
