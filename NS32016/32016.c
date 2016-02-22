@@ -231,18 +231,9 @@ void n32016_build_matrix()
 
       CASE2(0x7C)		// Type 3 byte
         CASE2(0x7D)		// Type 3 word
-        //CASE2(0x7F)		// Type 3 word
+        CASE2(0x7F)		// Type 3 word
       {
-        mat[Index].p.Function = TYPE3;
         mat[Index].p.Format = Format3;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
-
-      CASE2(0x7F)		// Type 3 word
-      {
-        mat[Index].p.Function = TYPE3MKII;
-        mat[Index].p.Size = sz32;
         mat[Index].p.Size = Index & 3;
       }
       break;
@@ -954,12 +945,21 @@ void n32016_exec(uint32_t tubecycles)
       break;
 
       case Format2:
+      {
+        opcode |= (readmemb(pc) << 8);
+        pc++;
+        getgen1(opcode >> 11, 0);
+        getgen(opcode >> 11, 0);
+      }
+      break;
+
       case Format3:
       {
         opcode |= (readmemb(pc) << 8);
         pc++;
         getgen1(opcode >> 11, 0);
         getgen(opcode >> 11, 0);
+        LookUp.p.Function = (opcode & 0x80) ? (CXPD + ((opcode >> 8) & 7)) : TRAP;
       }
       break;
 
@@ -1750,68 +1750,70 @@ void n32016_exec(uint32_t tubecycles)
       }
       break;      
  
-      case TYPE3:
+      case CXPD:
+      {
+        readgenl(0, temp)
+          pushw(0);
+        pushw(mod);
+        pushd(pc);
+        mod = temp & 0xFFFF;
+        temp3 = temp >> 16;
+        sb = readmemw(mod) | (readmemw(mod + 2) << 16);
+        temp2 = readmemw(mod + 8) | (readmemw(mod + 10) << 16);
+        pc = temp2 + temp3;
+      }
+      break;
+      
+      case BICPSR:
+      {
+        temp = ReadGen(0, LookUp.p.Size);
+        psr &= ~temp;
+      }
+      break;
+
+      case JUMP:
+      {
+        if (gentype[0])
+          pc = *(uint32_t *) genaddr[0];
+        else
+          pc = genaddr[0];
+      }
+      break;
+
+      case BISPSR:
+      {
+        temp = ReadGen(0, LookUp.p.Size);
+        psr |= temp;
+      }
+      break;
+
+      case ADJSP:
+      {
         temp = ReadGen(0, LookUp.p.Size);
 
-        switch ((opcode >> 7) & 0xF)
-        {
-          case 2: /*BICPSR*/
-            psr &= ~temp;
-            break;
+        if (temp & 0x80)
+          temp |= 0xFFFFFF00;
+        sp[SP] -= temp;
+      }
+      break;
 
-          case 6: /*BISPSR*/
-            psr |= temp;
-            break;
+      case CASE:
+      {
+        temp = ReadGen(0, LookUp.p.Size);
 
-          case 0xA: /*ADJSP*/
-            if (temp & 0x80)
-              temp |= 0xFFFFFF00;
-            sp[SP] -= temp;
-            break;
+        if (temp & 0x80)
+          temp |= 0xFFFFFF00;
+        pc = startpc + temp;
+      }
+      break;
 
-          case 0xE: /*CASE*/
-            if (temp & 0x80)
-              temp |= 0xFFFFFF00;
-            pc = startpc + temp;
-            break;
-
-          default:
-            printf("Bad NS32016 7C opcode %04X %01X\n", opcode, (opcode >> 7) & 0xF);
-            n32016_dumpregs();
-            break;
-        }
-        break;
-
-      case TYPE3MKII:
-        switch ((opcode >> 7) & 0xF)
-        {
-          case 0: /*CXPD*/
-            readgenl(0, temp)
-              pushw(0);
-            pushw(mod);
-            pushd(pc);
-            mod = temp & 0xFFFF;
-            temp3 = temp >> 16;
-            sb = readmemw(mod) | (readmemw(mod + 2) << 16);
-            temp2 = readmemw(mod + 8) | (readmemw(mod + 10) << 16);
-            pc = temp2 + temp3;
-            break;
-          case 4: /*JUMP*/
-            if (gentype[0])
-              pc = *(uint32_t *) genaddr[0];
-            else
-              pc = genaddr[0];
-            break;
-          case 0xA: /*ADJSP*/
+#if 0 
+      //OLD 32 bit Version
+      case 0xA: /*ADJSP*/
             readgenl(0, temp2)
               sp[SP] -= temp2;
             break;
-
-          default:
-            printf("Bad NS32016 7F opcode %04X %01X\n", opcode, (opcode >> 7) & 0xF);
-            n32016_dumpregs();
-        }
-        break;
+#endif
 
       case MOVM:
       {

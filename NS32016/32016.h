@@ -85,14 +85,12 @@ enum Functions
 	MOVQ,
 	LPR,
 
-	TYPE3,
-	TYPE3MKII,
-
 	CXPD,					// Format 3
 	BICPSR,
 	JUMP,
 	BISPSR,
-	ADJSP,
+  TRAP_F3_1000,
+  ADJSP,
 	JSR,
 	CASE,
 

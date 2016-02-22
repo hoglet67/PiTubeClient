@@ -21,8 +21,7 @@ const char InstuctionText[InstructionCount][16] =
 	"BEQ", "BNE", "BH", "BLS", "BGT", "BLE", "BFS", "BFC", "BLO", "BHS", "BLT", "BGE", "BR",																          // Format 0
 	"BSR", "RET", "CXP", "RXP", "RETT", "RETI", "SAVE", "RESTORE", "ENTER", "EXIT", "NOP", "WAIT", "DIA", "FLAG", "SVC", "BPT",				// Format 1
 	"ADDQ", "CMPQ", "SPR", "Scond", "ACB", "MOVQ", "LPR",																												                      // Format 2
-	"TYPE3", "TYPE3MKII",																																						                                  // Stop Gap
-	"CXPD", "BICPSR", "JUMP", "BISPSR", "ADJSP", "JSR", "CASE",																										                    // Format 3
+	"CXPD", "BICPSR", "JUMP", "BISPSR", "TRAP", "ADJSP", "JSR", "CASE",																										            // Format 3
 	"ADD", "CMP", "BIC", "ADDC", "MOV", "OR", "SUB", "ADDR", "AND", "SUBC", "TBIT", "XOR",																	          // Format 4
 	"MOVS", "CMPS", "SETCFG", "SKPS",                                                                                                 // Format 5  
   "ROT", "ASH", "CBIT", "CBITI", "TRAP", "LSH", "SBIT", "SBITI", "NEG", "NOT", "TRAP", "SUBP", "ABS", "COM", "IBIT", "ADDP",        // Format 6  
