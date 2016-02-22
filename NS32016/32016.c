@@ -501,6 +501,16 @@ void n32016_dumpregs()
 	//exit(1);
 }
 
+// Tube Access
+// FFFFF0 - R1 status - IO_D[7:0]
+// FFFFF2 - R1 data   - IO_D[23:16]
+// FFFFF4 - R2 status - IO_D[7:0]
+// FFFFF6 - R2 data   - IO_D[23:16]
+// FFFFF8 - R3 status - IO_D[7:0]
+// FFFFFA - R3 data   - IO_D[23:16]
+// FFFFFC - R4 status - IO_D[7:0]
+// FFFFFE - R4 data   - IO_D[23:16]
+
 uint8_t readmemb(uint32_t addr)
 {
 	addr &= MEM_MASK;
@@ -510,7 +520,7 @@ uint8_t readmemb(uint32_t addr)
 		return ns32016ram[addr];
 	}
 
-	if (addr >= 0xFFFFF0)
+	if ((addr >= 0xFFFFF0) && ((addr & 0x01) == 0))
 	{
 		return tubeRead(addr >> 1);
 	}
@@ -562,7 +572,7 @@ static void writememb(uint32_t addr, uint8_t val)
 		return;
 	}
 
-	if (addr >= 0xFFFFF0)
+	if ((addr >= 0xFFFFF0) && ((addr & 0x01) == 0))
 	{
 		tubeWrite(addr >> 1, val);
 		return;
