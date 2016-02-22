@@ -1419,7 +1419,7 @@ void n32016_exec(uint32_t tubecycles)
 			isize = ilook[opcode & 3];
 			getgen1(opcode >> 11, 0);
 			getgen1(opcode >> 6, 1);
-			if ((opcode & 0x3F) == 0x17)
+			if ((opcode & 0x3C) == 0x14) /* LSH */
 				isize = 1;
 			getgen(opcode >> 11, 0);
 			isize = ilook[opcode & 3];
@@ -1451,17 +1451,45 @@ void n32016_exec(uint32_t tubecycles)
 					writegenb(1, temp2);
 				}
 				break;
+			case 0x14: /*LSHB*/
+			{
+				readgenb(0, temp);
+				if (temp & 0xE0)
+					temp |= 0xE0;
+				readgenb(1, temp2);
+				if (temp & 0xE0)
+					temp2 >>= ((temp ^ 0xFF) + 1);
+				else
+					temp2 <<= temp;
+				writegenb(1, temp2);
+			}
+			break;
+			case 0x15: /*LSHW*/
+			{
+				readgenb(0, temp);
+				if (temp & 0xE0)
+					temp |= 0xE0;
+				readgenw(1, temp2);
+				if (temp & 0xE0)
+					temp2 >>= ((temp ^ 0xFF) + 1);
+				else
+					temp2 <<= temp;
+				writegenw(1, temp2);
+			}
+			break;
 			case 0x17: /*LSHD*/
-				readgenb(0, temp)
-					if (temp & 0xE0)
-						temp |= 0xE0;
-				readgenl(1, temp2)
-					if (temp & 0xE0)
-						temp2 >>= ((temp ^ 0xFF) + 1);
-					else
-						temp2 <<= temp;
-				writegenl(1, temp2)
-					break;
+			{
+				readgenb(0, temp);
+				if (temp & 0xE0)
+					temp |= 0xE0;
+				readgenl(1, temp2);
+				if (temp & 0xE0)
+					temp2 >>= ((temp ^ 0xFF) + 1);
+				else
+					temp2 <<= temp;
+				writegenl(1, temp2);
+			}
+			break;
 
 			case 0x24: // NOTB
 			{
