@@ -258,7 +258,6 @@ void n32016_build_matrix()
       {
         mat[Index].p.Size = szVaries;
         mat[Index].p.Format = Format8;
-        mat[Index].p.Function = TYPE8;
       }
       break;
 
@@ -1005,6 +1004,55 @@ void n32016_exec(uint32_t tubecycles)
         getgen(opcode >> 11, 0);
         getgen(opcode >> 6, 1);
         LookUp.p.Function = MOVM + ((opcode >> 2) & 15);
+      }
+      break;
+
+      case Format8:
+      {
+        opcode |= (readmemb(pc) << 8);
+        pc++;
+        opcode |= (readmemb(pc) << 16);
+        pc++;
+        getgen1(opcode >> 19, 0);
+        getgen1(opcode >> 14, 1);
+        getgen(opcode >> 19, 0);
+        getgen(opcode >> 14, 1);
+        temp = ((opcode >> 6) & 3) | ((opcode & 0x400) >> 8);
+        temp = (temp << 2) | ((opcode >> 8) & 3);
+        if (opcode & 0x400)
+        {
+          if (opcode & 0x80)
+          {
+            LookUp.p.Function = (opcode & 0x40) ? FFS : INDEX;
+          }
+          else
+          {
+            switch (opcode & 0x3CC0)
+            {
+              case 0x0C80:
+              {
+                LookUp.p.Function = MOVUS;
+              }
+              break;
+
+              case 0x1C80:
+              {
+                LookUp.p.Function = MOVSU;
+              }
+              break;
+
+              default:
+              {
+                LookUp.p.Function = TRAP;
+              }
+              break;
+            }
+          }
+        }
+        else
+        {
+          LookUp.p.Function = EXT + ((opcode >> 6) & 3);
+        }
       }
       break;
     }
@@ -1854,48 +1902,35 @@ void n32016_exec(uint32_t tubecycles)
       }
       break;
 
-      case TYPE8:
-        opcode |= (readmemb(pc) << 8);
-        pc++;
-        opcode |= (readmemb(pc) << 16);
-        pc++;
-        getgen1(opcode >> 19, 0);
-        getgen1(opcode >> 14, 1);
-        getgen(opcode >> 19, 0);
-        getgen(opcode >> 14, 1);
-        temp = ((opcode >> 6) & 3) | ((opcode & 0x400) >> 8);
-        temp = (temp << 2) | ((opcode >> 8) & 3);
-        switch (temp)
+      case EXT:
+      {
+        temp = r[(opcode >> 11) & 7] & 31;
+        temp2 = getdisp();
+        readgenl(0, temp3)
+          temp4 = 0;
+        for (c = 0; c < temp2; c++)
         {
-          case 0: /*EXT*/
-            temp = r[(opcode >> 11) & 7] & 31;
-            temp2 = getdisp();
-            readgenl(0, temp3)
-              temp4 = 0;
-            for (c = 0; c < temp2; c++)
-            {
-              if (temp3 & (1 << ((c + temp) & 31)))
-                temp4 |= (1 << c);
-            }
-            writegenl(1, temp4)
-              break;
-          case 0xC: /*CHECKB*/
-            readgenb(1, temp3)
-              temp = readmemb(genaddr[0]);
-            temp2 = readmemb(genaddr[0] + 1);
-            if (temp >= temp3 && temp3 >= temp2)
-            {
-              r[(opcode >> 11) & 7] = temp3 - temp2;
-              psr &= ~F_FLAG;
-            }
-            else
-              psr |= F_FLAG;
-            break;
-          default:
-            printf("Bad NS32016 Type 8 opcode %04X %01X %i\n", opcode, temp, (opcode >> 11) & 7);
-            n32016_dumpregs();
+          if (temp3 & (1 << ((c + temp) & 31)))
+            temp4 |= (1 << c);
         }
-        break;
+        writegenl(1, temp4)
+      }
+      break;
+      
+      case CHECK:
+      {
+        readgenb(1, temp3)
+        temp = readmemb(genaddr[0]);
+        temp2 = readmemb(genaddr[0] + 1);
+        if (temp >= temp3 && temp3 >= temp2)
+        {
+          r[(opcode >> 11) & 7] = temp3 - temp2;
+          psr &= ~F_FLAG;
+        }
+        else
+          psr |= F_FLAG;
+      }
+      break;
 
       case BSR:
         temp = getdisp();

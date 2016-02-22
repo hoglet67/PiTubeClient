@@ -27,7 +27,7 @@ const char InstuctionText[InstructionCount][16] =
 	"MOVS", "CMPS", "SETCFG", "SKPS",                                                                                                 // Format 5
 	"TYPE6",																																											                                    // Format 6
 	"MOVM", "CMPM", "INSS", "EXTS", "MOVXBW", "MOVZBW", "MOVZiD", "MOVXiD", "MUL", "MEI", "Trap", "DEI", "QUO", "REM", "MOD", "DIV",	// Format 7
-	"TYPE8",																																											                                      // Format 8
+  "EXT", "CVTP", "INS", "CHECK", "INDEX", "FFS", "MOVUS", "MOVSU",				                                                          // Format 8
   "TRAP",
 };
 

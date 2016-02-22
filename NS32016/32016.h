@@ -133,7 +133,14 @@ enum Functions
 	MOD,
 	DIV,
 	
-	TYPE8,				// Format 8
+  EXT,				  // Format 8
+  CVTP,
+  INS,
+  CHECK,
+  INDEX,
+  FFS,
+  MOVUS,
+  MOVSU,
 
   TRAP,
 	InstructionCount,
