@@ -1724,8 +1724,9 @@ void n32016_exec(uint32_t tubecycles)
 			break;
 
 		case BSR:
+			temp = getdisp();
 			pushd(pc);
-			pc = startpc + getdisp();
+			pc = startpc + temp;
 			break;
 
 		case RET:
