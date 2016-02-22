@@ -109,9 +109,12 @@ enum Functions
 	TBIT,
 	XOR,
 
-	StrI,					// Format 5
+	MOVS,					// Format 5
+	CMPS,
+	SETCFG,
+	SKPS,
 
-	TYPE6,				// Format 6
+  TYPE6,				// Format 6
 	
 	MOVM,					// Format 7
 	CMPM,
@@ -131,6 +134,8 @@ enum Functions
 	DIV,
 	
 	TYPE8,				// Format 8
+
+  TRAP,
 	InstructionCount,
 
 	BAD = 0xFF
