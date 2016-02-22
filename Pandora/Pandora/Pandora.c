@@ -1,8 +1,4 @@
 // Pandora.c
-#ifndef __linux
-#include "stdafx.h"
-#endif
-
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -37,11 +33,7 @@ void init(void)
 #endif
 }
 
-#ifdef __linux
 int main(int argc, char* argv[])
-#else
-int _tmain(int argc, _TCHAR* argv[])
-#endif
 {
 	init();
 	n32016_reset();
