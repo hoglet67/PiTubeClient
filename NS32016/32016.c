@@ -1172,27 +1172,27 @@ void n32016_exec(uint32_t tubecycles)
 					temp = 1;
 				break;
 			case 0x8:
-				if (!(psr & (L_FLAG | Z_FLAG)))
+				if (psr & F_FLAG)
 					temp = 1;
 				break;
 			case 0x9:
-				if (psr & (L_FLAG | Z_FLAG))
+				if (!(psr & F_FLAG))
 					temp = 1;
 				break;
 			case 0xA:
-				if (!(psr & (N_FLAG | Z_FLAG)))
+				if (!(psr & (Z_FLAG | L_FLAG)))
 					temp = 1;
 				break;
 			case 0xB:
-				if (psr & (N_FLAG | Z_FLAG))
+				if (psr & (Z_FLAG | L_FLAG))
 					temp = 1;
 				break;
 			case 0xC:
-				if (psr & Z_FLAG)
+				if (!(psr & (Z_FLAG | N_FLAG)))
 					temp = 1;
 				break;
 			case 0xD:
-				if (!(psr & Z_FLAG))
+				if (psr & (Z_FLAG | N_FLAG))
 					temp = 1;
 				break;
 			case 0xE:
