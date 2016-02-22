@@ -28,6 +28,8 @@ void n32016_build_matrix()
 {
 	uint32_t Index;
 
+	memset(mat, 0xFF, sizeof(mat));
+
 	for (Index = 0; Index < 256; Index++)
 	{
 		switch (Index)
@@ -35,6 +37,7 @@ void n32016_build_matrix()
 		case 0x0E: // String instruction
 		{
 			mat[Index].p.Size = szVaries;
+			mat[Index].p.Format = Format5;
 			mat[Index].p.Function = StrI;
 		}
 		break;
@@ -464,6 +467,13 @@ void n32016_build_matrix()
 		case 0xEA: /*BR*/
 		{
 			mat[Index].p.Function = BR;
+			mat[Index].p.Size = szVaries;
+			mat[Index].p.Format = Format0;
+		}
+		break;
+
+		case 0x3E:
+		{
 			mat[Index].p.Size = szVaries;
 			mat[Index].p.Format = Format0;
 		}

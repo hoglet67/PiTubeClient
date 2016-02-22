@@ -41,50 +41,12 @@ enum Formats
 	Format6,
 	Format7,
 	Format8,
-	FormatBad
+	FormatBad = 0xFF
 };
 
 enum Functions
 {
-	StrI,
-	CMPQ,
-	MOVQ,
-	ADDQ,
-	Scond,
-	ACB,
-	ADD,
-	CMP,
-	BIC,
-	ADDC,
-	MOV,
-	OR,
-	XOR,
-	SUB,
-	ADDR,
-	AND,
-	SUBC,
-	TBIT,
-	TYPE6,
-	TYPE3,
-	TYPE3MKII,
-	SPR,
-	LPR,
-	FORMAT7,
-	TYPE8,
-	BSR,
-	RET,
-	CXP,
-	RXP,
-	RETT,
-	RETI,
-	SAVE,
-	RESTORE,
-	ENTER,
-	EXIT,
-	NOP,
-	SVC,
-	BPT,
-	BEQ,
+	BEQ,					// Format 0
 	BNE,
 	BH,
 	BLS,
@@ -97,7 +59,55 @@ enum Functions
 	BLT,
 	BGE,
 	BR,
-	BAD
+
+	BSR,					// Format 1
+	RET,
+	CXP,
+	RXP,
+	RETT,
+	RETI,
+	SAVE,
+	RESTORE,
+	ENTER,
+	EXIT,
+	NOP,
+	WAIT,
+	DIA,
+	FLAG,
+	SVC,
+	BPT,
+
+	ADDQ,					// Format 2
+	CMPQ,
+	SPR,
+	Scond,
+	ACB,
+	MOVQ,
+	LPR,
+
+	TYPE3,				// Format 3
+	TYPE3MKII,
+
+	ADD,					// Format 4
+	CMP,
+	BIC,
+	ADDC,
+	MOV,
+	OR,
+	SUB,
+	ADDR,
+	AND,
+	SUBC,
+	TBIT,
+	XOR,
+
+	StrI,					// Format 5
+
+	TYPE6,				// Format 6
+	FORMAT7,				// Format 7
+	TYPE8,				// Format 8
+
+	BAD = 0xFF
 };
 
 enum DataSize
