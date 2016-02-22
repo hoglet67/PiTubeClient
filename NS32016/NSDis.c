@@ -18,68 +18,35 @@ const char* SizeLookup(uint8_t* pPC)
 	return "";
 }
 
-const char* InstuctionLookup(uint8_t* pPC)
+const char InstuctionText[InstructionCount][16] =
 {
-	uint8_t OpCode = *pPC;
-	
-	switch (mat[OpCode].p.Function)
+	"BEQ", "BNE", "BH", "BLS", "BGT", "BLE", "BFS", "BFC", "BLO", "BHS", "BLT", "BGE", "BR",																// Format 0
+	"BSR", "RET", "CXP", "RXP", "RETT", "RETI", "SAVE", "RESTORE", "ENTER", "EXIT", "NOP", "WAIT", "DIA", "FLAG", "SVC", "BPT",				// Format 1
+	"ADDQ", "CMPQ", "SPR", "Scond", "ACB", "MOVQ", "LPR",																												// Format 2
+	"TYPE3", "TYPE3MKII",																																						// Stop Gap
+	"CXPD", "BICPSR", "JUMP", "BISPSR", "ADJSP", "JSR", "CASE",																										// Format 3
+	"ADD", "CMP", "BIC", "ADDC", "MOV", "OR", "SUB", "ADDR", "AND", "SUBC", "TBIT", "XOR",																	// Format 4
+	"StrI",																																											// Format 5
+	"TYPE6",																																											// Format 6
+	"MOVM", "CMPM", "INSS", "EXTS", "MOVXBW", "MOVZBW", "MOVZiD", "MOVXiD", "MUL", "MEI", "Trap", "DEI", "QUO", "REM", "MOD", "DIV",			// Format 7
+	"TYPE8"																																											// Format 8
+};
+
+
+const char* InstuctionLookup(uint8_t Function)
+{
+	if (Function < InstructionCount)
 	{
-		case ADDQ:	return "ADDQ";
-		case CMPQ:	return "CMPQ";
-		case SPR:	return "SPR";
-		case Scond:	return "Scond";
-		case ACB:	return "ACB";
-		case MOVQ:	return "MOVQ";
-		case LPR:	return "LPR";
-		case ADD:	return "ADD";
-		case CMP:	return "CMP";
-		case BIC:	return "BIC";
-		case MOV:	return "MOV";
-		case OR:		return "OR";
-		case SUB:	return "SUB";
-		case ADDR:	return "ADDR";
-		case AND:	return "AND";
-		case TYPE8:	return "Type 8";
-		case TBIT:	return "TBIT";
-		case XOR:	return "XOR";
-		case BSR:	return "BSR";
-		case BEQ:	return "BEQ";
-		case StrI:	return "String instruction";
-		case RET:	return "RET";
-	case BNE:		return "BNE";
-	case CXP:		return "CXP";
-	case RXP:		return "RXP";
-	case RETT:		return "RETT";
-	case BH:			return "BH";
-	case TYPE6:		return "Type 6";
-	case BLS:		return "BLS";
-	case BGT:		return "BGT";
-	case BLE:		return "BLE";
-	case TYPE3:		return "Type 3";
-	case TYPE3MKII:return "Type 3 MKKI";
-	case FORMAT7:	return "Format 7";
-	case SAVE:		return "SAVE";
-	case RESTORE:	return "RESTORE";
-	case ENTER:		return "ENTER";
-	case BFS:		return "BFS";
-	case EXIT:		return "EXIT";
-	case BFC:		return "BFC";
-	case SVC:		return "SVC";
-	case BLO:		return "BLO";
-	case BHS:		return "BHS";
-	case BLT:		return "BLT";
-	case BGE:		return "BGE";
-	case BR:			return "BR";
-	default:			break;
+		return InstuctionText[Function];
 	}
 
 	return "Bad NS32016 opcode";
 }
 
-void ShowInstruction(uint32_t pc)
+void ShowInstruction(uint32_t pc, uint8_t Function)
 {
 	uint8_t opcode		= ns32016ram[pc];
 	uint8_t opcode2	= ns32016ram[pc + 1];
 	uint8_t* pAddr		= &ns32016ram[pc];
-	printf("PC:%06X INST:%02X [%02X] %s%s\n", pc, opcode, opcode2, InstuctionLookup(pAddr), SizeLookup(pAddr));
+	printf("PC:%06X INST:%02X [%02X] %s%s\n", pc, opcode, opcode2, InstuctionLookup(Function), SizeLookup(pAddr));
 }

@@ -85,8 +85,16 @@ enum Functions
 	MOVQ,
 	LPR,
 
-	TYPE3,				// Format 3
+	TYPE3,
 	TYPE3MKII,
+
+	CXPD,					// Format 3
+	BICPSR,
+	JUMP,
+	BISPSR,
+	ADJSP,
+	JSR,
+	CASE,
 
 	ADD,					// Format 4
 	CMP,
@@ -104,8 +112,26 @@ enum Functions
 	StrI,					// Format 5
 
 	TYPE6,				// Format 6
-	FORMAT7,				// Format 7
+	
+	MOVM,					// Format 7
+	CMPM,
+	INSS,
+	EXTS,
+	MOVXBW,
+	MOVZBW,
+	MOVZiD,
+	MOVXiD,
+	MUL,
+	MEI,
+	Trap,
+	DEI,
+	QUO,
+	REM,
+	MOD,
+	DIV,
+	
 	TYPE8,				// Format 8
+	InstructionCount,
 
 	BAD = 0xFF
 };
@@ -133,7 +159,7 @@ typedef union
 extern void n32016_init();
 extern void n32016_reset();
 extern void n32016_exec(uint32_t tubecycles);
-extern void ShowInstruction(uint32_t pc);
+extern void ShowInstruction(uint32_t pc, uint8_t Function);
 
 extern uint8_t ns32016ram[MEG16];
 extern uint32_t tube_irq;

@@ -252,7 +252,6 @@ void n32016_build_matrix()
 		{
 			mat[Index].p.Size = szVaries;
 			mat[Index].p.Format = Format7;
-			mat[Index].p.Function = FORMAT7;
 		}
 		break;
 
@@ -932,8 +931,6 @@ void n32016_exec(uint32_t tubecycles)
 		startpc = pc;
 		opcode = readmemb(pc);
 
-		ShowInstruction(pc);
-
 		if (pc == 0x1CB2)
 		{
 			n32016_dumpregs();
@@ -973,7 +970,24 @@ void n32016_exec(uint32_t tubecycles)
 			getgen(opcode >> 6, 0);
 		}
 		break;
+
+		case Format7:
+		{
+			opcode = readmemb(pc);
+			pc++;
+			opcode |= (readmemb(pc) << 8);
+			pc++;
+			isize = ilook[opcode & 3];
+			getgen1(opcode >> 11, 0);
+			getgen1(opcode >> 6, 1);
+			getgen(opcode >> 11, 0);
+			getgen(opcode >> 6, 1);
+			LookUp.p.Function = MOVM + ((opcode >> 2) & 7);
 		}
+		break;
+		}
+
+		ShowInstruction(pc, LookUp.p.Function);
 
 		switch (LookUp.p.Function)
 		{
@@ -1579,133 +1593,133 @@ void n32016_exec(uint32_t tubecycles)
 			}
 			break;
 
-		case FORMAT7:
-			opcode = readmemb(pc);
-			pc++;
-			opcode |= (readmemb(pc) << 8);
-			pc++;
-			isize = ilook[opcode & 3];
-			getgen1(opcode >> 11, 0);
-			getgen1(opcode >> 6, 1);
-			getgen(opcode >> 11, 0);
-			getgen(opcode >> 6, 1);
-			switch (opcode & 0x3F)
+		case MOVM:
+		{
+			temp = getdisp();
+			while (temp)
 			{
-			case 0x00: /*MOVMB*/
-				temp = getdisp();
-				while (temp)
-				{
-					temp2 = readmemb(genaddr[0]);
-					genaddr[0]++;
-					writememb(genaddr[1], temp2);
-					genaddr[1]++;
-					temp--;
-				}
-				break;
-			case 0x08: /*INSSB*/
-				temp3 = readmemb(pc);
-				pc++;
-				readgenb(0, temp)
-				readgenb(1, temp2)
-				for (c = 0; c <= (temp3 & 0x1F); c++)
-				{
-					temp2 &= ~(1 << ((c + (temp3 >> 5)) & 7));
-					if (temp & (1 << c))
-						temp2 |= (1 << ((c + (temp3 >> 5)) & 7));
-				}
-				writegenb(1, temp2)
-				break;
-
-			case 0x0C: // EXTSB
-				temp3 = readmemb(pc);
-				pc++;
-				readgenb(0, temp)
-					printf("EXTSB Source = %02X Shift = %u Bit Count = %u ", temp, temp3 >> 5, ((temp3 & 0x1F) + 1));
-				temp2 = 0;
-				temp >>= (temp3 >> 5); // Shift by offset
-				temp3 &= 0x1F; // Mask off the lower 5 Bits which are number of bits to extract
-
-				temp4 = 1;
-				for (c = 0; c <= temp3; c++)
-				{
-					if (temp & temp4) // Copy the ones
-					{
-						temp2 |= temp4;
-					}
-
-					temp4 <<= 1;
-				}
-				printf("Result = %02X\n", temp2);
-
-				writegenb(1, temp2)
-					break;
-
-			case 0x18: /*MOVZBD*/
-				readgenb(0, temp)
-					if (sdiff[1])
-						sdiff[1] = 4;
-				writegenl(1, temp)
-					break;
-			case 0x19: /*MOVZWD*/
-				readgenw(0, temp)
-					if (sdiff[1])
-						sdiff[1] = 4;
-				writegenl(1, temp)
-					break;
-
-			case 0x2F: /*DEID*/
-				readgenl(0, temp)
-					readgenq(1, temp64)
-					if (!temp)
-					{
-						printf("Divide by zero - DEID CE\n");
-						n32016_dumpregs();
-						break;
-					}
-				temp3 = temp64 % temp;
-				writegenl(1, temp3)
-					temp3 = (uint32_t) (temp64 / temp);
-				if (gentype[1])
-					*(uint32_t *) (genaddr[1] + 4) = temp3;
-				else
-				{
-					writememw(genaddr[1] + 4, temp3);
-					writememw(genaddr[1] + 4 + 2, temp3 >> 16);
-				}
-				break;
-
-			case 0x33: /*QUOD*/
-				readgenl(0, temp)
-					readgenl(1, temp2)
-					if (!temp)
-					{
-						printf("Divide by zero - QUOD CE\n");
-						n32016_dumpregs();
-						break;
-					}
-				temp2 /= temp;
-				writegenl(1, temp2)
-					break;
-
-			case 0x37: /*REMD*/
-				readgenl(0, temp)
-					readgenl(1, temp2)
-
-					if (!temp)
-					{
-						printf("Divide by zero - QUOD CE\n");
-						n32016_dumpregs();
-						break;
-					}
-				temp2 %= temp;
-				writegenl(1, temp2)
-					break;
-			default:
-				printf("Bad NS32016 CE opcode %04X %01X\n", opcode, opcode & 0x3F);
-				n32016_dumpregs();
-				break;
+				temp2 = readmemb(genaddr[0]);
+				genaddr[0]++;
+				writememb(genaddr[1], temp2);
+				genaddr[1]++;
+				temp--;
 			}
-			break;
+		}
+		break;
+
+		case INSS:
+		{
+			temp3 = readmemb(pc);
+			pc++;
+			readgenb(0, temp)
+			readgenb(1, temp2)
+			for (c = 0; c <= (temp3 & 0x1F); c++)
+			{
+				temp2 &= ~(1 << ((c + (temp3 >> 5)) & 7));
+				if (temp & (1 << c))
+					temp2 |= (1 << ((c + (temp3 >> 5)) & 7));
+			}
+			writegenb(1, temp2)
+		}
+		break;
+
+		case EXTS:
+		{
+			temp3 = readmemb(pc);
+			pc++;
+			readgenb(0, temp)
+				printf("EXTSB Source = %02X Shift = %u Bit Count = %u ", temp, temp3 >> 5, ((temp3 & 0x1F) + 1));
+			temp2 = 0;
+			temp >>= (temp3 >> 5); // Shift by offset
+			temp3 &= 0x1F; // Mask off the lower 5 Bits which are number of bits to extract
+
+			temp4 = 1;
+			for (c = 0; c <= temp3; c++)
+			{
+				if (temp & temp4) // Copy the ones
+				{
+					temp2 |= temp4;
+				}
+
+				temp4 <<= 1;
+			}
+			printf("Result = %02X\n", temp2);
+
+			writegenb(1, temp2)
+		}
+		break;
+
+		case MOVXBW:
+		{
+			readgenb(0, temp)
+			if (sdiff[1])
+				sdiff[1] = 4;
+			writegenl(1, temp)
+		}
+		break;
+
+		case MOVZBW:
+		{
+			readgenw(0, temp)
+				if (sdiff[1])
+					sdiff[1] = 4;
+			writegenl(1, temp)
+		}
+		break;
+
+		case DEI:
+		{
+			readgenl(0, temp)
+				readgenq(1, temp64)
+				if (!temp)
+				{
+					printf("Divide by zero - DEID CE\n");
+					n32016_dumpregs();
+					break;
+				}
+			temp3 = temp64 % temp;
+			writegenl(1, temp3)
+				temp3 = (uint32_t) (temp64 / temp);
+			if (gentype[1])
+				*(uint32_t *) (genaddr[1] + 4) = temp3;
+			else
+			{
+				writememw(genaddr[1] + 4, temp3);
+				writememw(genaddr[1] + 4 + 2, temp3 >> 16);
+			}
+		}
+		break;
+
+		case QUO:
+		{
+			readgenl(0, temp)
+				readgenl(1, temp2)
+				if (!temp)
+				{
+					printf("Divide by zero - QUOD CE\n");
+					n32016_dumpregs();
+					break;
+				}
+			temp2 /= temp;
+			writegenl(1, temp2)
+		}
+		break;
+
+		case REM:
+		{
+			readgenl(0, temp)
+				readgenl(1, temp2)
+
+				if (!temp)
+				{
+					printf("Divide by zero - QUOD CE\n");
+					n32016_dumpregs();
+					break;
+				}
+			temp2 %= temp;
+			writegenl(1, temp2)
+		}
+		break;
 
 		case TYPE8:
 			opcode |= (readmemb(pc) << 8);
