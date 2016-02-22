@@ -159,8 +159,8 @@ typedef union
 extern void n32016_init();
 extern void n32016_reset();
 extern void n32016_exec(uint32_t tubecycles);
-extern void ShowInstruction(uint32_t pc, uint8_t Function);
+extern void ShowInstruction(uint32_t pc, uint8_t Function, uint8_t Size);
 
-extern uint8_t ns32016ram[MEG16];
+extern uint8_t ns32016ram[MEG16 + 8];
 extern uint32_t tube_irq;
 extern DecodeMatrix mat[256];

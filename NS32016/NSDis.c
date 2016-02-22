@@ -3,15 +3,13 @@
 #include <string.h>
 #include "32016.h"
 
-const char* SizeLookup(uint8_t* pPC)
+const char* SizeLookup(uint8_t Size)
 {
-	uint8_t OpCode = *pPC;
-
-	switch (mat[OpCode].p.Size)
+	switch (Size)
 	{
-		case sz8:	return " Byte";
-		case sz16:	return " Word";
-		case sz32:	return " Dword";
+		case sz8:	return "B x08";
+		case sz16:	return "W x16";
+		case sz32:	return "D x32";
 		default:	break;
 	}
 
@@ -43,10 +41,15 @@ const char* InstuctionLookup(uint8_t Function)
 	return "Bad NS32016 opcode";
 }
 
-void ShowInstruction(uint32_t pc, uint8_t Function)
+void ShowInstruction(uint32_t pc, uint8_t Function, uint8_t Size)
 {
-	uint8_t opcode		= ns32016ram[pc];
-	uint8_t opcode2	= ns32016ram[pc + 1];
-	uint8_t* pAddr		= &ns32016ram[pc];
-	printf("PC:%06X INST:%02X [%02X] %s%s\n", pc, opcode, opcode2, InstuctionLookup(Function), SizeLookup(pAddr));
+	if (pc < MEG16)
+	{
+		uint8_t opcode = ns32016ram[pc];
+		uint8_t opcode2 = ns32016ram[pc + 1];
+		printf("PC:%06X INST:%02X [%02X] %s%s\n", pc, opcode, opcode2, InstuctionLookup(Function), SizeLookup(Size));
+		return;
+	}
+
+	printf("PC is :%08X ?????\n", pc);
 }

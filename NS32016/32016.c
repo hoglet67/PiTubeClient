@@ -13,7 +13,7 @@ int nsoutput = 0;
 int gentype[2];
 int nscfg;
 
-uint8_t ns32016ram[MEG16];
+uint8_t ns32016ram[MEG16 + 8];				// Extra 8 bytes as we can read that far off the end of RAM
 uint32_t tube_irq = 0;
 uint32_t r[8];
 uint32_t pc, sp[2], fp, sb, intbase;
@@ -1005,7 +1005,7 @@ void n32016_exec(uint32_t tubecycles)
 		break;
 		}
 
-		ShowInstruction(pc, LookUp.p.Function);
+		ShowInstruction(pc, LookUp.p.Function, LookUp.p.Size);
 
 		switch (LookUp.p.Function)
 		{
