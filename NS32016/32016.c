@@ -21,6 +21,7 @@ uint16_t psr, mod;
 uint32_t startpc;
 uint32_t genaddr[2];
 DecodeMatrix mat[256];
+DecodeMatrix LookUp;
 
 #define SP ((psr & S_FLAG) >> 9)
 
@@ -223,7 +224,6 @@ void n32016_build_matrix()
 
       case 0x4E:		// Type 6
       {
-        mat[Index].p.Function = TYPE6;
         mat[Index].p.Format = Format6;
         mat[Index].p.Size = szVaries;
       }
@@ -668,10 +668,6 @@ static uint32_t getdisp()
   return addr | ((addr & 0x20000000) ? 0xC0000000 : 0);
 }
 
-int isize = 0;
-int ilook[4] =
-{ 1, 2, 0, 4 };
-
 int genindex[2];
 static void getgen1(int gen, int c)
 {
@@ -747,13 +743,13 @@ static void getgen(int gen, int c)
       gentype[c] = 1;
       genaddr[c] = (uint32_t) & nsimm[c];
       /*Why can't they just decided on an endian and then stick to it?*/
-      if (isize == 1)
+      if (LookUp.p.Size == sz8)
         nsimm[c] = readmemb(pc);
-      else if (isize == 2)
+      else if (LookUp.p.Size == sz16)
         nsimm[c] = (readmemb(pc) << 8) | readmemb(pc + 1);
       else
         nsimm[c] = (readmemb(pc) << 24) | (readmemb(pc + 1) << 16) | (readmemb(pc + 2) << 8) | readmemb(pc + 3);
-      pc += isize;
+      pc += (LookUp.p.Size + 1);
       break;
 
     case 0x15: /*Absolute*/
@@ -771,17 +767,17 @@ static void getgen(int gen, int c)
 
     case 0x17: /*Stack*/
       gentype[c] = 0;
-      sdiff[c] = isize;
+      sdiff[c] = (LookUp.p.Size + 1);
       genaddr[c] = sp[SP];
       /*                if (c)
        {
-       sp[SP]-=isize;
+       sp[SP] -= (LookUp.p.Size + 1);
        genaddr[c]=sp[SP];
        }
        else
        {
        genaddr[c]=sp[SP];
-       sp[SP]+=isize;
+       sp[SP] += (LookUp.p.Size + 1);
        }*/
       break;
 
@@ -934,8 +930,6 @@ static uint16_t oldpsr;
 
 void n32016_exec(uint32_t tubecycles)
 {
-  DecodeMatrix LookUp;
-
   uint32_t opcode, WriteSize;
   uint32_t temp = 0, temp2, temp3, temp4;
   uint64_t temp64;
@@ -948,7 +942,6 @@ void n32016_exec(uint32_t tubecycles)
     opcode = readmemb(pc);
 
     pc++;
-    isize = ilook[opcode & 3];
     LookUp = mat[opcode];
     WriteSize = szVaries;
 
@@ -992,18 +985,38 @@ void n32016_exec(uint32_t tubecycles)
       }
       break;
 
+      case Format6:
+      {
+        opcode = readmemb(pc);
+        pc++;
+        opcode |= (readmemb(pc) << 8);
+        pc++;
+        getgen1(opcode >> 11, 0);
+        getgen1(opcode >> 6, 1);
+        getgen(opcode >> 11, 0);
+        getgen(opcode >> 6, 1);
+        LookUp.p.Function = ROT + ((opcode >> 2) & 15);
+
+        LookUp.p.Size = opcode & 3;
+        if ((opcode & 0x3C) == 0x00 || (opcode & 0x3C) == 0x04 || (opcode & 0x3C) == 0x14) /* ROT/ASH/LSH */
+        {
+          LookUp.p.Function = sz8;
+        }
+      }
+      break;
+      
       case Format7:
       {
         opcode = readmemb(pc);
         pc++;
         opcode |= (readmemb(pc) << 8);
         pc++;
-        isize = ilook[opcode & 3];
         getgen1(opcode >> 11, 0);
         getgen1(opcode >> 6, 1);
         getgen(opcode >> 11, 0);
         getgen(opcode >> 6, 1);
         LookUp.p.Function = MOVM + ((opcode >> 2) & 15);
+        LookUp.p.Size = opcode & 3;
       }
       break;
 
@@ -1500,61 +1513,60 @@ void n32016_exec(uint32_t tubecycles)
         WriteSize = LookUp.p.Size;
         break;
 
-      case TYPE6:
-        opcode = readmemb(pc);
-        pc++;
-        opcode |= (readmemb(pc) << 8);
-        pc++;
-        isize = ilook[opcode & 3];
-        getgen1(opcode >> 11, 0);
-        getgen1(opcode >> 6, 1);
-			if ((opcode & 0x3C) == 0x00 || (opcode & 0x3C) == 0x04 || (opcode & 0x3C) == 0x14) /* ROT/ASH/LSH */
-          isize = 1;
-        getgen(opcode >> 11, 0);
-        isize = ilook[opcode & 3];
-        getgen(opcode >> 6, 1);
-        switch (opcode & 0x3F)
+      case ROT:
+      {
+        switch (LookUp.p.Size)
         {
-			case 0x00: /*ROTB*/
-			{
-				readgenb(0, temp);
-				if (temp & 0xE0) {
-					temp |= 0xE0;
-					temp = ((temp ^ 0xFF) + 1);
-					temp = 8 - temp;
-				}
-				readgenb(1, temp2);
-				temp2 = (temp2 << temp) | (temp2 >> (8 - temp));
-				writegenb(1, temp2);
-			}
-			break;
-			case 0x01: /*ROTW*/
-			{
-				readgenb(0, temp);
-				if (temp & 0xE0) {
-					temp |= 0xE0;
-					temp = ((temp ^ 0xFF) + 1);
-					temp = 16 - temp;
-				}
-				readgenw(1, temp2);
-				temp2 = (temp2 << temp) | (temp2 >> (16 - temp));
-				writegenw(1, temp2);
-			}
-			break;
-			case 0x03: /*ROTD*/
-			{
-				readgenb(0, temp);
-				if (temp & 0xE0) {
-					temp |= 0xE0;
-					temp = ((temp ^ 0xFF) + 1);
-					temp = 32 - temp;
-				}
-				readgenl(1, temp2);
-				temp2 = (temp2 << temp) | (temp2 >> (32 - temp));
-				writegenl(1, temp2);
-			}
-			break;
-          case 0x04: /*ASHB*/
+          case sz8:
+          {
+            readgenb(0, temp);
+            if (temp & 0xE0) {
+              temp |= 0xE0;
+              temp = ((temp ^ 0xFF) + 1);
+              temp = 8 - temp;
+            }
+            readgenb(1, temp2);
+            temp2 = (temp2 << temp) | (temp2 >> (8 - temp));
+            writegenb(1, temp2);
+          }
+          break;
+
+          case sz16:
+          {
+            readgenb(0, temp);
+            if (temp & 0xE0) {
+              temp |= 0xE0;
+              temp = ((temp ^ 0xFF) + 1);
+              temp = 16 - temp;
+            }
+            readgenw(1, temp2);
+            temp2 = (temp2 << temp) | (temp2 >> (16 - temp));
+            writegenw(1, temp2);
+          }
+          break;
+
+          case sz32:
+          {
+            readgenb(0, temp);
+            if (temp & 0xE0) {
+              temp |= 0xE0;
+              temp = ((temp ^ 0xFF) + 1);
+              temp = 32 - temp;
+            }
+            readgenl(1, temp2);
+            temp2 = (temp2 << temp) | (temp2 >> (32 - temp));
+            writegenl(1, temp2);
+          }
+          break;
+        }
+      }
+      break;
+
+      case ASH:
+      {
+        switch (LookUp.p.Size)
+        {
+          case sz8:
           {
             readgenb(0, temp);
             if (temp & 0xE0)
@@ -1567,7 +1579,8 @@ void n32016_exec(uint32_t tubecycles)
             writegenb(1, temp2);
           }
           break;
-          case 0x05: /*ASHW*/
+
+          case sz16:
           {
             readgenb(0, temp);
             if (temp & 0xE0)
@@ -1580,7 +1593,8 @@ void n32016_exec(uint32_t tubecycles)
             writegenw(1, temp2);
           }
           break;
-          case 0x07: /*ASHD*/
+
+          case sz32:
           {
             readgenb(0, temp);
             if (temp & 0xE0)
@@ -1593,32 +1607,43 @@ void n32016_exec(uint32_t tubecycles)
             writegenl(1, temp2);
           }
           break;
-          case 8: /*CBITB*/
-            readgenb(0, temp)
-              temp &= 31;
-            if (gentype[1])
-            {
-              readgenl(1, temp2);
-            }
-            else
-            {
-              readgenb(1, temp2);
-            }
-            if (temp2 & (1 << temp))
-              psr |= F_FLAG;
-            else
-              psr &= ~F_FLAG;
-            temp2 &= ~(1 << temp);
-            if (gentype[1])
-            {
-              writegenl(1, temp2);
-            }
-            else
-            {
-              writegenb(1, temp2);
-            }
-            break;
-          case 0x14: /*LSHB*/
+        }
+      }
+      break;
+
+      case CBIT:
+      {
+        readgenb(0, temp)
+          temp &= 31;
+        if (gentype[1])
+        {
+          readgenl(1, temp2);
+        }
+        else
+        {
+          readgenb(1, temp2);
+        }
+        if (temp2 & (1 << temp))
+          psr |= F_FLAG;
+        else
+          psr &= ~F_FLAG;
+        temp2 &= ~(1 << temp);
+        if (gentype[1])
+        {
+          writegenl(1, temp2);
+        }
+        else
+        {
+          writegenb(1, temp2);
+        }
+      }
+      break;
+
+      case LSH:
+      {
+        switch (LookUp.p.Size)
+        {
+          case sz8:
           {
             readgenb(0, temp);
             if (temp & 0xE0)
@@ -1631,7 +1656,8 @@ void n32016_exec(uint32_t tubecycles)
             writegenb(1, temp2);
           }
           break;
-          case 0x15: /*LSHW*/
+
+          case sz16:
           {
             readgenb(0, temp);
             if (temp & 0xE0)
@@ -1644,7 +1670,8 @@ void n32016_exec(uint32_t tubecycles)
             writegenw(1, temp2);
           }
           break;
-          case 0x17: /*LSHD*/
+
+          case sz32:
           {
             readgenb(0, temp);
             if (temp & 0xE0)
@@ -1657,8 +1684,15 @@ void n32016_exec(uint32_t tubecycles)
             writegenl(1, temp2);
           }
           break;
+        }
+      }
+      break;
 
-          case 0x24: // NOTB
+      case NOT:
+      {
+        switch (LookUp.p.Size)
+        {
+          case sz8:
           {
             readgenb(0, temp);
             temp ^= 1;
@@ -1666,7 +1700,7 @@ void n32016_exec(uint32_t tubecycles)
           }
           break;
 
-          case 0x25: // NOTW
+          case sz16:
           {
             readgenw(0, temp);
             temp ^= 1;
@@ -1674,42 +1708,47 @@ void n32016_exec(uint32_t tubecycles)
           }
           break;
 
-          case 0x27: // NOTD
+          case sz32:
           {
             readgenl(0, temp);
             temp ^= 1;
             writegenl(1, temp);
           }
           break;
+        }
+      }
+      break;
 
-          case 0x30: /*ABSB*/
+      case ABS:
+      {
+        readgenb(0, temp)
+        if (temp & 0x80)
+          temp = (temp ^ 0xFF) + 1;
+        writegenb(1, temp)
+      }
+      break;
+
+      case COM:
+      {
+        switch (LookUp.p.Size)
+        {
+          case sz8:
             readgenb(0, temp)
-              if (temp & 0x80)
-                temp = (temp ^ 0xFF) + 1;
-            writegenb(1, temp)
-              break;
+            writegenb(1, ~temp)
+            break;
 
-          case 0x34: /*COMB*/
-            readgenb(0, temp)
-              writegenb(1, ~temp)
-              break;
-
-          case 0x35: // COMW
+          case sz16:
             readgenw(0, temp)
-              writegenw(1, ~temp)
-              break;
+            writegenw(1, ~temp)
+            break;
 
-          case 0x37: /// COMD
+          case sz32:
             readgenl(0, temp)
-              writegenl(1, ~temp)
-              break;
-
-          default:
-            printf("Bad NS32016 4E opcode %04X %01X\n", opcode, opcode & 0x3F);
-            n32016_dumpregs();
+            writegenl(1, ~temp)
             break;
         }
-        break;      
+      }
+      break;      
  
       case TYPE3:
         temp = ReadGen(0, LookUp.p.Size);

@@ -24,8 +24,8 @@ const char InstuctionText[InstructionCount][16] =
 	"TYPE3", "TYPE3MKII",																																						                                  // Stop Gap
 	"CXPD", "BICPSR", "JUMP", "BISPSR", "ADJSP", "JSR", "CASE",																										                    // Format 3
 	"ADD", "CMP", "BIC", "ADDC", "MOV", "OR", "SUB", "ADDR", "AND", "SUBC", "TBIT", "XOR",																	          // Format 4
-	"MOVS", "CMPS", "SETCFG", "SKPS",                                                                                                 // Format 5
-	"TYPE6",																																											                                    // Format 6
+	"MOVS", "CMPS", "SETCFG", "SKPS",                                                                                                 // Format 5  
+  "ROT", "ASH", "CBIT", "CBITI", "TRAP", "LSH", "SBIT", "SBITI", "NEG", "NOT", "TRAP", "SUBP", "ABS", "COM", "IBIT", "ADDP",        // Format 6  
 	"MOVM", "CMPM", "INSS", "EXTS", "MOVXBW", "MOVZBW", "MOVZiD", "MOVXiD", "MUL", "MEI", "Trap", "DEI", "QUO", "REM", "MOD", "DIV",	// Format 7
   "EXT", "CVTP", "INS", "CHECK", "INDEX", "FFS", "MOVUS", "MOVSU",				                                                          // Format 8
   "TRAP",

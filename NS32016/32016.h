@@ -114,8 +114,23 @@ enum Functions
 	SETCFG,
 	SKPS,
 
-  TYPE6,				// Format 6
-	
+  ROT,          // Format 6
+  ASH,
+  CBIT,
+  CBITI,
+  TRAP_F5_0100,
+  LSH,
+  SBIT,
+  SBITI,
+  NEG,
+  NOT,
+  TRAP_F5_1010,
+  SUBP,
+  ABS,
+  COM,
+  IBIT,
+  ADDP,
+		
 	MOVM,					// Format 7
 	CMPM,
 	INSS,
