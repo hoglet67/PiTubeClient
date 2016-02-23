@@ -920,9 +920,84 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
 
 static uint16_t oldpsr;
 
+// From: http://homepage.cs.uiowa.edu/~jones/bcd/bcd.html
+static uint32_t bcd_add_16(uint32_t a, uint32_t b, uint32_t *carry) {
+  uint32_t  t1, t2;              // unsigned 32-bit intermediate values
+  //printf("bcd_add_16: in  %08x %08x %08x\n", a, b, *carry);
+  if (*carry) {
+    b++;                         // I'm 90% sure its OK to handle carry this way
+  }                              // i.e. its OK if the ls digit of b becomes A
+  t1 = a + 0x06666666;
+  t2 = t1 ^ b;                   // sum without carry propagation
+  t1 = t1 + b;                   // provisional sum
+  t2 = t1 ^ t2;                  // all the binary carry bits
+  t2 = ~t2 & 0x11111110;         // just the BCD carry bits
+  t2 = (t2 >> 2) | (t2 >> 3);    // correction
+  t2 = t1 - t2;                  // corrected BCD sum
+  *carry = (t2 & 0xFFFF0000) ? 1 : 0;
+  t2 &= 0xFFFF;
+  //printf("bcd_add_16: out %08x %08x\n", t2, *carry);
+  return t2;
+}
+
+static uint32_t bcd_sub_16(uint32_t a, uint32_t b, uint32_t *carry) {
+  uint32_t  t1, t2;              // unsigned 32-bit intermediate values
+  //printf("bcd_sub_16: in  %08x %08x %08x\n", a, b, *carry);
+  if (*carry) {
+    b++;
+  }
+  *carry = 0;
+  t1 = 0x9999 - b;
+  t2 = bcd_add_16(t1, 1, carry);
+  t2 = bcd_add_16(a, t2, carry);
+  *carry = 1 - *carry;
+  //printf("bcd_add_16: out %08x %08x\n", t2, *carry);
+  return t2;
+}
+
+static uint32_t bcd_add(uint32_t a, uint32_t b, int size, uint32_t *carry) {
+  if (size == sz8)
+  {
+    uint32_t word = bcd_add_16(a, b, carry);
+    // If anything beyond bit 7 is set, then there has been a carry out
+    *carry = (word & 0xFF00) ? 1 : 0; 
+    return word & 0xFF;
+  }
+  else if (size == sz16)
+  {
+    return bcd_add_16(a, b, carry);
+  }
+  else
+  {
+    uint32_t word0 = bcd_add_16(a & 0xFFFF, b & 0xFFFF, carry);
+    uint32_t word1 = bcd_add_16(a >> 16, b >> 16,  carry);
+    return word0 + (word1 << 16);
+  }
+}
+
+static uint32_t bcd_sub(uint32_t a, uint32_t b, int size, uint32_t *carry) {
+  if (size == sz8)
+  {
+    uint32_t word = bcd_sub_16(a, b, carry);
+    // If anything beyond bit 7 is set, then there has been a carry out
+    *carry = (word & 0xFF00) ? 1 : 0; 
+    return word & 0xFF;
+  }
+  else if (size == sz16)
+  {
+    return bcd_sub_16(a, b, carry);
+  }
+  else
+  {
+    uint32_t word0 = bcd_sub_16(a & 0xFFFF, b & 0xFFFF, carry);
+    uint32_t word1 = bcd_sub_16(a >> 16, b >> 16,  carry);
+    return word0 + (word1 << 16);
+  }
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
-  uint32_t opcode, WriteSize;
+  uint32_t opcode, WriteSize, WriteIndex;
   uint32_t temp = 0, temp2, temp3, temp4;
   uint64_t temp64;
   int c;
@@ -936,6 +1011,7 @@ void n32016_exec(uint32_t tubecycles)
     pc++;
     LookUp = mat[opcode];
     WriteSize = szVaries;
+    WriteIndex = 0; // default to writing operand 0
 
     switch (LookUp.p.Format)
     {
@@ -992,6 +1068,7 @@ void n32016_exec(uint32_t tubecycles)
         pc++;
         opcode |= (readmemb(pc) << 8);
         pc++;
+        LookUp.p.Size = opcode & 3;
         getgen1(opcode >> 11, 0);
         getgen1(opcode >> 6, 1);
         // Ordering important here, as getgen uses LookUp.p.Size
@@ -1611,18 +1688,8 @@ void n32016_exec(uint32_t tubecycles)
          }
          else
             temp <<= temp2;
-         if (LookUp.p.Size == sz8)
-         {
-            writegenb(1, temp);
-         }
-         else if (LookUp.p.Size == sz16)
-         {
-            writegenw(1, temp);
-         }
-         else
-         {
-            writegenl(1, temp);
-         }
+         WriteSize = LookUp.p.Size;
+         WriteIndex = 1;
       }
       break;
 
@@ -2175,6 +2242,36 @@ void n32016_exec(uint32_t tubecycles)
         pc = temp;
         break;
 
+      case ADDP: /*ADDP*/
+        {
+          int carry = (psr & C_FLAG) ? 1 : 0;
+          temp2 = ReadGen(0, LookUp.p.Size);
+          temp = ReadGen(1, LookUp.p.Size);
+          temp = bcd_add(temp, temp2, LookUp.p.Size, &carry);
+          if (carry)
+            psr |= C_FLAG;
+          else
+            psr &= ~C_FLAG;
+          WriteSize = LookUp.p.Size;
+          WriteIndex = 1;
+        }
+        break;
+
+      case SUBP: /*SUBP*/
+        {
+          int carry = (psr & C_FLAG) ? 1 : 0;
+          temp2 = ReadGen(0, LookUp.p.Size);
+          temp = ReadGen(1, LookUp.p.Size);
+          temp = bcd_sub(temp, temp2, LookUp.p.Size, &carry);
+          if (carry)
+            psr |= C_FLAG;
+          else
+            psr &= ~C_FLAG;
+          WriteSize = LookUp.p.Size;
+          WriteIndex = 1;
+        }
+        break;
+
       default:
         printf("Bad NS32016 opcode %02X\n", opcode);
         n32016_dumpregs();
@@ -2185,19 +2282,19 @@ void n32016_exec(uint32_t tubecycles)
     {
       case sz8:
       {
-        writegenb(0, temp);
+        writegenb(WriteIndex, temp);
       }
       break;
 
       case sz16:
       {
-        writegenw(0, temp);
+        writegenw(WriteIndex, temp);
       }
       break;
 
       case sz32:
       {
-        uint32_t c = 0;
+        uint32_t c = WriteIndex;
 
         if (gentype[c])
         {
