@@ -1971,6 +1971,15 @@ void n32016_exec(uint32_t tubecycles)
       }
       break;
 
+      case MOVZiD:
+      {
+        temp = ReadGen(0, LookUp.p.Size);
+        if (sdiff[1])
+          sdiff[1] = 4;
+        writegenl(1, temp);
+      }
+      break;
+
       case DEI:
       {
         readgenl(0, temp)
