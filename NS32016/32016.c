@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "32016.h"
-#include "../bare-metal/tube-lib.h"
+#include "mem32016.h"
 #include "PandoraV0_61.h"
 
 int nsoutput = 0;
@@ -459,107 +459,6 @@ void n32016_dumpregs()
   printf("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
   printf("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
   exit(1);
-}
-
-// Tube Access
-// FFFFF0 - R1 status - IO_D[7:0]
-// FFFFF2 - R1 data   - IO_D[23:16]
-// FFFFF4 - R2 status - IO_D[7:0]
-// FFFFF6 - R2 data   - IO_D[23:16]
-// FFFFF8 - R3 status - IO_D[7:0]
-// FFFFFA - R3 data   - IO_D[23:16]
-// FFFFFC - R4 status - IO_D[7:0]
-// FFFFFE - R4 data   - IO_D[23:16]
-
-uint8_t read_x8(uint32_t addr)
-{
-  addr &= MEM_MASK;
-
-  //if (addr < RAM_SIZE)
-  {
-    return ns32016ram[addr];
-  }
-
-  if ((addr >= 0xFFFFF0) && ((addr & 0x01) == 0))
-  {
-    return tubeRead(addr >> 1);
-  }
-
-  printf("Bad read_x8 %08X\n", addr);
-  n32016_dumpregs();
-
-  return 0;
-}
-
-static uint16_t read_x16(uint32_t addr)
-{
-  addr &= MEM_MASK;
-  //if (addr < 0x100000)
-  {
-    //    printf("Read %08X %04X\n",addr,ns32016ram[addr&0xFFFFF]|(ns32016ram[(addr+1)&0xFFFFF]<<8));
-    return ns32016ram[addr & 0xFFFFF] | (ns32016ram[(addr + 1) & 0xFFFFF] << 8);
-  }
-
-  if (addr < 0x400000)
-  {
-    return 0;
-  }
-
-  if ((addr & ~0x7FFF) == 0xF00000)
-  {
-    return PandoraV0_61[addr & 0x7FFF] | (PandoraV0_61[(addr + 1) & 0x7FFF] << 8);
-  }
-
-  printf("Bad read_x16 %08X\n", addr);
-  n32016_dumpregs();
-
-  return 0;
-}
-
-static void write_x8(uint32_t addr, uint8_t val)
-{
-  addr &= MEM_MASK;
-
-  if (addr < RAM_SIZE)
-  {
-    ns32016ram[addr] = val;
-    return;
-  }
-
-  if (addr == 0xF90000)
-  {
-    memset(ns32016ram, 0, MEG4);
-    return;
-  }
-
-  if ((addr >= 0xFFFFF0) && ((addr & 0x01) == 0))
-  {
-    tubeWrite(addr >> 1, val);
-    return;
-  }
-
-  printf("Bad write_x8 %08X %02X\n", addr, val);
-  n32016_dumpregs();
-}
-
-static void write_x16(uint32_t addr, uint16_t val)
-{
-  addr &= MEM_MASK;
-
-  if (addr < RAM_SIZE)
-  {
-    ns32016ram[addr] = val & 0xFF;
-    ns32016ram[addr + 1] = val >> 8;
-    return;
-  }
-
-  if (addr < 0x400000)
-  {
-    return;
-  }
-
-  printf("Bad write_x16 %08X %04X\n", addr, val);
-  n32016_dumpregs();
 }
 
 static void pushw(uint16_t val)
