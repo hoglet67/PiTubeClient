@@ -1970,6 +1970,16 @@ void n32016_exec(uint32_t tubecycles)
       }
       break;
 
+      case MOVXiD:
+      {
+        temp = ReadGen(0, LookUp.p.Size);
+        SIGN_EXTEND(temp)
+        if (sdiff[1])
+          sdiff[1] = 4;
+        writegenl(1, temp);
+      }
+      break;
+
       case MOVZBW:
       {
         readgenb(0, temp)
