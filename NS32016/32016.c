@@ -1964,10 +1964,10 @@ void n32016_exec(uint32_t tubecycles)
 
       case MOVZBW:
       {
-        readgenw(0, temp)
+        readgenb(0, temp)
           if (sdiff[1])
             sdiff[1] = 4;
-        writegenl(1, temp)
+        writegenw(1, temp)
       }
       break;
 
