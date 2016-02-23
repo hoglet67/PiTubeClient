@@ -4,6 +4,7 @@
 // And Simon R. Ellwood
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "32016.h"
 #include "../bare-metal/tube-lib.h"
@@ -496,7 +497,7 @@ void n32016_dumpregs()
   printf("R4=%08X R5=%08X R6=%08X R7=%08X\n", r[4], r[5], r[6], r[7]);
   printf("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
   printf("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
-  //exit(1);
+  exit(1);
 }
 
 // Tube Access
