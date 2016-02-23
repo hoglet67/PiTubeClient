@@ -1566,18 +1566,63 @@ void n32016_exec(uint32_t tubecycles)
 
       case ASH:
       {
-			readgenb(0, temp2);
-			temp = ReadGen(1, LookUp.p.Size);
-
+         readgenb(0, temp2);
+         temp = ReadGen(1, LookUp.p.Size);
+         // Test if the shift is negative (i.e. a right shift)
          if (temp2 & 0xE0)
-			{
-				temp2 |= 0xE0;
-				temp >>= ((temp2 ^ 0xFF) + 1);
-			}
+         {
+            temp2 |= 0xE0;
+            temp2 = ((temp2 ^ 0xFF) + 1);
+            if (LookUp.p.Size == sz8)
+            {
+               // Test if the operand is also negative
+               if (temp & 0x80)
+               {
+                  // Sign extend in a portable way
+                  temp = (temp >> temp2) | ((0xFF >> temp2) ^ 0xFF);
+               }
+               else
+               {
+                  temp = (temp >> temp2);
+               }
+            }
+            else if (LookUp.p.Size == sz16)
+            {
+               if (temp & 0x8000)
+               {
+                  temp = (temp >> temp2) | ((0xFFFF >> temp2) ^ 0xFFFF);
+               }
+               else
+               {
+                  temp = (temp >> temp2);
+               }
+            }
+            else
+            {
+               if (temp & 0x80000000)
+               {
+                  temp = (temp >> temp2) | ((0xFFFFFFFF >> temp2) ^ 0xFFFFFFFF);
+               }
+               else
+               {
+                  temp = (temp >> temp2);
+               }
+            }
+         }
          else
-				temp <<= temp2;
-			
-         WriteSize = LookUp.p.Size;
+            temp <<= temp2;
+         if (LookUp.p.Size == sz8)
+         {
+            writegenb(1, temp);
+         }
+         else if (LookUp.p.Size == sz16)
+         {
+            writegenw(1, temp);
+         }
+         else
+         {
+            writegenl(1, temp);
+         }
       }
       break;
 
