@@ -959,7 +959,7 @@ void n32016_exec(uint32_t tubecycles)
         pc++;
         getgen1(opcode >> 11, 0);
         getgen(opcode >> 11, 0);
-        LookUp.p.Function = (opcode & 0x80) ? (CXPD + ((opcode >> 8) & 7)) : TRAP;
+        LookUp.p.Function = (opcode & 0x80) ? TRAP : (CXPD + ((opcode >> 8) & 7));
       }
       break;
 
