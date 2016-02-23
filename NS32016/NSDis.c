@@ -43,13 +43,11 @@ const char* InstuctionLookup(uint8_t Function)
 	return "Bad NS32016 opcode";
 }
 
-void ShowInstruction(uint32_t pc, uint8_t Function, uint8_t Size)
+void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Size)
 {
 	if (pc < MEG16)
 	{
-		uint8_t opcode = ns32016ram[pc];
-		uint8_t opcode2 = ns32016ram[pc + 1];
-    printf("#%08X PC:%06X INST:%02X [%02X] %s%s\n", ++OpCount, pc, opcode, opcode2, InstuctionLookup(Function), SizeLookup(Size));
+      printf("#%08X PC:%06X INST:%08X %s%s\n", ++OpCount, pc, opcode, InstuctionLookup(Function), SizeLookup(Size));
 		return;
 	}
 

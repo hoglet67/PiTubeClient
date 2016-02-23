@@ -871,10 +871,10 @@ void n32016_exec(uint32_t tubecycles)
   {
     sdiff[0] = sdiff[1] = 0;
     startpc = pc;
-    opcode = read_x8(pc);
+    opcode = read_x32(pc);
 
     pc++;
-    LookUp = mat[opcode];
+    LookUp = mat[opcode & 0xFF];
     WriteSize = szVaries;
     WriteIndex = 0; // default to writing operand 0
 
@@ -888,7 +888,6 @@ void n32016_exec(uint32_t tubecycles)
 
       case Format2:
       {
-        opcode |= (read_x8(pc) << 8);
         pc++;
         getgen1(opcode >> 11, 0);
         getgen(opcode >> 11, 0);
@@ -897,7 +896,6 @@ void n32016_exec(uint32_t tubecycles)
 
       case Format3:
       {
-        opcode |= (read_x8(pc) << 8);
         pc++;
         getgen1(opcode >> 11, 0);
         getgen(opcode >> 11, 0);
@@ -907,7 +905,6 @@ void n32016_exec(uint32_t tubecycles)
 
       case Format4:
       {
-        opcode |= (read_x8(pc) << 8);
         pc++;
         getgen1(opcode >> 11, 1);
         getgen1(opcode >> 6, 0);
@@ -918,10 +915,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case Format5:
       {
-        opcode |= (read_x8(pc) << 8);
-        pc++;
-        opcode |= (read_x8(pc) << 16);
-        pc++;
+        pc += 2;
         temp2 = (opcode >> 15) & 0xF;        
         LookUp.p.Function = (opcode & 0x30) ? TRAP : (MOVS + ((opcode >> 2) & 3));
       }
@@ -929,46 +923,37 @@ void n32016_exec(uint32_t tubecycles)
 
       case Format6:
       {
-        opcode = read_x8(pc);
-        pc++;
-        opcode |= (read_x8(pc) << 8);
-        pc++;
-        LookUp.p.Size = opcode & 3;
-        getgen1(opcode >> 11, 0);
-        getgen1(opcode >> 6, 1);
+        pc += 2;
+        LookUp.p.Size = (opcode >> 8) & 3;
+        getgen1(opcode >> 19, 0);
+        getgen1(opcode >> 14, 1);
         // Ordering important here, as getgen uses LookUp.p.Size
-        if ((opcode & 0x3C) == 0x00 || (opcode & 0x3C) == 0x04 || (opcode & 0x3C) == 0x14) //  ROT/ASH/LSH 
+        if ((opcode & 0x3C00) == 0x0000 || (opcode & 0x3C00) == 0x0400 || (opcode & 0x3C00) == 0x1400) //  ROT/ASH/LSH 
         {
           LookUp.p.Size = sz8;
         }
-        getgen(opcode >> 11, 0);
-        getgen(opcode >> 6, 1);
-        LookUp.p.Size = opcode & 3;
-        LookUp.p.Function = ROT + ((opcode >> 2) & 15);
+        getgen(opcode >> 19, 0);
+        getgen(opcode >> 14, 1);
+        LookUp.p.Size = (opcode >> 8) & 3;
+        LookUp.p.Function = ROT + ((opcode >> 10) & 15);
       }
       break;
       
       case Format7:
       {
-        opcode = read_x8(pc);
-        pc++;
-        opcode |= (read_x8(pc) << 8);
-        pc++;
-        getgen1(opcode >> 11, 0);
-        getgen1(opcode >> 6, 1);
-        getgen(opcode >> 11, 0);
-        getgen(opcode >> 6, 1);
-        LookUp.p.Function = MOVM + ((opcode >> 2) & 15);
-        LookUp.p.Size = opcode & 3;
+        pc += 2;
+        getgen1(opcode >> 19, 0);
+        getgen1(opcode >> 14, 1);
+        getgen(opcode >> 19, 0);
+        getgen(opcode >> 14, 1);
+        LookUp.p.Function = MOVM + ((opcode >> 10) & 15);
+        LookUp.p.Size = (opcode >> 8) & 3;
       }
       break;
 
       case Format8:
       {
-        opcode |= (read_x8(pc) << 8);
-        pc++;
-        opcode |= (read_x8(pc) << 16);
-        pc++;
+        pc += 2;
         getgen1(opcode >> 19, 0);
         getgen1(opcode >> 14, 1);
         getgen(opcode >> 19, 0);
@@ -1013,7 +998,7 @@ void n32016_exec(uint32_t tubecycles)
       break;
     }
 
-    ShowInstruction(startpc, LookUp.p.Function, LookUp.p.Size);
+    ShowInstruction(startpc, opcode, LookUp.p.Function, LookUp.p.Size);
 
     if (startpc == 0x1CB2)
     {
@@ -1033,7 +1018,7 @@ void n32016_exec(uint32_t tubecycles)
       {
         if (temp2 & 3)
         {
-          printf("Bad NS32016 MOVS %02X %04X %01X\n", (opcode >> 15) & 0xF, opcode, (opcode >> 15) & 0xF);
+          printf("Bad NS32016 MOVS %08X\n", opcode);
           n32016_dumpregs();
         }
 
@@ -1060,7 +1045,7 @@ void n32016_exec(uint32_t tubecycles)
       case 0x03: // MOVS dword
         if (temp2)
         {
-          printf("Bad NS32016 MOVS %02X %04X %01X\n", (opcode >> 15) & 0xF, opcode, (opcode >> 15) & 0xF);
+          printf("Bad NS32016 MOVS %08X\n", opcode);
           n32016_dumpregs();
           break;
         }
@@ -1182,7 +1167,7 @@ void n32016_exec(uint32_t tubecycles)
             writegenl(0, mod)
               break;
           default:
-            printf("Bad SPR reg %01X\n", (opcode >> 7) & 0xF);
+            printf("Bad SPR reg %08X\n", opcode);
             n32016_dumpregs();
         }
       }
@@ -1293,7 +1278,7 @@ void n32016_exec(uint32_t tubecycles)
               sp[SP] = temp;
               break;
             default:
-              printf("Bad LPRB reg %01X\n", (opcode >> 7) & 0xF);
+              printf("Bad LPRB reg %08X\n", opcode);
               n32016_dumpregs();
           }
         }
@@ -1305,7 +1290,7 @@ void n32016_exec(uint32_t tubecycles)
               mod = temp;
               break;
             default:
-              printf("Bad LPRW reg %01X\n", (opcode >> 7) & 0xF);
+              printf("Bad LPRW reg %08X\n", opcode);
               n32016_dumpregs();
           }
           break;
@@ -1325,7 +1310,7 @@ void n32016_exec(uint32_t tubecycles)
               break;
 
             default:
-              printf("Bad LPRD reg %01X\n", (opcode >> 7) & 0xF);
+              printf("Bad LPRD reg %08X\n", opcode);
               n32016_dumpregs();
               break;
           }
