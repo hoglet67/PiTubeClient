@@ -993,15 +993,15 @@ void n32016_exec(uint32_t tubecycles)
         pc++;
         getgen1(opcode >> 11, 0);
         getgen1(opcode >> 6, 1);
-        getgen(opcode >> 11, 0);
-        getgen(opcode >> 6, 1);
-        LookUp.p.Function = ROT + ((opcode >> 2) & 15);
-
-        LookUp.p.Size = opcode & 3;
+        // Ordering important here, as getgen uses LookUp.p.Size
         if ((opcode & 0x3C) == 0x00 || (opcode & 0x3C) == 0x04 || (opcode & 0x3C) == 0x14) /* ROT/ASH/LSH */
         {
           LookUp.p.Size = sz8;
         }
+        getgen(opcode >> 11, 0);
+        getgen(opcode >> 6, 1);
+        LookUp.p.Size = opcode & 3;
+        LookUp.p.Function = ROT + ((opcode >> 2) & 15);
       }
       break;
       
