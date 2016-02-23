@@ -1,5 +1,5 @@
-/*B-em v2.2 by Tom Walker
- 32016 parasite processor emulation (not working yet)*/
+// B-em v2.2 by Tom Walker
+// 32016 parasite processor emulation (not working yet)
 
 // And Simon R. Ellwood
 #include <stdint.h>
@@ -28,455 +28,416 @@ DecodeMatrix LookUp;
 
 void n32016_build_matrix()
 {
-  uint32_t Index;
+   uint32_t Index;
 
-  memset(mat, 0xFF, sizeof(mat));
+   memset(mat, 0xFF, sizeof(mat));
 
-  for (Index = 0; Index < 256; Index++)
-  {
-    switch (Index)
-    {
-      case 0x0E: // String instruction
+   for (Index = 0; Index < 256; Index++)
+   {
+      switch (Index)
       {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format5;
-      }
-      break;
+         case 0x0A: // BEQ
+         {
+            mat[Index].p.Function = BEQ;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE2(0x0C)		// ADDQ byte
-        CASE2(0x0D)		// ADDQ word
-        CASE2(0x0F)		// ADDQ dword
-      {
-        mat[Index].p.Function = ADDQ;
-        mat[Index].p.Format = Format2;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x1A: // BNE
+         {
+            mat[Index].p.Function = BNE;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE2(0x1C)		// CMPQ byte
-        CASE2(0x1D)		// CMPQ word
-        CASE2(0x1F)		// CMPQ dword
-      {
-        mat[Index].p.Function = CMPQ;
-        mat[Index].p.Format = Format2;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x4A: // BH
+         {
+            mat[Index].p.Function = BH;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE2(0x2C)		// SPR byte
-        CASE2(0x2D)		// SPR word
-        CASE2(0x2F)		// SPR dword
-      {
-        mat[Index].p.Function = SPR;
-        mat[Index].p.Format = Format2;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x5A: // BLS
+         {
+            mat[Index].p.Function = BLS;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE2(0x3C)		// Scond Byte
-        CASE2(0x3D)		// Scond Word
-        CASE2(0x3F)		// Scond DWord
-      {
-        mat[Index].p.Function = Scond;
-        mat[Index].p.Format = Format2;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x6A: // BGT
+         {
+            mat[Index].p.Function = BGT;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE2(0x4C)		// ACBB Byte
-        CASE2(0x4D)		// ACCB Word
-        CASE2(0x4F)		// ACCB DWord
-      {
-        mat[Index].p.Function = ACB;
-        mat[Index].p.Format = Format2;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x7A: // BLE
+         {
+            mat[Index].p.Function = BLE;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE2(0x5C)		// MOVQ byte
-        CASE2(0x5D)		// MOVQ word
-        CASE2(0x5F)		// MOVQ dword
-      {
-        mat[Index].p.Function = MOVQ;
-        mat[Index].p.Format = Format2;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x8A: // BFS
+         {
+            mat[Index].p.Function = BFS;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE2(0x6C)		// LPR byte
-        CASE2(0x6D)		// LPR word
-        CASE2(0x6F)		// LPR dword
-      {
-        mat[Index].p.Function = LPR;
-        mat[Index].p.Format = Format2;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x9A: // BFC
+         {
+            mat[Index].p.Function = BFC;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE4(0x00)		// ADD byte
-        CASE4(0x01)		// ADD word
-        CASE4(0x03)		// ADD dword
-      {
-        mat[Index].p.Function = ADD;
-        mat[Index].p.Format = Format4;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0xAA: // BLO
+         {
+            mat[Index].p.Function = BLO;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE4(0x04)		// CMP byte
-        CASE4(0x05)		// CMP word
-        CASE4(0x07)		// CMP dword
-      {
-        mat[Index].p.Function = CMP;
-        mat[Index].p.Format = Format4;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0xBA: // BHS
+         {
+            mat[Index].p.Function = BHS;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE4(0x08)		// BIC byte
-        CASE4(0x09)		// BIC word
-        CASE4(0x0B)		// BIC dword
-      {
-        mat[Index].p.Function = BIC;
-        mat[Index].p.Format = Format4;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0xCA: // BLT
+         {
+            mat[Index].p.Function = BLT;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE4(0x14)		// MOV byte
-        CASE4(0x15)		// MOV word
-        CASE4(0x17)		// MOV dword
-      {
-        mat[Index].p.Function = MOV;
-        mat[Index].p.Format = Format4;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0xDA: // BGE
+         {
+            mat[Index].p.Function = BGE;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE4(0x18)		// OR byte
-        CASE4(0x19)		// OR word
-        CASE4(0x1B)		// OR dword
-      {
-        mat[Index].p.Function = OR;
-        mat[Index].p.Format = Format4;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0xEA: // BR
+         {
+            mat[Index].p.Function = BR;
+            mat[Index].p.Format = Format0;
+         }
+         break;
 
-      CASE4(0x20)		// SUB byte
-        CASE4(0x21)		// SUB word
-        CASE4(0x23)		// SUB dword
-      {
-        mat[Index].p.Function = SUB;
-        mat[Index].p.Format = Format4;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x02:		// BSR
+         {
+            mat[Index].p.Function = BSR;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      CASE4(0x24)		// ADDR byte
-        CASE4(0x25)		// ADDR word
-        CASE4(0x27)		// ADDR dword
-      {
-        mat[Index].p.Function = ADDR;
-        mat[Index].p.Format = Format4;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x12: // RET
+         {
+            mat[Index].p.Function = RET;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      CASE4(0x28)		// AND byte
-        CASE4(0x29)		// AND word
-        CASE4(0x2B)		// AND dword
-      {
-        mat[Index].p.Function = AND;
-        mat[Index].p.Format = Format4;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x22: // CXP
+         {
+            mat[Index].p.Function = CXP;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      CASE4(0x30)		// SUBC byte
-        CASE4(0x31)		// SUBC word
-        CASE4(0x33)		// SUBC dword
-      {
-        mat[Index].p.Function = SUBC;
-        mat[Index].p.Format = Format4;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x32: // RXP
+         {
+            mat[Index].p.Function = RXP;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      CASE4(0x34)		// TBIT byte
-        CASE4(0x35)		// TBIT word
-        CASE4(0x37)		// TBIT dword
-      {
-        mat[Index].p.Function = TBIT;
-        mat[Index].p.Format = Format4;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x42: // RETT
+         {
+            mat[Index].p.Function = RETT;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      CASE4(0x38)		// XOR byte
-        CASE4(0x39)		// XOR word
-        CASE4(0x3B)		// XOR dword
-      {
-        mat[Index].p.Function = XOR;
-        mat[Index].p.Format = Format4;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x52: // RETI
+         {
+            mat[Index].p.Function = RETI;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      case 0x4E:		// Type 6
-      {
-        mat[Index].p.Format = Format6;
-        mat[Index].p.Size = szVaries;
-      }
-      break;
+         case 0x62: // SAVE
+         {
+            mat[Index].p.Function = SAVE;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      CASE2(0x7C)		// Type 3 byte
-        CASE2(0x7D)		// Type 3 word
-        CASE2(0x7F)		// Type 3 word
-      {
-        mat[Index].p.Format = Format3;
-        mat[Index].p.Size = Index & 3;
-      }
-      break;
+         case 0x72: // RESTORE
+         {
+            mat[Index].p.Function = RESTORE;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      case 0xCE:		// Format 7
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format7;
-      }
-      break;
+         case 0x82: // ENTER
+         {
+            mat[Index].p.Function = ENTER;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      CASE4(0x2E)		// Type 8
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format8;
-      }
-      break;
+         case 0x92: // EXIT
+         {
+            mat[Index].p.Function = EXIT;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      case 0x02:		// BSR
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = BSR;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         case 0xA2: // NOP
+         {
+            mat[Index].p.Function = NOP;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      case 0x12: // RET
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = RET;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         case 0xE2: // SVC
+         {
+            mat[Index].p.Function = SVC;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      case 0x22: // CXP
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = CXP;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         case 0xF2: // BPT
+         {
+            mat[Index].p.Function = BPT;
+            mat[Index].p.Format = Format1;
+         }
+         break;
 
-      case 0x32: // RXP
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = RXP;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         CASE2(0x0C)		// ADDQ byte
+         CASE2(0x0D)		// ADDQ word
+         CASE2(0x0F)		// ADDQ dword
+         {
+            mat[Index].p.Function = ADDQ;
+            mat[Index].p.Format = Format2;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x42: // RETT
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = RETT;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         CASE2(0x1C)		// CMPQ byte
+         CASE2(0x1D)		// CMPQ word
+         CASE2(0x1F)		// CMPQ dword
+         {
+            mat[Index].p.Function = CMPQ;
+            mat[Index].p.Format = Format2;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x52: // RETI
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = RETI;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         CASE2(0x2C)		// SPR byte
+         CASE2(0x2D)		// SPR word
+         CASE2(0x2F)		// SPR dword
+         {
+            mat[Index].p.Function = SPR;
+            mat[Index].p.Format = Format2;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x62: // SAVE
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = SAVE;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         CASE2(0x3C)		// Scond Byte
+         CASE2(0x3D)		// Scond Word
+         CASE2(0x3F)		// Scond DWord
+         {
+            mat[Index].p.Function = Scond;
+            mat[Index].p.Format = Format2;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x72: /*RESTORE*/
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = RESTORE;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         CASE2(0x4C)		// ACBB Byte
+         CASE2(0x4D)		// ACCB Word
+         CASE2(0x4F)		// ACCB DWord
+         {
+            mat[Index].p.Function = ACB;
+            mat[Index].p.Format = Format2;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x82: /*ENTER*/
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = ENTER;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         CASE2(0x5C)		// MOVQ byte
+         CASE2(0x5D)		// MOVQ word
+         CASE2(0x5F)		// MOVQ dword
+         {
+            mat[Index].p.Function = MOVQ;
+            mat[Index].p.Format = Format2;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x92: /*EXIT*/
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = EXIT;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         CASE2(0x6C)		// LPR byte
+         CASE2(0x6D)		// LPR word
+         CASE2(0x6F)		// LPR dword
+         {
+            mat[Index].p.Function = LPR;
+            mat[Index].p.Format = Format2;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0xA2: // NOP
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = NOP;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         CASE2(0x7C)		// Type 3 byte
+         CASE2(0x7D)		// Type 3 word
+         CASE2(0x7F)		// Type 3 word
+         {
+            mat[Index].p.Format = Format3;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0xE2: // SVC
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = SVC;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         CASE4(0x00)		// ADD byte
+         CASE4(0x01)		// ADD word
+         CASE4(0x03)		// ADD dword
+         {
+            mat[Index].p.Function = ADD;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0xF2: // BPT
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Function = BPT;
-        mat[Index].p.Format = Format1;
-      }
-      break;
+         CASE4(0x04)		// CMP byte
+         CASE4(0x05)		// CMP word
+         CASE4(0x07)		// CMP dword
+         {
+            mat[Index].p.Function = CMP;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x0A: /*BEQ*/
-      {
-        mat[Index].p.Function = BEQ;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         CASE4(0x08)		// BIC byte
+         CASE4(0x09)		// BIC word
+         CASE4(0x0B)		// BIC dword
+         {
+            mat[Index].p.Function = BIC;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x1A: /*BNE*/
-      {
-        mat[Index].p.Function = BNE;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         CASE4(0x14)		// MOV byte
+         CASE4(0x15)		// MOV word
+         CASE4(0x17)		// MOV dword
+         {
+            mat[Index].p.Function = MOV;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x4A: /*BH*/
-      {
-        mat[Index].p.Function = BH;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         CASE4(0x18)		// OR byte
+         CASE4(0x19)		// OR word
+         CASE4(0x1B)		// OR dword
+         {
+            mat[Index].p.Function = OR;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x5A: /*BLS*/
-      {
-        mat[Index].p.Function = BLS;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         CASE4(0x20)		// SUB byte
+         CASE4(0x21)		// SUB word
+         CASE4(0x23)		// SUB dword
+         {
+            mat[Index].p.Function = SUB;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x6A: /*BGT*/
-      {
-        mat[Index].p.Function = BGT;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         CASE4(0x24)		// ADDR byte
+         CASE4(0x25)		// ADDR word
+         CASE4(0x27)		// ADDR dword
+         {
+            mat[Index].p.Function = ADDR;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x7A: /*BLE*/
-      {
-        mat[Index].p.Function = BLE;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         CASE4(0x28)		// AND byte
+         CASE4(0x29)		// AND word
+         CASE4(0x2B)		// AND dword
+         {
+            mat[Index].p.Function = AND;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x8A: /*BFS*/
-      {
-        mat[Index].p.Function = BFS;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         CASE4(0x30)		// SUBC byte
+         CASE4(0x31)		// SUBC word
+         CASE4(0x33)		// SUBC dword
+         {
+            mat[Index].p.Function = SUBC;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0x9A: /*BFC*/
-      {
-        mat[Index].p.Function = BFC;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         CASE4(0x34)		// TBIT byte
+         CASE4(0x35)		// TBIT word
+         CASE4(0x37)		// TBIT dword
+         {
+            mat[Index].p.Function = TBIT;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0xAA: /*BLO*/
-      {
-        mat[Index].p.Function = BLO;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         CASE4(0x38)		// XOR byte
+         CASE4(0x39)		// XOR word
+         CASE4(0x3B)		// XOR dword
+         {
+            mat[Index].p.Function = XOR;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
 
-      case 0xBA: /*BHS*/
-      {
-        mat[Index].p.Function = BHS;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         case 0x0E: // String instruction
+         {
+            mat[Index].p.Format = Format5;
+         }
+         break;
 
-      case 0xCA: /*BLT*/
-      {
-        mat[Index].p.Function = BLT;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         case 0x4E:		// Type 6
+         {
+            mat[Index].p.Format = Format6;
+         }
+         break;
 
-      case 0xDA: /*BGE*/
-      {
-        mat[Index].p.Function = BGE;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         case 0xCE:		// Format 7
+         {
+            mat[Index].p.Format = Format7;
+         }
+         break;
 
-      case 0xEA: /*BR*/
-      {
-        mat[Index].p.Function = BR;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
-      }
-      break;
+         CASE4(0x2E)		// Type 8
+         {
+            mat[Index].p.Format = Format8;
+         }
+         break;
 
-      case 0x3E:
-      {
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = Format0;
+         case 0x3E:	/// TODO Check this looks wrong!
+         {
+            mat[Index].p.Format = Format0;
+         }
+         break;
       }
-      break;
-
-      default:
-      {
-        mat[Index].p.Function = BAD;
-        mat[Index].p.Size = szVaries;
-        mat[Index].p.Format = FormatBad;
-      }
-      break;
-    }
-  }
+   }
 }
 
 void n32016_reset()
@@ -510,7 +471,7 @@ void n32016_dumpregs()
 // FFFFFC - R4 status - IO_D[7:0]
 // FFFFFE - R4 data   - IO_D[23:16]
 
-uint8_t readmemb(uint32_t addr)
+uint8_t read_x8(uint32_t addr)
 {
   addr &= MEM_MASK;
 
@@ -524,13 +485,13 @@ uint8_t readmemb(uint32_t addr)
     return tubeRead(addr >> 1);
   }
 
-  printf("Bad readmemb %08X\n", addr);
+  printf("Bad read_x8 %08X\n", addr);
   n32016_dumpregs();
 
   return 0;
 }
 
-static uint16_t readmemw(uint32_t addr)
+static uint16_t read_x16(uint32_t addr)
 {
   addr &= MEM_MASK;
   //if (addr < 0x100000)
@@ -549,13 +510,13 @@ static uint16_t readmemw(uint32_t addr)
     return PandoraV0_61[addr & 0x7FFF] | (PandoraV0_61[(addr + 1) & 0x7FFF] << 8);
   }
 
-  printf("Bad readmemw %08X\n", addr);
+  printf("Bad read_x16 %08X\n", addr);
   n32016_dumpregs();
 
   return 0;
 }
 
-static void writememb(uint32_t addr, uint8_t val)
+static void write_x8(uint32_t addr, uint8_t val)
 {
   addr &= MEM_MASK;
 
@@ -577,11 +538,11 @@ static void writememb(uint32_t addr, uint8_t val)
     return;
   }
 
-  printf("Bad writememb %08X %02X\n", addr, val);
+  printf("Bad write_x8 %08X %02X\n", addr, val);
   n32016_dumpregs();
 }
 
-static void writememw(uint32_t addr, uint16_t val)
+static void write_x16(uint32_t addr, uint16_t val)
 {
   addr &= MEM_MASK;
 
@@ -597,27 +558,27 @@ static void writememw(uint32_t addr, uint16_t val)
     return;
   }
 
-  printf("Bad writememw %08X %04X\n", addr, val);
+  printf("Bad write_x16 %08X %04X\n", addr, val);
   n32016_dumpregs();
 }
 
 static void pushw(uint16_t val)
 {
   sp[SP] -= 2;
-  writememw(sp[SP], val);
+  write_x16(sp[SP], val);
 }
 
 static void pushd(uint32_t val)
 {
   sp[SP] -= 4;
 
-  writememw(sp[SP], val);
-  writememw(sp[SP] + 2, val >> 16);
+  write_x16(sp[SP], val);
+  write_x16(sp[SP] + 2, val >> 16);
 }
 
 static uint16_t popw()
 {
-  uint16_t temp = readmemw(sp[SP]);
+  uint16_t temp = read_x16(sp[SP]);
   sp[SP] += 2;
 
   return temp;
@@ -625,7 +586,7 @@ static uint16_t popw()
 
 static uint32_t popd()
 {
-  uint32_t temp = readmemw(sp[SP]) | (readmemw(sp[SP] + 2) << 16);
+  uint32_t temp = read_x16(sp[SP]) | (read_x16(sp[SP] + 2) << 16);
   sp[SP] += 4;
 
   return temp;
@@ -633,7 +594,7 @@ static uint32_t popd()
 
 static uint32_t getdisp()
 {
-  uint32_t addr = readmemb(pc);
+  uint32_t addr = read_x8(pc);
   pc++;
   if (!(addr & 0x80))
   {
@@ -643,18 +604,18 @@ static uint32_t getdisp()
   if (!(addr & 0x40))
   {
     addr &= 0x3F;
-    addr = (addr << 8) | readmemb(pc);
+    addr = (addr << 8) | read_x8(pc);
     pc++;
 
     return addr | ((addr & 0x2000) ? 0xFFFFC000 : 0);
   }
 
   addr &= 0x3F;
-  addr = (addr << 24) | (readmemb(pc) << 16);
+  addr = (addr << 24) | (read_x8(pc) << 16);
   pc++;
-  addr = addr | (readmemb(pc) << 8);
+  addr = addr | (read_x8(pc) << 8);
   pc++;
-  addr = addr | readmemb(pc);
+  addr = addr | read_x8(pc);
   pc++;
 
   return addr | ((addr & 0x20000000) ? 0xC0000000 : 0);
@@ -665,7 +626,7 @@ static void getgen1(int gen, int c)
 {
   if ((gen & 0x1C) == 0x1C)
   {
-    genindex[c] = readmemb(pc);
+    genindex[c] = read_x8(pc);
     pc++;
   }
 }
@@ -705,59 +666,59 @@ static void getgen(int gen, int c)
       genaddr[c] = r[gen & 7] + getdisp();
       break;
 
-    case 0x10: /*Frame memory relative*/
+    case 0x10: // Frame memory relative
       temp = getdisp();
       temp2 = getdisp();
-      genaddr[c] = readmemw(fp + temp) | (readmemw(fp + temp + 2) << 16);
+      genaddr[c] = read_x16(fp + temp) | (read_x16(fp + temp + 2) << 16);
       genaddr[c] += temp2;
       gentype[c] = 0;
       break;
 
-    case 0x11: /*Stack memory relative*/
+    case 0x11: // Stack memory relative
       temp = getdisp();
       temp2 = getdisp();
-      genaddr[c] = readmemw(sp[SP] + temp) | (readmemw(sp[SP] + temp + 2) << 16);
+      genaddr[c] = read_x16(sp[SP] + temp) | (read_x16(sp[SP] + temp + 2) << 16);
       genaddr[c] += temp2;
       gentype[c] = 0;
       break;
 
-    case 0x12: /*Static memory relative*/
+    case 0x12: // Static memory relative
       temp = getdisp();
       temp2 = getdisp();
-      genaddr[c] = readmemw(sb + temp) | (readmemw(sb + temp + 2) << 16);
+      genaddr[c] = read_x16(sb + temp) | (read_x16(sb + temp + 2) << 16);
       genaddr[c] += temp2;
       gentype[c] = 0;
       break;
 
-    case 0x14: /*Immediate*/
-      /*                genaddr[c]=pc;
-       gentype[c]=0;*/
+    case 0x14: // Immediate
+      /*                genaddr[c]=pc;*/
+       gentype[c]=0;
       gentype[c] = 1;
       genaddr[c] = (uint32_t) & nsimm[c];
-      /*Why can't they just decided on an endian and then stick to it?*/
+      // Why can't they just decided on an endian and then stick to it?
       if (LookUp.p.Size == sz8)
-        nsimm[c] = readmemb(pc);
+        nsimm[c] = read_x8(pc);
       else if (LookUp.p.Size == sz16)
-        nsimm[c] = (readmemb(pc) << 8) | readmemb(pc + 1);
+        nsimm[c] = (read_x8(pc) << 8) | read_x8(pc + 1);
       else
-        nsimm[c] = (readmemb(pc) << 24) | (readmemb(pc + 1) << 16) | (readmemb(pc + 2) << 8) | readmemb(pc + 3);
+        nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
       pc += (LookUp.p.Size + 1);
       break;
 
-    case 0x15: /*Absolute*/
+    case 0x15: // Absolute
       gentype[c] = 0;
       genaddr[c] = getdisp();
       break;
 
-    case 0x16: /*External*/
+    case 0x16: // External
       gentype[c] = 0;
-      temp = readmemw(mod + 4) + (readmemw(mod + 6) << 16);
+      temp = read_x16(mod + 4) + (read_x16(mod + 6) << 16);
       temp += getdisp();
-      temp2 = readmemw(temp) + (readmemw(temp + 2) << 16);
+      temp2 = read_x16(temp) + (read_x16(temp + 2) << 16);
       genaddr[c] = temp2 + getdisp();
       break;
 
-    case 0x17: /*Stack*/
+    case 0x17: // Stack
       gentype[c] = 0;
       sdiff[c] = (LookUp.p.Size + 1);
       genaddr[c] = sp[SP];
@@ -773,24 +734,24 @@ static void getgen(int gen, int c)
        }*/
       break;
 
-    case 0x18: /*FP relative*/
+    case 0x18: // FP relative
       gentype[c] = 0;
       genaddr[c] = getdisp() + fp;
       break;
-    case 0x19: /*SP relative*/
+    case 0x19: // SP relative
       gentype[c] = 0;
       genaddr[c] = getdisp() + sp[SP];
       break;
-    case 0x1A: /*SB relative*/
+    case 0x1A: // SB relative
       gentype[c] = 0;
       genaddr[c] = getdisp() + sb;
       break;
-    case 0x1B: /*PC relative*/
+    case 0x1B: // PC relative
       gentype[c] = 0;
       genaddr[c] = getdisp() + startpc;
       break;
 
-    case 0x1C: /*EA + Rn*/
+    case 0x1C: // EA + Rn
       getgen(genindex[c] >> 3, c);
       if (!gentype[c])
         genaddr[c] += r[genindex[c] & 7];
@@ -799,7 +760,7 @@ static void getgen(int gen, int c)
       gentype[c] = 0;
       break;
 
-    case 0x1D: /*EA + Rn*2*/
+    case 0x1D: // EA + Rn*2
       getgen(genindex[c] >> 3, c);
       if (!gentype[c])
         genaddr[c] += (r[genindex[c] & 7] * 2);
@@ -808,7 +769,7 @@ static void getgen(int gen, int c)
       gentype[c] = 0;
       break;
 
-    case 0x1E: /*EA + Rn*4*/
+    case 0x1E: // EA + Rn*4
       getgen(genindex[c] >> 3, c);
       if (!gentype[c])
         genaddr[c] += (r[genindex[c] & 7] * 4);
@@ -817,7 +778,7 @@ static void getgen(int gen, int c)
       gentype[c] = 0;
       break;
 
-    case 0x1F: /*EA + Rn*8*/
+    case 0x1F: // EA + Rn*8
       getgen(genindex[c] >> 3, c);
       if (!gentype[c])
         genaddr[c] += (r[genindex[c] & 7] * 8);
@@ -835,21 +796,21 @@ static void getgen(int gen, int c)
 #define readgenb(c,temp)        if (gentype[c]) temp=*(uint8_t *)genaddr[c]; \
                                                                                                                                                                                                                                                                                                 																					 										                                  else \
                                 { \
-                                        temp=readmemb(genaddr[c]); \
+                                        temp=read_x8(genaddr[c]); \
                                         if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
                                 }
 
 #define readgenw(c,temp)        if (gentype[c]) temp=*(uint16_t *)genaddr[c]; \
                                                                                                                                                                                                                                                                                                 																					 										                                  else \
                                 { \
-                                        temp=readmemw(genaddr[c]); \
+                                        temp=read_x16(genaddr[c]); \
                                         if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
                                 }
 
 #define readgenl(c,temp)        if (gentype[c]) temp=*(uint32_t *)genaddr[c]; \
                                                                                                                                                                                                                                                                                                 																					 										                                  else \
                                 { \
-                                        temp=readmemw(genaddr[c])|(readmemw(genaddr[c]+2)<<16); \
+                                        temp=read_x16(genaddr[c])|(read_x16(genaddr[c]+2)<<16); \
                                         if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
                                 }
 
@@ -890,9 +851,9 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
 #define readgenq(c,temp)        if (gentype[c]) temp=*(uint64_t *)genaddr[c]; \
                                                                                                                                                                                                                                                                                                 																					 										                                  else \
                                 { \
-                                        temp=readmemw(genaddr[c])|(readmemw(genaddr[c]+2)<<16); \
+                                        temp=read_x16(genaddr[c])|(read_x16(genaddr[c]+2)<<16); \
                                         if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
-                                        temp|=((readmemw(genaddr[c])|(readmemw(genaddr[c]+2)<<16))<<16); \
+                                        temp|=((read_x16(genaddr[c])|(read_x16(genaddr[c]+2)<<16))<<16); \
                                         if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
                                 }
 
@@ -900,22 +861,22 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
                                                                                                                                                                                                                                                                                                 																					 										                                  else \
                                 { \
                                         if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]-sdiff[c]; \
-                                        writememb(genaddr[c],temp); \
+                                        write_x8(genaddr[c],temp); \
                                 }
 
 #define writegenw(c,temp)		if (gentype[c]) *(uint16_t*) genaddr[c]=temp; \
                                                                                                                                                                                                                                                                                                 																					 										                                  else \
                                 { \
 											if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]-sdiff[c]; \
-                                        writememw(genaddr[c],temp); \
+                                        write_x16(genaddr[c],temp); \
                                 }
 
 #define writegenl(c,temp)       if (gentype[c]) *(uint32_t *)genaddr[c]=temp; \
                                                                                                                                                                                                                                                                                                 																					 										                                  else \
                                 { \
                                         if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]-sdiff[c]; \
-                                        writememw(genaddr[c],temp); \
-                                        writememw(genaddr[c]+2,temp>>16); \
+                                        write_x16(genaddr[c],temp); \
+                                        write_x16(genaddr[c]+2,temp>>16); \
                                 }
 
 static uint16_t oldpsr;
@@ -931,7 +892,7 @@ void n32016_exec(uint32_t tubecycles)
   {
     sdiff[0] = sdiff[1] = 0;
     startpc = pc;
-    opcode = readmemb(pc);
+    opcode = read_x8(pc);
 
     pc++;
     LookUp = mat[opcode];
@@ -947,7 +908,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case Format2:
       {
-        opcode |= (readmemb(pc) << 8);
+        opcode |= (read_x8(pc) << 8);
         pc++;
         getgen1(opcode >> 11, 0);
         getgen(opcode >> 11, 0);
@@ -956,7 +917,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case Format3:
       {
-        opcode |= (readmemb(pc) << 8);
+        opcode |= (read_x8(pc) << 8);
         pc++;
         getgen1(opcode >> 11, 0);
         getgen(opcode >> 11, 0);
@@ -966,7 +927,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case Format4:
       {
-        opcode |= (readmemb(pc) << 8);
+        opcode |= (read_x8(pc) << 8);
         pc++;
         getgen1(opcode >> 11, 1);
         getgen1(opcode >> 6, 0);
@@ -977,9 +938,9 @@ void n32016_exec(uint32_t tubecycles)
 
       case Format5:
       {
-        opcode |= (readmemb(pc) << 8);
+        opcode |= (read_x8(pc) << 8);
         pc++;
-        opcode |= (readmemb(pc) << 16);
+        opcode |= (read_x8(pc) << 16);
         pc++;
         temp2 = (opcode >> 15) & 0xF;        
         LookUp.p.Function = (opcode & 0x30) ? TRAP : (MOVS + ((opcode >> 2) & 3));
@@ -988,14 +949,14 @@ void n32016_exec(uint32_t tubecycles)
 
       case Format6:
       {
-        opcode = readmemb(pc);
+        opcode = read_x8(pc);
         pc++;
-        opcode |= (readmemb(pc) << 8);
+        opcode |= (read_x8(pc) << 8);
         pc++;
         getgen1(opcode >> 11, 0);
         getgen1(opcode >> 6, 1);
         // Ordering important here, as getgen uses LookUp.p.Size
-        if ((opcode & 0x3C) == 0x00 || (opcode & 0x3C) == 0x04 || (opcode & 0x3C) == 0x14) /* ROT/ASH/LSH */
+        if ((opcode & 0x3C) == 0x00 || (opcode & 0x3C) == 0x04 || (opcode & 0x3C) == 0x14) //  ROT/ASH/LSH 
         {
           LookUp.p.Size = sz8;
         }
@@ -1008,9 +969,9 @@ void n32016_exec(uint32_t tubecycles)
       
       case Format7:
       {
-        opcode = readmemb(pc);
+        opcode = read_x8(pc);
         pc++;
-        opcode |= (readmemb(pc) << 8);
+        opcode |= (read_x8(pc) << 8);
         pc++;
         getgen1(opcode >> 11, 0);
         getgen1(opcode >> 6, 1);
@@ -1023,9 +984,9 @@ void n32016_exec(uint32_t tubecycles)
 
       case Format8:
       {
-        opcode |= (readmemb(pc) << 8);
+        opcode |= (read_x8(pc) << 8);
         pc++;
-        opcode |= (readmemb(pc) << 16);
+        opcode |= (read_x8(pc) << 16);
         pc++;
         getgen1(opcode >> 19, 0);
         getgen1(opcode >> 14, 1);
@@ -1097,7 +1058,7 @@ void n32016_exec(uint32_t tubecycles)
 
         while (r[0])
         {
-          temp = readmemb(r[1]);
+          temp = read_x8(r[1]);
           r[1]++;
           if ((temp2 & 0xC) == 0xC && temp == r[4])
           {
@@ -1107,7 +1068,7 @@ void n32016_exec(uint32_t tubecycles)
           {
             break;
           }
-          writememb(r[2], temp);
+          write_x8(r[2], temp);
           r[2]++;
           r[0]--;
         }
@@ -1115,7 +1076,7 @@ void n32016_exec(uint32_t tubecycles)
       break;
 
 #if 0
-      case 0x03: /*MOVS dword*/
+      case 0x03: // MOVS dword
         if (temp2)
         {
           printf("Bad NS32016 MOVS %02X %04X %01X\n", (opcode >> 15) & 0xF, opcode, (opcode >> 15) & 0xF);
@@ -1124,11 +1085,11 @@ void n32016_exec(uint32_t tubecycles)
         }
         while (r[0])
         {
-          temp = readmemw(r[1]);
-          temp |= (readmemw(r[1] + 2) << 16);
+          temp = read_x16(r[1]);
+          temp |= (read_x16(r[1] + 2) << 16);
           r[1] += 4;
-          writememw(r[2], temp);
-          writememw(r[2] + 2, temp >> 16);
+          write_x16(r[2], temp);
+          write_x16(r[2] + 2, temp >> 16);
           r[2] += 4;
           r[0]--;
         }
@@ -1194,7 +1155,7 @@ void n32016_exec(uint32_t tubecycles)
 
         temp = ReadGen(0, LookUp.p.Size);
 
-        /* Sign extend smaller quantites to 32 bits to match temp2 */
+        //  Sign extend smaller quantites to 32 bits to match temp2 
         if (LookUp.p.Size == sz8) {
           temp = (signed char) temp;
         }
@@ -1381,7 +1342,7 @@ void n32016_exec(uint32_t tubecycles)
               sb = temp;
               break;
             case 0xE:
-              intbase = temp; /*printf("INTBASE %08X %08X\n",temp,pc); */
+              intbase = temp; // printf("INTBASE %08X %08X\n",temp,pc); 
               break;
 
             default:
@@ -1773,8 +1734,8 @@ void n32016_exec(uint32_t tubecycles)
         pushd(pc);
         mod = temp & 0xFFFF;
         temp3 = temp >> 16;
-        sb = readmemw(mod) | (readmemw(mod + 2) << 16);
-        temp2 = readmemw(mod + 8) | (readmemw(mod + 10) << 16);
+        sb = read_x16(mod) | (read_x16(mod + 2) << 16);
+        temp2 = read_x16(mod + 8) | (read_x16(mod + 10) << 16);
         pc = temp2 + temp3;
       }
       break;
@@ -1824,7 +1785,7 @@ void n32016_exec(uint32_t tubecycles)
 
 #if 0 
       //OLD 32 bit Version
-      case 0xA: /*ADJSP*/
+      case 0xA: // ADJSP
             readgenl(0, temp2)
               sp[SP] -= temp2;
             break;
@@ -1835,9 +1796,9 @@ void n32016_exec(uint32_t tubecycles)
         temp = getdisp();
         while (temp)
         {
-          temp2 = readmemb(genaddr[0]);
+          temp2 = read_x8(genaddr[0]);
           genaddr[0]++;
-          writememb(genaddr[1], temp2);
+          write_x8(genaddr[1], temp2);
           genaddr[1]++;
           temp--;
         }
@@ -1846,7 +1807,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case INSS:
       {
-        temp3 = readmemb(pc);
+        temp3 = read_x8(pc);
         pc++;
         readgenb(0, temp)
           readgenb(1, temp2)
@@ -1862,7 +1823,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case EXTS:
       {
-        temp3 = readmemb(pc);
+        temp3 = read_x8(pc);
         pc++;
         readgenb(0, temp)
           printf("EXTSB Source = %02X Shift = %u Bit Count = %u ", temp, temp3 >> 5, ((temp3 & 0x1F) + 1));
@@ -1921,8 +1882,8 @@ void n32016_exec(uint32_t tubecycles)
           *(uint32_t *) (genaddr[1] + 4) = temp3;
         else
         {
-          writememw(genaddr[1] + 4, temp3);
-          writememw(genaddr[1] + 4 + 2, temp3 >> 16);
+          write_x16(genaddr[1] + 4, temp3);
+          write_x16(genaddr[1] + 4 + 2, temp3 >> 16);
         }
       }
       break;
@@ -1976,8 +1937,8 @@ void n32016_exec(uint32_t tubecycles)
       case CHECK:
       {
         readgenb(1, temp3)
-        temp = readmemb(genaddr[0]);
-        temp2 = readmemb(genaddr[0] + 1);
+        temp = read_x8(genaddr[0]);
+        temp2 = read_x8(genaddr[0] + 1);
         if (temp >= temp3 && temp3 >= temp2)
         {
           r[(opcode >> 11) & 7] = temp3 - temp2;
@@ -2005,11 +1966,11 @@ void n32016_exec(uint32_t tubecycles)
         pushw(0);
         pushw(mod);
         pushd(pc);
-        temp2 = readmemw(mod + 4) + (readmemw(mod + 6) << 16) + (4 * temp);
-        temp = readmemw(temp2) + (readmemw(temp2 + 2) << 16);
+        temp2 = read_x16(mod + 4) + (read_x16(mod + 6) << 16) + (4 * temp);
+        temp = read_x16(temp2) + (read_x16(temp2 + 2) << 16);
         mod = temp & 0xFFFF;
-        sb = readmemw(mod) + (readmemw(mod + 2) << 16);
-        pc = readmemw(mod + 8) + (readmemw(mod + 10) << 16) + (temp >> 16);
+        sb = read_x16(mod) + (read_x16(mod + 2) << 16);
+        pc = read_x16(mod + 8) + (read_x16(mod + 10) << 16) + (temp >> 16);
         break;
 
       case RXP:
@@ -2018,7 +1979,7 @@ void n32016_exec(uint32_t tubecycles)
         temp2 = popd();
         mod = temp2 & 0xFFFF;
         sp[SP] += temp;
-        sb = readmemw(mod) | (readmemw(mod + 2) << 16);
+        sb = read_x16(mod) | (read_x16(mod + 2) << 16);
         break;
 
       case RETT:
@@ -2027,7 +1988,7 @@ void n32016_exec(uint32_t tubecycles)
         mod = popw();
         psr = popw();
         sp[SP] += temp;
-        sb = readmemw(mod) | (readmemw(mod + 2) << 16);
+        sb = read_x16(mod) | (read_x16(mod + 2) << 16);
         break;
 
       case RETI:
@@ -2035,7 +1996,7 @@ void n32016_exec(uint32_t tubecycles)
         break;
 
       case SAVE:
-        temp = readmemb(pc);
+        temp = read_x8(pc);
         pc++;
         for (c = 0; c < 8; c++)
         {
@@ -2047,7 +2008,7 @@ void n32016_exec(uint32_t tubecycles)
         break;
 
       case RESTORE:
-        temp = readmemb(pc);
+        temp = read_x8(pc);
         pc++;
         for (c = 0; c < 8; c++)
         {
@@ -2059,7 +2020,7 @@ void n32016_exec(uint32_t tubecycles)
         break;
 
       case ENTER:
-        temp = readmemb(pc);
+        temp = read_x8(pc);
         pc++;
         temp2 = getdisp();
         pushd(fp);
@@ -2076,7 +2037,7 @@ void n32016_exec(uint32_t tubecycles)
         break;
 
       case EXIT:
-        temp = readmemb(pc);
+        temp = read_x8(pc);
         pc++;
         for (c = 0; c < 8; c++)
         {
@@ -2090,88 +2051,88 @@ void n32016_exec(uint32_t tubecycles)
         break;
 
       case NOP:
-        //temp = readmemb(pc);
+        //temp = read_x8(pc);
         //pc++;
         break;
 
       case SVC:
         temp = psr;
         psr &= ~0x700;
-        temp = readmemw(intbase + (5 * 4)) | (readmemw(intbase + (5 * 4) + 2) << 16);
+        temp = read_x16(intbase + (5 * 4)) | (read_x16(intbase + (5 * 4) + 2) << 16);
         mod = temp & 0xFFFF;
         temp3 = temp >> 16;
-        sb = readmemw(mod) | (readmemw(mod + 2) << 16);
-        temp2 = readmemw(mod + 8) | (readmemw(mod + 10) << 16);
+        sb = read_x16(mod) | (read_x16(mod + 2) << 16);
+        temp2 = read_x16(mod + 8) | (read_x16(mod + 10) << 16);
         pc = temp2 + temp3;
         break;
 
       case BPT:
-        //temp = readmemb(pc);
+        //temp = read_x8(pc);
         //pc++;
         printf("BPT ??????\n");
         break;
 
-      case BEQ: /*BEQ*/
+      case BEQ: // BEQ
         if (psr & Z_FLAG)
           pc = temp;
         break;
 
-      case BNE: /*BNE*/
+      case BNE: // BNE
         if (!(psr & Z_FLAG))
           pc = temp;
         break;
 
-      case BH: /*BH*/
+      case BH: // BH
         if (psr & L_FLAG)
           pc = temp;
         break;
 
-      case BLS: /*BLS*/
+      case BLS: // BLS
         if (!(psr & L_FLAG))
           pc = temp;
         break;
 
-      case BGT: /*BGT*/
+      case BGT: // BGT
         if (psr & N_FLAG)
           pc = temp;
         break;
 
-      case BLE: /*BLE*/
+      case BLE: // BLE
         if (!(psr & N_FLAG))
           pc = temp;
         break;
 
-      case BFS: /*BFS*/
+      case BFS: // BFS
         if (psr & F_FLAG)
           pc = temp;
         break;
 
-      case BFC: /*BFC*/
+      case BFC: // BFC
         if (!(psr & F_FLAG))
           pc = temp;
         break;
 
-      case BLO: /*BLO*/
+      case BLO: // BLO
         if (!(psr & (L_FLAG | Z_FLAG)))
           pc = temp;
         break;
 
-      case BHS: /*BHS*/
+      case BHS: // BHS
         if (psr & (L_FLAG | Z_FLAG))
           pc = temp;
         break;
 
-      case BLT: /*BLT*/
+      case BLT: // BLT
         if (!(psr & (N_FLAG | Z_FLAG)))
           pc = temp;
         break;
 
-      case BGE: /*BGE*/
+      case BGE: // BGE
         if (psr & (N_FLAG | Z_FLAG))
           pc = temp;
         break;
 
-      case BR: /*BR*/
+      case BR: // BR
         pc = temp;
         break;
 
@@ -2208,8 +2169,8 @@ void n32016_exec(uint32_t tubecycles)
           if (sdiff[c])
           {
             genaddr[c] = sp[SP] = (sp[SP] - sdiff[c]);
-            writememw(genaddr[c], temp);
-            writememw(genaddr[c] + 2, temp >> 16);
+            write_x16(genaddr[c], temp);
+            write_x16(genaddr[c] + 2, temp >> 16);
           }
         }
 
@@ -2226,11 +2187,11 @@ void n32016_exec(uint32_t tubecycles)
       pushw(temp);
       pushw(mod);
       pushd(pc);
-      temp = readmemw(intbase + (1 * 4)) | (readmemw(intbase + (1 * 4) + 2) << 16);
+      temp = read_x16(intbase + (1 * 4)) | (read_x16(intbase + (1 * 4) + 2) << 16);
       mod = temp & 0xFFFF;
       temp3 = temp >> 16;
-      sb = readmemw(mod) | (readmemw(mod + 2) << 16);
-      temp2 = readmemw(mod + 8) | (readmemw(mod + 10) << 16);
+      sb = read_x16(mod) | (read_x16(mod + 2) << 16);
+      temp2 = read_x16(mod + 8) | (read_x16(mod + 10) << 16);
       pc = temp2 + temp3;
     }
 
@@ -2241,11 +2202,11 @@ void n32016_exec(uint32_t tubecycles)
       pushw(temp);
       pushw(mod);
       pushd(pc);
-      temp = readmemw(intbase) | (readmemw(intbase + 2) << 16);
+      temp = read_x16(intbase) | (read_x16(intbase + 2) << 16);
       mod = temp & 0xFFFF;
       temp3 = temp >> 16;
-      sb = readmemw(mod) | (readmemw(mod + 2) << 16);
-      temp2 = readmemw(mod + 8) | (readmemw(mod + 10) << 16);
+      sb = read_x16(mod) | (read_x16(mod + 2) << 16);
+      temp2 = read_x16(mod + 8) | (read_x16(mod + 10) << 16);
       pc = temp2 + temp3;
     }
 

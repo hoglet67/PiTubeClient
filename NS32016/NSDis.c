@@ -3,6 +3,8 @@
 #include <string.h>
 #include "32016.h"
 
+uint32_t OpCount = 0;
+
 const char* SizeLookup(uint8_t Size)
 {
 	switch (Size)
@@ -47,7 +49,7 @@ void ShowInstruction(uint32_t pc, uint8_t Function, uint8_t Size)
 	{
 		uint8_t opcode = ns32016ram[pc];
 		uint8_t opcode2 = ns32016ram[pc + 1];
-		printf("PC:%06X INST:%02X [%02X] %s%s\n", pc, opcode, opcode2, InstuctionLookup(Function), SizeLookup(Size));
+    printf("#%08X PC:%06X INST:%02X [%02X] %s%s\n", ++OpCount, pc, opcode, opcode2, InstuctionLookup(Function), SizeLookup(Size));
 		return;
 	}
 
