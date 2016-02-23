@@ -471,8 +471,7 @@ static void pushd(uint32_t val)
 {
   sp[SP] -= 4;
 
-  write_x16(sp[SP], val);
-  write_x16(sp[SP] + 2, val >> 16);
+  write_x32(sp[SP], val);
 }
 
 static uint16_t popw()
@@ -774,8 +773,7 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
                                                                                                                                                                                                                                                                                                 																					 										                                  else \
                                 { \
                                         if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]-sdiff[c]; \
-                                        write_x16(genaddr[c],temp); \
-                                        write_x16(genaddr[c]+2,temp>>16); \
+                                        write_x32(genaddr[c],temp); \
                                 }
 
 static uint16_t oldpsr;
@@ -986,8 +984,7 @@ void n32016_exec(uint32_t tubecycles)
         {
           temp = read_x32(r[1]);
           r[1] += 4;
-          write_x16(r[2], temp);
-          write_x16(r[2] + 2, temp >> 16);
+          write_x32(r[2], temp);
           r[2] += 4;
           r[0]--;
         }
@@ -1780,8 +1777,7 @@ void n32016_exec(uint32_t tubecycles)
           *(uint32_t *) (genaddr[1] + 4) = temp3;
         else
         {
-          write_x16(genaddr[1] + 4, temp3);
-          write_x16(genaddr[1] + 4 + 2, temp3 >> 16);
+          write_x32(genaddr[1] + 4, temp3);
         }
       }
       break;
@@ -2067,8 +2063,7 @@ void n32016_exec(uint32_t tubecycles)
           if (sdiff[c])
           {
             genaddr[c] = sp[SP] = (sp[SP] - sdiff[c]);
-            write_x16(genaddr[c], temp);
-            write_x16(genaddr[c] + 2, temp >> 16);
+            write_x32(genaddr[c], temp);
           }
         }
 
