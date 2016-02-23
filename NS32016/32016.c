@@ -485,7 +485,7 @@ static uint16_t popw()
 
 static uint32_t popd()
 {
-  uint32_t temp = read_x16(sp[SP]) | (read_x16(sp[SP] + 2) << 16);
+  uint32_t temp = read_x32(sp[SP]);
   sp[SP] += 4;
 
   return temp;
@@ -568,7 +568,7 @@ static void getgen(int gen, int c)
     case 0x10: // Frame memory relative
       temp = getdisp();
       temp2 = getdisp();
-      genaddr[c] = read_x16(fp + temp) | (read_x16(fp + temp + 2) << 16);
+      genaddr[c] = read_x32(fp + temp);
       genaddr[c] += temp2;
       gentype[c] = 0;
       break;
@@ -576,7 +576,7 @@ static void getgen(int gen, int c)
     case 0x11: // Stack memory relative
       temp = getdisp();
       temp2 = getdisp();
-      genaddr[c] = read_x16(sp[SP] + temp) | (read_x16(sp[SP] + temp + 2) << 16);
+      genaddr[c] = read_x32(sp[SP] + temp);
       genaddr[c] += temp2;
       gentype[c] = 0;
       break;
@@ -584,7 +584,7 @@ static void getgen(int gen, int c)
     case 0x12: // Static memory relative
       temp = getdisp();
       temp2 = getdisp();
-      genaddr[c] = read_x16(sb + temp) | (read_x16(sb + temp + 2) << 16);
+      genaddr[c] = read_x32(sb + temp);
       genaddr[c] += temp2;
       gentype[c] = 0;
       break;
@@ -611,9 +611,9 @@ static void getgen(int gen, int c)
 
     case 0x16: // External
       gentype[c] = 0;
-      temp = read_x16(mod + 4) + (read_x16(mod + 6) << 16);
+      temp = read_x32(mod + 4);
       temp += getdisp();
-      temp2 = read_x16(temp) + (read_x16(temp + 2) << 16);
+      temp2 = read_x32(temp);
       genaddr[c] = temp2 + getdisp();
       break;
 
@@ -709,7 +709,7 @@ static void getgen(int gen, int c)
 #define readgenl(c,temp)        if (gentype[c]) temp=*(uint32_t *)genaddr[c]; \
                                                                                                                                                                                                                                                                                                 																					 										                                  else \
                                 { \
-                                        temp=read_x16(genaddr[c])|(read_x16(genaddr[c]+2)<<16); \
+                                        temp=read_x32(genaddr[c]); \
                                         if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
                                 }
 
@@ -750,9 +750,9 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
 #define readgenq(c,temp)        if (gentype[c]) temp=*(uint64_t *)genaddr[c]; \
                                                                                                                                                                                                                                                                                                 																					 										                                  else \
                                 { \
-                                        temp=read_x16(genaddr[c])|(read_x16(genaddr[c]+2)<<16); \
+                                        temp=read_x32(genaddr[c]); \
                                         if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
-                                        temp|=((read_x16(genaddr[c])|(read_x16(genaddr[c]+2)<<16))<<16); \
+                                        temp|= read_x32(genaddr[c]); \
                                         if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
                                 }
 
@@ -984,8 +984,7 @@ void n32016_exec(uint32_t tubecycles)
         }
         while (r[0])
         {
-          temp = read_x16(r[1]);
-          temp |= (read_x16(r[1] + 2) << 16);
+          temp = read_x32(r[1]);
           r[1] += 4;
           write_x16(r[2], temp);
           write_x16(r[2] + 2, temp >> 16);
@@ -1633,8 +1632,8 @@ void n32016_exec(uint32_t tubecycles)
         pushd(pc);
         mod = temp & 0xFFFF;
         temp3 = temp >> 16;
-        sb = read_x16(mod) | (read_x16(mod + 2) << 16);
-        temp2 = read_x16(mod + 8) | (read_x16(mod + 10) << 16);
+        sb = read_x32(mod);
+        temp2 = read_x32(mod + 8);
         pc = temp2 + temp3;
       }
       break;
@@ -1865,11 +1864,11 @@ void n32016_exec(uint32_t tubecycles)
         pushw(0);
         pushw(mod);
         pushd(pc);
-        temp2 = read_x16(mod + 4) + (read_x16(mod + 6) << 16) + (4 * temp);
-        temp = read_x16(temp2) + (read_x16(temp2 + 2) << 16);
+        temp2 = read_x32(mod + 4) + (4 * temp);
+        temp = read_x32(temp2);
         mod = temp & 0xFFFF;
-        sb = read_x16(mod) + (read_x16(mod + 2) << 16);
-        pc = read_x16(mod + 8) + (read_x16(mod + 10) << 16) + (temp >> 16);
+        sb = read_x32(mod);
+        pc = read_x32(mod + 8) + (temp >> 16);
         break;
 
       case RXP:
@@ -1878,7 +1877,7 @@ void n32016_exec(uint32_t tubecycles)
         temp2 = popd();
         mod = temp2 & 0xFFFF;
         sp[SP] += temp;
-        sb = read_x16(mod) | (read_x16(mod + 2) << 16);
+        sb = read_x32(mod);
         break;
 
       case RETT:
@@ -1887,7 +1886,7 @@ void n32016_exec(uint32_t tubecycles)
         mod = popw();
         psr = popw();
         sp[SP] += temp;
-        sb = read_x16(mod) | (read_x16(mod + 2) << 16);
+        sb = read_x32(mod);
         break;
 
       case RETI:
@@ -1957,11 +1956,11 @@ void n32016_exec(uint32_t tubecycles)
       case SVC:
         temp = psr;
         psr &= ~0x700;
-        temp = read_x16(intbase + (5 * 4)) | (read_x16(intbase + (5 * 4) + 2) << 16);
+        temp = read_x32(intbase + (5 * 4));
         mod = temp & 0xFFFF;
         temp3 = temp >> 16;
-        sb = read_x16(mod) | (read_x16(mod + 2) << 16);
-        temp2 = read_x16(mod + 8) | (read_x16(mod + 10) << 16);
+        sb = read_x32(mod);
+        temp2 = read_x32(mod + 8);
         pc = temp2 + temp3;
         break;
 
@@ -2086,11 +2085,11 @@ void n32016_exec(uint32_t tubecycles)
       pushw(temp);
       pushw(mod);
       pushd(pc);
-      temp = read_x16(intbase + (1 * 4)) | (read_x16(intbase + (1 * 4) + 2) << 16);
+      temp = read_x32(intbase + (1 * 4));
       mod = temp & 0xFFFF;
       temp3 = temp >> 16;
-      sb = read_x16(mod) | (read_x16(mod + 2) << 16);
-      temp2 = read_x16(mod + 8) | (read_x16(mod + 10) << 16);
+      sb = read_x32(mod);
+      temp2 = read_x32(mod + 8);
       pc = temp2 + temp3;
     }
 
@@ -2101,11 +2100,11 @@ void n32016_exec(uint32_t tubecycles)
       pushw(temp);
       pushw(mod);
       pushd(pc);
-      temp = read_x16(intbase) | (read_x16(intbase + 2) << 16);
+      temp = read_x32(intbase);
       mod = temp & 0xFFFF;
       temp3 = temp >> 16;
-      sb = read_x16(mod) | (read_x16(mod + 2) << 16);
-      temp2 = read_x16(mod + 8) | (read_x16(mod + 10) << 16);
+      sb = read_x32(mod);
+      temp2 = read_x32(mod + 8);
       pc = temp2 + temp3;
     }
 
