@@ -1568,8 +1568,10 @@ void n32016_exec(uint32_t tubecycles)
 			temp = ReadGen(1, LookUp.p.Size);
 
          if (temp2 & 0xE0)
+			{
 				temp2 |= 0xE0;
 				temp >>= ((temp2 ^ 0xFF) + 1);
+			}
          else
 				temp <<= temp2;
 			
