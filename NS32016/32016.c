@@ -26,6 +26,13 @@ DecodeMatrix LookUp;
 
 #define SP ((psr & S_FLAG) >> 9)
 
+#define SIGN_EXTEND(reg) \
+  if ((LookUp.p.Size == sz8) && (reg & 0x80)) { \
+    reg |= 0xFFFFFF00; \
+  } else if ((LookUp.p.Size == sz16) && (reg & 0x8000)) { \
+    reg |= 0xFFFF0000; \
+  }
+
 void n32016_build_matrix()
 {
   uint32_t Index;
@@ -1956,9 +1963,10 @@ void n32016_exec(uint32_t tubecycles)
       case MOVXBW:
       {
         readgenb(0, temp)
+        SIGN_EXTEND(temp)
           if (sdiff[1])
             sdiff[1] = 4;
-        writegenl(1, temp)
+        writegenw(1, temp)
       }
       break;
 
