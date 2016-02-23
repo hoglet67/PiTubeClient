@@ -1762,7 +1762,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case MOVM:
       {
-        temp = getdisp();
+        temp = getdisp() + LookUp.p.Size + 1; // disp of 0 means move 1 byte
         while (temp)
         {
           temp2 = read_x8(genaddr[0]);
@@ -2187,8 +2187,8 @@ void n32016_exec(uint32_t tubecycles)
           if (sdiff[c])
           {
             genaddr[c] = sp[SP] = (sp[SP] - sdiff[c]);
-            write_x32(genaddr[c], temp);
           }
+          write_x32(genaddr[c], temp);
         }
 
         //writegenl(0, temp);
