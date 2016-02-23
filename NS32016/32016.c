@@ -1324,8 +1324,9 @@ void n32016_exec(uint32_t tubecycles)
         temp = ReadGen(0, LookUp.p.Size);
         temp += temp2;
         WriteSize = LookUp.p.Size;
+        temp2 = getdisp();
         if (temp & 0xFF)
-          pc = startpc + getdisp();
+          pc = startpc + temp2;
         break;
 
       case MOVQ:
