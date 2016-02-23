@@ -1564,50 +1564,16 @@ void n32016_exec(uint32_t tubecycles)
 
       case ASH:
       {
-        switch (LookUp.p.Size)
-        {
-          case sz8:
-          {
-            readgenb(0, temp);
-            if (temp & 0xE0)
-              temp |= 0xE0;
-            readgenb(1, temp2);
-            if (temp & 0xE0)
-              temp2 = ((signed char) temp2) >> ((temp ^ 0xFF) + 1);
-            else
-              temp2 <<= temp;
-            writegenb(1, temp2);
-          }
-          break;
+			readgenb(0, temp2);
+			temp = ReadGen(1, LookUp.p.Size);
 
-          case sz16:
-          {
-            readgenb(0, temp);
-            if (temp & 0xE0)
-              temp |= 0xE0;
-            readgenw(1, temp2);
-            if (temp & 0xE0)
-              temp2 = ((signed short) temp2) >> ((temp ^ 0xFF) + 1);
-            else
-              temp2 <<= temp;
-            writegenw(1, temp2);
-          }
-          break;
-
-          case sz32:
-          {
-            readgenb(0, temp);
-            if (temp & 0xE0)
-              temp |= 0xE0;
-            readgenl(1, temp2);
-            if (temp & 0xE0)
-              temp2 = ((signed int) temp2) >> ((temp ^ 0xFF) + 1);
-            else
-              temp2 <<= temp;
-            writegenl(1, temp2);
-          }
-          break;
-        }
+         if (temp2 & 0xE0)
+				temp2 |= 0xE0;
+				temp >>= ((temp2 ^ 0xFF) + 1);
+         else
+				temp <<= temp2;
+			
+         WriteSize = LookUp.p.Size;
       }
       break;
 
