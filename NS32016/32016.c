@@ -1000,7 +1000,7 @@ void n32016_exec(uint32_t tubecycles)
         LookUp.p.Size = opcode & 3;
         if ((opcode & 0x3C) == 0x00 || (opcode & 0x3C) == 0x04 || (opcode & 0x3C) == 0x14) /* ROT/ASH/LSH */
         {
-          LookUp.p.Function = sz8;
+          LookUp.p.Size = sz8;
         }
       }
       break;
