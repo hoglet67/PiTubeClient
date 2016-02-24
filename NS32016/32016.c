@@ -1507,10 +1507,20 @@ void n32016_exec(uint32_t tubecycles)
         break;
 
       case TBIT:
-        temp2 = ReadGen(0, LookUp.p.Size);
-        temp = ReadGen(1, LookUp.p.Size);
-        temp2 &= (LookUp.p.Size == sz8) ? 7 : 31;
-
+        temp2 = ReadGen(1, sz32);
+        if (gentype[0])
+        {
+          // operand 0 is a register
+          temp = ReadGen(0, sz32);
+        }
+        else
+        {
+          // operand0 is memory
+          // TODO: this should probably use the DIV and MOD opersator functions
+          genaddr[0] += temp2 / 8;
+          temp = ReadGen(0, sz8);
+          temp2 &= temp2 % 8;
+        }
         psr &= ~F_FLAG;
         if (temp & (1 << temp2))
           psr |= F_FLAG;
