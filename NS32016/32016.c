@@ -962,6 +962,38 @@ static uint32_t mod_operator(uint32_t a, uint32_t b)
   return a - div_operator(a, b) * b;
 }
 
+static void handle_mei_dei_upper_write(uint64_t result)
+{
+  uint32_t temp;
+  // Handle the writing to the upper half of dst locally here
+  switch (LookUp.p.Size)
+  {
+    case sz8:
+      temp = result >> 8;
+      if (gentype[1])
+        *(uint8_t *)(genaddr[1] + 4) = temp;
+      else
+        write_x8(genaddr[1] + 4, temp);
+      break;
+
+    case sz16:
+      temp = result >> 16;
+      if (gentype[1])
+        *(uint16_t *)(genaddr[1] + 4) = temp;
+      else
+        write_x16(genaddr[1] + 4, temp);
+      break;
+
+    case sz32:
+      temp = result >> 32;
+      if (gentype[1])
+        *(uint32_t *)(genaddr[1] + 4) = temp;
+      else
+        write_x32(genaddr[1] + 4, temp);
+      break;
+  }
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
   uint32_t opcode, WriteSize, WriteIndex;
@@ -1981,6 +2013,20 @@ void n32016_exec(uint32_t tubecycles)
         temp = ReadGen(0, LookUp.p.Size);
         temp2 = ReadGen(1, LookUp.p.Size);
         temp *= temp2;
+        WriteSize = LookUp.p.Size;
+        WriteIndex = 1;
+      }
+      break;
+
+      case MEI:
+      {
+        temp = ReadGen(0, LookUp.p.Size);     // src
+        temp64 = ReadGen(1, LookUp.p.Size);   // dst
+        temp64 *= temp;
+        // Handle the writing to the upper half of dst locally here
+        handle_mei_dei_upper_write(temp64);
+        // Allow fallthrough write logic to write the lower half of dst
+        temp = temp64;
         WriteSize = LookUp.p.Size;
         WriteIndex = 1;
       }
