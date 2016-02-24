@@ -134,3 +134,21 @@ void write_x32(uint32_t addr, uint32_t val)
 	write_x8(addr++,	(val >> 16	));
 	write_x8(addr, 	(val >> 24	));
 }
+
+void write_Arbitary(uint32_t addr, uint8_t* pData, uint32_t Size)
+{
+   //addr &= MEM_MASK;
+
+#ifdef LITTLE_ENDIAN
+   if ((addr + Size) <= RAM_SIZE)
+   {
+      memcpy(&ns32016ram[addr], pData, Size);
+      return;
+   }
+#endif
+
+   while (Size--)
+   {
+      write_x8(addr++, *pData++);
+   }
+}

@@ -528,17 +528,6 @@ static uint32_t getdisp()
 }
 
 int genindex[2];
-static void getgen1(int gen, int c)
-{
-   StoreRegisters(c, gen & 0x1F);
-
-  if ((gen & 0x1C) == 0x1C)
-  {
-    genindex[c] = read_x8(pc);
-    pc++;
-  }
-}
-
 int sdiff[2] =
 { 0, 0 };
 
@@ -548,7 +537,16 @@ static void getgen(int gen, int c)
 {
   uint32_t temp, temp2;
 
-  switch (gen & 0x1F)
+  gen &= 0x1F;
+
+  if ((gen & 0x1C) == 0x1C)
+  {
+     genindex[c] = read_x8(pc);
+     pc++;
+  }
+  
+  StoreRegisters(c, gen);
+  switch (gen)
   {
     case 0:
     case 1:
@@ -757,6 +755,8 @@ uint64_t readgenq(uint32_t c)
          genaddr[c] = sp[SP] = sp[SP] + sdiff[c];
       }
    }
+
+   return temp;
 }
 
 void writegenb(uint32_t c, uint8_t temp)
@@ -812,58 +812,58 @@ static uint32_t bcd_add_16(uint32_t a, uint32_t b, uint32_t *carry) {
 }
 
 static uint32_t bcd_sub_16(uint32_t a, uint32_t b, uint32_t *carry) {
-  uint32_t  t1, t2;              // unsigned 32-bit intermediate values
-  //printf("bcd_sub_16: in  %08x %08x %08x\n", a, b, *carry);
-  if (*carry) {
-    b++;
-  }
-  *carry = 0;
-  t1 = 0x9999 - b;
-  t2 = bcd_add_16(t1, 1, carry);
-  t2 = bcd_add_16(a, t2, carry);
-  *carry = 1 - *carry;
-  //printf("bcd_add_16: out %08x %08x\n", t2, *carry);
-  return t2;
+   uint32_t  t1, t2;              // unsigned 32-bit intermediate values
+   //printf("bcd_sub_16: in  %08x %08x %08x\n", a, b, *carry);
+   if (*carry) {
+      b++;
+   }
+   *carry = 0;
+   t1 = 0x9999 - b;
+   t2 = bcd_add_16(t1, 1, carry);
+   t2 = bcd_add_16(a, t2, carry);
+   *carry = 1 - *carry;
+   //printf("bcd_add_16: out %08x %08x\n", t2, *carry);
+   return t2;
 }
 
 static uint32_t bcd_add(uint32_t a, uint32_t b, int size, uint32_t *carry) {
-  if (size == sz8)
-  {
-    uint32_t word = bcd_add_16(a, b, carry);
-    // If anything beyond bit 7 is set, then there has been a carry out
-    *carry = (word & 0xFF00) ? 1 : 0; 
-    return word & 0xFF;
-  }
-  else if (size == sz16)
-  {
-    return bcd_add_16(a, b, carry);
-  }
-  else
-  {
-    uint32_t word0 = bcd_add_16(a & 0xFFFF, b & 0xFFFF, carry);
-    uint32_t word1 = bcd_add_16(a >> 16, b >> 16,  carry);
-    return word0 + (word1 << 16);
-  }
+   if (size == sz8)
+   {
+      uint32_t word = bcd_add_16(a, b, carry);
+      // If anything beyond bit 7 is set, then there has been a carry out
+      *carry = (word & 0xFF00) ? 1 : 0;
+      return word & 0xFF;
+   }
+   else if (size == sz16)
+   {
+      return bcd_add_16(a, b, carry);
+   }
+   else
+   {
+      uint32_t word0 = bcd_add_16(a & 0xFFFF, b & 0xFFFF, carry);
+      uint32_t word1 = bcd_add_16(a >> 16, b >> 16, carry);
+      return word0 + (word1 << 16);
+   }
 }
 
 static uint32_t bcd_sub(uint32_t a, uint32_t b, int size, uint32_t *carry) {
-  if (size == sz8)
-  {
-    uint32_t word = bcd_sub_16(a, b, carry);
-    // If anything beyond bit 7 is set, then there has been a carry out
-    *carry = (word & 0xFF00) ? 1 : 0; 
-    return word & 0xFF;
-  }
-  else if (size == sz16)
-  {
-    return bcd_sub_16(a, b, carry);
-  }
-  else
-  {
-    uint32_t word0 = bcd_sub_16(a & 0xFFFF, b & 0xFFFF, carry);
-    uint32_t word1 = bcd_sub_16(a >> 16, b >> 16,  carry);
-    return word0 + (word1 << 16);
-  }
+   if (size == sz8)
+   {
+      uint32_t word = bcd_sub_16(a, b, carry);
+      // If anything beyond bit 7 is set, then there has been a carry out
+      *carry = (word & 0xFF00) ? 1 : 0;
+      return word & 0xFF;
+   }
+   else if (size == sz16)
+   {
+      return bcd_sub_16(a, b, carry);
+   }
+   else
+   {
+      uint32_t word0 = bcd_sub_16(a & 0xFFFF, b & 0xFFFF, carry);
+      uint32_t word1 = bcd_sub_16(a >> 16, b >> 16, carry);
+      return word0 + (word1 << 16);
+   }
 }
 
 void n32016_exec(uint32_t tubecycles)
@@ -896,25 +896,21 @@ void n32016_exec(uint32_t tubecycles)
          case Format2:
          {
             pc++;
-            getgen1(opcode >> 11, 0);
             getgen(opcode >> 11, 0);
          }
          break;
 
          case Format3:
          {
-            pc++;
-            getgen1(opcode >> 11, 0);
-            getgen(opcode >> 11, 0);
             LookUp.p.Function = (opcode & 0x80) ? TRAP : (CXPD + ((opcode >> 8) & 7));
+            pc++;
+            getgen(opcode >> 11, 0);
          }
          break;
 
          case Format4:
          {
             pc++;
-            getgen1(opcode >> 11, 1);
-            getgen1(opcode >> 6, 0);
             getgen(opcode >> 11, 1);
             getgen(opcode >> 6, 0);
          }
@@ -922,18 +918,18 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format5:
          {
+            LookUp.p.Function = (opcode & 0x30) ? TRAP : (MOVS + ((opcode >> 2) & 3));
             pc += 2;
             temp2 = (opcode >> 15) & 0xF;
-            LookUp.p.Function = (opcode & 0x30) ? TRAP : (MOVS + ((opcode >> 2) & 3));
          }
          break;
 
          case Format6:
          {
+            LookUp.p.Function = ROT + ((opcode >> 10) & 15);
+
             pc += 2;
             LookUp.p.Size = (opcode >> 8) & 3;
-            getgen1(opcode >> 19, 0);
-            getgen1(opcode >> 14, 1);
             // Ordering important here, as getgen uses LookUp.p.Size
             if ((opcode & 0x3C00) == 0x0000 || (opcode & 0x3C00) == 0x0400 || (opcode & 0x3C00) == 0x1400) //  ROT/ASH/LSH 
             {
@@ -942,18 +938,16 @@ void n32016_exec(uint32_t tubecycles)
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
             LookUp.p.Size = (opcode >> 8) & 3;
-            LookUp.p.Function = ROT + ((opcode >> 10) & 15);
          }
          break;
 
          case Format7:
          {
+            LookUp.p.Function = MOVM + ((opcode >> 10) & 15);
+
             pc += 2;
-            getgen1(opcode >> 19, 0);
-            getgen1(opcode >> 14, 1);
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
-            LookUp.p.Function = MOVM + ((opcode >> 10) & 15);
             LookUp.p.Size = (opcode >> 8) & 3;
          }
          break;
@@ -961,8 +955,6 @@ void n32016_exec(uint32_t tubecycles)
          case Format8:
          {
             pc += 2;
-            getgen1(opcode >> 19, 0);
-            getgen1(opcode >> 14, 1);
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
             temp = ((opcode >> 6) & 3) | ((opcode & 0x400) >> 8);
@@ -1066,7 +1058,6 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-
          case ADDQ:
          {
             temp2 = (opcode >> 7) & 0xF;
@@ -1156,16 +1147,16 @@ void n32016_exec(uint32_t tubecycles)
             {
                case 0x8:
                   writegenl(0, fp);
-                     break;
+                  break;
                case 0x9:
                   writegenl(0, sp[SP]);
-                     break;
+                  break;
                case 0xA:
                   writegenl(0, sb);
-                     break;
+                  break;
                case 0xF:
                   writegenl(0, mod);
-                     break;
+                  break;
                default:
                   n32016_dumpregs("Bad SPR reg");
                   break;
@@ -1445,8 +1436,9 @@ void n32016_exec(uint32_t tubecycles)
             {
                case sz8:
                {
-                  temp = ReadGen(0, sz8);;
-                  if (temp & 0xE0) {
+                  temp = ReadGen(0, sz8);
+                  if (temp & 0xE0)
+                  {
                      temp |= 0xE0;
                      temp = ((temp ^ 0xFF) + 1);
                      temp = 8 - temp;
@@ -1459,8 +1451,9 @@ void n32016_exec(uint32_t tubecycles)
 
                case sz16:
                {
-                  temp = ReadGen(0, sz8);;
-                  if (temp & 0xE0) {
+                  temp = ReadGen(0, sz8);
+                  if (temp & 0xE0) 
+                  {
                      temp |= 0xE0;
                      temp = ((temp ^ 0xFF) + 1);
                      temp = 16 - temp;
@@ -1473,8 +1466,9 @@ void n32016_exec(uint32_t tubecycles)
 
                case sz32:
                {
-                  temp = ReadGen(0, sz8);;
-                  if (temp & 0xE0) {
+                  temp = ReadGen(0, sz8);
+                  if (temp & 0xE0)
+                  {
                      temp |= 0xE0;
                      temp = ((temp ^ 0xFF) + 1);
                      temp = 32 - temp;
@@ -1574,7 +1568,7 @@ void n32016_exec(uint32_t tubecycles)
             {
                case sz8:
                {
-                  temp = ReadGen(0, sz8);;
+                  temp = ReadGen(0, sz8);
                   if (temp & 0xE0)
                      temp |= 0xE0;
                   temp2 = ReadGen(1, sz8);
@@ -1588,7 +1582,7 @@ void n32016_exec(uint32_t tubecycles)
 
                case sz16:
                {
-                  temp = ReadGen(0, sz8);;
+                  temp = ReadGen(0, sz8);
                   if (temp & 0xE0)
                      temp |= 0xE0;
                   temp2 = ReadGen(1, sz16);
@@ -1602,7 +1596,7 @@ void n32016_exec(uint32_t tubecycles)
 
                case sz32:
                {
-                  temp = ReadGen(0, sz8);;
+                  temp = ReadGen(0, sz8);
                   if (temp & 0xE0)
                      temp |= 0xE0;
                   temp2 = ReadGen(1, sz32);
@@ -1619,32 +1613,10 @@ void n32016_exec(uint32_t tubecycles)
 
          case NOT:
          {
-            switch (LookUp.p.Size)
-            {
-               case sz8:
-               {
-                  temp = ReadGen(0, sz8);;
-                  temp ^= 1;
-                  writegenb(1, temp);
-               }
-               break;
-
-               case sz16:
-               {
-                  temp = ReadGen(0, sz16);
-                  temp ^= 1;
-                  writegenw(1, temp);
-               }
-               break;
-
-               case sz32:
-               {
-                  temp = ReadGen(0, sz32);
-                  temp ^= 1;
-                  writegenl(1, temp);
-               }
-               break;
-            }
+            temp = ReadGen(0, LookUp.p.Size);
+            temp ^= 1;
+            WriteIndex = 1;
+            WriteSize = LookUp.p.Size;
          }
          break;
 
@@ -1659,23 +1631,10 @@ void n32016_exec(uint32_t tubecycles)
 
          case COM:
          {
-            switch (LookUp.p.Size)
-            {
-               case sz8:
-                  temp = ReadGen(0, sz8);
-                  writegenb(1, ~temp);
-                     break;
-
-               case sz16:
-                  temp = ReadGen(0, sz16);
-                  writegenw(1, ~temp);
-                     break;
-
-               case sz32:
-                  temp = ReadGen(0, sz32);
-                  writegenl(1, ~temp);
-                     break;
-            }
+            temp = ReadGen(0, LookUp.p.Size);
+            temp = ~temp;
+            WriteIndex = 1;
+            WriteSize = LookUp.p.Size;
          }
          break;
 
@@ -1801,9 +1760,9 @@ void n32016_exec(uint32_t tubecycles)
          case MOVXBW:
          {
             temp = ReadGen(0, sz8);
-            SIGN_EXTEND(temp)
-               if (sdiff[1])
-                  sdiff[1] = 4;
+            SIGN_EXTEND(temp);                                    // Editor need the useless semicolon
+            if (sdiff[1])
+               sdiff[1] = 4;
             writegenw(1, temp);
          }
          break;
@@ -1811,9 +1770,9 @@ void n32016_exec(uint32_t tubecycles)
          case MOVXiD:
          {
             temp = ReadGen(0, LookUp.p.Size);
-            SIGN_EXTEND(temp)
-               if (sdiff[1])
-                  sdiff[1] = 4;
+            SIGN_EXTEND(temp);
+            if (sdiff[1])
+               sdiff[1] = 4;
             writegenl(1, temp);
          }
          break;
@@ -1840,15 +1799,14 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0, sz32);
             temp64 = readgenq(1);
-               if (!temp)
-               {
-
-                  n32016_dumpregs("Divide by zero - DEID");
-                  break;
-               }
+            if (temp == 0)
+            {
+               n32016_dumpregs("Divide by zero - DEID");
+               break;
+            }
             temp3 = temp64 % temp;
             writegenl(1, temp3);
-               temp3 = (uint32_t) (temp64 / temp);
+            temp3 = (uint32_t) (temp64 / temp);
             if (gentype[1])
                *(uint32_t *) (genaddr[1] + 4) = temp3;
             else
@@ -1862,7 +1820,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0, sz32);
             temp2 = ReadGen(1, sz32);
-            if (!temp)
+            if (temp == 0)
             {
                n32016_dumpregs("Divide by zero - QUOD");
                break;
@@ -1876,8 +1834,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0, sz32);
             temp2 = ReadGen(1, sz32);
-
-            if (!temp)
+            if (temp == 0)
             {
                n32016_dumpregs("Divide by zero - REM");
                break;
@@ -2155,22 +2112,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case sz32:
          {
-            uint32_t c = WriteIndex;
-
-            if (gentype[c])
-            {
-               *((uint32_t*) genaddr[c]) = temp;
-            }
-            else
-            {
-               if (sdiff[c])
-               {
-                  genaddr[c] = sp[SP] = (sp[SP] - sdiff[c]);
-               }
-               write_x32(genaddr[c], temp);
-            }
-
-            //writegenl(0, temp);
+            writegenl(WriteIndex, temp);
          }
          break;
       }
@@ -2190,8 +2132,7 @@ void n32016_exec(uint32_t tubecycles)
          temp2 = read_x32(mod + 8);
          pc = temp2 + temp3;
       }
-
-      if ((tube_irq & 1) && (psr & 0x800))
+      else if ((tube_irq & 1) && (psr & 0x800))
       {
          temp = psr;
          psr &= ~0xF00;

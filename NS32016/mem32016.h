@@ -9,3 +9,4 @@ extern uint32_t	read_x32(uint32_t addr);
 extern void write_x8(uint32_t addr, uint8_t val);
 extern void write_x16(uint32_t addr, uint16_t val);
 extern void write_x32(uint32_t addr, uint32_t val);
+extern void write_Arbitary(uint32_t addr, uint8_t* pData, uint32_t Size);
