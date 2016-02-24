@@ -1003,12 +1003,12 @@ void n32016_exec(uint32_t tubecycles)
       case Format7:
       {
         pc += 2;
+        LookUp.p.Size = (opcode >> 8) & 3;
         getgen1(opcode >> 19, 0);
         getgen1(opcode >> 14, 1);
         getgen(opcode >> 19, 0);
         getgen(opcode >> 14, 1);
         LookUp.p.Function = MOVM + ((opcode >> 10) & 15);
-        LookUp.p.Size = (opcode >> 8) & 3;
       }
       break;
 
@@ -1932,6 +1932,16 @@ void n32016_exec(uint32_t tubecycles)
         if (sdiff[1])
           sdiff[1] = 4;
         writegenl(1, temp);
+      }
+      break;
+
+      case MUL:
+      {
+        temp = ReadGen(0, LookUp.p.Size);
+        temp2 = ReadGen(1, LookUp.p.Size);
+        temp *= temp2;
+        WriteSize = LookUp.p.Size;
+        WriteIndex = 1;
       }
       break;
 
