@@ -176,6 +176,9 @@ typedef union
 		uint8_t Format;
 		uint8_t Size;
 		uint8_t Function;
+		uint8_t BaseSize;
+		uint8_t Source;
+		uint8_t Destination;		
 	} p;
 
 	uint32_t Whole;
@@ -184,6 +187,8 @@ typedef union
 extern void n32016_init();
 extern void n32016_reset(uint32_t StartAddress);
 extern void n32016_exec(uint32_t tubecycles);
+extern void StoreRegisters(uint8_t Index, uint8_t Value);
+extern void ClearRegs(void);
 extern void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Size);
 extern void n32016_dumpregs();
 
