@@ -3,6 +3,7 @@
 
 // And Simon R. Ellwood
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -334,6 +335,16 @@ void n32016_build_matrix()
          }
          break;
 
+         CASE4(0x10)		// ADDC byte
+         CASE4(0x11)		// ADDC word
+         CASE4(0x13)		// ADDC dword
+         {
+            mat[Index].p.Function = ADDC;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
+    
          CASE4(0x14)		// MOV byte
          CASE4(0x15)		// MOV word
          CASE4(0x17)		// MOV dword
@@ -894,6 +905,130 @@ static uint32_t bcd_sub(uint32_t a, uint32_t b, int size, uint32_t *carry) {
    }
 }
 
+static void update_add_flags(uint32_t a, uint32_t b, uint32_t cin)
+{
+   // TODO: Check the carry logic here is correct
+   // I suspect there is a corner case where b=&FFFFFFFF and cin=1
+   uint32_t sum = a + b + cin;
+   psr &= ~(C_FLAG | F_FLAG);
+   switch (LookUp.p.Size)
+   {
+      case sz8:
+      {
+         if (sum & 0x100)
+            psr |= C_FLAG;
+         if ((a ^ sum) & (b ^ sum) & 0x80)
+            psr |= F_FLAG;
+      }
+      break;
+
+      case sz16:
+      {
+         if (sum & 0x10000)
+            psr |= C_FLAG;
+         if ((a ^ sum) & (b ^ sum) & 0x8000)
+            psr |= F_FLAG;
+      }
+      break;
+
+      case sz32:
+      {
+         if (sum < a)
+            psr |= C_FLAG;
+         if ((a ^ sum) & (b ^ sum) & 0x80000000)
+            psr |= F_FLAG;
+      }
+      break;
+   }
+   //printf("ADD FLAGS: C=%d F=%d\n", (psr & C_FLAG) ? 1 : 0, (psr & F_FLAG) ? 1 : 0);
+}
+
+static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
+{
+   // TODO: Check the carry logic here is correct
+   // I suspect there is a corner case where b=&FFFFFFFF and cin=1
+   uint32_t diff = a - b - cin;
+   psr &= ~(C_FLAG | F_FLAG);
+   if (diff > a)
+      psr |= C_FLAG;
+   if ((b ^ a) & (b ^ diff) & 0x80000000)
+      psr |= F_FLAG;
+   //printf("SUB FLAGS: C=%d F=%d\n", (psr & C_FLAG) ? 1 : 0, (psr & F_FLAG) ? 1 : 0);
+}
+
+// The difference between DIV and QUO occurs when the result (the quotient) is negative
+// e.g. -16 QUO 3 ===> -5
+// e.g. -16 DIV 3 ===> -6
+// i.e. DIV rounds down to the more negative nu,ber
+// This case is detected if the sign bits of the two operands differ
+static uint32_t div_operator(uint32_t a, uint32_t b)
+{
+   uint32_t ret;
+   int signmask = 1 << ((LookUp.p.Size << 3) + 7);
+   if ((a & signmask) && !(b & signmask))
+   {
+      // e.g. a = -16; b =  3 ===> a becomes -18
+      a -= b - 1;
+   }
+   else if (!(a & signmask) && (b & signmask))
+   {
+      // e.g. a =  16; b = -3 ===> a becomes 18
+      a -= b + 1;
+   }
+   switch (LookUp.p.Size)
+   {
+      case sz8:
+         ret = (int8_t) a / (int8_t) b;
+         break;
+
+      case sz16:
+         ret = (int16_t) a / (int16_t) b;
+         break;
+
+      case sz32:
+         ret = (int32_t) a / (int32_t) b;
+         break;
+   }
+   return ret;
+}
+
+static uint32_t mod_operator(uint32_t a, uint32_t b)
+{
+   return a - div_operator(a, b) * b;
+}
+
+static void handle_mei_dei_upper_write(uint64_t result)
+{
+   uint32_t temp;
+   // Handle the writing to the upper half of dst locally here
+   switch (LookUp.p.Size)
+   {
+      case sz8:
+         temp = result >> 8;
+         if (gentype[1])
+            *(uint8_t *) (genaddr[1] + 4) = temp;
+         else
+            write_x8(genaddr[1] + 4, temp);
+         break;
+
+      case sz16:
+         temp = result >> 16;
+         if (gentype[1])
+            *(uint16_t *) (genaddr[1] + 4) = temp;
+         else
+            write_x16(genaddr[1] + 4, temp);
+         break;
+
+      case sz32:
+         temp = result >> 32;
+         if (gentype[1])
+            *(uint32_t *) (genaddr[1] + 4) = temp;
+         else
+            write_x32(genaddr[1] + 4, temp);
+         break;
+   }
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteSize, WriteIndex;
@@ -960,17 +1095,16 @@ void n32016_exec(uint32_t tubecycles)
             }
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
-            LookUp.p.Size = (opcode >> 8) & 3;
          }
          break;
 
          case Format7:
          {
             LookUp.p.Function = MOVM + ((opcode >> 10) & 15);
+            LookUp.p.Size = (opcode >> 8) & 3;
 
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
-            LookUp.p.Size = (opcode >> 8) & 3;
          }
          break;
 
@@ -1085,38 +1219,17 @@ void n32016_exec(uint32_t tubecycles)
                temp2 |= 0xFFFFFFF0;
             temp = ReadGen(0, LookUp.p.Size);
 
-            psr &= ~(C_FLAG | V_FLAG);
+            update_add_flags(temp, temp2, 0);
+            temp += temp2;
+            WriteSize = LookUp.p.Size;
+         }
+         break;
 
-            switch (LookUp.p.Size)
-            {
-               case sz8:
-               {
-                  if ((temp + temp2) & 0x100)
-                     psr |= C_FLAG;
-                  if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
-                     psr |= V_FLAG;
-               }
-               break;
-
-               case sz16:
-               {
-                  if ((temp + temp2) & 0x10000)
-                     psr |= C_FLAG;
-                  if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x8000)
-                     psr |= V_FLAG;
-               }
-               break;
-
-               case sz32:
-               {
-                  if ((temp + temp2) < temp)
-                     psr |= C_FLAG;
-                  if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
-                     psr |= V_FLAG;
-               }
-               break;
-            }
-
+         case ADD: // ADD
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
+            update_add_flags(temp, temp2, 0);
             temp += temp2;
             WriteSize = LookUp.p.Size;
          }
@@ -1328,46 +1441,6 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         case ADD: // ADD byte
-            temp2 = ReadGen(0, LookUp.p.Size);
-            temp = ReadGen(1, LookUp.p.Size);
-
-            psr &= ~(C_FLAG | V_FLAG);
-
-            switch (LookUp.p.Size)
-            {
-               case sz8:
-               {
-                  if ((temp + temp2) & 0x100)
-                     psr |= C_FLAG;
-                  if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
-                     psr |= V_FLAG;
-               }
-               break;
-
-               case sz16:
-               {
-                  if ((temp + temp2) & 0x10000)
-                     psr |= C_FLAG;
-                  if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x8000)
-                     psr |= V_FLAG;
-               }
-               break;
-
-               case sz32:
-               {
-                  if ((temp + temp2) < temp)
-                     psr |= C_FLAG;
-                  if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
-                     psr |= V_FLAG;
-               }
-               break;
-            }
-
-            temp += temp2;
-            WriteSize = LookUp.p.Size;
-            break;
-
          case CMP: // CMP
             temp2 = ReadGen(0, LookUp.p.Size);
             temp = ReadGen(1, LookUp.p.Size);
@@ -1389,11 +1462,21 @@ void n32016_exec(uint32_t tubecycles)
             }
             break;
 
-         case BIC: // BIC byte
+         case BIC: // BIC
             temp = ReadGen(0, LookUp.p.Size);
             temp2 = ReadGen(1, LookUp.p.Size);
 
             temp &= ~temp2;
+            WriteSize = LookUp.p.Size;
+            break;
+
+         case ADDC: // ADDC 
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
+            temp3 = (psr & C_FLAG) ? 1 : 0;
+            update_add_flags(temp, temp2, temp3);
+            temp += temp2;
+            temp += temp3;
             WriteSize = LookUp.p.Size;
             break;
 
@@ -1410,14 +1493,20 @@ void n32016_exec(uint32_t tubecycles)
             break;
 
          case SUB:
-            temp2 = ReadGen(0, LookUp.p.Size);
-            temp = ReadGen(1, LookUp.p.Size);
-            psr &= ~(C_FLAG | V_FLAG);
-            if ((temp2 + temp) > temp2)
-               psr |= C_FLAG;
-            if ((temp2 ^ temp) & (temp2 ^ (temp2 + temp)) & 0x80000000)
-               psr |= V_FLAG;
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
+            update_sub_flags(temp, temp2, 0);
             temp -= temp2;
+            WriteSize = LookUp.p.Size;
+            break;
+
+         case SUBC:
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
+            temp3 = (psr & C_FLAG) ? 1 : 0;
+            update_sub_flags(temp, temp2, temp3);
+            temp -= temp2;
+            temp -= temp3;
             WriteSize = LookUp.p.Size;
             break;
 
@@ -1434,10 +1523,20 @@ void n32016_exec(uint32_t tubecycles)
             break;
 
          case TBIT:
-            temp2 = ReadGen(0, LookUp.p.Size);
-            temp = ReadGen(1, LookUp.p.Size);
-            temp2 &= (LookUp.p.Size == sz8) ? 7 : 31;
-
+            temp2 = ReadGen(1, sz32);
+            if (gentype[0])
+            {
+               // operand 0 is a register
+               temp = ReadGen(0, sz32);
+            }
+            else
+            {
+               // operand0 is memory
+               // TODO: this should probably use the DIV and MOD opersator functions
+               genaddr[0] += temp2 / 8;
+               temp = ReadGen(0, sz8);
+               temp2 &= temp2 % 8;
+            }
             psr &= ~F_FLAG;
             if (temp & (1 << temp2))
                psr |= F_FLAG;
@@ -1640,12 +1739,63 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
+         case NEG:
+         {
+            temp = 0;
+            temp2 = ReadGen(0, LookUp.p.Size);
+            update_sub_flags(temp, temp2, 0);
+            temp -= temp2;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+         }
+         break;
+ 
          case ABS:
          {
-            temp = ReadGen(0, sz8);
-            if (temp & 0x80)
-               temp = (temp ^ 0xFF) + 1;
-            writegenb(1, temp);
+            temp = ReadGen(0, LookUp.p.Size);
+            switch (LookUp.p.Size)
+            {
+               case sz8:
+               {
+                  if (temp == 0x80)
+                  {
+                     psr |= F_FLAG;
+                  }
+                  if (temp & 0x80)
+                  {
+                     temp = (temp ^ 0xFF) + 1;
+                  }
+               }
+               break;
+
+               case sz16:
+               {
+                  if (temp == 0x8000)
+                  {
+                     psr |= F_FLAG;
+                  }
+                  if (temp & 0x8000)
+                  {
+                     temp = (temp ^ 0xFFFF) + 1;
+                  }
+               }
+               break;
+
+               case sz32:
+               {
+                  if (temp == 0x80000000)
+                  {
+                     psr |= F_FLAG;
+                  }
+                  if (temp & 0x80000000)
+                  {
+                     temp = (temp ^ 0xFFFFFFFF) + 1;
+                  }
+               }
+               break;
+            }
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
          }
          break;
 
@@ -1698,9 +1848,7 @@ void n32016_exec(uint32_t tubecycles)
          case ADJSP:
          {
             temp = ReadGen(0, LookUp.p.Size);
-
-            if (temp & 0x80)
-               temp |= 0xFFFFFF00;
+            SIGN_EXTEND(temp);
             sp[SP] -= temp;
          }
          break;
@@ -1725,7 +1873,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case MOVM:
          {
-            temp = getdisp() + LookUp.p.Size + 1; // disp of 0 means move 1 byte
+            temp = getdisp() + (LookUp.p.Size + 1); // disp of 0 means move 1 byte
             while (temp)
             {
                temp2 = read_x8(genaddr[0]);
@@ -1733,6 +1881,38 @@ void n32016_exec(uint32_t tubecycles)
                write_x8(genaddr[1], temp2);
                genaddr[1]++;
                temp--;
+            }
+         }
+         break;
+
+         // TODO: This is a short term implementation
+         // that just sets the Z flag. To also set
+         // the N and L flags correctly, the correct
+         // item size must be used, together with
+         // appropriated signed/unsigned comparisons.
+         case CMPM:
+         {
+            int match = 1;
+            temp = getdisp() + (LookUp.p.Size + 1); // disp of 0 means move 1 byte/word/dword
+            while (temp && match)
+            {
+               temp2 = read_x8(genaddr[0]);
+               temp3 = read_x8(genaddr[1]);
+               if (temp2 != temp3)
+               {
+                  match = 0;
+               }
+               genaddr[0]++;
+               genaddr[1]++;
+               temp--;
+            }
+            if (match)
+            {
+               psr |= Z_FLAG;
+            }
+            else
+            {
+               psr &= ~Z_FLAG;
             }
          }
          break;
@@ -1815,52 +1995,146 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
+         case MEI:
+         {
+            temp = ReadGen(0, LookUp.p.Size);     // src
+            temp64 = ReadGen(1, LookUp.p.Size);   // dst
+            temp64 *= temp;
+            // Handle the writing to the upper half of dst locally here
+            handle_mei_dei_upper_write(temp64);
+            // Allow fallthrough write logic to write the lower half of dst
+            temp = temp64;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+         }
+         break;
+
          case DEI:
          {
-            temp = ReadGen(0, sz32);
-            temp64 = readgenq(1);
+            int size = (LookUp.p.Size + 1) << 3;  // 8, 16  or 32 
+            temp = ReadGen(0, LookUp.p.Size);     // src
             if (temp == 0)
             {
-               n32016_dumpregs("Divide by zero - DEID");
+               n32016_dumpregs("Divide by zero - DEI CE");
                break;
             }
-            temp3 = temp64 % temp;
-            writegenl(1, temp3);
-            temp3 = (uint32_t) (temp64 / temp);
-            if (gentype[1])
-               *(uint32_t *) (genaddr[1] + 4) = temp3;
-            else
+            temp64 = readgenq(1);                   // dst
+            switch (LookUp.p.Size)
             {
-               write_x32(genaddr[1] + 4, temp3);
+                  case sz8:
+                     temp64 = ((temp64 >> 24) & 0xFF00) | (temp64 & 0xFF);
+                     break;
+
+                  case sz16:
+                     temp64 = ((temp64 >> 16) & 0xFFFF0000) | (temp64 & 0xFFFF);
+                     break;
             }
+            printf("temp = %08x\n", temp);
+            printf("temp64 = %016" PRIu64 "\n", temp64);
+            temp64 = ((temp64 / temp) << size) | (temp64 % temp);
+            printf("result = %016" PRIu64 "\n", temp64);
+            // Handle the writing to the upper half of dst locally here
+            handle_mei_dei_upper_write(temp64);
+            // Allow fallthrough write logic to write the lower half of dst
+            temp = temp64;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+         }
+         break;
+
+         case MUL:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
+            temp *= temp2;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
          }
          break;
 
          case QUO:
          {
-            temp = ReadGen(0, sz32);
-            temp2 = ReadGen(1, sz32);
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
             if (temp == 0)
             {
-               n32016_dumpregs("Divide by zero - QUOD");
+               n32016_dumpregs("Divide by zero - QUO CE");
                break;
             }
-            temp2 /= temp;
-            writegenl(1, temp2);
+            switch (LookUp.p.Size)
+            {
+               case sz8:
+                  temp = (int8_t) temp2 / (int8_t) temp;
+                  break;
+
+               case sz16:
+                  temp = (int16_t) temp2 / (int16_t) temp;
+                  break;
+
+               case sz32:
+                  temp = (int32_t) temp2 / (int32_t) temp;
+                  break;
+            }
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
          }
          break;
 
          case REM:
          {
-            temp = ReadGen(0, sz32);
-            temp2 = ReadGen(1, sz32);
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
             if (temp == 0)
             {
-               n32016_dumpregs("Divide by zero - REM");
+               n32016_dumpregs("Divide by zero - REM CE");
                break;
             }
-            temp2 %= temp;
-            writegenl(1, temp2);
+
+            switch (LookUp.p.Size)
+            {
+               case sz8:
+                  temp = (int8_t) temp2 % (int8_t) temp;
+                  break;
+
+               case sz16:
+                  temp = (int16_t) temp2 % (int16_t) temp;
+
+               case sz32:
+                  temp = (int32_t) temp2 % (int32_t) temp;
+                  break;
+            }
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+         }
+         break;
+
+         case DIV:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
+            if (temp == 0)
+            {
+               n32016_dumpregs("Divide by zero - DIV CE");
+               break;
+            }
+            temp = div_operator(temp2, temp);
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+         }
+         break;
+
+         case MOD:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
+            if (temp == 0)
+            {
+               n32016_dumpregs("Divide by zero - MOD CE");
+               break;
+            }
+            temp = mod_operator(temp2, temp);
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
          }
          break;
 
