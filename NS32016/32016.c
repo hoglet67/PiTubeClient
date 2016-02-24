@@ -1973,7 +1973,7 @@ void n32016_exec(uint32_t tubecycles)
         temp2 = ReadGen(1, LookUp.p.Size);
         if (!temp)
         {
-          printf("Divide by zero - QUOD CE\n");
+          printf("Divide by zero - QUO CE\n");
           n32016_dumpregs();
           break;
         }
@@ -1998,17 +1998,30 @@ void n32016_exec(uint32_t tubecycles)
 
       case REM:
       {
-        readgenl(0, temp)
-          readgenl(1, temp2)
-
-          if (!temp)
-          {
-            printf("Divide by zero - QUOD CE\n");
-            n32016_dumpregs();
+        temp = ReadGen(0, LookUp.p.Size);
+        temp2 = ReadGen(1, LookUp.p.Size);
+        if (!temp)
+        {
+          printf("Divide by zero - REM CE\n");
+          n32016_dumpregs();
+          break;
+        }
+        switch (LookUp.p.Size)
+        {
+          case sz8:
+            temp = (int8_t) temp2 % (int8_t) temp;
             break;
-          }
-        temp2 %= temp;
-        writegenl(1, temp2)
+
+          case sz16:
+            temp = (int16_t) temp2 % (int16_t) temp;
+            break;
+
+          case sz32:
+            temp = (int32_t) temp2 % (int32_t) temp;
+            break;
+        }
+        WriteSize = LookUp.p.Size;
+        WriteIndex = 1;
       }
       break;
 
