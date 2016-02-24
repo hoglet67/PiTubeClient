@@ -449,18 +449,19 @@ void n32016_build_matrix()
 
 void n32016_reset(uint32_t StartAddress)
 {
-  pc = StartAddress;
-  psr = 0;
+	pc = StartAddress;
+	psr = 0;
 
-  n32016_build_matrix();
+	n32016_build_matrix();
 }
 
-void n32016_dumpregs()
+void n32016_dumpregs(char* pMessage)
 {
   //FILE *f = fopen("32016.dmp", "wb");
   //fwrite(ns32016ram, 1024 * 1024, 1, f);
   //fclose(f);
-
+  
+  printf("%s\n", pMessage);
   printf("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
   printf("R4=%08X R5=%08X R6=%08X R7=%08X\n", r[4], r[5], r[6], r[7]);
   printf("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
@@ -693,8 +694,8 @@ static void getgen(int gen, int c)
       break;
 
     default:
-      printf("Bad NS32016 gen mode %02X\n", gen & 0x1F);
-      n32016_dumpregs();
+      n32016_dumpregs("Bad NS32016 gen mode");
+		break;
   }
 }
 
@@ -1000,17 +1001,12 @@ void n32016_exec(uint32_t tubecycles)
 
     ShowInstruction(startpc, opcode, LookUp.p.Function, LookUp.p.Size);
 
-    if (startpc == 0x1CB2)
+#if 1 
+   if (startpc == 0x1CB2)
     {
-      n32016_dumpregs();
-      printf("Epic Fail!\n");
+      n32016_dumpregs("Test Suite Failure!\n");
     }
-
-    if (startpc == 0x630)
-    {
-      n32016_dumpregs();
-      printf("0x631\n");
-    }
+#endif
 
     switch (LookUp.p.Function)
     {
@@ -1018,8 +1014,7 @@ void n32016_exec(uint32_t tubecycles)
       {
         if (temp2 & 3)
         {
-          printf("Bad NS32016 MOVS %08X\n", opcode);
-          n32016_dumpregs();
+          n32016_dumpregs("Bad NS32016 MOVS %08X");
         }
 
         while (r[0])
@@ -1045,9 +1040,8 @@ void n32016_exec(uint32_t tubecycles)
       case 0x03: // MOVS dword
         if (temp2)
         {
-          printf("Bad NS32016 MOVS %08X\n", opcode);
-          n32016_dumpregs();
-          break;
+           n32016_dumpregs("Bad NS32016 MOVS");
+			  break;
         }
         while (r[0])
         {
@@ -1167,8 +1161,8 @@ void n32016_exec(uint32_t tubecycles)
             writegenl(0, mod)
               break;
           default:
-            printf("Bad SPR reg %08X\n", opcode);
-            n32016_dumpregs();
+            n32016_dumpregs("Bad SPR reg");
+				break;
         }
       }
       break;
@@ -1278,8 +1272,8 @@ void n32016_exec(uint32_t tubecycles)
               sp[SP] = temp;
               break;
             default:
-              printf("Bad LPRB reg %08X\n", opcode);
-              n32016_dumpregs();
+              n32016_dumpregs("Bad LPRB reg");
+				  break;
           }
         }
         else if (LookUp.p.Size == sz16)
@@ -1290,8 +1284,8 @@ void n32016_exec(uint32_t tubecycles)
               mod = temp;
               break;
             default:
-              printf("Bad LPRW reg %08X\n", opcode);
-              n32016_dumpregs();
+              n32016_dumpregs("Bad LPRW reg");
+				  break;
           }
           break;
         }
@@ -1310,8 +1304,7 @@ void n32016_exec(uint32_t tubecycles)
               break;
 
             default:
-              printf("Bad LPRD reg %08X\n", opcode);
-              n32016_dumpregs();
+              n32016_dumpregs("Bad LPRD reg");
               break;
           }
         }
@@ -1841,12 +1834,12 @@ void n32016_exec(uint32_t tubecycles)
 
       case DEI:
       {
-        readgenl(0, temp)
-          readgenq(1, temp64)
+			readgenl(0, temp)
+			readgenq(1, temp64)
           if (!temp)
           {
-            printf("Divide by zero - DEID CE\n");
-            n32016_dumpregs();
+
+            n32016_dumpregs("Divide by zero - DEID");
             break;
           }
         temp3 = temp64 % temp;
@@ -1867,8 +1860,7 @@ void n32016_exec(uint32_t tubecycles)
           readgenl(1, temp2)
           if (!temp)
           {
-            printf("Divide by zero - QUOD CE\n");
-            n32016_dumpregs();
+            n32016_dumpregs("Divide by zero - QUOD");
             break;
           }
         temp2 /= temp;
@@ -1883,8 +1875,7 @@ void n32016_exec(uint32_t tubecycles)
 
           if (!temp)
           {
-            printf("Divide by zero - QUOD CE\n");
-            n32016_dumpregs();
+            n32016_dumpregs("Divide by zero - REM");
             break;
           }
         temp2 %= temp;
@@ -2140,8 +2131,7 @@ void n32016_exec(uint32_t tubecycles)
         break;
 
       default:
-        printf("Bad NS32016 opcode %02X\n", opcode);
-        n32016_dumpregs();
+        n32016_dumpregs("Bad NS32016 opcode");
         break;
     }
 

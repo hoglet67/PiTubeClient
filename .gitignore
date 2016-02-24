@@ -63,3 +63,4 @@ stdafx.*
 ReadMe.txt
 targetver.h
 *.vcx*
+*.opendb

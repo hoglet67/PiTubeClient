@@ -176,6 +176,9 @@ typedef union
 		uint8_t Format;
 		uint8_t Size;
 		uint8_t Function;
+		uint8_t BaseSize;
+		uint8_t Source;
+		uint8_t Destination;		
 	} p;
 
 	uint32_t Whole;
