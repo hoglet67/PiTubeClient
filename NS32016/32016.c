@@ -530,6 +530,8 @@ static uint32_t getdisp()
 int genindex[2];
 static void getgen1(int gen, int c)
 {
+   StoreRegisters(gen, c);
+
   if ((gen & 0x1C) == 0x1C)
   {
     genindex[c] = read_x8(pc);
@@ -872,6 +874,7 @@ void n32016_exec(uint32_t tubecycles)
   {
     sdiff[0] = sdiff[1] = 0;
     startpc = pc;
+    ClearRegs();
     opcode = read_x32(pc);
 
     pc++;
