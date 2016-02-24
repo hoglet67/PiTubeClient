@@ -1094,6 +1094,7 @@ void n32016_exec(uint32_t tubecycles)
                LookUp.p.Size = sz8;
             }
             getgen(opcode >> 19, 0);
+            LookUp.p.Size = (opcode >> 8) & 3;
             getgen(opcode >> 14, 1);
          }
          break;
