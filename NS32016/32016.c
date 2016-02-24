@@ -3,6 +3,7 @@
 
 // And Simon R. Ellwood
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -2034,23 +2035,35 @@ void n32016_exec(uint32_t tubecycles)
 
       case DEI:
       {
-        readgenl(0, temp)
-          readgenq(1, temp64)
-          if (!temp)
-          {
-            printf("Divide by zero - DEID CE\n");
-            n32016_dumpregs();
-            break;
-          }
-        temp3 = temp64 % temp;
-        writegenl(1, temp3)
-          temp3 = (uint32_t) (temp64 / temp);
-        if (gentype[1])
-          *(uint32_t *) (genaddr[1] + 4) = temp3;
-        else
+        int size = (LookUp.p.Size + 1) << 3;  // 8, 16  or 32 
+        temp = ReadGen(0, LookUp.p.Size);     // src
+        if (!temp)
         {
-          write_x32(genaddr[1] + 4, temp3);
+          printf("Divide by zero - DEI CE\n");
+          n32016_dumpregs();
+          break;
         }
+        readgenq(1, temp64)                   // dst
+        switch (LookUp.p.Size)
+        {
+          case sz8:
+            temp64 = ((temp64 >> 24) & 0xFF00) | (temp64 & 0xFF);
+            break;
+
+          case sz16:
+            temp64 = ((temp64 >> 16) & 0xFFFF0000) | (temp64 & 0xFFFF);
+            break;
+        }
+        printf("temp = %08x\n", temp);
+        printf("temp64 = %016" PRIu64 "\n", temp64);
+        temp64 = ((temp64 / temp) << size) | (temp64 % temp);
+        printf("result = %016" PRIu64 "\n", temp64);
+        // Handle the writing to the upper half of dst locally here
+        handle_mei_dei_upper_write(temp64);
+        // Allow fallthrough write logic to write the lower half of dst
+        temp = temp64;
+        WriteSize = LookUp.p.Size;
+        WriteIndex = 1;
       }
       break;
 
