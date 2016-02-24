@@ -447,9 +447,9 @@ void n32016_build_matrix()
    }
 }
 
-void n32016_reset()
+void n32016_reset(uint32_t StartAddress)
 {
-  pc = 0;
+  pc = StartAddress;
   psr = 0;
 
   n32016_build_matrix();

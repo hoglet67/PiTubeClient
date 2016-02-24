@@ -36,7 +36,7 @@ void init(void)
 int main(int argc, char* argv[])
 {
 	init();
-	n32016_reset();
+	n32016_reset(0);
 
 	while (1)
 	{

@@ -182,7 +182,7 @@ typedef union
 } DecodeMatrix;
 
 extern void n32016_init();
-extern void n32016_reset();
+extern void n32016_reset(uint32_t StartAddress);
 extern void n32016_exec(uint32_t tubecycles);
 extern void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Size);
 extern void n32016_dumpregs();
