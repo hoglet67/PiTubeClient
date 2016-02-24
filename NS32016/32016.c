@@ -457,37 +457,37 @@ void n32016_reset(uint32_t StartAddress)
 
 void n32016_dumpregs(char* pMessage)
 {
-  //FILE *f = fopen("32016.dmp", "wb");
-  //fwrite(ns32016ram, 1024 * 1024, 1, f);
-  //fclose(f);
-  
-  printf("%s\n", pMessage);
-  printf("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
-  printf("R4=%08X R5=%08X R6=%08X R7=%08X\n", r[4], r[5], r[6], r[7]);
-  printf("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
-  printf("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
-  exit(1);
+   //FILE *f = fopen("32016.dmp", "wb");
+   //fwrite(ns32016ram, 1024 * 1024, 1, f);
+   //fclose(f);
+
+   printf("%s\n", pMessage);
+   printf("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
+   printf("R4=%08X R5=%08X R6=%08X R7=%08X\n", r[4], r[5], r[6], r[7]);
+   printf("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
+   printf("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
+   exit(1);
 }
 
 static void pushw(uint16_t val)
 {
-  sp[SP] -= 2;
-  write_x16(sp[SP], val);
+   sp[SP] -= 2;
+   write_x16(sp[SP], val);
 }
 
 static void pushd(uint32_t val)
 {
-  sp[SP] -= 4;
+   sp[SP] -= 4;
 
-  write_x32(sp[SP], val);
+   write_x32(sp[SP], val);
 }
 
 static uint16_t popw()
 {
-  uint16_t temp = read_x16(sp[SP]);
-  sp[SP] += 2;
+   uint16_t temp = read_x16(sp[SP]);
+   sp[SP] += 2;
 
-  return temp;
+   return temp;
 }
 
 static uint32_t popd()
@@ -738,35 +738,56 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
    return Temp;
 }
 
-#define readgenq(c,temp)        if (gentype[c]) temp=*(uint64_t *)genaddr[c]; \
-                                                                                                                                                                                                                                                                                                																					 										                                  else \
-                                { \
-                                        temp=read_x32(genaddr[c]); \
-                                        if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
-                                        temp|= read_x32(genaddr[c]); \
-                                        if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
-                                }
+uint64_t readgenq(uint32_t c)
+{
+   uint64_t temp;
 
-#define writegenb(c,temp)       if (gentype[c]) *(uint8_t *)genaddr[c]=temp; \
-                                                                                                                                                                                                                                                                                                																					 										                                  else \
-                                { \
-                                        if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]-sdiff[c]; \
-                                        write_x8(genaddr[c],temp); \
-                                }
+   if (gentype[c])
+   {
+      temp = *(uint64_t *) genaddr[c];
+   }
+   else
+   {
+      temp = read_x32(genaddr[c]);
+      if (sdiff[c])
+         genaddr[c] = sp[SP] = sp[SP] + sdiff[c];
+      temp |= read_x32(genaddr[c]);
+      if (sdiff[c])
+      {
+         genaddr[c] = sp[SP] = sp[SP] + sdiff[c];
+      }
+   }
+}
 
-#define writegenw(c,temp)		if (gentype[c]) *(uint16_t*) genaddr[c]=temp; \
-                                                                                                                                                                                                                                                                                                																					 										                                  else \
-                                { \
-											if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]-sdiff[c]; \
-                                        write_x16(genaddr[c],temp); \
-                                }
+void writegenb(uint32_t c, uint8_t temp)
+{
+   if (gentype[c]) *((uint8_t*) genaddr[c]) = temp;
+   else
+   {
+      if (sdiff[c]) genaddr[c] = sp[SP] = sp[SP] - sdiff[c];
+      write_x8(genaddr[c], temp);
+   }
+}
 
-#define writegenl(c,temp)       if (gentype[c]) *(uint32_t *)genaddr[c]=temp; \
-                                                                                                                                                                                                                                                                                                																					 										                                  else \
-                                { \
-                                        if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]-sdiff[c]; \
-                                        write_x32(genaddr[c],temp); \
-                                }
+void writegenw(uint32_t c, uint16_t temp)
+{
+   if (gentype[c]) *((uint16_t*) genaddr[c]) = temp;
+   else
+   {
+      if (sdiff[c]) genaddr[c] = sp[SP] = sp[SP] - sdiff[c];
+      write_x16(genaddr[c], temp);
+   }
+}
+
+void writegenl(uint32_t c, uint32_t temp)
+{
+   if (gentype[c]) *((uint32_t*) genaddr[c]) = temp;
+   else
+   {
+      if (sdiff[c]) genaddr[c] = sp[SP] = sp[SP] - sdiff[c];
+      write_x32(genaddr[c], temp);
+   }
+}
 
 static uint16_t oldpsr;
 
@@ -847,1344 +868,1344 @@ static uint32_t bcd_sub(uint32_t a, uint32_t b, int size, uint32_t *carry) {
 
 void n32016_exec(uint32_t tubecycles)
 {
-  uint32_t opcode, WriteSize, WriteIndex;
-  uint32_t temp = 0, temp2, temp3, temp4;
-  uint64_t temp64;
-  int c;
+   uint32_t opcode, WriteSize, WriteIndex;
+   uint32_t temp = 0, temp2, temp3, temp4;
+   uint64_t temp64;
+   int c;
 
-  while (tubecycles > 0)
-  {
-    sdiff[0] = sdiff[1] = 0;
-    startpc = pc;
-    ClearRegs();
-    opcode = read_x32(pc);
+   while (tubecycles > 0)
+   {
+      sdiff[0] = sdiff[1] = 0;
+      startpc = pc;
+      ClearRegs();
+      opcode = read_x32(pc);
 
-    pc++;
-    LookUp = mat[opcode & 0xFF];
-    WriteSize = szVaries;
-    WriteIndex = 0; // default to writing operand 0
+      pc++;
+      LookUp = mat[opcode & 0xFF];
+      WriteSize = szVaries;
+      WriteIndex = 0; // default to writing operand 0
 
-    switch (LookUp.p.Format)
-    {
-      case Format0:
+      switch (LookUp.p.Format)
       {
-        temp = startpc + getdisp();
-      }
-      break;
-
-      case Format2:
-      {
-        pc++;
-        getgen1(opcode >> 11, 0);
-        getgen(opcode >> 11, 0);
-      }
-      break;
-
-      case Format3:
-      {
-        pc++;
-        getgen1(opcode >> 11, 0);
-        getgen(opcode >> 11, 0);
-        LookUp.p.Function = (opcode & 0x80) ? TRAP : (CXPD + ((opcode >> 8) & 7));
-      }
-      break;
-
-      case Format4:
-      {
-        pc++;
-        getgen1(opcode >> 11, 1);
-        getgen1(opcode >> 6, 0);
-        getgen(opcode >> 11, 1);
-        getgen(opcode >> 6, 0);
-      }
-      break;
-
-      case Format5:
-      {
-        pc += 2;
-        temp2 = (opcode >> 15) & 0xF;        
-        LookUp.p.Function = (opcode & 0x30) ? TRAP : (MOVS + ((opcode >> 2) & 3));
-      }
-      break;
-
-      case Format6:
-      {
-        pc += 2;
-        LookUp.p.Size = (opcode >> 8) & 3;
-        getgen1(opcode >> 19, 0);
-        getgen1(opcode >> 14, 1);
-        // Ordering important here, as getgen uses LookUp.p.Size
-        if ((opcode & 0x3C00) == 0x0000 || (opcode & 0x3C00) == 0x0400 || (opcode & 0x3C00) == 0x1400) //  ROT/ASH/LSH 
-        {
-          LookUp.p.Size = sz8;
-        }
-        getgen(opcode >> 19, 0);
-        getgen(opcode >> 14, 1);
-        LookUp.p.Size = (opcode >> 8) & 3;
-        LookUp.p.Function = ROT + ((opcode >> 10) & 15);
-      }
-      break;
-      
-      case Format7:
-      {
-        pc += 2;
-        getgen1(opcode >> 19, 0);
-        getgen1(opcode >> 14, 1);
-        getgen(opcode >> 19, 0);
-        getgen(opcode >> 14, 1);
-        LookUp.p.Function = MOVM + ((opcode >> 10) & 15);
-        LookUp.p.Size = (opcode >> 8) & 3;
-      }
-      break;
-
-      case Format8:
-      {
-        pc += 2;
-        getgen1(opcode >> 19, 0);
-        getgen1(opcode >> 14, 1);
-        getgen(opcode >> 19, 0);
-        getgen(opcode >> 14, 1);
-        temp = ((opcode >> 6) & 3) | ((opcode & 0x400) >> 8);
-        temp = (temp << 2) | ((opcode >> 8) & 3);
-        if (opcode & 0x400)
-        {
-          if (opcode & 0x80)
-          {
-            LookUp.p.Function = (opcode & 0x40) ? FFS : INDEX;
-          }
-          else
-          {
-            switch (opcode & 0x3CC0)
-            {
-              case 0x0C80:
-              {
-                LookUp.p.Function = MOVUS;
-              }
-              break;
-
-              case 0x1C80:
-              {
-                LookUp.p.Function = MOVSU;
-              }
-              break;
-
-              default:
-              {
-                LookUp.p.Function = TRAP;
-              }
-              break;
-            }
-          }
-        }
-        else
-        {
-          LookUp.p.Function = EXT + ((opcode >> 6) & 3);
-        }
-      }
-      break;
-    }
-
-    ShowInstruction(startpc, opcode, LookUp.p.Function, LookUp.p.Size);
-
-#if 1 
-   if (startpc == 0x1CB2)
-    {
-      n32016_dumpregs("Test Suite Failure!\n");
-    }
-#endif
-
-    switch (LookUp.p.Function)
-    {
-      case MOVS:
-      {
-        if (temp2 & 3)
-        {
-          n32016_dumpregs("Bad NS32016 MOVS %08X");
-        }
-
-        while (r[0])
-        {
-          temp = read_x8(r[1]);
-          r[1]++;
-          if ((temp2 & 0xC) == 0xC && temp == r[4])
-          {
-            break;
-          }
-          if ((temp2 & 0xC) == 0x4 && temp != r[4])
-          {
-            break;
-          }
-          write_x8(r[2], temp);
-          r[2]++;
-          r[0]--;
-        }
-      }
-      break;
-
-#if 0
-      case 0x03: // MOVS dword
-        if (temp2)
-        {
-           n32016_dumpregs("Bad NS32016 MOVS");
-			  break;
-        }
-        while (r[0])
-        {
-          temp = read_x32(r[1]);
-          r[1] += 4;
-          write_x32(r[2], temp);
-          r[2] += 4;
-          r[0]--;
-        }
-        break;
-#endif
-
-      case SETCFG:
-      {
-        nscfg = temp;
-      }
-      break;
-
-
-      case ADDQ:
-      {
-        temp2 = (opcode >> 7) & 0xF;
-        if (temp2 & 8)
-          temp2 |= 0xFFFFFFF0;
-        temp = ReadGen(0, LookUp.p.Size);
-
-        psr &= ~(C_FLAG | V_FLAG);
-
-        switch (LookUp.p.Size)
-        {
-          case sz8:
-          {
-            if ((temp + temp2) & 0x100)
-              psr |= C_FLAG;
-            if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
-              psr |= V_FLAG;
-          }
-          break;
-
-          case sz16:
-          {
-            if ((temp + temp2) & 0x10000)
-              psr |= C_FLAG;
-            if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x8000)
-              psr |= V_FLAG;
-          }
-          break;
-
-          case sz32:
-          {
-            if ((temp + temp2) < temp)
-              psr |= C_FLAG;
-            if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
-              psr |= V_FLAG;
-          }
-          break;
-        }
-
-        temp += temp2;
-        WriteSize = LookUp.p.Size;
-      }
-      break;
-
-      case CMPQ:
-      {
-        temp2 = (opcode >> 7) & 0xF;
-        if (temp2 & 8)
-          temp2 |= 0xFFFFFFF0;
-
-        temp = ReadGen(0, LookUp.p.Size);
-
-        //  Sign extend smaller quantites to 32 bits to match temp2 
-        if (LookUp.p.Size == sz8) {
-          temp = (signed char) temp;
-        }
-        else if (LookUp.p.Size == sz16) {
-          temp = (signed short) temp;
-        }
-
-        psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
-        if (temp == temp2)
-          psr |= Z_FLAG;
-        if (temp2 > temp)
-          psr |= L_FLAG;
-
-        if (LookUp.p.Size == sz8)
-        {
-          if (((signed char) temp2) > ((signed char) temp))
-          {
-            psr |= N_FLAG;
-          }
-        }
-        else if (LookUp.p.Size == sz32)
-        {
-          if (((signed long) temp2) > ((signed long) temp))
-          {
-            psr |= N_FLAG;
-          }
-        }
-      }
-      break;
-
-      case SPR:
-      {
-        switch ((opcode >> 7) & 0xF)
-        {
-          case 0x8:
-            writegenl(0, fp)
-              break;
-          case 0x9:
-            writegenl(0, sp[SP])
-              break;
-          case 0xA:
-            writegenl(0, sb)
-              break;
-          case 0xF:
-            writegenl(0, mod)
-              break;
-          default:
-            n32016_dumpregs("Bad SPR reg");
-				break;
-        }
-      }
-      break;
-
-      case Scond:
-        temp = 0;
-        switch ((opcode >> 7) & 0xF)
-        {
-          case 0x0:
-            if (psr & Z_FLAG)
-              temp = 1;
-            break;
-          case 0x1:
-            if (!(psr & Z_FLAG))
-              temp = 1;
-            break;
-          case 0x2:
-            if (psr & C_FLAG)
-              temp = 1;
-            break;
-          case 0x3:
-            if (!(psr & C_FLAG))
-              temp = 1;
-            break;
-          case 0x4:
-            if (psr & L_FLAG)
-              temp = 1;
-            break;
-          case 0x5:
-            if (!(psr & L_FLAG))
-              temp = 1;
-            break;
-          case 0x6:
-            if (psr & N_FLAG)
-              temp = 1;
-            break;
-          case 0x7:
-            if (!(psr & N_FLAG))
-              temp = 1;
-            break;
-          case 0x8:
-            if (psr & F_FLAG)
-              temp = 1;
-            break;
-          case 0x9:
-            if (!(psr & F_FLAG))
-              temp = 1;
-            break;
-          case 0xA:
-            if (!(psr & (Z_FLAG | L_FLAG)))
-              temp = 1;
-            break;
-          case 0xB:
-            if (psr & (Z_FLAG | L_FLAG))
-              temp = 1;
-            break;
-          case 0xC:
-            if (!(psr & (Z_FLAG | N_FLAG)))
-              temp = 1;
-            break;
-          case 0xD:
-            if (psr & (Z_FLAG | N_FLAG))
-              temp = 1;
-            break;
-          case 0xE:
-            temp = 1;
-            break;
-          case 0xF:
-            break;
-        }
-        WriteSize = LookUp.p.Size;
-        break;
-
-      case ACB: // ACB
-        temp2 = (opcode >> 7) & 0xF;
-        if (temp2 & 8)
-          temp2 |= 0xFFFFFFF0;
-        temp = ReadGen(0, LookUp.p.Size);
-        temp += temp2;
-        WriteSize = LookUp.p.Size;
-        temp2 = getdisp();
-        if (temp & 0xFF)
-          pc = startpc + temp2;
-        break;
-
-      case MOVQ:
-      {
-        temp = (opcode >> 7) & 0xF;
-        if (temp & 8)
-          temp |= 0xFFFFFFF0;
-        WriteSize = LookUp.p.Size;
-      }
-      break;
-
-      case LPR:
-      {
-        temp = ReadGen(0, LookUp.p.Size);
-
-        if (LookUp.p.Size == sz8)
-        {
-          switch ((opcode >> 7) & 0xF)
-          {
-            case 0:
-              psr = (psr & 0xFF00) | (temp & 0xFF);
-              break;
-            case 9:
-              sp[SP] = temp;
-              break;
-            default:
-              n32016_dumpregs("Bad LPRB reg");
-				  break;
-          }
-        }
-        else if (LookUp.p.Size == sz16)
-        {
-          switch ((opcode >> 7) & 0xF)
-          {
-            case 15:
-              mod = temp;
-              break;
-            default:
-              n32016_dumpregs("Bad LPRW reg");
-				  break;
-          }
-          break;
-        }
-        else
-        {
-          switch ((opcode >> 7) & 0xF)
-          {
-            case 9:
-              sp[SP] = temp;
-              break;
-            case 0xA:
-              sb = temp;
-              break;
-            case 0xE:
-              intbase = temp; // printf("INTBASE %08X %08X\n",temp,pc); 
-              break;
-
-            default:
-              n32016_dumpregs("Bad LPRD reg");
-              break;
-          }
-        }
-      }
-      break;
-
-      case ADD: // ADD byte
-        temp2 = ReadGen(0, LookUp.p.Size);
-        temp = ReadGen(1, LookUp.p.Size);
-
-        psr &= ~(C_FLAG | V_FLAG);
-
-        switch (LookUp.p.Size)
-        {
-          case sz8:
-          {
-            if ((temp + temp2) & 0x100)
-              psr |= C_FLAG;
-            if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
-              psr |= V_FLAG;
-          }
-          break;
-
-          case sz16:
-          {
-            if ((temp + temp2) & 0x10000)
-              psr |= C_FLAG;
-            if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x8000)
-              psr |= V_FLAG;
-          }
-          break;
-
-          case sz32:
-          {
-            if ((temp + temp2) < temp)
-              psr |= C_FLAG;
-            if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
-              psr |= V_FLAG;
-          }
-          break;
-        }
-
-        temp += temp2;
-        WriteSize = LookUp.p.Size;
-        break;
-
-      case CMP: // CMP
-        temp2 = ReadGen(0, LookUp.p.Size);
-        temp = ReadGen(1, LookUp.p.Size);
-
-        psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
-        if (temp == temp2)
-          psr |= Z_FLAG;
-        if (temp > temp2)
-          psr |= L_FLAG;
-        if (LookUp.p.Size == sz8)
-        {
-          if (((signed char) temp) > ((signed char) temp2))
-            psr |= N_FLAG;
-        }
-        else if (LookUp.p.Size == sz32)
-        {
-          if (((signed long) temp) > ((signed long) temp2))
-            psr |= N_FLAG;
-        }
-        break;
-
-      case BIC: // BIC byte
-        temp = ReadGen(0, LookUp.p.Size);
-        temp2 = ReadGen(1, LookUp.p.Size);
-
-        temp &= ~temp2;
-        WriteSize = LookUp.p.Size;
-        break;
-
-      case MOV:
-        temp = ReadGen(1, LookUp.p.Size);
-        WriteSize = LookUp.p.Size;
-        break;
-
-      case OR:
-        temp2 = ReadGen(0, LookUp.p.Size);
-        temp = ReadGen(1, LookUp.p.Size);
-        temp |= temp2;
-        WriteSize = LookUp.p.Size;
-        break;
-
-      case SUB:
-        temp2 = ReadGen(0, LookUp.p.Size);
-        temp = ReadGen(1, LookUp.p.Size);
-        psr &= ~(C_FLAG | V_FLAG);
-        if ((temp2 + temp) > temp2)
-          psr |= C_FLAG;
-        if ((temp2 ^ temp) & (temp2 ^ (temp2 + temp)) & 0x80000000)
-          psr |= V_FLAG;
-        temp -= temp2;
-        WriteSize = LookUp.p.Size;
-        break;
-
-      case ADDR:
-        temp = genaddr[1];
-        WriteSize = LookUp.p.Size;
-        break;
-
-      case AND:
-        temp2 = ReadGen(0, LookUp.p.Size);
-        temp = ReadGen(1, LookUp.p.Size);
-        temp &= temp2;
-        WriteSize = LookUp.p.Size;
-        break;
-
-      case TBIT:
-        temp2 = ReadGen(0, LookUp.p.Size);
-        temp = ReadGen(1, LookUp.p.Size);
-        temp2 &= (LookUp.p.Size == sz8) ? 7 : 31;
-
-        psr &= ~F_FLAG;
-        if (temp & (1 << temp2))
-          psr |= F_FLAG;
-        break;
-
-      case XOR:
-        temp2 = ReadGen(0, LookUp.p.Size);
-        temp = ReadGen(1, LookUp.p.Size);
-        temp ^= temp2;
-        WriteSize = LookUp.p.Size;
-        break;
-
-      case ROT:
-      {
-        switch (LookUp.p.Size)
-        {
-          case sz8:
-          {
-            temp = ReadGen(0, sz8);;
-            if (temp & 0xE0) {
-              temp |= 0xE0;
-              temp = ((temp ^ 0xFF) + 1);
-              temp = 8 - temp;
-            }
-            temp2 = ReadGen(1, sz8);
-            temp2 = (temp2 << temp) | (temp2 >> (8 - temp));
-            writegenb(1, temp2);
-          }
-          break;
-
-          case sz16:
-          {
-            temp = ReadGen(0, sz8);;
-            if (temp & 0xE0) {
-              temp |= 0xE0;
-              temp = ((temp ^ 0xFF) + 1);
-              temp = 16 - temp;
-            }
-            temp2 = ReadGen(1, sz16);
-            temp2 = (temp2 << temp) | (temp2 >> (16 - temp));
-            writegenw(1, temp2);
-          }
-          break;
-
-          case sz32:
-          {
-            temp = ReadGen(0, sz8);;
-            if (temp & 0xE0) {
-              temp |= 0xE0;
-              temp = ((temp ^ 0xFF) + 1);
-              temp = 32 - temp;
-            }
-            temp2 = ReadGen(1, sz32);
-            temp2 = (temp2 << temp) | (temp2 >> (32 - temp));
-            writegenl(1, temp2);
-          }
-          break;
-        }
-      }
-      break;
-
-      case ASH:
-      {
-         temp2 = ReadGen(0, sz8);
-         temp = ReadGen(1, LookUp.p.Size);
-         // Test if the shift is negative (i.e. a right shift)
-         if (temp2 & 0xE0)
+         case Format0:
          {
-            temp2 |= 0xE0;
-            temp2 = ((temp2 ^ 0xFF) + 1);
-            if (LookUp.p.Size == sz8)
+            temp = startpc + getdisp();
+         }
+         break;
+
+         case Format2:
+         {
+            pc++;
+            getgen1(opcode >> 11, 0);
+            getgen(opcode >> 11, 0);
+         }
+         break;
+
+         case Format3:
+         {
+            pc++;
+            getgen1(opcode >> 11, 0);
+            getgen(opcode >> 11, 0);
+            LookUp.p.Function = (opcode & 0x80) ? TRAP : (CXPD + ((opcode >> 8) & 7));
+         }
+         break;
+
+         case Format4:
+         {
+            pc++;
+            getgen1(opcode >> 11, 1);
+            getgen1(opcode >> 6, 0);
+            getgen(opcode >> 11, 1);
+            getgen(opcode >> 6, 0);
+         }
+         break;
+
+         case Format5:
+         {
+            pc += 2;
+            temp2 = (opcode >> 15) & 0xF;
+            LookUp.p.Function = (opcode & 0x30) ? TRAP : (MOVS + ((opcode >> 2) & 3));
+         }
+         break;
+
+         case Format6:
+         {
+            pc += 2;
+            LookUp.p.Size = (opcode >> 8) & 3;
+            getgen1(opcode >> 19, 0);
+            getgen1(opcode >> 14, 1);
+            // Ordering important here, as getgen uses LookUp.p.Size
+            if ((opcode & 0x3C00) == 0x0000 || (opcode & 0x3C00) == 0x0400 || (opcode & 0x3C00) == 0x1400) //  ROT/ASH/LSH 
             {
-               // Test if the operand is also negative
-               if (temp & 0x80)
+               LookUp.p.Size = sz8;
+            }
+            getgen(opcode >> 19, 0);
+            getgen(opcode >> 14, 1);
+            LookUp.p.Size = (opcode >> 8) & 3;
+            LookUp.p.Function = ROT + ((opcode >> 10) & 15);
+         }
+         break;
+
+         case Format7:
+         {
+            pc += 2;
+            getgen1(opcode >> 19, 0);
+            getgen1(opcode >> 14, 1);
+            getgen(opcode >> 19, 0);
+            getgen(opcode >> 14, 1);
+            LookUp.p.Function = MOVM + ((opcode >> 10) & 15);
+            LookUp.p.Size = (opcode >> 8) & 3;
+         }
+         break;
+
+         case Format8:
+         {
+            pc += 2;
+            getgen1(opcode >> 19, 0);
+            getgen1(opcode >> 14, 1);
+            getgen(opcode >> 19, 0);
+            getgen(opcode >> 14, 1);
+            temp = ((opcode >> 6) & 3) | ((opcode & 0x400) >> 8);
+            temp = (temp << 2) | ((opcode >> 8) & 3);
+            if (opcode & 0x400)
+            {
+               if (opcode & 0x80)
                {
-                  // Sign extend in a portable way
-                  temp = (temp >> temp2) | ((0xFF >> temp2) ^ 0xFF);
+                  LookUp.p.Function = (opcode & 0x40) ? FFS : INDEX;
                }
                else
                {
-                  temp = (temp >> temp2);
+                  switch (opcode & 0x3CC0)
+                  {
+                     case 0x0C80:
+                     {
+                        LookUp.p.Function = MOVUS;
+                     }
+                     break;
+
+                     case 0x1C80:
+                     {
+                        LookUp.p.Function = MOVSU;
+                     }
+                     break;
+
+                     default:
+                     {
+                        LookUp.p.Function = TRAP;
+                     }
+                     break;
+                  }
+               }
+            }
+            else
+            {
+               LookUp.p.Function = EXT + ((opcode >> 6) & 3);
+            }
+         }
+         break;
+      }
+
+      ShowInstruction(startpc, opcode, LookUp.p.Function, LookUp.p.Size);
+
+#if 1 
+      if (startpc == 0x1CB2)
+      {
+         n32016_dumpregs("Test Suite Failure!\n");
+      }
+#endif
+
+      switch (LookUp.p.Function)
+      {
+         case MOVS:
+         {
+            if (temp2 & 3)
+            {
+               n32016_dumpregs("Bad NS32016 MOVS %08X");
+            }
+
+            while (r[0])
+            {
+               temp = read_x8(r[1]);
+               r[1]++;
+               if ((temp2 & 0xC) == 0xC && temp == r[4])
+               {
+                  break;
+               }
+               if ((temp2 & 0xC) == 0x4 && temp != r[4])
+               {
+                  break;
+               }
+               write_x8(r[2], temp);
+               r[2]++;
+               r[0]--;
+            }
+         }
+         break;
+
+#if 0
+         case 0x03: // MOVS dword
+            if (temp2)
+            {
+               n32016_dumpregs("Bad NS32016 MOVS");
+               break;
+            }
+            while (r[0])
+            {
+               temp = read_x32(r[1]);
+               r[1] += 4;
+               write_x32(r[2], temp);
+               r[2] += 4;
+               r[0]--;
+            }
+            break;
+#endif
+
+         case SETCFG:
+         {
+            nscfg = temp;
+         }
+         break;
+
+
+         case ADDQ:
+         {
+            temp2 = (opcode >> 7) & 0xF;
+            if (temp2 & 8)
+               temp2 |= 0xFFFFFFF0;
+            temp = ReadGen(0, LookUp.p.Size);
+
+            psr &= ~(C_FLAG | V_FLAG);
+
+            switch (LookUp.p.Size)
+            {
+               case sz8:
+               {
+                  if ((temp + temp2) & 0x100)
+                     psr |= C_FLAG;
+                  if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
+                     psr |= V_FLAG;
+               }
+               break;
+
+               case sz16:
+               {
+                  if ((temp + temp2) & 0x10000)
+                     psr |= C_FLAG;
+                  if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x8000)
+                     psr |= V_FLAG;
+               }
+               break;
+
+               case sz32:
+               {
+                  if ((temp + temp2) < temp)
+                     psr |= C_FLAG;
+                  if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
+                     psr |= V_FLAG;
+               }
+               break;
+            }
+
+            temp += temp2;
+            WriteSize = LookUp.p.Size;
+         }
+         break;
+
+         case CMPQ:
+         {
+            temp2 = (opcode >> 7) & 0xF;
+            if (temp2 & 8)
+               temp2 |= 0xFFFFFFF0;
+
+            temp = ReadGen(0, LookUp.p.Size);
+
+            //  Sign extend smaller quantites to 32 bits to match temp2 
+            if (LookUp.p.Size == sz8) {
+               temp = (signed char) temp;
+            }
+            else if (LookUp.p.Size == sz16) {
+               temp = (signed short) temp;
+            }
+
+            psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
+            if (temp == temp2)
+               psr |= Z_FLAG;
+            if (temp2 > temp)
+               psr |= L_FLAG;
+
+            if (LookUp.p.Size == sz8)
+            {
+               if (((signed char) temp2) > ((signed char) temp))
+               {
+                  psr |= N_FLAG;
+               }
+            }
+            else if (LookUp.p.Size == sz32)
+            {
+               if (((signed long) temp2) > ((signed long) temp))
+               {
+                  psr |= N_FLAG;
+               }
+            }
+         }
+         break;
+
+         case SPR:
+         {
+            switch ((opcode >> 7) & 0xF)
+            {
+               case 0x8:
+                  writegenl(0, fp);
+                     break;
+               case 0x9:
+                  writegenl(0, sp[SP]);
+                     break;
+               case 0xA:
+                  writegenl(0, sb);
+                     break;
+               case 0xF:
+                  writegenl(0, mod);
+                     break;
+               default:
+                  n32016_dumpregs("Bad SPR reg");
+                  break;
+            }
+         }
+         break;
+
+         case Scond:
+            temp = 0;
+            switch ((opcode >> 7) & 0xF)
+            {
+               case 0x0:
+                  if (psr & Z_FLAG)
+                     temp = 1;
+                  break;
+               case 0x1:
+                  if (!(psr & Z_FLAG))
+                     temp = 1;
+                  break;
+               case 0x2:
+                  if (psr & C_FLAG)
+                     temp = 1;
+                  break;
+               case 0x3:
+                  if (!(psr & C_FLAG))
+                     temp = 1;
+                  break;
+               case 0x4:
+                  if (psr & L_FLAG)
+                     temp = 1;
+                  break;
+               case 0x5:
+                  if (!(psr & L_FLAG))
+                     temp = 1;
+                  break;
+               case 0x6:
+                  if (psr & N_FLAG)
+                     temp = 1;
+                  break;
+               case 0x7:
+                  if (!(psr & N_FLAG))
+                     temp = 1;
+                  break;
+               case 0x8:
+                  if (psr & F_FLAG)
+                     temp = 1;
+                  break;
+               case 0x9:
+                  if (!(psr & F_FLAG))
+                     temp = 1;
+                  break;
+               case 0xA:
+                  if (!(psr & (Z_FLAG | L_FLAG)))
+                     temp = 1;
+                  break;
+               case 0xB:
+                  if (psr & (Z_FLAG | L_FLAG))
+                     temp = 1;
+                  break;
+               case 0xC:
+                  if (!(psr & (Z_FLAG | N_FLAG)))
+                     temp = 1;
+                  break;
+               case 0xD:
+                  if (psr & (Z_FLAG | N_FLAG))
+                     temp = 1;
+                  break;
+               case 0xE:
+                  temp = 1;
+                  break;
+               case 0xF:
+                  break;
+            }
+            WriteSize = LookUp.p.Size;
+            break;
+
+         case ACB: // ACB
+            temp2 = (opcode >> 7) & 0xF;
+            if (temp2 & 8)
+               temp2 |= 0xFFFFFFF0;
+            temp = ReadGen(0, LookUp.p.Size);
+            temp += temp2;
+            WriteSize = LookUp.p.Size;
+            temp2 = getdisp();
+            if (temp & 0xFF)
+               pc = startpc + temp2;
+            break;
+
+         case MOVQ:
+         {
+            temp = (opcode >> 7) & 0xF;
+            if (temp & 8)
+               temp |= 0xFFFFFFF0;
+            WriteSize = LookUp.p.Size;
+         }
+         break;
+
+         case LPR:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+
+            if (LookUp.p.Size == sz8)
+            {
+               switch ((opcode >> 7) & 0xF)
+               {
+                  case 0:
+                     psr = (psr & 0xFF00) | (temp & 0xFF);
+                     break;
+                  case 9:
+                     sp[SP] = temp;
+                     break;
+                  default:
+                     n32016_dumpregs("Bad LPRB reg");
+                     break;
                }
             }
             else if (LookUp.p.Size == sz16)
             {
-               if (temp & 0x8000)
+               switch ((opcode >> 7) & 0xF)
                {
-                  temp = (temp >> temp2) | ((0xFFFF >> temp2) ^ 0xFFFF);
+                  case 15:
+                     mod = temp;
+                     break;
+                  default:
+                     n32016_dumpregs("Bad LPRW reg");
+                     break;
                }
-               else
-               {
-                  temp = (temp >> temp2);
-               }
+               break;
             }
             else
             {
-               if (temp & 0x80000000)
+               switch ((opcode >> 7) & 0xF)
                {
-                  temp = (temp >> temp2) | ((0xFFFFFFFF >> temp2) ^ 0xFFFFFFFF);
-               }
-               else
-               {
-                  temp = (temp >> temp2);
+                  case 9:
+                     sp[SP] = temp;
+                     break;
+                  case 0xA:
+                     sb = temp;
+                     break;
+                  case 0xE:
+                     intbase = temp; // printf("INTBASE %08X %08X\n",temp,pc); 
+                     break;
+
+                  default:
+                     n32016_dumpregs("Bad LPRD reg");
+                     break;
                }
             }
          }
-         else
-            temp <<= temp2;
-         WriteSize = LookUp.p.Size;
-         WriteIndex = 1;
-      }
-      break;
+         break;
 
-      case CBIT:
-      {
-        temp = ReadGen(0, sz8);
-          temp &= 31;
-        if (gentype[1])
-        {
-           temp2 = ReadGen(1, sz32);
-        }
-        else
-        {
-           temp2 = ReadGen(1, sz8);
-        }
-        if (temp2 & (1 << temp))
-          psr |= F_FLAG;
-        else
-          psr &= ~F_FLAG;
-        temp2 &= ~(1 << temp);
-        if (gentype[1])
-        {
-          writegenl(1, temp2);
-        }
-        else
-        {
-          writegenb(1, temp2);
-        }
-      }
-      break;
+         case ADD: // ADD byte
+            temp2 = ReadGen(0, LookUp.p.Size);
+            temp = ReadGen(1, LookUp.p.Size);
 
-      case LSH:
-      {
-        switch (LookUp.p.Size)
-        {
-          case sz8:
-          {
-            temp = ReadGen(0, sz8);;
-            if (temp & 0xE0)
-              temp |= 0xE0;
-            temp2 = ReadGen(1, sz8);
-            if (temp & 0xE0)
-              temp2 >>= ((temp ^ 0xFF) + 1);
+            psr &= ~(C_FLAG | V_FLAG);
+
+            switch (LookUp.p.Size)
+            {
+               case sz8:
+               {
+                  if ((temp + temp2) & 0x100)
+                     psr |= C_FLAG;
+                  if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
+                     psr |= V_FLAG;
+               }
+               break;
+
+               case sz16:
+               {
+                  if ((temp + temp2) & 0x10000)
+                     psr |= C_FLAG;
+                  if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x8000)
+                     psr |= V_FLAG;
+               }
+               break;
+
+               case sz32:
+               {
+                  if ((temp + temp2) < temp)
+                     psr |= C_FLAG;
+                  if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
+                     psr |= V_FLAG;
+               }
+               break;
+            }
+
+            temp += temp2;
+            WriteSize = LookUp.p.Size;
+            break;
+
+         case CMP: // CMP
+            temp2 = ReadGen(0, LookUp.p.Size);
+            temp = ReadGen(1, LookUp.p.Size);
+
+            psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
+            if (temp == temp2)
+               psr |= Z_FLAG;
+            if (temp > temp2)
+               psr |= L_FLAG;
+            if (LookUp.p.Size == sz8)
+            {
+               if (((signed char) temp) > ((signed char) temp2))
+                  psr |= N_FLAG;
+            }
+            else if (LookUp.p.Size == sz32)
+            {
+               if (((signed long) temp) > ((signed long) temp2))
+                  psr |= N_FLAG;
+            }
+            break;
+
+         case BIC: // BIC byte
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
+
+            temp &= ~temp2;
+            WriteSize = LookUp.p.Size;
+            break;
+
+         case MOV:
+            temp = ReadGen(1, LookUp.p.Size);
+            WriteSize = LookUp.p.Size;
+            break;
+
+         case OR:
+            temp2 = ReadGen(0, LookUp.p.Size);
+            temp = ReadGen(1, LookUp.p.Size);
+            temp |= temp2;
+            WriteSize = LookUp.p.Size;
+            break;
+
+         case SUB:
+            temp2 = ReadGen(0, LookUp.p.Size);
+            temp = ReadGen(1, LookUp.p.Size);
+            psr &= ~(C_FLAG | V_FLAG);
+            if ((temp2 + temp) > temp2)
+               psr |= C_FLAG;
+            if ((temp2 ^ temp) & (temp2 ^ (temp2 + temp)) & 0x80000000)
+               psr |= V_FLAG;
+            temp -= temp2;
+            WriteSize = LookUp.p.Size;
+            break;
+
+         case ADDR:
+            temp = genaddr[1];
+            WriteSize = LookUp.p.Size;
+            break;
+
+         case AND:
+            temp2 = ReadGen(0, LookUp.p.Size);
+            temp = ReadGen(1, LookUp.p.Size);
+            temp &= temp2;
+            WriteSize = LookUp.p.Size;
+            break;
+
+         case TBIT:
+            temp2 = ReadGen(0, LookUp.p.Size);
+            temp = ReadGen(1, LookUp.p.Size);
+            temp2 &= (LookUp.p.Size == sz8) ? 7 : 31;
+
+            psr &= ~F_FLAG;
+            if (temp & (1 << temp2))
+               psr |= F_FLAG;
+            break;
+
+         case XOR:
+            temp2 = ReadGen(0, LookUp.p.Size);
+            temp = ReadGen(1, LookUp.p.Size);
+            temp ^= temp2;
+            WriteSize = LookUp.p.Size;
+            break;
+
+         case ROT:
+         {
+            switch (LookUp.p.Size)
+            {
+               case sz8:
+               {
+                  temp = ReadGen(0, sz8);;
+                  if (temp & 0xE0) {
+                     temp |= 0xE0;
+                     temp = ((temp ^ 0xFF) + 1);
+                     temp = 8 - temp;
+                  }
+                  temp2 = ReadGen(1, sz8);
+                  temp2 = (temp2 << temp) | (temp2 >> (8 - temp));
+                  writegenb(1, temp2);
+               }
+               break;
+
+               case sz16:
+               {
+                  temp = ReadGen(0, sz8);;
+                  if (temp & 0xE0) {
+                     temp |= 0xE0;
+                     temp = ((temp ^ 0xFF) + 1);
+                     temp = 16 - temp;
+                  }
+                  temp2 = ReadGen(1, sz16);
+                  temp2 = (temp2 << temp) | (temp2 >> (16 - temp));
+                  writegenw(1, temp2);
+               }
+               break;
+
+               case sz32:
+               {
+                  temp = ReadGen(0, sz8);;
+                  if (temp & 0xE0) {
+                     temp |= 0xE0;
+                     temp = ((temp ^ 0xFF) + 1);
+                     temp = 32 - temp;
+                  }
+                  temp2 = ReadGen(1, sz32);
+                  temp2 = (temp2 << temp) | (temp2 >> (32 - temp));
+                  writegenl(1, temp2);
+               }
+               break;
+            }
+         }
+         break;
+
+         case ASH:
+         {
+            temp2 = ReadGen(0, sz8);
+            temp = ReadGen(1, LookUp.p.Size);
+            // Test if the shift is negative (i.e. a right shift)
+            if (temp2 & 0xE0)
+            {
+               temp2 |= 0xE0;
+               temp2 = ((temp2 ^ 0xFF) + 1);
+               if (LookUp.p.Size == sz8)
+               {
+                  // Test if the operand is also negative
+                  if (temp & 0x80)
+                  {
+                     // Sign extend in a portable way
+                     temp = (temp >> temp2) | ((0xFF >> temp2) ^ 0xFF);
+                  }
+                  else
+                  {
+                     temp = (temp >> temp2);
+                  }
+               }
+               else if (LookUp.p.Size == sz16)
+               {
+                  if (temp & 0x8000)
+                  {
+                     temp = (temp >> temp2) | ((0xFFFF >> temp2) ^ 0xFFFF);
+                  }
+                  else
+                  {
+                     temp = (temp >> temp2);
+                  }
+               }
+               else
+               {
+                  if (temp & 0x80000000)
+                  {
+                     temp = (temp >> temp2) | ((0xFFFFFFFF >> temp2) ^ 0xFFFFFFFF);
+                  }
+                  else
+                  {
+                     temp = (temp >> temp2);
+                  }
+               }
+            }
             else
-              temp2 <<= temp;
-            writegenb(1, temp2);
-          }
-          break;
+               temp <<= temp2;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+         }
+         break;
 
-          case sz16:
-          {
-            temp = ReadGen(0, sz8);;
-            if (temp & 0xE0)
-              temp |= 0xE0;
-            temp2 = ReadGen(1, sz16);
-            if (temp & 0xE0)
-              temp2 >>= ((temp ^ 0xFF) + 1);
-            else
-              temp2 <<= temp;
-            writegenw(1, temp2);
-          }
-          break;
-
-          case sz32:
-          {
-            temp = ReadGen(0, sz8);;
-            if (temp & 0xE0)
-              temp |= 0xE0;
-            temp2 = ReadGen(1, sz32);
-            if (temp & 0xE0)
-              temp2 >>= ((temp ^ 0xFF) + 1);
-            else
-              temp2 <<= temp;
-            writegenl(1, temp2);
-          }
-          break;
-        }
-      }
-      break;
-
-      case NOT:
-      {
-        switch (LookUp.p.Size)
-        {
-          case sz8:
-          {
-            temp = ReadGen(0, sz8);;
-            temp ^= 1;
-            writegenb(1, temp);
-          }
-          break;
-
-          case sz16:
-          {
-            temp = ReadGen(0, sz16);
-            temp ^= 1;
-            writegenw(1, temp);
-          }
-          break;
-
-          case sz32:
-          {
-             temp = ReadGen(0, sz32);
-            temp ^= 1;
-            writegenl(1, temp);
-          }
-          break;
-        }
-      }
-      break;
-
-      case ABS:
-      {
-        temp = ReadGen(0, sz8);
-        if (temp & 0x80)
-          temp = (temp ^ 0xFF) + 1;
-        writegenb(1, temp)
-      }
-      break;
-
-      case COM:
-      {
-        switch (LookUp.p.Size)
-        {
-          case sz8:
+         case CBIT:
+         {
             temp = ReadGen(0, sz8);
-            writegenb(1, ~temp)
-            break;
+            temp &= 31;
+            if (gentype[1])
+            {
+               temp2 = ReadGen(1, sz32);
+            }
+            else
+            {
+               temp2 = ReadGen(1, sz8);
+            }
+            if (temp2 & (1 << temp))
+               psr |= F_FLAG;
+            else
+               psr &= ~F_FLAG;
+            temp2 &= ~(1 << temp);
+            if (gentype[1])
+            {
+               writegenl(1, temp2);
+            }
+            else
+            {
+               writegenb(1, temp2);
+            }
+         }
+         break;
 
-          case sz16:
-             temp = ReadGen(0, sz16);
-             writegenw(1, ~temp)
-            break;
+         case LSH:
+         {
+            switch (LookUp.p.Size)
+            {
+               case sz8:
+               {
+                  temp = ReadGen(0, sz8);;
+                  if (temp & 0xE0)
+                     temp |= 0xE0;
+                  temp2 = ReadGen(1, sz8);
+                  if (temp & 0xE0)
+                     temp2 >>= ((temp ^ 0xFF) + 1);
+                  else
+                     temp2 <<= temp;
+                  writegenb(1, temp2);
+               }
+               break;
 
-          case sz32:
+               case sz16:
+               {
+                  temp = ReadGen(0, sz8);;
+                  if (temp & 0xE0)
+                     temp |= 0xE0;
+                  temp2 = ReadGen(1, sz16);
+                  if (temp & 0xE0)
+                     temp2 >>= ((temp ^ 0xFF) + 1);
+                  else
+                     temp2 <<= temp;
+                  writegenw(1, temp2);
+               }
+               break;
+
+               case sz32:
+               {
+                  temp = ReadGen(0, sz8);;
+                  if (temp & 0xE0)
+                     temp |= 0xE0;
+                  temp2 = ReadGen(1, sz32);
+                  if (temp & 0xE0)
+                     temp2 >>= ((temp ^ 0xFF) + 1);
+                  else
+                     temp2 <<= temp;
+                  writegenl(1, temp2);
+               }
+               break;
+            }
+         }
+         break;
+
+         case NOT:
+         {
+            switch (LookUp.p.Size)
+            {
+               case sz8:
+               {
+                  temp = ReadGen(0, sz8);;
+                  temp ^= 1;
+                  writegenb(1, temp);
+               }
+               break;
+
+               case sz16:
+               {
+                  temp = ReadGen(0, sz16);
+                  temp ^= 1;
+                  writegenw(1, temp);
+               }
+               break;
+
+               case sz32:
+               {
+                  temp = ReadGen(0, sz32);
+                  temp ^= 1;
+                  writegenl(1, temp);
+               }
+               break;
+            }
+         }
+         break;
+
+         case ABS:
+         {
+            temp = ReadGen(0, sz8);
+            if (temp & 0x80)
+               temp = (temp ^ 0xFF) + 1;
+            writegenb(1, temp);
+         }
+         break;
+
+         case COM:
+         {
+            switch (LookUp.p.Size)
+            {
+               case sz8:
+                  temp = ReadGen(0, sz8);
+                  writegenb(1, ~temp);
+                     break;
+
+               case sz16:
+                  temp = ReadGen(0, sz16);
+                  writegenw(1, ~temp);
+                     break;
+
+               case sz32:
+                  temp = ReadGen(0, sz32);
+                  writegenl(1, ~temp);
+                     break;
+            }
+         }
+         break;
+
+         case CXPD:
+         {
             temp = ReadGen(0, sz32);
-            writegenl(1, ~temp)
-            break;
-        }
-      }
-      break;      
- 
-      case CXPD:
-      {
-         temp = ReadGen(0, sz32);
-          pushw(0);
-        pushw(mod);
-        pushd(pc);
-        mod = temp & 0xFFFF;
-        temp3 = temp >> 16;
-        sb = read_x32(mod);
-        temp2 = read_x32(mod + 8);
-        pc = temp2 + temp3;
-      }
-      break;
-      
-      case BICPSR:
-      {
-        temp = ReadGen(0, LookUp.p.Size);
-        psr &= ~temp;
-      }
-      break;
+            pushw(0);
+            pushw(mod);
+            pushd(pc);
+            mod = temp & 0xFFFF;
+            temp3 = temp >> 16;
+            sb = read_x32(mod);
+            temp2 = read_x32(mod + 8);
+            pc = temp2 + temp3;
+         }
+         break;
 
-      case JUMP:
-      {
-        if (gentype[0])
-          pc = *(uint32_t *) genaddr[0];
-        else
-          pc = genaddr[0];
-      }
-      break;
+         case BICPSR:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            psr &= ~temp;
+         }
+         break;
 
-      case BISPSR:
-      {
-        temp = ReadGen(0, LookUp.p.Size);
-        psr |= temp;
-      }
-      break;
+         case JUMP:
+         {
+            if (gentype[0])
+               pc = *(uint32_t *) genaddr[0];
+            else
+               pc = genaddr[0];
+         }
+         break;
 
-      case ADJSP:
-      {
-        temp = ReadGen(0, LookUp.p.Size);
+         case BISPSR:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            psr |= temp;
+         }
+         break;
 
-        if (temp & 0x80)
-          temp |= 0xFFFFFF00;
-        sp[SP] -= temp;
-      }
-      break;
+         case ADJSP:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
 
-      case CASE:
-      {
-        temp = ReadGen(0, LookUp.p.Size);
+            if (temp & 0x80)
+               temp |= 0xFFFFFF00;
+            sp[SP] -= temp;
+         }
+         break;
 
-        if (temp & 0x80)
-          temp |= 0xFFFFFF00;
-        pc = startpc + temp;
-      }
-      break;
+         case CASE:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+
+            if (temp & 0x80)
+               temp |= 0xFFFFFF00;
+            pc = startpc + temp;
+         }
+         break;
 
 #if 0 
-      //OLD 32 bit Version
-      case 0xA: // ADJSP
-         temp2 = ReadGen(0, sz32);
-              sp[SP] -= temp2;
+         //OLD 32 bit Version
+         case 0xA: // ADJSP
+            temp2 = ReadGen(0, sz32);
+            sp[SP] -= temp2;
             break;
 #endif
 
-      case MOVM:
-      {
-        temp = getdisp() + LookUp.p.Size + 1; // disp of 0 means move 1 byte
-        while (temp)
-        {
-          temp2 = read_x8(genaddr[0]);
-          genaddr[0]++;
-          write_x8(genaddr[1], temp2);
-          genaddr[1]++;
-          temp--;
-        }
-      }
-      break;
+         case MOVM:
+         {
+            temp = getdisp() + LookUp.p.Size + 1; // disp of 0 means move 1 byte
+            while (temp)
+            {
+               temp2 = read_x8(genaddr[0]);
+               genaddr[0]++;
+               write_x8(genaddr[1], temp2);
+               genaddr[1]++;
+               temp--;
+            }
+         }
+         break;
 
-      case INSS:
-      {
-         temp3 = read_x8(pc);
-         pc++;
-         temp = ReadGen(0, sz8);
-         temp2 = ReadGen(1, sz8);
+         case INSS:
+         {
+            temp3 = read_x8(pc);
+            pc++;
+            temp = ReadGen(0, sz8);
+            temp2 = ReadGen(1, sz8);
             for (c = 0; c <= (temp3 & 0x1F); c++)
             {
                temp2 &= ~(1 << ((c + (temp3 >> 5)) & 7));
                if (temp & (1 << c))
                   temp2 |= (1 << ((c + (temp3 >> 5)) & 7));
             }
-         writegenb(1, temp2)
-      }
-      break;
+            writegenb(1, temp2);
+         }
+         break;
 
-      case EXTS:
-      {
-        temp3 = read_x8(pc);
-        pc++;
-        temp = ReadGen(0, sz8);
-        temp2 = 0;
-        temp >>= (temp3 >> 5); // Shift by offset
-        temp3 &= 0x1F; // Mask off the lower 5 Bits which are number of bits to extract
+         case EXTS:
+         {
+            temp3 = read_x8(pc);
+            pc++;
+            temp = ReadGen(0, sz8);
+            temp2 = 0;
+            temp >>= (temp3 >> 5); // Shift by offset
+            temp3 &= 0x1F; // Mask off the lower 5 Bits which are number of bits to extract
 
-        temp4 = 1;
-        for (c = 0; c <= temp3; c++)
-        {
-          if (temp & temp4) // Copy the ones
-          {
-            temp2 |= temp4;
-          }
+            temp4 = 1;
+            for (c = 0; c <= temp3; c++)
+            {
+               if (temp & temp4) // Copy the ones
+               {
+                  temp2 |= temp4;
+               }
 
-          temp4 <<= 1;
-        }
+               temp4 <<= 1;
+            }
 
-        writegenb(1, temp2)
-      }
-      break;
+            writegenb(1, temp2);
+         }
+         break;
 
-      case MOVXBW:
-      {
-        temp = ReadGen(0, sz8);
-        SIGN_EXTEND(temp)
-          if (sdiff[1])
-            sdiff[1] = 4;
-        writegenw(1, temp)
-      }
-      break;
+         case MOVXBW:
+         {
+            temp = ReadGen(0, sz8);
+            SIGN_EXTEND(temp)
+               if (sdiff[1])
+                  sdiff[1] = 4;
+            writegenw(1, temp);
+         }
+         break;
 
-      case MOVXiD:
-      {
-        temp = ReadGen(0, LookUp.p.Size);
-        SIGN_EXTEND(temp)
-        if (sdiff[1])
-          sdiff[1] = 4;
-        writegenl(1, temp);
-      }
-      break;
+         case MOVXiD:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            SIGN_EXTEND(temp)
+               if (sdiff[1])
+                  sdiff[1] = 4;
+            writegenl(1, temp);
+         }
+         break;
 
-      case MOVZBW:
-      {
-        temp = ReadGen(0, sz8);
-          if (sdiff[1])
-            sdiff[1] = 4;
-        writegenw(1, temp)
-      }
-      break;
+         case MOVZBW:
+         {
+            temp = ReadGen(0, sz8);
+            if (sdiff[1])
+               sdiff[1] = 4;
+            writegenw(1, temp);
+         }
+         break;
 
-      case MOVZiD:
-      {
-        temp = ReadGen(0, LookUp.p.Size);
-        if (sdiff[1])
-          sdiff[1] = 4;
-        writegenl(1, temp);
-      }
-      break;
+         case MOVZiD:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            if (sdiff[1])
+               sdiff[1] = 4;
+            writegenl(1, temp);
+         }
+         break;
 
-      case DEI:
-      {
-         temp = ReadGen(0, sz32);
-			readgenq(1, temp64)
-          if (!temp)
-          {
+         case DEI:
+         {
+            temp = ReadGen(0, sz32);
+            temp64 = readgenq(1);
+               if (!temp)
+               {
 
-            n32016_dumpregs("Divide by zero - DEID");
+                  n32016_dumpregs("Divide by zero - DEID");
+                  break;
+               }
+            temp3 = temp64 % temp;
+            writegenl(1, temp3);
+               temp3 = (uint32_t) (temp64 / temp);
+            if (gentype[1])
+               *(uint32_t *) (genaddr[1] + 4) = temp3;
+            else
+            {
+               write_x32(genaddr[1] + 4, temp3);
+            }
+         }
+         break;
+
+         case QUO:
+         {
+            temp = ReadGen(0, sz32);
+            temp2 = ReadGen(1, sz32);
+            if (!temp)
+            {
+               n32016_dumpregs("Divide by zero - QUOD");
+               break;
+            }
+            temp2 /= temp;
+            writegenl(1, temp2);
+         }
+         break;
+
+         case REM:
+         {
+            temp = ReadGen(0, sz32);
+            temp2 = ReadGen(1, sz32);
+
+            if (!temp)
+            {
+               n32016_dumpregs("Divide by zero - REM");
+               break;
+            }
+            temp2 %= temp;
+            writegenl(1, temp2);
+         }
+         break;
+
+         case EXT:
+         {
+            temp = r[(opcode >> 11) & 7] & 31;
+            temp2 = getdisp();
+            temp3 = ReadGen(0, sz32);
+            temp4 = 0;
+            for (c = 0; c < temp2; c++)
+            {
+               if (temp3 & (1 << ((c + temp) & 31)))
+                  temp4 |= (1 << c);
+            }
+            writegenl(1, temp4);
+         }
+         break;
+
+         case CHECK:
+         {
+            temp3 = ReadGen(1, sz8);
+            temp = read_x8(genaddr[0]);
+            temp2 = read_x8(genaddr[0] + 1);
+            if (temp >= temp3 && temp3 >= temp2)
+            {
+               r[(opcode >> 11) & 7] = temp3 - temp2;
+               psr &= ~F_FLAG;
+            }
+            else
+               psr |= F_FLAG;
+         }
+         break;
+
+         case BSR:
+            temp = getdisp();
+            pushd(pc);
+            pc = startpc + temp;
             break;
-          }
-        temp3 = temp64 % temp;
-        writegenl(1, temp3)
-          temp3 = (uint32_t) (temp64 / temp);
-        if (gentype[1])
-          *(uint32_t *) (genaddr[1] + 4) = temp3;
-        else
-        {
-          write_x32(genaddr[1] + 4, temp3);
-        }
-      }
-      break;
 
-      case QUO:
-      {
-         temp = ReadGen(0, sz32);
-          temp2 = ReadGen(1, sz32);
-          if (!temp)
-          {
-            n32016_dumpregs("Divide by zero - QUOD");
+         case RET:
+            temp = getdisp();
+            pc = popd();
+            sp[SP] += temp;
             break;
-          }
-        temp2 /= temp;
-        writegenl(1, temp2)
-      }
-      break;
 
-      case REM:
-      {
-         temp = ReadGen(0, sz32);
-         temp2 = ReadGen(1, sz32);
-
-          if (!temp)
-          {
-            n32016_dumpregs("Divide by zero - REM");
+         case CXP:
+            temp = getdisp();
+            pushw(0);
+            pushw(mod);
+            pushd(pc);
+            temp2 = read_x32(mod + 4) + (4 * temp);
+            temp = read_x32(temp2);
+            mod = temp & 0xFFFF;
+            sb = read_x32(mod);
+            pc = read_x32(mod + 8) + (temp >> 16);
             break;
-          }
-        temp2 %= temp;
-        writegenl(1, temp2)
-      }
-      break;
 
-      case EXT:
+         case RXP:
+            temp = getdisp();
+            pc = popd();
+            temp2 = popd();
+            mod = temp2 & 0xFFFF;
+            sp[SP] += temp;
+            sb = read_x32(mod);
+            break;
+
+         case RETT:
+            temp = getdisp();
+            pc = popd();
+            mod = popw();
+            psr = popw();
+            sp[SP] += temp;
+            sb = read_x32(mod);
+            break;
+
+         case RETI:
+            printf("RETI ????");
+            break;
+
+         case SAVE:
+            temp = read_x8(pc);
+            pc++;
+            for (c = 0; c < 8; c++)
+            {
+               if (temp & (1 << c))
+               {
+                  pushd(r[c]);
+               }
+            }
+            break;
+
+         case RESTORE:
+            temp = read_x8(pc);
+            pc++;
+            for (c = 0; c < 8; c++)
+            {
+               if (temp & (1 << c))
+               {
+                  r[c ^ 7] = popd(r[c]);
+               }
+            }
+            break;
+
+         case ENTER:
+            temp = read_x8(pc);
+            pc++;
+            temp2 = getdisp();
+            pushd(fp);
+            fp = sp[SP];
+            sp[SP] -= temp2;
+
+            for (c = 0; c < 8; c++)
+            {
+               if (temp & (1 << c))
+               {
+                  pushd(r[c]);
+               }
+            }
+            break;
+
+         case EXIT:
+            temp = read_x8(pc);
+            pc++;
+            for (c = 0; c < 8; c++)
+            {
+               if (temp & (1 << c))
+               {
+                  r[c ^ 7] = popd(r[c]);
+               }
+            }
+            sp[SP] = fp;
+            fp = popd();
+            break;
+
+         case NOP:
+            //temp = read_x8(pc);
+            //pc++;
+            break;
+
+         case SVC:
+            temp = psr;
+            psr &= ~0x700;
+            temp = read_x32(intbase + (5 * 4));
+            mod = temp & 0xFFFF;
+            temp3 = temp >> 16;
+            sb = read_x32(mod);
+            temp2 = read_x32(mod + 8);
+            pc = temp2 + temp3;
+            break;
+
+         case BPT:
+            //temp = read_x8(pc);
+            //pc++;
+            printf("BPT ??????\n");
+            break;
+
+         case BEQ: // BEQ
+            if (psr & Z_FLAG)
+               pc = temp;
+            break;
+
+         case BNE: // BNE
+            if (!(psr & Z_FLAG))
+               pc = temp;
+            break;
+
+         case BH: // BH
+            if (psr & L_FLAG)
+               pc = temp;
+            break;
+
+         case BLS: // BLS
+            if (!(psr & L_FLAG))
+               pc = temp;
+            break;
+
+         case BGT: // BGT
+            if (psr & N_FLAG)
+               pc = temp;
+            break;
+
+         case BLE: // BLE
+            if (!(psr & N_FLAG))
+               pc = temp;
+            break;
+
+         case BFS: // BFS
+            if (psr & F_FLAG)
+               pc = temp;
+            break;
+
+         case BFC: // BFC
+            if (!(psr & F_FLAG))
+               pc = temp;
+            break;
+
+         case BLO: // BLO
+            if (!(psr & (L_FLAG | Z_FLAG)))
+               pc = temp;
+            break;
+
+         case BHS: // BHS
+            if (psr & (L_FLAG | Z_FLAG))
+               pc = temp;
+            break;
+
+         case BLT: // BLT
+            if (!(psr & (N_FLAG | Z_FLAG)))
+               pc = temp;
+            break;
+
+         case BGE: // BGE
+            if (psr & (N_FLAG | Z_FLAG))
+               pc = temp;
+            break;
+
+         case BR: // BR
+            pc = temp;
+            break;
+
+         case ADDP: /*ADDP*/
+         {
+            int carry = (psr & C_FLAG) ? 1 : 0;
+            temp2 = ReadGen(0, LookUp.p.Size);
+            temp = ReadGen(1, LookUp.p.Size);
+            temp = bcd_add(temp, temp2, LookUp.p.Size, &carry);
+            if (carry)
+               psr |= C_FLAG;
+            else
+               psr &= ~C_FLAG;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+         }
+         break;
+
+         case SUBP: /*SUBP*/
+         {
+            int carry = (psr & C_FLAG) ? 1 : 0;
+            temp2 = ReadGen(0, LookUp.p.Size);
+            temp = ReadGen(1, LookUp.p.Size);
+            temp = bcd_sub(temp, temp2, LookUp.p.Size, &carry);
+            if (carry)
+               psr |= C_FLAG;
+            else
+               psr &= ~C_FLAG;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+         }
+         break;
+
+         default:
+            n32016_dumpregs("Bad NS32016 opcode");
+            break;
+      }
+
+      switch (WriteSize)
       {
-        temp = r[(opcode >> 11) & 7] & 31;
-        temp2 = getdisp();
-        temp3 = ReadGen(0, sz32);
-        temp4 = 0;
-        for (c = 0; c < temp2; c++)
-        {
-          if (temp3 & (1 << ((c + temp) & 31)))
-            temp4 |= (1 << c);
-        }
-        writegenl(1, temp4)
+         case sz8:
+         {
+            writegenb(WriteIndex, temp);
+         }
+         break;
+
+         case sz16:
+         {
+            writegenw(WriteIndex, temp);
+         }
+         break;
+
+         case sz32:
+         {
+            uint32_t c = WriteIndex;
+
+            if (gentype[c])
+            {
+               *((uint32_t*) genaddr[c]) = temp;
+            }
+            else
+            {
+               if (sdiff[c])
+               {
+                  genaddr[c] = sp[SP] = (sp[SP] - sdiff[c]);
+               }
+               write_x32(genaddr[c], temp);
+            }
+
+            //writegenl(0, temp);
+         }
+         break;
       }
-      break;
-      
-      case CHECK:
+
+      tubecycles -= 8;
+      if (tube_irq & 2)
       {
-        temp3 = ReadGen(1, sz8);
-        temp = read_x8(genaddr[0]);
-        temp2 = read_x8(genaddr[0] + 1);
-        if (temp >= temp3 && temp3 >= temp2)
-        {
-          r[(opcode >> 11) & 7] = temp3 - temp2;
-          psr &= ~F_FLAG;
-        }
-        else
-          psr |= F_FLAG;
+         temp = psr;
+         psr &= ~0xF00;
+         pushw(temp);
+         pushw(mod);
+         pushd(pc);
+         temp = read_x32(intbase + (1 * 4));
+         mod = temp & 0xFFFF;
+         temp3 = temp >> 16;
+         sb = read_x32(mod);
+         temp2 = read_x32(mod + 8);
+         pc = temp2 + temp3;
       }
-      break;
 
-      case BSR:
-        temp = getdisp();
-        pushd(pc);
-        pc = startpc + temp;
-        break;
-
-      case RET:
-        temp = getdisp();
-        pc = popd();
-        sp[SP] += temp;
-        break;
-
-      case CXP:
-        temp = getdisp();
-        pushw(0);
-        pushw(mod);
-        pushd(pc);
-        temp2 = read_x32(mod + 4) + (4 * temp);
-        temp = read_x32(temp2);
-        mod = temp & 0xFFFF;
-        sb = read_x32(mod);
-        pc = read_x32(mod + 8) + (temp >> 16);
-        break;
-
-      case RXP:
-        temp = getdisp();
-        pc = popd();
-        temp2 = popd();
-        mod = temp2 & 0xFFFF;
-        sp[SP] += temp;
-        sb = read_x32(mod);
-        break;
-
-      case RETT:
-        temp = getdisp();
-        pc = popd();
-        mod = popw();
-        psr = popw();
-        sp[SP] += temp;
-        sb = read_x32(mod);
-        break;
-
-      case RETI:
-        printf("RETI ????");
-        break;
-
-      case SAVE:
-        temp = read_x8(pc);
-        pc++;
-        for (c = 0; c < 8; c++)
-        {
-          if (temp & (1 << c))
-          {
-            pushd(r[c]);
-          }
-        }
-        break;
-
-      case RESTORE:
-        temp = read_x8(pc);
-        pc++;
-        for (c = 0; c < 8; c++)
-        {
-          if (temp & (1 << c))
-          {
-            r[c ^ 7] = popd(r[c]);
-          }
-        }
-        break;
-
-      case ENTER:
-        temp = read_x8(pc);
-        pc++;
-        temp2 = getdisp();
-        pushd(fp);
-        fp = sp[SP];
-        sp[SP] -= temp2;
-
-        for (c = 0; c < 8; c++)
-        {
-          if (temp & (1 << c))
-          {
-            pushd(r[c]);
-          }
-        }
-        break;
-
-      case EXIT:
-        temp = read_x8(pc);
-        pc++;
-        for (c = 0; c < 8; c++)
-        {
-          if (temp & (1 << c))
-          {
-            r[c ^ 7] = popd(r[c]);
-          }
-        }
-        sp[SP] = fp;
-        fp = popd();
-        break;
-
-      case NOP:
-        //temp = read_x8(pc);
-        //pc++;
-        break;
-
-      case SVC:
-        temp = psr;
-        psr &= ~0x700;
-        temp = read_x32(intbase + (5 * 4));
-        mod = temp & 0xFFFF;
-        temp3 = temp >> 16;
-        sb = read_x32(mod);
-        temp2 = read_x32(mod + 8);
-        pc = temp2 + temp3;
-        break;
-
-      case BPT:
-        //temp = read_x8(pc);
-        //pc++;
-        printf("BPT ??????\n");
-        break;
-
-      case BEQ: // BEQ
-        if (psr & Z_FLAG)
-          pc = temp;
-        break;
-
-      case BNE: // BNE
-        if (!(psr & Z_FLAG))
-          pc = temp;
-        break;
-
-      case BH: // BH
-        if (psr & L_FLAG)
-          pc = temp;
-        break;
-
-      case BLS: // BLS
-        if (!(psr & L_FLAG))
-          pc = temp;
-        break;
-
-      case BGT: // BGT
-        if (psr & N_FLAG)
-          pc = temp;
-        break;
-
-      case BLE: // BLE
-        if (!(psr & N_FLAG))
-          pc = temp;
-        break;
-
-      case BFS: // BFS
-        if (psr & F_FLAG)
-          pc = temp;
-        break;
-
-      case BFC: // BFC
-        if (!(psr & F_FLAG))
-          pc = temp;
-        break;
-
-      case BLO: // BLO
-        if (!(psr & (L_FLAG | Z_FLAG)))
-          pc = temp;
-        break;
-
-      case BHS: // BHS
-        if (psr & (L_FLAG | Z_FLAG))
-          pc = temp;
-        break;
-
-      case BLT: // BLT
-        if (!(psr & (N_FLAG | Z_FLAG)))
-          pc = temp;
-        break;
-
-      case BGE: // BGE
-        if (psr & (N_FLAG | Z_FLAG))
-          pc = temp;
-        break;
-
-      case BR: // BR
-        pc = temp;
-        break;
-
-      case ADDP: /*ADDP*/
-        {
-          int carry = (psr & C_FLAG) ? 1 : 0;
-          temp2 = ReadGen(0, LookUp.p.Size);
-          temp = ReadGen(1, LookUp.p.Size);
-          temp = bcd_add(temp, temp2, LookUp.p.Size, &carry);
-          if (carry)
-            psr |= C_FLAG;
-          else
-            psr &= ~C_FLAG;
-          WriteSize = LookUp.p.Size;
-          WriteIndex = 1;
-        }
-        break;
-
-      case SUBP: /*SUBP*/
-        {
-          int carry = (psr & C_FLAG) ? 1 : 0;
-          temp2 = ReadGen(0, LookUp.p.Size);
-          temp = ReadGen(1, LookUp.p.Size);
-          temp = bcd_sub(temp, temp2, LookUp.p.Size, &carry);
-          if (carry)
-            psr |= C_FLAG;
-          else
-            psr &= ~C_FLAG;
-          WriteSize = LookUp.p.Size;
-          WriteIndex = 1;
-        }
-        break;
-
-      default:
-        n32016_dumpregs("Bad NS32016 opcode");
-        break;
-    }
-
-    switch (WriteSize)
-    {
-      case sz8:
+      if ((tube_irq & 1) && (psr & 0x800))
       {
-        writegenb(WriteIndex, temp);
+         temp = psr;
+         psr &= ~0xF00;
+         pushw(temp);
+         pushw(mod);
+         pushd(pc);
+         temp = read_x32(intbase);
+         mod = temp & 0xFFFF;
+         temp3 = temp >> 16;
+         sb = read_x32(mod);
+         temp2 = read_x32(mod + 8);
+         pc = temp2 + temp3;
       }
-      break;
 
-      case sz16:
-      {
-        writegenw(WriteIndex, temp);
-      }
-      break;
-
-      case sz32:
-      {
-        uint32_t c = WriteIndex;
-
-        if (gentype[c])
-        {
-          *((uint32_t*) genaddr[c]) = temp;
-        }
-        else
-        {
-          if (sdiff[c])
-          {
-            genaddr[c] = sp[SP] = (sp[SP] - sdiff[c]);
-          }
-          write_x32(genaddr[c], temp);
-        }
-
-        //writegenl(0, temp);
-      }
-      break;
-    }
-
-    tubecycles -= 8;
-    if (tube_irq & 2)
-    {
-      temp = psr;
-      psr &= ~0xF00;
-      pushw(temp);
-      pushw(mod);
-      pushd(pc);
-      temp = read_x32(intbase + (1 * 4));
-      mod = temp & 0xFFFF;
-      temp3 = temp >> 16;
-      sb = read_x32(mod);
-      temp2 = read_x32(mod + 8);
-      pc = temp2 + temp3;
-    }
-
-    if ((tube_irq & 1) && (psr & 0x800))
-    {
-      temp = psr;
-      psr &= ~0xF00;
-      pushw(temp);
-      pushw(mod);
-      pushd(pc);
-      temp = read_x32(intbase);
-      mod = temp & 0xFFFF;
-      temp3 = temp >> 16;
-      sb = read_x32(mod);
-      temp2 = read_x32(mod + 8);
-      pc = temp2 + temp3;
-    }
-
-    oldpsr = psr;
-  }
+      oldpsr = psr;
+   }
 }
