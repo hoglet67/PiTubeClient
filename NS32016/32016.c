@@ -921,6 +921,47 @@ static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
   //printf("SUB FLAGS: C=%d F=%d\n", (psr & C_FLAG) ? 1 : 0, (psr & F_FLAG) ? 1 : 0);
 }
 
+// The difference between DIV and QUO occurs when the result (the quotient) is negative
+// e.g. -16 QUO 3 ===> -5
+// e.g. -16 DIV 3 ===> -6
+// i.e. DIV rounds down to the more negative nu,ber
+// This case is detected if the sign bits of the two operands differ
+static uint32_t div_operator(uint32_t a, uint32_t b)
+{
+  uint32_t ret;
+  int signmask = 1 << (LookUp.p.Size << 3) + 7;
+  if ((a & signmask) && !(b & signmask))
+  {
+    // e.g. a = -16; b =  3 ===> a becomes -18
+    a -= b - 1;
+  }
+  else if (!(a & signmask) && (b & signmask))
+  {
+    // e.g. a =  16; b = -3 ===> a becomes 18
+    a -= b + 1;
+  }
+  switch (LookUp.p.Size)
+    {
+    case sz8:
+      ret = (int8_t) a / (int8_t) b;
+      break;
+
+    case sz16:
+      ret = (int16_t) a / (int16_t) b;
+      break;
+
+    case sz32:
+      ret = (int32_t) a / (int32_t) b;
+      break;
+    }
+  return ret;
+}
+
+static uint32_t mod_operator(uint32_t a, uint32_t b)
+{
+  return a - div_operator(a, b) * b;
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
   uint32_t opcode, WriteSize, WriteIndex;
@@ -2020,6 +2061,38 @@ void n32016_exec(uint32_t tubecycles)
             temp = (int32_t) temp2 % (int32_t) temp;
             break;
         }
+        WriteSize = LookUp.p.Size;
+        WriteIndex = 1;
+      }
+      break;
+
+      case DIV:
+      {
+        temp = ReadGen(0, LookUp.p.Size);
+        temp2 = ReadGen(1, LookUp.p.Size);
+        if (!temp)
+        {
+          printf("Divide by zero - DIV CE\n");
+          n32016_dumpregs();
+          break;
+        }
+        temp = div_operator(temp2, temp);
+        WriteSize = LookUp.p.Size;
+        WriteIndex = 1;
+      }
+      break;
+
+      case MOD:
+      {
+        temp = ReadGen(0, LookUp.p.Size);
+        temp2 = ReadGen(1, LookUp.p.Size);
+        if (!temp)
+        {
+          printf("Divide by zero - MOD CE\n");
+          n32016_dumpregs();
+          break;
+        }
+        temp = mod_operator(temp2, temp);
         WriteSize = LookUp.p.Size;
         WriteIndex = 1;
       }
