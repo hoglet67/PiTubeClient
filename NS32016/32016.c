@@ -1675,10 +1675,50 @@ void n32016_exec(uint32_t tubecycles)
 
       case ABS:
       {
-        readgenb(0, temp)
-        if (temp & 0x80)
-          temp = (temp ^ 0xFF) + 1;
-        writegenb(1, temp)
+        temp = ReadGen(0, LookUp.p.Size);
+        switch (LookUp.p.Size)
+        {
+          case sz8:
+          {
+            if (temp == 0x80)
+            {
+              psr |= F_FLAG;
+            }
+            if (temp & 0x80)
+            {
+              temp = (temp ^ 0xFF) + 1;
+            }
+          }
+          break;
+
+          case sz16:
+          {
+            if (temp == 0x8000)
+            {
+              psr |= F_FLAG;
+            }
+            if (temp & 0x8000)
+            {
+              temp = (temp ^ 0xFFFF) + 1;
+            }
+          }
+          break;
+
+          case sz32:
+          {
+            if (temp == 0x80000000)
+            {
+              psr |= F_FLAG;
+            }
+            if (temp & 0x80000000)
+            {
+              temp = (temp ^ 0xFFFFFFFF) + 1;
+            }
+          }
+          break;
+        }
+        WriteSize = LookUp.p.Size;
+        WriteIndex = 1;
       }
       break;
 
