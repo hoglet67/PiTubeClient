@@ -1631,6 +1631,17 @@ void n32016_exec(uint32_t tubecycles)
       }
       break;
 
+      case NEG:
+      {
+        temp = 0;
+        temp2 = ReadGen(0, LookUp.p.Size);
+        update_sub_flags(temp, temp2, 0);
+        temp -= temp2;
+        WriteSize = LookUp.p.Size;
+        WriteIndex = 1;
+      }
+      break;
+
       case NOT:
       {
         switch (LookUp.p.Size)
