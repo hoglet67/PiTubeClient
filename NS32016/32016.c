@@ -444,6 +444,34 @@ void n32016_build_matrix()
          }
          break;
       }
+
+      switch (mat[Index].p.Format)
+      {
+         case Format0:
+         case Format1:
+         default:
+         {
+            mat[Index].p.BaseSize = 1;
+         }
+         break;
+
+         case Format2:
+         case Format3:
+         case Format4:
+         {
+            mat[Index].p.BaseSize = 2;
+         }
+         break;
+
+         case Format5:
+         case Format6:
+         case Format7:
+         case Format8:
+         {
+            mat[Index].p.BaseSize = 3;
+         }
+         break;
+      }
    }
 }
 
@@ -880,8 +908,8 @@ void n32016_exec(uint32_t tubecycles)
       ClearRegs();
       opcode = read_x32(pc);
 
-      pc++;
       LookUp = mat[opcode & 0xFF];
+      pc += LookUp.p.BaseSize;
       WriteSize = szVaries;
       WriteIndex = 0; // default to writing operand 0
 
@@ -895,7 +923,6 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format2:
          {
-            pc++;
             getgen(opcode >> 11, 0);
          }
          break;
@@ -903,14 +930,12 @@ void n32016_exec(uint32_t tubecycles)
          case Format3:
          {
             LookUp.p.Function = (opcode & 0x80) ? TRAP : (CXPD + ((opcode >> 8) & 7));
-            pc++;
             getgen(opcode >> 11, 0);
          }
          break;
 
          case Format4:
          {
-            pc++;
             getgen(opcode >> 11, 1);
             getgen(opcode >> 6, 0);
          }
@@ -919,7 +944,6 @@ void n32016_exec(uint32_t tubecycles)
          case Format5:
          {
             LookUp.p.Function = (opcode & 0x30) ? TRAP : (MOVS + ((opcode >> 2) & 3));
-            pc += 2;
             temp2 = (opcode >> 15) & 0xF;
          }
          break;
@@ -927,9 +951,8 @@ void n32016_exec(uint32_t tubecycles)
          case Format6:
          {
             LookUp.p.Function = ROT + ((opcode >> 10) & 15);
-
-            pc += 2;
             LookUp.p.Size = (opcode >> 8) & 3;
+
             // Ordering important here, as getgen uses LookUp.p.Size
             if ((opcode & 0x3C00) == 0x0000 || (opcode & 0x3C00) == 0x0400 || (opcode & 0x3C00) == 0x1400) //  ROT/ASH/LSH 
             {
@@ -945,7 +968,6 @@ void n32016_exec(uint32_t tubecycles)
          {
             LookUp.p.Function = MOVM + ((opcode >> 10) & 15);
 
-            pc += 2;
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
             LookUp.p.Size = (opcode >> 8) & 3;
@@ -954,11 +976,6 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format8:
          {
-            pc += 2;
-            getgen(opcode >> 19, 0);
-            getgen(opcode >> 14, 1);
-            temp = ((opcode >> 6) & 3) | ((opcode & 0x400) >> 8);
-            temp = (temp << 2) | ((opcode >> 8) & 3);
             if (opcode & 0x400)
             {
                if (opcode & 0x80)
@@ -993,6 +1010,9 @@ void n32016_exec(uint32_t tubecycles)
             {
                LookUp.p.Function = EXT + ((opcode >> 6) & 3);
             }
+
+            getgen(opcode >> 19, 0);
+            getgen(opcode >> 14, 1);
          }
          break;
       }
