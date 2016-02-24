@@ -1747,7 +1747,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case MOVM:
       {
-        temp = getdisp() + LookUp.p.Size + 1; // disp of 0 means move 1 byte
+        temp = getdisp() + (LookUp.p.Size + 1); // disp of 0 means move 1 byte/word/dword
         while (temp)
         {
           temp2 = read_x8(genaddr[0]);
@@ -1755,6 +1755,38 @@ void n32016_exec(uint32_t tubecycles)
           write_x8(genaddr[1], temp2);
           genaddr[1]++;
           temp--;
+        }
+      }
+      break;
+
+      // TODO: This is a short term implementation
+      // that just sets the Z flag. To also set
+      // the N and L flags correctly, the correct
+      // item size must be used, together with
+      // appropriated signed/unsigned comparisons.
+      case CMPM:
+      {
+        int match = 1;
+        temp = getdisp() + (LookUp.p.Size + 1); // disp of 0 means move 1 byte/word/dword
+        while (temp && match)
+        {
+          temp2 = read_x8(genaddr[0]);
+          temp3 = read_x8(genaddr[1]);
+          if (temp2 != temp3)
+          {
+            match = 0;
+          }
+          genaddr[0]++;
+          genaddr[1]++;
+          temp--;
+        }
+        if (match)
+        {
+          psr |= Z_FLAG;
+        }
+        else
+        {
+          psr &= ~Z_FLAG;
         }
       }
       break;
