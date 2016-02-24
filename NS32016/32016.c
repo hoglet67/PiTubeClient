@@ -334,6 +334,16 @@ void n32016_build_matrix()
          }
          break;
 
+         CASE4(0x10)		// ADDC byte
+         CASE4(0x11)		// ADDC word
+         CASE4(0x13)		// ADDC dword
+         {
+            mat[Index].p.Function = ADDC;
+            mat[Index].p.Format = Format4;
+            mat[Index].p.Size = Index & 3;
+         }
+         break;
+
          CASE4(0x14)		// MOV byte
          CASE4(0x15)		// MOV word
          CASE4(0x17)		// MOV dword
@@ -860,6 +870,57 @@ static uint32_t bcd_sub(uint32_t a, uint32_t b, int size, uint32_t *carry) {
   }
 }
 
+static void update_add_flags(uint32_t a, uint32_t b, uint32_t cin)
+{
+  // TODO: Check the carry logic here is correct
+  // I suspect there is a corner case where b=&FFFFFFFF and cin=1
+  uint32_t sum = a + b + cin;
+  psr &= ~(C_FLAG | F_FLAG);
+  switch (LookUp.p.Size)
+    {
+    case sz8:
+      {
+        if (sum & 0x100)
+          psr |= C_FLAG;
+        if ((a ^ sum) & (b ^ sum) & 0x80)
+          psr |= F_FLAG;
+      }
+      break;
+      
+    case sz16:
+      {
+        if (sum & 0x10000)
+          psr |= C_FLAG;
+        if ((a ^ sum) & (b ^ sum) & 0x8000)
+          psr |= F_FLAG;
+      }
+      break;
+
+    case sz32:
+      {
+        if (sum < a)
+          psr |= C_FLAG;
+        if ((a ^ sum) & (b ^ sum) & 0x80000000)
+          psr |= F_FLAG;
+      }
+      break;
+    }
+  //printf("ADD FLAGS: C=%d F=%d\n", (psr & C_FLAG) ? 1 : 0, (psr & F_FLAG) ? 1 : 0);
+}
+
+static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
+{
+  // TODO: Check the carry logic here is correct
+  // I suspect there is a corner case where b=&FFFFFFFF and cin=1
+  uint32_t diff = a - b - cin;
+  psr &= ~(C_FLAG | F_FLAG);
+  if (diff > a)
+    psr |= C_FLAG;
+  if ((b ^ a) & (b ^ diff) & 0x80000000)
+    psr |= F_FLAG;
+  //printf("SUB FLAGS: C=%d F=%d\n", (psr & C_FLAG) ? 1 : 0, (psr & F_FLAG) ? 1 : 0);
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
   uint32_t opcode, WriteSize, WriteIndex;
@@ -1073,39 +1134,7 @@ void n32016_exec(uint32_t tubecycles)
         if (temp2 & 8)
           temp2 |= 0xFFFFFFF0;
         temp = ReadGen(0, LookUp.p.Size);
-
-        psr &= ~(C_FLAG | V_FLAG);
-
-        switch (LookUp.p.Size)
-        {
-          case sz8:
-          {
-            if ((temp + temp2) & 0x100)
-              psr |= C_FLAG;
-            if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
-              psr |= V_FLAG;
-          }
-          break;
-
-          case sz16:
-          {
-            if ((temp + temp2) & 0x10000)
-              psr |= C_FLAG;
-            if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x8000)
-              psr |= V_FLAG;
-          }
-          break;
-
-          case sz32:
-          {
-            if ((temp + temp2) < temp)
-              psr |= C_FLAG;
-            if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
-              psr |= V_FLAG;
-          }
-          break;
-        }
-
+        update_add_flags(temp, temp2, 0);
         temp += temp2;
         WriteSize = LookUp.p.Size;
       }
@@ -1318,42 +1347,10 @@ void n32016_exec(uint32_t tubecycles)
       }
       break;
 
-      case ADD: // ADD byte
-        temp2 = ReadGen(0, LookUp.p.Size);
-        temp = ReadGen(1, LookUp.p.Size);
-
-        psr &= ~(C_FLAG | V_FLAG);
-
-        switch (LookUp.p.Size)
-        {
-          case sz8:
-          {
-            if ((temp + temp2) & 0x100)
-              psr |= C_FLAG;
-            if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80)
-              psr |= V_FLAG;
-          }
-          break;
-
-          case sz16:
-          {
-            if ((temp + temp2) & 0x10000)
-              psr |= C_FLAG;
-            if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x8000)
-              psr |= V_FLAG;
-          }
-          break;
-
-          case sz32:
-          {
-            if ((temp + temp2) < temp)
-              psr |= C_FLAG;
-            if ((temp ^ (temp + temp2)) & (temp2 ^ (temp + temp2)) & 0x80000000)
-              psr |= V_FLAG;
-          }
-          break;
-        }
-
+      case ADD: // ADD
+        temp = ReadGen(0, LookUp.p.Size);
+        temp2 = ReadGen(1, LookUp.p.Size);
+        update_add_flags(temp, temp2, 0);
         temp += temp2;
         WriteSize = LookUp.p.Size;
         break;
@@ -1379,11 +1376,21 @@ void n32016_exec(uint32_t tubecycles)
         }
         break;
 
-      case BIC: // BIC byte
+      case BIC: // BIC
         temp = ReadGen(0, LookUp.p.Size);
         temp2 = ReadGen(1, LookUp.p.Size);
 
         temp &= ~temp2;
+        WriteSize = LookUp.p.Size;
+        break;
+
+      case ADDC: // ADDC 
+        temp = ReadGen(0, LookUp.p.Size);
+        temp2 = ReadGen(1, LookUp.p.Size);
+        temp3 = (psr & C_FLAG) ? 1 : 0;
+        update_add_flags(temp, temp2, temp3);
+        temp += temp2;
+        temp += temp3;
         WriteSize = LookUp.p.Size;
         break;
 
@@ -1400,13 +1407,9 @@ void n32016_exec(uint32_t tubecycles)
         break;
 
       case SUB:
-        temp2 = ReadGen(0, LookUp.p.Size);
-        temp = ReadGen(1, LookUp.p.Size);
-        psr &= ~(C_FLAG | V_FLAG);
-        if ((temp2 + temp) > temp2)
-          psr |= C_FLAG;
-        if ((temp2 ^ temp) & (temp2 ^ (temp2 + temp)) & 0x80000000)
-          psr |= V_FLAG;
+        temp = ReadGen(0, LookUp.p.Size);
+        temp2 = ReadGen(1, LookUp.p.Size);
+        update_sub_flags(temp, temp2, 0);
         temp -= temp2;
         WriteSize = LookUp.p.Size;
         break;
@@ -1420,6 +1423,16 @@ void n32016_exec(uint32_t tubecycles)
         temp2 = ReadGen(0, LookUp.p.Size);
         temp = ReadGen(1, LookUp.p.Size);
         temp &= temp2;
+        WriteSize = LookUp.p.Size;
+        break;
+
+      case SUBC:
+        temp = ReadGen(0, LookUp.p.Size);
+        temp2 = ReadGen(1, LookUp.p.Size);
+        temp3 = (psr & C_FLAG) ? 1 : 0;
+        update_sub_flags(temp, temp2, temp3);
+        temp -= temp2;
+        temp -= temp3;
         WriteSize = LookUp.p.Size;
         break;
 
