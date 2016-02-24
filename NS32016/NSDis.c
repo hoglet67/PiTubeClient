@@ -70,7 +70,7 @@ void RegLookUp(void)
    {
       if (Regs[Index] < 8)
       {
-         printf(" R%u", Regs[Index] + 1);
+         printf(" R%u", Regs[Index]);
       }
    }
 }
@@ -82,8 +82,17 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Siz
       printf("#%08X PC:%06X INST:%08X %s%s", ++OpCount, pc, opcode, InstuctionLookup(Function), SizeLookup(Size));
       RegLookUp();
       printf("\n");
+
+#if 0
+      if ((OpCount & 0xF) == 0)
+      {
+         printf(".\n");
+      }
+#endif
+
 		return;
 	}
+
 
 	printf("PC is :%08X ?????\n", pc);
 }

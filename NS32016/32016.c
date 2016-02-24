@@ -530,7 +530,7 @@ static uint32_t getdisp()
 int genindex[2];
 static void getgen1(int gen, int c)
 {
-   StoreRegisters(gen, c);
+   StoreRegisters(c, gen & 0x1F);
 
   if ((gen & 0x1C) == 0x1C)
   {
@@ -701,59 +701,41 @@ static void getgen(int gen, int c)
   }
 }
 
-#define readgenb(c,temp)        if (gentype[c]) temp=*(uint8_t *)genaddr[c]; \
-                                                                                                                                                                                                                                                                                                																					 										                                  else \
-                                { \
-                                        temp=read_x8(genaddr[c]); \
-                                        if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
-                                }
-
-#define readgenw(c,temp)        if (gentype[c]) temp=*(uint16_t *)genaddr[c]; \
-                                                                                                                                                                                                                                                                                                																					 										                                  else \
-                                { \
-                                        temp=read_x16(genaddr[c]); \
-                                        if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
-                                }
-
-#define readgenl(c,temp)        if (gentype[c]) temp=*(uint32_t *)genaddr[c]; \
-                                                                                                                                                                                                                                                                                                																					 										                                  else \
-                                { \
-                                        temp=read_x32(genaddr[c]); \
-                                        if (sdiff[c]) genaddr[c]=sp[SP]=sp[SP]+sdiff[c]; \
-                                }
-
 uint32_t ReadGen(uint32_t c, uint32_t Size)
 {
-  uint32_t temp = 0;
+   uint32_t Temp = 0;
 
-  switch (Size)
-  {
-    case sz8:
-    {
-      readgenb(c, temp)
-    }
-    break;
+   if (gentype[c])
+   {
+      Temp = *(uint32_t*) genaddr[c];
+   }
+   else
+   {
+      Temp = read_x32(genaddr[c]);
 
-    case sz16:
-    {
-      readgenw(c, temp)
-    }
-    break;
+      if (sdiff[c])
+      {
+         genaddr[c]  = 
+         sp[SP]      = sp[SP] + sdiff[c];
+      }
+   }
 
-    case sz32:
-    {
-      readgenl(c, temp)
-    }
-    break;
+   switch (Size)
+   {
+      case sz8:
+      {
+         Temp &= 0xFF;
+      }
+      break;
 
-    default:
-    {
-      printf("Bad call to ReadGen\n");
-    }
-    break;
-  }
+      case sz16:
+      {
+         Temp &= 0xFFFF;
+      }
+      break;
+   }
 
-  return temp;
+   return Temp;
 }
 
 #define readgenq(c,temp)        if (gentype[c]) temp=*(uint64_t *)genaddr[c]; \
@@ -1442,13 +1424,13 @@ void n32016_exec(uint32_t tubecycles)
         {
           case sz8:
           {
-            readgenb(0, temp);
+            temp = ReadGen(0, sz8);;
             if (temp & 0xE0) {
               temp |= 0xE0;
               temp = ((temp ^ 0xFF) + 1);
               temp = 8 - temp;
             }
-            readgenb(1, temp2);
+            temp2 = ReadGen(1, sz8);
             temp2 = (temp2 << temp) | (temp2 >> (8 - temp));
             writegenb(1, temp2);
           }
@@ -1456,13 +1438,13 @@ void n32016_exec(uint32_t tubecycles)
 
           case sz16:
           {
-            readgenb(0, temp);
+            temp = ReadGen(0, sz8);;
             if (temp & 0xE0) {
               temp |= 0xE0;
               temp = ((temp ^ 0xFF) + 1);
               temp = 16 - temp;
             }
-            readgenw(1, temp2);
+            temp2 = ReadGen(1, sz16);
             temp2 = (temp2 << temp) | (temp2 >> (16 - temp));
             writegenw(1, temp2);
           }
@@ -1470,13 +1452,13 @@ void n32016_exec(uint32_t tubecycles)
 
           case sz32:
           {
-            readgenb(0, temp);
+            temp = ReadGen(0, sz8);;
             if (temp & 0xE0) {
               temp |= 0xE0;
               temp = ((temp ^ 0xFF) + 1);
               temp = 32 - temp;
             }
-            readgenl(1, temp2);
+            temp2 = ReadGen(1, sz32);
             temp2 = (temp2 << temp) | (temp2 >> (32 - temp));
             writegenl(1, temp2);
           }
@@ -1487,7 +1469,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case ASH:
       {
-         readgenb(0, temp2);
+         temp2 = ReadGen(0, sz8);
          temp = ReadGen(1, LookUp.p.Size);
          // Test if the shift is negative (i.e. a right shift)
          if (temp2 & 0xE0)
@@ -1539,15 +1521,15 @@ void n32016_exec(uint32_t tubecycles)
 
       case CBIT:
       {
-        readgenb(0, temp)
+        temp = ReadGen(0, sz8);
           temp &= 31;
         if (gentype[1])
         {
-          readgenl(1, temp2);
+           temp2 = ReadGen(1, sz32);
         }
         else
         {
-          readgenb(1, temp2);
+           temp2 = ReadGen(1, sz8);
         }
         if (temp2 & (1 << temp))
           psr |= F_FLAG;
@@ -1571,10 +1553,10 @@ void n32016_exec(uint32_t tubecycles)
         {
           case sz8:
           {
-            readgenb(0, temp);
+            temp = ReadGen(0, sz8);;
             if (temp & 0xE0)
               temp |= 0xE0;
-            readgenb(1, temp2);
+            temp2 = ReadGen(1, sz8);
             if (temp & 0xE0)
               temp2 >>= ((temp ^ 0xFF) + 1);
             else
@@ -1585,10 +1567,10 @@ void n32016_exec(uint32_t tubecycles)
 
           case sz16:
           {
-            readgenb(0, temp);
+            temp = ReadGen(0, sz8);;
             if (temp & 0xE0)
               temp |= 0xE0;
-            readgenw(1, temp2);
+            temp2 = ReadGen(1, sz16);
             if (temp & 0xE0)
               temp2 >>= ((temp ^ 0xFF) + 1);
             else
@@ -1599,10 +1581,10 @@ void n32016_exec(uint32_t tubecycles)
 
           case sz32:
           {
-            readgenb(0, temp);
+            temp = ReadGen(0, sz8);;
             if (temp & 0xE0)
               temp |= 0xE0;
-            readgenl(1, temp2);
+            temp2 = ReadGen(1, sz32);
             if (temp & 0xE0)
               temp2 >>= ((temp ^ 0xFF) + 1);
             else
@@ -1620,7 +1602,7 @@ void n32016_exec(uint32_t tubecycles)
         {
           case sz8:
           {
-            readgenb(0, temp);
+            temp = ReadGen(0, sz8);;
             temp ^= 1;
             writegenb(1, temp);
           }
@@ -1628,7 +1610,7 @@ void n32016_exec(uint32_t tubecycles)
 
           case sz16:
           {
-            readgenw(0, temp);
+            temp = ReadGen(0, sz16);
             temp ^= 1;
             writegenw(1, temp);
           }
@@ -1636,7 +1618,7 @@ void n32016_exec(uint32_t tubecycles)
 
           case sz32:
           {
-            readgenl(0, temp);
+             temp = ReadGen(0, sz32);
             temp ^= 1;
             writegenl(1, temp);
           }
@@ -1647,7 +1629,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case ABS:
       {
-        readgenb(0, temp)
+        temp = ReadGen(0, sz8);
         if (temp & 0x80)
           temp = (temp ^ 0xFF) + 1;
         writegenb(1, temp)
@@ -1659,17 +1641,17 @@ void n32016_exec(uint32_t tubecycles)
         switch (LookUp.p.Size)
         {
           case sz8:
-            readgenb(0, temp)
+            temp = ReadGen(0, sz8);
             writegenb(1, ~temp)
             break;
 
           case sz16:
-            readgenw(0, temp)
-            writegenw(1, ~temp)
+             temp = ReadGen(0, sz16);
+             writegenw(1, ~temp)
             break;
 
           case sz32:
-            readgenl(0, temp)
+            temp = ReadGen(0, sz32);
             writegenl(1, ~temp)
             break;
         }
@@ -1678,7 +1660,7 @@ void n32016_exec(uint32_t tubecycles)
  
       case CXPD:
       {
-        readgenl(0, temp)
+         temp = ReadGen(0, sz32);
           pushw(0);
         pushw(mod);
         pushd(pc);
@@ -1736,7 +1718,7 @@ void n32016_exec(uint32_t tubecycles)
 #if 0 
       //OLD 32 bit Version
       case 0xA: // ADJSP
-            readgenl(0, temp2)
+         temp2 = ReadGen(0, sz32);
               sp[SP] -= temp2;
             break;
 #endif
@@ -1757,17 +1739,17 @@ void n32016_exec(uint32_t tubecycles)
 
       case INSS:
       {
-        temp3 = read_x8(pc);
-        pc++;
-        readgenb(0, temp)
-          readgenb(1, temp2)
-          for (c = 0; c <= (temp3 & 0x1F); c++)
-          {
-            temp2 &= ~(1 << ((c + (temp3 >> 5)) & 7));
-            if (temp & (1 << c))
-              temp2 |= (1 << ((c + (temp3 >> 5)) & 7));
-          }
-        writegenb(1, temp2)
+         temp3 = read_x8(pc);
+         pc++;
+         temp = ReadGen(0, sz8);
+         temp2 = ReadGen(1, sz8);
+            for (c = 0; c <= (temp3 & 0x1F); c++)
+            {
+               temp2 &= ~(1 << ((c + (temp3 >> 5)) & 7));
+               if (temp & (1 << c))
+                  temp2 |= (1 << ((c + (temp3 >> 5)) & 7));
+            }
+         writegenb(1, temp2)
       }
       break;
 
@@ -1775,8 +1757,7 @@ void n32016_exec(uint32_t tubecycles)
       {
         temp3 = read_x8(pc);
         pc++;
-        readgenb(0, temp)
-          printf("EXTSB Source = %02X Shift = %u Bit Count = %u ", temp, temp3 >> 5, ((temp3 & 0x1F) + 1));
+        temp = ReadGen(0, sz8);
         temp2 = 0;
         temp >>= (temp3 >> 5); // Shift by offset
         temp3 &= 0x1F; // Mask off the lower 5 Bits which are number of bits to extract
@@ -1791,7 +1772,6 @@ void n32016_exec(uint32_t tubecycles)
 
           temp4 <<= 1;
         }
-        printf("Result = %02X\n", temp2);
 
         writegenb(1, temp2)
       }
@@ -1799,7 +1779,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case MOVXBW:
       {
-        readgenb(0, temp)
+        temp = ReadGen(0, sz8);
         SIGN_EXTEND(temp)
           if (sdiff[1])
             sdiff[1] = 4;
@@ -1819,7 +1799,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case MOVZBW:
       {
-        readgenb(0, temp)
+        temp = ReadGen(0, sz8);
           if (sdiff[1])
             sdiff[1] = 4;
         writegenw(1, temp)
@@ -1837,7 +1817,7 @@ void n32016_exec(uint32_t tubecycles)
 
       case DEI:
       {
-			readgenl(0, temp)
+         temp = ReadGen(0, sz32);
 			readgenq(1, temp64)
           if (!temp)
           {
@@ -1859,8 +1839,8 @@ void n32016_exec(uint32_t tubecycles)
 
       case QUO:
       {
-        readgenl(0, temp)
-          readgenl(1, temp2)
+         temp = ReadGen(0, sz32);
+          temp2 = ReadGen(1, sz32);
           if (!temp)
           {
             n32016_dumpregs("Divide by zero - QUOD");
@@ -1873,8 +1853,8 @@ void n32016_exec(uint32_t tubecycles)
 
       case REM:
       {
-        readgenl(0, temp)
-          readgenl(1, temp2)
+         temp = ReadGen(0, sz32);
+         temp2 = ReadGen(1, sz32);
 
           if (!temp)
           {
@@ -1890,8 +1870,8 @@ void n32016_exec(uint32_t tubecycles)
       {
         temp = r[(opcode >> 11) & 7] & 31;
         temp2 = getdisp();
-        readgenl(0, temp3)
-          temp4 = 0;
+        temp3 = ReadGen(0, sz32);
+        temp4 = 0;
         for (c = 0; c < temp2; c++)
         {
           if (temp3 & (1 << ((c + temp) & 31)))
@@ -1903,7 +1883,7 @@ void n32016_exec(uint32_t tubecycles)
       
       case CHECK:
       {
-        readgenb(1, temp3)
+        temp3 = ReadGen(1, sz8);
         temp = read_x8(genaddr[0]);
         temp2 = read_x8(genaddr[0] + 1);
         if (temp >= temp3 && temp3 >= temp2)
