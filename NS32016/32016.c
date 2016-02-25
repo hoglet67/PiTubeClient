@@ -1113,7 +1113,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (opcode & 0x400)
             {
-               if (opcode & 0x80)
+               if (!(opcode & 0x80))
                {
                   LookUp.p.Function = (opcode & 0x40) ? FFS : INDEX;
                }
