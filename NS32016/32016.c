@@ -1953,9 +1953,10 @@ void n32016_exec(uint32_t tubecycles)
 
          case EXTS:
          {
+            // Read the immediate offset (3 bits) / length - 1 (5 bits) from the instruction
             temp3 = read_x8(pc);
             pc++;
-            temp = ReadGen(0, sz8);
+            temp = ReadGen(0, LookUp.p.Size);
             temp2 = 0;
             temp >>= (temp3 >> 5); // Shift by offset
             temp3 &= 0x1F; // Mask off the lower 5 Bits which are number of bits to extract
@@ -1970,8 +1971,9 @@ void n32016_exec(uint32_t tubecycles)
 
                temp4 <<= 1;
             }
-
-            writegenb(1, temp2);
+            temp = temp2;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
          }
          break;
 
