@@ -1146,6 +1146,7 @@ void n32016_exec(uint32_t tubecycles)
                LookUp.p.Function = EXT + ((opcode >> 6) & 3);
             }
 
+            LookUp.p.Size = (opcode >> 8) & 3;
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
          }
@@ -2185,6 +2186,29 @@ void n32016_exec(uint32_t tubecycles)
                psr |= F_FLAG;
          }
          break;
+
+         case FFS:
+            {
+               int numbits = (LookUp.p.Size + 1) << 3;   // number of bits: 8, 16 or 32
+               temp2 = ReadGen(0, LookUp.p.Size);        // base is the variable size operand being scanned
+               temp  = ReadGen(1, sz8);                  // offset is always 8 bits (also the result)
+               // find the first set bit, starting at offset
+               for (;temp < numbits && !(temp2 & (1 << temp)); temp++);
+               if (temp < numbits)
+               {
+                  // a set bit was found, return it in the offset operand
+                  psr &= ~F_FLAG;
+               }
+               else
+               {
+                  // no set bit was found, return 0 in the offset operand
+                  psr |= F_FLAG;
+                  temp = 0;
+               }
+               WriteIndex = 1;
+               WriteSize = sz8;
+            }
+            break;
 
          case BSR:
             temp = getdisp();
