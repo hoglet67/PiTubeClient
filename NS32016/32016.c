@@ -1705,6 +1705,7 @@ void n32016_exec(uint32_t tubecycles)
          break;
 
          // TODO, could merge this with TBIT if Format4 operand indexes were consistent (dst == index 0)
+         case IBIT:
          case CBIT:
          case SBIT:
          // The SBITIB, SBITIW, and SBITID instructions, in addition, activate the Interlocked
@@ -1731,7 +1732,11 @@ void n32016_exec(uint32_t tubecycles)
             psr &= ~F_FLAG;
             if (temp & (1 << temp2))
                psr |= F_FLAG;
-            if ((LookUp.p.Function == SBIT) || (LookUp.p.Function == SBITI))
+            if (LookUp.p.Function == IBIT)
+            {
+               temp ^= 1 << temp2;
+            }
+            else if ((LookUp.p.Function == SBIT) || (LookUp.p.Function == SBITI))
             {
                temp |= 1 << temp2;
             }
