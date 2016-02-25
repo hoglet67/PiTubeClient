@@ -2099,6 +2099,7 @@ void n32016_exec(uint32_t tubecycles)
 
                case sz16:
                   temp = (int16_t) temp2 % (int16_t) temp;
+                  break;
 
                case sz32:
                   temp = (int32_t) temp2 % (int32_t) temp;
