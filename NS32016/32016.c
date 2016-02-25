@@ -1115,7 +1115,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format5:
          {
-            LookUp.p.Function = (opcode & 0x30) ? TRAP : (MOVS + ((opcode >> 2) & 3));
+            LookUp.p.Function = (opcode & 0x30) ? TRAP : (MOVS + ((opcode >> 10) & 3));
             temp2 = (opcode >> 15) & 0xF;
          }
          break;

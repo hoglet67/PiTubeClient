@@ -12,7 +12,7 @@
 #include "../bare-metal/tube-lib.h"
 #include "mem32016.h"
 
-#define TEST_SUITE
+//#define TEST_SUITE
 #ifdef TEST_SUITE
 #include "boot_rom.h"
 #else
