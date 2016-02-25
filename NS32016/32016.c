@@ -1524,7 +1524,7 @@ void n32016_exec(uint32_t tubecycles)
             break;
 
          case TBIT:
-            temp2 = ReadGen(1, sz32);
+            temp2 = ReadGen(1, LookUp.p.Size);
             if (gentype[0])
             {
                // operand 0 is a register
@@ -1730,6 +1730,33 @@ void n32016_exec(uint32_t tubecycles)
             }
          }
          break;
+
+         // TODO, could merge this with TBIT if Format4 operand indexes were consistent (dst == index 0)
+         case SBIT:
+            temp2 = ReadGen(0, LookUp.p.Size);
+            if (gentype[1])
+            {
+               // operand 0 is a register
+               temp = ReadGen(1, sz32);
+            }
+            else
+            {
+               // operand0 is memory
+               // TODO: this should probably use the DIV and MOD opersator functions
+               genaddr[1] += temp2 / 8;
+               temp = ReadGen(1, sz8);
+               temp2 &= temp2 % 8;
+            }
+            psr &= ~F_FLAG;
+            if (temp & (1 << temp2))
+               psr |= F_FLAG;
+            if (LookUp.p.Function == SBIT)
+            {
+               temp |= 1 << temp2;
+               WriteSize = ReadGen(1, sz8);;
+               WriteIndex = 1;
+            }
+            break;
 
          case NOT:
          {
