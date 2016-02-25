@@ -1,4 +1,8 @@
-#define IO_BASE 0xFFFFF0
+#define IO_BASE         0xFFFFF0
+
+#define TEST_SUITE
+//#define PANDORA_BASE    0xF00000
+
 #define PANDORA_ROM_PAGE_OUT
 #define LITTLE_ENDIAN
 

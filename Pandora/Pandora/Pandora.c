@@ -21,7 +21,12 @@ unsigned char tubeRead(unsigned char Address)
 int main(int argc, char* argv[])
 {
    init_ram();
+
+#ifdef PANDORA_BASE
+   n32016_reset(0xF00000);
+#else
    n32016_reset(0);
+#endif
 
 	while (1)
 	{

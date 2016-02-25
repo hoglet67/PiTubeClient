@@ -12,7 +12,6 @@
 #include "../bare-metal/tube-lib.h"
 #include "mem32016.h"
 
-//#define TEST_SUITE
 #ifdef TEST_SUITE
 #include "boot_rom.h"
 #else
@@ -26,6 +25,8 @@ void init_ram(void)
 #ifdef TEST_SUITE
    memset(ns32016ram, 0, sizeof(ns32016ram));
    memcpy(ns32016ram, boot_rom, sizeof(boot_rom));
+#elif defined(PANDORA_BASE)
+   memcpy(&ns32016ram[0xF00000], PandoraV2_00, sizeof(PandoraV2_00));
 #else
    uint32_t Address;
 
