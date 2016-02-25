@@ -46,119 +46,119 @@ enum Formats
 
 enum Functions
 {
-	BEQ,					// Format 0
-	BNE,
-	BH,
-	BLS,
-	BGT,
-	BLE,
-	BFS,
-	BFC,
-	BLO,
-	BHS,
-	BLT,
-	BGE,
-	BR,
+   BEQ,					// Format 0
+   BNE,
+   BH,
+   BLS,
+   BGT,
+   BLE,
+   BFS,
+   BFC,
+   BLO,
+   BHS,
+   BLT,
+   BGE,
+   BR,
 
-	BSR,					// Format 1
-	RET,
-	CXP,
-	RXP,
-	RETT,
-	RETI,
-	SAVE,
-	RESTORE,
-	ENTER,
-	EXIT,
-	NOP,
-	WAIT,
-	DIA,
-	FLAG,
-	SVC,
-	BPT,
+   BSR,					// Format 1
+   RET,
+   CXP,
+   RXP,
+   RETT,
+   RETI,
+   SAVE,
+   RESTORE,
+   ENTER,
+   EXIT,
+   NOP,
+   WAIT,
+   DIA,
+   FLAG,
+   SVC,
+   BPT,
 
-	ADDQ,					// Format 2
-	CMPQ,
-	SPR,
-	Scond,
-	ACB,
-	MOVQ,
-	LPR,
+   ADDQ,					// Format 2
+   CMPQ,
+   SPR,
+   Scond,
+   ACB,
+   MOVQ,
+   LPR,
 
-	CXPD,					// Format 3
-	BICPSR,
-	JUMP,
-	BISPSR,
-  TRAP_F3_1000,
-  ADJSP,
-	JSR,
-	CASE,
+   CXPD,					// Format 3
+   BICPSR,
+   JUMP,
+   BISPSR,
+   TRAP_F3_1000,
+   ADJSP,
+   JSR,
+   CASE,
 
-	ADD,					// Format 4
-	CMP,
-	BIC,
-	ADDC,
-	MOV,
-	OR,
-	SUB,
-	ADDR,
-	AND,
-	SUBC,
-	TBIT,
-	XOR,
+   ADD,					// Format 4
+   CMP,
+   BIC,
+   ADDC,
+   MOV,
+   OR,
+   SUB,
+   ADDR,
+   AND,
+   SUBC,
+   TBIT,
+   XOR,
 
-	MOVS,					// Format 5
-	CMPS,
-	SETCFG,
-	SKPS,
+   MOVS,					// Format 5
+   CMPS,
+   SETCFG,
+   SKPS,
 
-  ROT,          // Format 6
-  ASH,
-  CBIT,
-  CBITI,
-  TRAP_F5_0100,
-  LSH,
-  SBIT,
-  SBITI,
-  NEG,
-  NOT,
-  TRAP_F5_1010,
-  SUBP,
-  ABS,
-  COM,
-  IBIT,
-  ADDP,
-		
-	MOVM,					// Format 7
-	CMPM,
-	INSS,
-	EXTS,
-	MOVXBW,
-	MOVZBW,
-	MOVZiD,
-	MOVXiD,
-	MUL,
-	MEI,
-	Trap,
-	DEI,
-	QUO,
-	REM,
-	MOD,
-	DIV,
-	
-  EXT,				  // Format 8
-  CVTP,
-  INS,
-  CHECK,
-  INDEX,
-  FFS,
-  MOVUS,
-  MOVSU,
+   ROT,          // Format 6
+   ASH,
+   CBIT,
+   CBITI,
+   TRAP_F5_0100,
+   LSH,
+   SBIT,
+   SBITI,
+   NEG,
+   NOT,
+   TRAP_F5_1010,
+   SUBP,
+   ABS,
+   COM,
+   IBIT,
+   ADDP,
 
-  TRAP,
-	InstructionCount,
+   MOVM,					// Format 7
+   CMPM,
+   INSS,
+   EXTS,
+   MOVXBW,
+   MOVZBW,
+   MOVZiD,
+   MOVXiD,
+   MUL,
+   MEI,
+   Trap,
+   DEI,
+   QUO,
+   REM,
+   MOD,
+   DIV,
 
-	BAD = 0xFF
+   EXT,				  // Format 8
+   CVTP,
+   INS,
+   CHECK,
+   INDEX,
+   FFS,
+   MOVUS,
+   MOVSU,
+
+   TRAP,
+   InstructionCount,
+
+   BAD = 0xFF
 };
 
 enum DataSize
@@ -192,6 +192,9 @@ extern void ClearRegs(void);
 extern void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Size);
 extern void n32016_dumpregs();
 
-extern uint8_t ns32016ram[MEG16 + 8];
 extern uint32_t tube_irq;
 extern DecodeMatrix mat[256];
+extern DecodeMatrix LookUp;
+extern uint32_t genaddr[2];
+extern int gentype[2];
+

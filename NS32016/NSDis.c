@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "32016.h"
+#include "mem32016.h"
 
 uint32_t OpCount = 0;
 uint8_t Regs[2];
@@ -68,9 +69,44 @@ void RegLookUp(void)
 
    for (Index = 0; Index < 2; Index++)
    {
-      if (Regs[Index] < 8)
+      if (Regs[Index] < 32)
       {
-         printf(" R%u", Regs[Index]);
+         if (Regs[Index] < 8)
+         {
+            printf(" R%u", Regs[Index]);
+         }
+         else if (Regs[Index] < 16)
+         {
+
+         }
+         else
+         {
+            if (gentype[Index] == 0)
+            {
+               uint32_t  Address = genaddr[Index];
+               printf(" &%06X=", Address);
+               switch (LookUp.p.Size)
+               {
+                  case sz8:
+                  {
+                     printf("%02X", read_x8(Address));
+                  }
+                  break;
+
+                  case sz16:
+                  {
+                     printf("%04", read_x16(Address));
+                  }
+                  break;
+
+                  case sz32:
+                  {
+                     printf("%08X", read_x32(Address));
+                  }
+                  break; 
+               }
+            }
+         }
       }
    }
 }
@@ -79,7 +115,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Siz
 {
 	if (pc < MEG16)
 	{
-      printf("#%08X PC:%06X INST:%08X %s%s", ++OpCount, pc, opcode, InstuctionLookup(Function), SizeLookup(Size));
+      printf("#%08u PC:%06X INST:%08X %s%s", ++OpCount, pc, opcode, InstuctionLookup(Function), SizeLookup(Size));
       RegLookUp();
       printf("\n");
 

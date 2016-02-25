@@ -12,16 +12,18 @@
 #include "PandoraV0_61.h"
 
 int nsoutput = 0;
-int gentype[2];
+
 int nscfg;
 
-uint8_t ns32016ram[MEG16 + 8];				// Extra 8 bytes as we can read that far off the end of RAM
 uint32_t tube_irq = 0;
 uint32_t r[8];
 uint32_t pc, sp[2], fp, sb, intbase;
 uint16_t psr, mod;
 uint32_t startpc;
+
 uint32_t genaddr[2];
+int gentype[2];
+
 DecodeMatrix mat[256];
 DecodeMatrix LookUp;
 
@@ -496,15 +498,16 @@ void n32016_reset(uint32_t StartAddress)
 
 void n32016_dumpregs(char* pMessage)
 {
-   //FILE *f = fopen("32016.dmp", "wb");
-   //fwrite(ns32016ram, 1024 * 1024, 1, f);
-   //fclose(f);
-
    printf("%s\n", pMessage);
    printf("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
    printf("R4=%08X R5=%08X R6=%08X R7=%08X\n", r[4], r[5], r[6], r[7]);
    printf("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
    printf("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
+
+#ifdef WIN32
+   system("pause");
+#endif
+
    exit(1);
 }
 
@@ -2173,9 +2176,45 @@ void n32016_exec(uint32_t tubecycles)
                if (temp3 & (1 << ((c + temp) & 31)))
                   temp4 |= (1 << c);
             }
-            writegenl(1, temp4);
+
+            temp = temp4;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
          }
          break;
+
+#if 0
+         // Well I tried ;)
+         case INS:
+         {
+            int32_t Offset = r[(opcode >> 11) & 7] % 8;
+            int32_t Length = getdisp();
+            int32_t Source = ReadGen(0, LookUp.p.Size); 
+            int32_t Base   = ReadGen(1, LookUp.p.Size);
+
+            for (c = 0; c < Length; c++)
+            {
+               if ((c + Offset) > 31)
+               {
+                  break;      
+               }
+
+               if (Source & (1 << c))
+               { 
+                  Base |= (1 << (c + Offset));
+               }
+               else
+               {
+                  Base &= ~(1 << (c + Offset));
+               }
+            }
+
+            temp = Base;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+         }
+         break;
+#endif
 
          case CHECK:
          {

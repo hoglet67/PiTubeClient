@@ -2,6 +2,10 @@
 #define PANDORA_ROM_PAGE_OUT
 #define LITTLE_ENDIAN
 
+//extern uint8_t ns32016ram[MEG16 + 8];
+
+void init_ram(void);
+
 extern uint8_t		read_x8(uint32_t addr);
 extern uint16_t	read_x16(uint32_t addr);
 extern uint32_t	read_x32(uint32_t addr);

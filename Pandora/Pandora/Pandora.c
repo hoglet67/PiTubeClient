@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "32016.h"
-#include "boot_rom.h"
-#include "PandoraV2_00.h"
+#include "mem32016.h"
 
 void tubeWrite(unsigned char Address, unsigned char Data)
 {
@@ -18,25 +18,10 @@ unsigned char tubeRead(unsigned char Address)
 	return 0;
 }
 
-void init(void)
-{
-#if 1
-	memset(ns32016ram, 0, sizeof(ns32016ram));
-	memcpy(ns32016ram, boot_rom, sizeof(boot_rom));
-#else
-	uint32_t Address;
-
-	for (Address = 0; Address < MEG16; Address += sizeof(PandoraV2_00))
-	{
-		memcpy(&ns32016ram[Address], PandoraV2_00, sizeof(PandoraV2_00));
-	}
-#endif
-}
-
 int main(int argc, char* argv[])
 {
-	init();
-	n32016_reset(0);
+   init_ram();
+   n32016_reset(0);
 
 	while (1)
 	{
