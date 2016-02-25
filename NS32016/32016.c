@@ -36,6 +36,10 @@ DecodeMatrix LookUp;
     reg |= 0xFFFF0000; \
   }
 
+#define NIBBLE_EXTEND(reg) \
+   if (reg & 0x08) \
+      reg |= 0xFFFFFFF0;
+
 void n32016_build_matrix()
 {
    uint32_t Index;
@@ -1250,8 +1254,7 @@ void n32016_exec(uint32_t tubecycles)
          case ADDQ:
          {
             temp2 = (opcode >> 7) & 0xF;
-            if (temp2 & 8)
-               temp2 |= 0xFFFFFFF0;
+            NIBBLE_EXTEND(temp2);
             temp = ReadGen(0, LookUp.p.Size);
 
             update_add_flags(temp, temp2, 0);
@@ -1273,9 +1276,7 @@ void n32016_exec(uint32_t tubecycles)
          case CMPQ:
          {
             temp2 = (opcode >> 7) & 0xF;
-            if (temp2 & 8)
-               temp2 |= 0xFFFFFFF0;
-
+            NIBBLE_EXTEND(temp2);
             temp = ReadGen(0, LookUp.p.Size);
             SIGN_EXTEND(temp);
             CompareCommon(temp, temp2);
@@ -1376,8 +1377,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case ACB: // ACB
             temp2 = (opcode >> 7) & 0xF;
-            if (temp2 & 8)
-               temp2 |= 0xFFFFFFF0;
+            NIBBLE_EXTEND(temp2);
             temp = ReadGen(0, LookUp.p.Size);
             temp += temp2;
             WriteSize = LookUp.p.Size;
@@ -1389,8 +1389,7 @@ void n32016_exec(uint32_t tubecycles)
          case MOVQ:
          {
             temp = (opcode >> 7) & 0xF;
-            if (temp & 8)
-               temp |= 0xFFFFFFF0;
+            NIBBLE_EXTEND(temp);
             WriteSize = LookUp.p.Size;
          }
          break;
