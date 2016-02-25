@@ -1937,17 +1937,20 @@ void n32016_exec(uint32_t tubecycles)
 
          case INSS:
          {
+            // Read the immediate offset (3 bits) / length - 1 (5 bits) from the instruction
             temp3 = read_x8(pc);
             pc++;
-            temp = ReadGen(0, sz8);
-            temp2 = ReadGen(1, sz8);
+            temp = ReadGen(0, LookUp.p.Size);   // src operand
+            temp2 = ReadGen(1, LookUp.p.Size);  // base operand
             for (c = 0; c <= (temp3 & 0x1F); c++)
             {
-               temp2 &= ~(1 << ((c + (temp3 >> 5)) & 7));
+               temp2 &= ~(1 << ((c + (temp3 >> 5)) & 31));
                if (temp & (1 << c))
-                  temp2 |= (1 << ((c + (temp3 >> 5)) & 7));
+                  temp2 |= (1 << ((c + (temp3 >> 5)) & 31));
             }
-            writegenb(1, temp2);
+            temp = temp2;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
          }
          break;
 
