@@ -1529,6 +1529,7 @@ void n32016_exec(uint32_t tubecycles)
             {
                // operand 0 is a register
                temp = ReadGen(0, sz32);
+               temp2 &= 31;
             }
             else
             {
@@ -1536,7 +1537,7 @@ void n32016_exec(uint32_t tubecycles)
                // TODO: this should probably use the DIV and MOD opersator functions
                genaddr[0] += temp2 / 8;
                temp = ReadGen(0, sz8);
-               temp2 &= temp2 % 8;
+               temp2 %= 8;
             }
             psr &= ~F_FLAG;
             if (temp & (1 << temp2))
@@ -1654,34 +1655,6 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         case CBIT:
-         {
-            temp = ReadGen(0, sz8);
-            temp &= 31;
-            if (gentype[1])
-            {
-               temp2 = ReadGen(1, sz32);
-            }
-            else
-            {
-               temp2 = ReadGen(1, sz8);
-            }
-            if (temp2 & (1 << temp))
-               psr |= F_FLAG;
-            else
-               psr &= ~F_FLAG;
-            temp2 &= ~(1 << temp);
-            if (gentype[1])
-            {
-               writegenl(1, temp2);
-            }
-            else
-            {
-               writegenb(1, temp2);
-            }
-         }
-         break;
-
          case LSH:
          {
             switch (LookUp.p.Size)
@@ -1732,30 +1705,36 @@ void n32016_exec(uint32_t tubecycles)
          break;
 
          // TODO, could merge this with TBIT if Format4 operand indexes were consistent (dst == index 0)
+         case CBIT:
          case SBIT:
             temp2 = ReadGen(0, LookUp.p.Size);
             if (gentype[1])
             {
                // operand 0 is a register
-               temp = ReadGen(1, sz32);
+               WriteSize = sz32;
+               temp2 &= 31;
             }
             else
             {
                // operand0 is memory
                // TODO: this should probably use the DIV and MOD opersator functions
                genaddr[1] += temp2 / 8;
-               temp = ReadGen(1, sz8);
-               temp2 &= temp2 % 8;
+               WriteSize = sz32;
+               temp2 %= 8;
             }
+            temp = ReadGen(1, WriteSize);
             psr &= ~F_FLAG;
             if (temp & (1 << temp2))
                psr |= F_FLAG;
             if (LookUp.p.Function == SBIT)
             {
                temp |= 1 << temp2;
-               WriteSize = ReadGen(1, sz8);;
-               WriteIndex = 1;
             }
+            else
+            {
+               temp &= ~(1 << temp2);
+            }
+            WriteIndex = 1;
             break;
 
          case NOT:
