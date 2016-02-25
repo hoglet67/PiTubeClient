@@ -1201,50 +1201,6 @@ void n32016_exec(uint32_t tubecycles)
 
       switch (LookUp.p.Function)
       {
-         case MOVS:
-         {
-            if (temp2 & 3)
-            {
-               n32016_dumpregs("Bad NS32016 MOVS %08X");
-            }
-
-            while (r[0])
-            {
-               temp = read_x8(r[1]);
-               r[1]++;
-               if ((temp2 & 0xC) == 0xC && temp == r[4])
-               {
-                  break;
-               }
-               if ((temp2 & 0xC) == 0x4 && temp != r[4])
-               {
-                  break;
-               }
-               write_x8(r[2], temp);
-               r[2]++;
-               r[0]--;
-            }
-         }
-         break;
-
-#if 0
-         case 0x03: // MOVS dword
-            if (temp2)
-            {
-               n32016_dumpregs("Bad NS32016 MOVS");
-               break;
-            }
-            while (r[0])
-            {
-               temp = read_x32(r[1]);
-               r[1] += 4;
-               write_x32(r[2], temp);
-               r[2] += 4;
-               r[0]--;
-            }
-            break;
-#endif
-
          case SETCFG:
          {
             nscfg = temp;
@@ -1544,6 +1500,104 @@ void n32016_exec(uint32_t tubecycles)
             temp ^= temp2;
             WriteSize = LookUp.p.Size;
             break;
+
+         case MOVS:
+         {
+            if (temp2 & 3)
+            {
+               n32016_dumpregs("Bad NS32016 MOVS %08X");
+            }
+
+            while (r[0])
+            {
+               temp = read_x8(r[1]);
+               r[1]++;
+               if ((temp2 & 0xC) == 0xC && temp == r[4])
+               {
+                  break;
+               }
+               if ((temp2 & 0xC) == 0x4 && temp != r[4])
+               {
+                  break;
+               }
+               write_x8(r[2], temp);
+               r[2]++;
+               r[0]--;
+            }
+         }
+         break;
+
+#if 0
+         case 0x03: // MOVS dword
+            if (temp2)
+            {
+               n32016_dumpregs("Bad NS32016 MOVS");
+               break;
+            }
+            while (r[0])
+            {
+               temp = read_x32(r[1]);
+               r[1] += 4;
+               write_x32(r[2], temp);
+               r[2] += 4;
+               r[0]--;
+            }
+            break;
+#endif
+
+         // Early CMPS Hacking
+         case CMPS:
+         {
+            if (r[0])
+            {
+               psr ^= ~F_FLAG;                              // Clear PSR F Bit
+
+               temp  = read_x8(r[1]);
+               //
+               if (opcode & (1 << 17))                      // While Match
+               {
+                  if (temp != r[4])
+                  {
+                     break;
+                  }
+               }
+               else if (opcode & (1 << 18))                  // Until Match
+               {
+                  if (temp == r[4])
+                  {
+                     break;
+                  }
+               }
+
+               temp2 = read_x8(r[2]);
+
+               if (CompareCommon(temp, temp2) == 0)
+               {
+                  break;
+               }
+
+               if (opcode & (1 << 16))                      // Backwards
+               {
+                  r[1]--;
+                  r[2]--;
+               }
+               else
+               {
+                  r[1]++;
+                  r[2]++;
+               }
+               r[0]--;
+            }
+
+            if (r[0] == 0)
+            {
+               psr |= F_FLAG; // Set PSR F Bit
+               break;
+            }
+            
+            pc = startpc;           // Not finsihed so come back again!
+         }
+         break;
 
          case ROT:
          {
