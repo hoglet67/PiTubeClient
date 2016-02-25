@@ -1277,15 +1277,7 @@ void n32016_exec(uint32_t tubecycles)
                temp2 |= 0xFFFFFFF0;
 
             temp = ReadGen(0, LookUp.p.Size);
-
-            //  Sign extend smaller quantites to 32 bits to match temp2 
-            if (LookUp.p.Size == sz8) {
-               temp = (signed char) temp;
-            }
-            else if (LookUp.p.Size == sz16) {
-               temp = (signed short) temp;
-            }
-
+            SIGN_EXTEND(temp);
             CompareCommon(temp, temp2);
          }
          break;
@@ -1905,11 +1897,6 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         // TODO: This is a short term implementation
-         // that just sets the Z flag. To also set
-         // the N and L flags correctly, the correct
-         // item size must be used, together with
-         // appropriated signed/unsigned comparisons.
          case CMPM:
          {
             temp4 = (LookUp.p.Size + 1);          // disp of 0 means move 1 byte/word/dword
