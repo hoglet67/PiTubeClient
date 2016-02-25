@@ -1032,6 +1032,36 @@ static void handle_mei_dei_upper_write(uint64_t result)
    }
 }
 
+uint32_t CompareCommon(uint32_t temp, uint32_t temp2)
+{
+   psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
+   if (temp2 > temp)
+      psr |= L_FLAG;
+
+   if (LookUp.p.Size == sz8)
+   {
+      if (((signed char) temp2) > ((signed char) temp))
+      {
+         psr |= N_FLAG;
+      }
+   }
+   else if (LookUp.p.Size == sz32)
+   {
+      if (((signed long) temp2) > ((signed long) temp))
+      {
+         psr |= N_FLAG;
+      }
+   }
+
+   if (temp == temp2)
+   {
+      psr |= Z_FLAG;
+      return 1;
+   }
+
+   return 0;
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteSize, WriteIndex;
@@ -1256,26 +1286,7 @@ void n32016_exec(uint32_t tubecycles)
                temp = (signed short) temp;
             }
 
-            psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
-            if (temp == temp2)
-               psr |= Z_FLAG;
-            if (temp2 > temp)
-               psr |= L_FLAG;
-
-            if (LookUp.p.Size == sz8)
-            {
-               if (((signed char) temp2) > ((signed char) temp))
-               {
-                  psr |= N_FLAG;
-               }
-            }
-            else if (LookUp.p.Size == sz32)
-            {
-               if (((signed long) temp2) > ((signed long) temp))
-               {
-                  psr |= N_FLAG;
-               }
-            }
+            CompareCommon(temp, temp2);
          }
          break;
 
@@ -1447,25 +1458,13 @@ void n32016_exec(uint32_t tubecycles)
          break;
 
          case CMP: // CMP
+         {
             temp2 = ReadGen(0, LookUp.p.Size);
             temp = ReadGen(1, LookUp.p.Size);
 
-            psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
-            if (temp == temp2)
-               psr |= Z_FLAG;
-            if (temp > temp2)
-               psr |= L_FLAG;
-            if (LookUp.p.Size == sz8)
-            {
-               if (((signed char) temp) > ((signed char) temp2))
-                  psr |= N_FLAG;
-            }
-            else if (LookUp.p.Size == sz32)
-            {
-               if (((signed long) temp) > ((signed long) temp2))
-                  psr |= N_FLAG;
-            }
-            break;
+            CompareCommon(temp, temp2);
+         }
+         break;
 
          case BIC: // BIC
             temp = ReadGen(0, LookUp.p.Size);
@@ -1913,27 +1912,43 @@ void n32016_exec(uint32_t tubecycles)
          // appropriated signed/unsigned comparisons.
          case CMPM:
          {
-            int match = 1;
-            temp = getdisp() + (LookUp.p.Size + 1); // disp of 0 means move 1 byte/word/dword
-            while (temp && match)
+            temp4 = (LookUp.p.Size + 1);          // disp of 0 means move 1 byte/word/dword
+            temp3 = (getdisp() / temp4) + 1;
+
+            //printf("CMP Size = %u Count = %u\n", temp4, temp3);
+            while (temp3--)
             {
-               temp2 = read_x8(genaddr[0]);
-               temp3 = read_x8(genaddr[1]);
-               if (temp2 != temp3)
+               switch (LookUp.p.Size)
                {
-                  match = 0;
+                  case sz8:
+                  {
+                     temp =  read_x8(genaddr[0]);
+                     temp2 = read_x8(genaddr[1]);
+                  }
+                  break;
+
+                  case sz16:
+                  {
+                     temp = read_x16(genaddr[0]);
+                     temp2 = read_x16(genaddr[1]);
+                  }
+                  break;
+
+                  case sz32:
+                  {
+                     temp = read_x16(genaddr[0]);
+                     temp2 = read_x16(genaddr[1]);
+                  }
+                  break;
                }
-               genaddr[0]++;
-               genaddr[1]++;
-               temp--;
-            }
-            if (match)
-            {
-               psr |= Z_FLAG;
-            }
-            else
-            {
-               psr &= ~Z_FLAG;
+               
+               if (CompareCommon(temp, temp2) == 0)
+               {
+                  break;
+               }
+
+               genaddr[0] += temp4;
+               genaddr[1] += temp4;
             }
          }
          break;
