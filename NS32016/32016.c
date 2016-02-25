@@ -1707,6 +1707,11 @@ void n32016_exec(uint32_t tubecycles)
          // TODO, could merge this with TBIT if Format4 operand indexes were consistent (dst == index 0)
          case CBIT:
          case SBIT:
+         // The SBITIB, SBITIW, and SBITID instructions, in addition, activate the Interlocked
+         // Operation output pin on the CPU, which may be used in multiprocessor systems to
+         // interlock accesses to semaphore bits. This aspect is not implemented here.
+         case CBITI:
+         case SBITI:
             temp2 = ReadGen(0, LookUp.p.Size);
             if (gentype[1])
             {
@@ -1726,7 +1731,7 @@ void n32016_exec(uint32_t tubecycles)
             psr &= ~F_FLAG;
             if (temp & (1 << temp2))
                psr |= F_FLAG;
-            if (LookUp.p.Function == SBIT)
+            if ((LookUp.p.Function == SBIT) || (LookUp.p.Function == SBITI))
             {
                temp |= 1 << temp2;
             }
