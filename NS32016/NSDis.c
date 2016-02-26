@@ -57,8 +57,8 @@ const char InstuctionText[InstructionCount][16] =
    "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
 
    // FORMAT 4
-	"ADD", "CMP", "BIC", "ADDC", "MOV", "OR", "SUB", "ADDR",
-   "AND", "SUBC", "TBIT", "XOR",	"TRAP", "TRAP", "TRAP", "TRAP",
+	"ADD", "CMP", "BIC", "TRAP", "ADDC", "MOV", "OR",  "TRAP",
+   "SUB", "ADDR","AND", "TRAP", "SUBC", "TBIT", "XOR","TRAP",
 
    // FORMAT 5
 	"MOVS", "CMPS", "SETCFG", "SKPS", "TRAP", "TRAP", "TRAP", "TRAP",
@@ -78,7 +78,6 @@ const char InstuctionText[InstructionCount][16] =
 
    "TRAP"
 };
-
 
 const char* InstuctionLookup(uint8_t Function)
 {
@@ -160,6 +159,15 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Siz
 	printf("PC is :%08X ?????\n", pc);
 }
 
+const uint8_t FormatSizes[FormatCount] =
+{
+   1, 1, 2, 2, 2, 3, 3, 3, 3
+};
+
+#define FUNC(FORMAT, OFFSET) \
+   mat[Index].p.Format     = (FORMAT); \
+   mat[Index].p.Function   = (((FORMAT) << 4) + (OFFSET)); \
+   mat[Index].p.BaseSize   = FormatSizes[FORMAT]
 
 void n32016_build_matrix()
 {
@@ -169,363 +177,71 @@ void n32016_build_matrix()
 
    for (Index = 0; Index < 256; Index++)
    {
-#if 1
-      if ((Index & 0x0F) == 0x0A)
+      switch (Index & 0x0F)
       {
-         mat[Index].p.Function = Index >> 4;
-         mat[Index].p.Format = Format0;
-      }
-      else
-#endif
-      {
-         switch (Index)
+         case 0x0A:
          {
-            case 0x02:		// BSR
-            {
-               mat[Index].p.Function = BSR;
-               mat[Index].p.Format = Format1;
-            }
-            break;
+            FUNC(Format0, Index >> 4);
+            continue;
+         }
+         // No break due to continue
 
-            case 0x12: // RET
-            {
-               mat[Index].p.Function = RET;
-               mat[Index].p.Format = Format1;
-            }
-            break;
-
-            case 0x22: // CXP
-            {
-               mat[Index].p.Function = CXP;
-               mat[Index].p.Format = Format1;
-            }
-            break;
-
-            case 0x32: // RXP
-            {
-               mat[Index].p.Function = RXP;
-               mat[Index].p.Format = Format1;
-            }
-            break;
-
-            case 0x42: // RETT
-            {
-               mat[Index].p.Function = RETT;
-               mat[Index].p.Format = Format1;
-            }
-            break;
-
-            case 0x52: // RETI
-            {
-               mat[Index].p.Function = RETI;
-               mat[Index].p.Format = Format1;
-            }
-            break;
-
-            case 0x62: // SAVE
-            {
-               mat[Index].p.Function = SAVE;
-               mat[Index].p.Format = Format1;
-            }
-            break;
-
-            case 0x72: // RESTORE
-            {
-               mat[Index].p.Function = RESTORE;
-               mat[Index].p.Format = Format1;
-            }
-            break;
-
-            case 0x82: // ENTER
-            {
-               mat[Index].p.Function = ENTER;
-               mat[Index].p.Format = Format1;
-            }
-            break;
-
-            case 0x92: // EXIT
-            {
-               mat[Index].p.Function = EXIT;
-               mat[Index].p.Format = Format1;
-            }
-            break;
-
-            case 0xA2: // NOP
-            {
-               mat[Index].p.Function = NOP;
-               mat[Index].p.Format = Format1;
-            }
-            break;
-
-            case 0xE2: // SVC
-            {
-               mat[Index].p.Function = SVC;
-               mat[Index].p.Format = Format1;
-            }
-            break;
-
-            case 0xF2: // BPT
-            {
-               mat[Index].p.Function = BPT;
-               mat[Index].p.Format = Format1;
-            }
-            break;
-
-            CASE2(0x0C)		// ADDQ byte
-            CASE2(0x0D)		// ADDQ word
-            CASE2(0x0F)		// ADDQ dword
-            {
-               mat[Index].p.Function = ADDQ;
-               mat[Index].p.Format = Format2;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE2(0x1C)		// CMPQ byte
-            CASE2(0x1D)		// CMPQ word
-            CASE2(0x1F)		// CMPQ dword
-            {
-               mat[Index].p.Function = CMPQ;
-               mat[Index].p.Format = Format2;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE2(0x2C)		// SPR byte
-            CASE2(0x2D)		// SPR word
-            CASE2(0x2F)		// SPR dword
-            {
-               mat[Index].p.Function = SPR;
-               mat[Index].p.Format = Format2;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE2(0x3C)		// Scond Byte
-            CASE2(0x3D)		// Scond Word
-            CASE2(0x3F)		// Scond DWord
-            {
-               mat[Index].p.Function = Scond;
-               mat[Index].p.Format = Format2;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE2(0x4C)		// ACBB Byte
-            CASE2(0x4D)		// ACCB Word
-            CASE2(0x4F)		// ACCB DWord
-            {
-               mat[Index].p.Function = ACB;
-               mat[Index].p.Format = Format2;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE2(0x5C)		// MOVQ byte
-            CASE2(0x5D)		// MOVQ word
-            CASE2(0x5F)		// MOVQ dword
-            {
-               mat[Index].p.Function = MOVQ;
-               mat[Index].p.Format = Format2;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE2(0x6C)		// LPR byte
-            CASE2(0x6D)		// LPR word
-            CASE2(0x6F)		// LPR dword
-            {
-               mat[Index].p.Function = LPR;
-               mat[Index].p.Format = Format2;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE2(0x7C)		// Type 3 byte
-            CASE2(0x7D)		// Type 3 word
-            CASE2(0x7F)		// Type 3 word
-            {
-               mat[Index].p.Format = Format3;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE4(0x00)		// ADD byte
-            CASE4(0x01)		// ADD word
-            CASE4(0x03)		// ADD dword
-            {
-               mat[Index].p.Function = ADD;
-               mat[Index].p.Format = Format4;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE4(0x04)		// CMP byte
-            CASE4(0x05)		// CMP word
-            CASE4(0x07)		// CMP dword
-            {
-               mat[Index].p.Function = CMP;
-               mat[Index].p.Format = Format4;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE4(0x08)		// BIC byte
-            CASE4(0x09)		// BIC word
-            CASE4(0x0B)		// BIC dword
-            {
-               mat[Index].p.Function = BIC;
-               mat[Index].p.Format = Format4;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE4(0x10)		// ADDC byte
-            CASE4(0x11)		// ADDC word
-            CASE4(0x13)		// ADDC dword
-            {
-               mat[Index].p.Function = ADDC;
-               mat[Index].p.Format = Format4;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE4(0x14)		// MOV byte
-            CASE4(0x15)		// MOV word
-            CASE4(0x17)		// MOV dword
-            {
-               mat[Index].p.Function = MOV;
-               mat[Index].p.Format = Format4;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE4(0x18)		// OR byte
-            CASE4(0x19)		// OR word
-            CASE4(0x1B)		// OR dword
-            {
-               mat[Index].p.Function = OR;
-               mat[Index].p.Format = Format4;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE4(0x20)		// SUB byte
-            CASE4(0x21)		// SUB word
-            CASE4(0x23)		// SUB dword
-            {
-               mat[Index].p.Function = SUB;
-               mat[Index].p.Format = Format4;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE4(0x24)		// ADDR byte
-            CASE4(0x25)		// ADDR word
-            CASE4(0x27)		// ADDR dword
-            {
-               mat[Index].p.Function = ADDR;
-               mat[Index].p.Format = Format4;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE4(0x28)		// AND byte
-            CASE4(0x29)		// AND word
-            CASE4(0x2B)		// AND dword
-            {
-               mat[Index].p.Function = AND;
-               mat[Index].p.Format = Format4;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE4(0x30)		// SUBC byte
-            CASE4(0x31)		// SUBC word
-            CASE4(0x33)		// SUBC dword
-            {
-               mat[Index].p.Function = SUBC;
-               mat[Index].p.Format = Format4;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE4(0x34)		// TBIT byte
-            CASE4(0x35)		// TBIT word
-            CASE4(0x37)		// TBIT dword
-            {
-               mat[Index].p.Function = TBIT;
-               mat[Index].p.Format = Format4;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            CASE4(0x38)		// XOR byte
-            CASE4(0x39)		// XOR word
-            CASE4(0x3B)		// XOR dword
-            {
-               mat[Index].p.Function = XOR;
-               mat[Index].p.Format = Format4;
-               mat[Index].p.Size = Index & 3;
-            }
-            break;
-
-            case 0x0E: // String instruction
-            {
-               mat[Index].p.Format = Format5;
-            }
-            break;
-
-            case 0x4E:		// Type 6
-            {
-               mat[Index].p.Format = Format6;
-            }
-            break;
-
-            case 0xCE:		// Format 7
-            {
-               mat[Index].p.Format = Format7;
-            }
-            break;
-
-            CASE4(0x2E)		// Type 8
-            {
-               mat[Index].p.Format = Format8;
-            }
-            break;
-
-            case 0x3E:	/// TODO Check this looks wrong!
-            {
-               mat[Index].p.Format = Format0;
-            }
-            break;
-      }
-      }
-
-      switch (mat[Index].p.Format)
-      {
-         case Format0:
-         case Format1:
-         default:
+         case 0x02:
          {
-            mat[Index].p.BaseSize = 1;
+            FUNC(Format1, Index >> 4);
+            continue;
+         }
+         // No break due to continue
+
+         case 0x0C:
+         case 0x0D:
+         case 0x0F:
+         {
+            if ((Index & 0x70) != 0x70)
+            {
+               FUNC(Format2, (Index >> 4) & 0x07);
+            }
+            else
+            {
+               FUNC(Format3, (Index >> 4) & 0x07);
+            }
+
+            mat[Index].p.Size = Index & 3;
+            continue;
+         }
+         // No break due to continue
+      }
+
+      if ((Index & 0x03) != 0x02)
+      {
+         FUNC(Format4, (Index >> 2) & 0x0F);
+         mat[Index].p.Size = Index & 3;
+         continue;
+      }
+
+      switch (Index)
+      {
+         case 0x0E:
+         {
+            FUNC(Format5, 0);          // String instruction
          }
          break;
 
-         case Format2:
-         case Format3:
-         case Format4:
+         case 0x4E:
          {
-            mat[Index].p.BaseSize = 2;
+            FUNC(Format6, 0);
          }
          break;
 
-         case Format5:
-         case Format6:
-         case Format7:
-         case Format8:
+         case 0xCE:
          {
-            mat[Index].p.BaseSize = 3;
+            FUNC(Format7, 0);
+         }
+         break;
+
+         CASE4(0x2E):
+         {
+            FUNC(Format8, 0);
          }
          break;
       }

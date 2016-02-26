@@ -14,8 +14,8 @@
 #define RAM_SIZE 0x100000
 //#define RAM_SIZE 0x400000
 
-#define CASE2(in) case (in): case ((in) | 0x80):
-#define CASE4(in) case (in): case ((in) | 0x40): case ((in) | 0x80): case ((in) | 0xC0):
+#define CASE2(in) case (in): case ((in) | 0x80)
+#define CASE4(in) case (in): case ((in) | 0x40): case ((in) | 0x80): case ((in) | 0xC0)
 
 #define C_FLAG 0x01
 #define T_FLAG 0x02
@@ -41,6 +41,7 @@ enum Formats
 	Format6,
 	Format7,
 	Format8,
+   FormatCount,
 	FormatBad = 0xFF
 };
 
@@ -99,12 +100,15 @@ enum Functions
    ADD = 0x40,					// Format 4
    CMP,
    BIC,
+   TRAP_F4_0011,
    ADDC,
    MOV,
    OR,
+   TRAP_F4_0111,
    SUB,
    ADDR,
    AND,
+   TRAP_F4_1011,
    SUBC,
    TBIT,
    XOR,
