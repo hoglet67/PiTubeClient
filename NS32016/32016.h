@@ -48,6 +48,8 @@ enum Functions
 {
    BEQ,					// Format 0
    BNE,
+   TRAP_F1_02,
+   TRAP_F1_03,
    BH,
    BLS,
    BGT,

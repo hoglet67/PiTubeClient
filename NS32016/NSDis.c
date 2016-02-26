@@ -41,8 +41,8 @@ const char* SizeLookup(uint8_t Size)
 const char InstuctionText[InstructionCount][16] =
 {
    // FORMAT 0
-	"BEQ", "BNE", "BH", "BLS", "BGT", "BLE", "BFS", "BFC",
-   "BLO", "BHS", "BLT", "BGE", "BR", "TRAP", "TRAP", "TRAP",
+	"BEQ", "BNE", "TRAP", "TRAP", "BH", "BLS", "BGT", "BLE",
+   "BFS", "BFC", "BLO", "BHS", "BLT", "BGE", "BR", "TRAP", 
 
    // FORMAT 1	
    "BSR", "RET", "CXP", "RXP", "RETT", "RETI", "SAVE", "RESTORE",
@@ -169,7 +169,7 @@ void n32016_build_matrix()
 
    for (Index = 0; Index < 256; Index++)
    {
-#if 0
+#if 1
       if ((Index & 0x0F) == 0x0A)
       {
          mat[Index].p.Function = Index >> 4;
@@ -180,98 +180,7 @@ void n32016_build_matrix()
       {
          switch (Index)
          {
-            case 0x0A: // BEQ
-            {
-               mat[Index].p.Function = BEQ;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-            case 0x1A: // BNE
-            {
-               mat[Index].p.Function = BNE;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-            case 0x4A: // BH
-            {
-               mat[Index].p.Function = BH;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-            case 0x5A: // BLS
-            {
-               mat[Index].p.Function = BLS;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-            case 0x6A: // BGT
-            {
-               mat[Index].p.Function = BGT;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-            case 0x7A: // BLE
-            {
-               mat[Index].p.Function = BLE;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-            case 0x8A: // BFS
-            {
-               mat[Index].p.Function = BFS;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-            case 0x9A: // BFC
-            {
-               mat[Index].p.Function = BFC;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-            case 0xAA: // BLO
-            {
-               mat[Index].p.Function = BLO;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-            case 0xBA: // BHS
-            {
-               mat[Index].p.Function = BHS;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-            case 0xCA: // BLT
-            {
-               mat[Index].p.Function = BLT;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-            case 0xDA: // BGE
-            {
-               mat[Index].p.Function = BGE;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-            case 0xEA: // BR
-            {
-               mat[Index].p.Function = BR;
-               mat[Index].p.Format = Format0;
-            }
-            break;
-
-          case 0x02:		// BSR
+            case 0x02:		// BSR
             {
                mat[Index].p.Function = BSR;
                mat[Index].p.Format = Format1;
