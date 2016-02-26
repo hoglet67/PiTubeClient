@@ -633,7 +633,7 @@ void n32016_exec(uint32_t tubecycles)
       WriteSize = szVaries;
       WriteIndex = 0; // default to writing operand 0
 
-      switch (LookUp.p.Format)
+      switch (LookUp.p.Function >> 4)
       {
          case Format0:
          {
@@ -649,7 +649,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format3:
          {
-            LookUp.p.Function = (opcode & 0x80) ? TRAP : (CXPD + ((opcode >> 8) & 7));
+            LookUp.p.Function += ((opcode >> 7) & 0x0F);
             getgen(opcode >> 11, 0);
          }
          break;
@@ -663,14 +663,14 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format5:
          {
-            LookUp.p.Function = (opcode & 0x30) ? TRAP : (MOVS + ((opcode >> 10) & 3));
+            LookUp.p.Function += ((opcode >> 10) & 0x0F);
             temp2 = (opcode >> 15) & 0xF;
          }
          break;
 
          case Format6:
          {
-            LookUp.p.Function = ROT + ((opcode >> 10) & 15);
+            LookUp.p.Function += ((opcode >> 10) & 0x0F);
             LookUp.p.Size = (opcode >> 8) & 3;
 
             // Ordering important here, as getgen uses LookUp.p.Size
@@ -686,7 +686,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format7:
          {
-            LookUp.p.Function = MOVM + ((opcode >> 10) & 15);
+            LookUp.p.Function += ((opcode >> 10) & 0x0F);
             LookUp.p.Size = (opcode >> 8) & 3;
 
             getgen(opcode >> 19, 0);
@@ -698,11 +698,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (opcode & 0x400)
             {
-               if (!(opcode & 0x80))
-               {
-                  LookUp.p.Function = (opcode & 0x40) ? FFS : INDEX;
-               }
-               else
+               if (opcode & 0x80)
                {
                   switch (opcode & 0x3CC0)
                   {
@@ -725,10 +721,14 @@ void n32016_exec(uint32_t tubecycles)
                      break;
                   }
                }
+               else
+               {
+                  LookUp.p.Function = (opcode & 0x40) ? FFS : INDEX;
+               }
             }
             else
             {
-               LookUp.p.Function = EXT + ((opcode >> 6) & 3);
+               LookUp.p.Function += ((opcode >> 6) & 3);
             }
 
             LookUp.p.Size = (opcode >> 8) & 3;

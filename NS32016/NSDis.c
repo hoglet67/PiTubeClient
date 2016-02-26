@@ -53,8 +53,8 @@ const char InstuctionText[InstructionCount][16] =
    "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
 
    // FORMAT 3
-	"CXPD", "BICPSR", "JUMP", "BISPSR", "TRAP", "ADJSP", "JSR", "CASE",																										            // Format 3
-   "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
+   "CXPD", "TRAP", "BICPSR", "TRAP", "JUMP", "TRAP", "BISPSR", "TRAP",
+   "TRAP", "TRAP", "ADJSP", "TRAP", "JSR", "TRAP", "CASE", "TRAP",
 
    // FORMAT 4
 	"ADD", "CMP", "BIC", "TRAP", "ADDC", "MOV", "OR",  "TRAP",
@@ -165,7 +165,6 @@ const uint8_t FormatSizes[FormatCount] =
 };
 
 #define FUNC(FORMAT, OFFSET) \
-   mat[Index].p.Format     = (FORMAT); \
    mat[Index].p.Function   = (((FORMAT) << 4) + (OFFSET)); \
    mat[Index].p.BaseSize   = FormatSizes[FORMAT]
 
@@ -203,7 +202,7 @@ void n32016_build_matrix()
             }
             else
             {
-               FUNC(Format3, (Index >> 4) & 0x07);
+               FUNC(Format3, 0);
             }
 
             mat[Index].p.Size = Index & 3;

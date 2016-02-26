@@ -47,7 +47,7 @@ enum Formats
 
 enum Functions
 {
-   BEQ,					// Format 0
+   BEQ = 0x00,		            // Format 0
    BNE,
    TRAP_F1_02,
    TRAP_F1_03,
@@ -89,15 +89,23 @@ enum Functions
    LPR,
 
    CXPD = 0x30,					// Format 3
+   TRAP_F3_0001,
    BICPSR,
+   TRAP_F3_0011,
    JUMP,
+   TRAP_F3_0101,
    BISPSR,
+   TRAP_F3_0111,
    TRAP_F3_1000,
+   TRAP_F3_1001,
    ADJSP,
+   TRAP_F3_1011,
    JSR,
+   TRAP_F3_1101,
    CASE,
+   TRAP_F3_1111,
 
-   ADD = 0x40,					// Format 4
+   ADD = 0x40,					   // Format 4
    CMP,
    BIC,
    TRAP_F4_0011,
@@ -118,7 +126,7 @@ enum Functions
    SETCFG,
    SKPS,
 
-   ROT = 0x60,          // Format 6
+   ROT = 0x60,                // Format 6
    ASH,
    CBIT,
    CBITI,
@@ -179,7 +187,6 @@ typedef union
 {
 	struct
 	{
-		uint8_t Format;
 		uint8_t Size;
 		uint8_t Function;
 		uint8_t BaseSize;
