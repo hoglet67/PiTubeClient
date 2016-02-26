@@ -60,7 +60,7 @@ enum Functions
    BGE,
    BR,
 
-   BSR,					// Format 1
+   BSR = 0x10,					// Format 1
    RET,
    CXP,
    RXP,
@@ -77,7 +77,7 @@ enum Functions
    SVC,
    BPT,
 
-   ADDQ,					// Format 2
+   ADDQ = 0x20,					// Format 2
    CMPQ,
    SPR,
    Scond,
@@ -85,7 +85,7 @@ enum Functions
    MOVQ,
    LPR,
 
-   CXPD,					// Format 3
+   CXPD = 0x30,					// Format 3
    BICPSR,
    JUMP,
    BISPSR,
@@ -94,7 +94,7 @@ enum Functions
    JSR,
    CASE,
 
-   ADD,					// Format 4
+   ADD = 0x40,					// Format 4
    CMP,
    BIC,
    ADDC,
@@ -107,12 +107,12 @@ enum Functions
    TBIT,
    XOR,
 
-   MOVS,					// Format 5
+   MOVS = 0x50,					// Format 5
    CMPS,
    SETCFG,
    SKPS,
 
-   ROT,          // Format 6
+   ROT = 0x60,          // Format 6
    ASH,
    CBIT,
    CBITI,
@@ -129,7 +129,7 @@ enum Functions
    IBIT,
    ADDP,
 
-   MOVM,					// Format 7
+   MOVM = 0x70,					// Format 7
    CMPM,
    INSS,
    EXTS,
@@ -146,7 +146,7 @@ enum Functions
    MOD,
    DIV,
 
-   EXT,				  // Format 8
+   EXT = 0x80,				  // Format 8
    CVTP,
    INS,
    CHECK,
@@ -155,7 +155,7 @@ enum Functions
    MOVUS,
    MOVSU,
 
-   TRAP,
+   TRAP = 0x90,
    InstructionCount,
 
    BAD = 0xFF
@@ -191,6 +191,7 @@ extern void StoreRegisters(uint8_t Index, uint8_t Value);
 extern void ClearRegs(void);
 extern void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Size);
 extern void n32016_dumpregs();
+extern void n32016_build_matrix();
 
 extern uint32_t tube_irq;
 extern DecodeMatrix mat[256];
