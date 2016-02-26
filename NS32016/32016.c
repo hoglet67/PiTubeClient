@@ -671,13 +671,25 @@ void n32016_exec(uint32_t tubecycles)
          case Format6:
          {
             LookUp.p.Function += ((opcode >> 10) & 0x0F);
-            LookUp.p.Size = (opcode >> 8) & 3;
 
             // Ordering important here, as getgen uses LookUp.p.Size
-            if ((opcode & 0x3C00) == 0x0000 || (opcode & 0x3C00) == 0x0400 || (opcode & 0x3C00) == 0x1400) //  ROT/ASH/LSH 
+            switch (LookUp.p.Function)
             {
-               LookUp.p.Size = sz8;
+               case ROT:
+               case ASH:
+               case LSH:
+               {
+                  LookUp.p.Size = sz8;
+               }
+               break;
+
+               default:
+               {
+                  LookUp.p.Size = (opcode >> 8) & 3;
+               }
+               break;
             }
+
             getgen(opcode >> 19, 0);
             LookUp.p.Size = (opcode >> 8) & 3;
             getgen(opcode >> 14, 1);
@@ -1786,8 +1798,22 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-#if 0
-         // Well I tried ;)
+         case CVTP:
+         {
+            // This is just some copy and paste rubbish!
+ #if 0           
+            int32_t Offset = r[(opcode >> 11) & 7] % 8;
+            int32_t Length = getdisp();
+            int32_t Source = ReadGen(0, LookUp.p.Size);
+            int32_t Base = ReadGen(1, LookUp.p.Size);
+
+            temp = Base;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+#endif
+         }
+         break;
+
          case INS:
          {
             int32_t Offset = r[(opcode >> 11) & 7] % 8;
@@ -1817,7 +1843,6 @@ void n32016_exec(uint32_t tubecycles)
             WriteIndex = 1;
          }
          break;
-#endif
 
          case CHECK:
          {
@@ -2099,6 +2124,14 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
       }
+
+#if 0
+      // Test Suite Diverter ;)
+      if (pc == 0x001CB2)
+      {
+         pc = 0x001AD9;
+      }
+#endif
 
       tubecycles -= 8;
       if (tube_irq & 2)
