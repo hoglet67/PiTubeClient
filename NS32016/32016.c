@@ -252,40 +252,24 @@ static void getgen(int gen, int c)
       break;
 
     case 0x1C: // EA + Rn
-      getgen(genindex[c] >> 3, c);
-      if (!gentype[c])
-        genaddr[c] += r[genindex[c] & 7];
-      else
-        genaddr[c] = *(uint32_t *) genaddr[c] + r[genindex[c] & 7];
-      gentype[c] = 0;
-      break;
-
     case 0x1D: // EA + Rn*2
-      getgen(genindex[c] >> 3, c);
-      if (!gentype[c])
-        genaddr[c] += (r[genindex[c] & 7] * 2);
-      else
-        genaddr[c] = *(uint32_t *) genaddr[c] + (r[genindex[c] & 7] * 2);
-      gentype[c] = 0;
-      break;
-
     case 0x1E: // EA + Rn*4
-      getgen(genindex[c] >> 3, c);
-      if (!gentype[c])
-        genaddr[c] += (r[genindex[c] & 7] * 4);
-      else
-        genaddr[c] = *(uint32_t *) genaddr[c] + (r[genindex[c] & 7] * 4);
-      gentype[c] = 0;
-      break;
-
     case 0x1F: // EA + Rn*8
-      getgen(genindex[c] >> 3, c);
-      if (!gentype[c])
-        genaddr[c] += (r[genindex[c] & 7] * 8);
-      else
-        genaddr[c] = *(uint32_t *) genaddr[c] + (r[genindex[c] & 7] * 8);
-      gentype[c] = 0;
-      break;
+    {
+       uint32_t Shift = gen & 3;
+       getgen(genindex[c] >> 3, c);
+       if (!gentype[c])
+       {
+          genaddr[c] += (r[genindex[c] & 7] << Shift);
+       }
+       else
+       {
+          genaddr[c] = *(uint32_t*) genaddr[c] + (r[genindex[c] & 7] << Shift);
+       }
+
+       gentype[c] = 0;
+    }
+    break;
 
     default:
       n32016_dumpregs("Bad NS32016 gen mode");
