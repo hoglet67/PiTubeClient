@@ -54,6 +54,7 @@ void dump_mini(void)
    if (Trace)
    {
       printf("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
+      printf("R4=%08X R5=%08X R6=%08X R7=%08X\n\n", r[4], r[5], r[6], r[7]);
    }
 }
 
@@ -1806,9 +1807,36 @@ void n32016_exec(uint32_t tubecycles)
 
          case CHECK:
          {
-            temp3 = ReadGen(1, sz8);
-            temp = read_x8(genaddr[0]);
-            temp2 = read_x8(genaddr[0] + 1);
+            Trace = 1;
+            //temp3 = ReadGen(1, sz8);
+            temp3 = ReadGen(1, LookUp.p.Size);          
+
+            switch (LookUp.p.Size)
+            {
+               case sz8:
+               {
+                  temp = read_x8(genaddr[0]);
+                  temp2 = read_x8(genaddr[0] + 1);
+               }
+               break;
+
+               case sz16:
+               {
+                  temp = read_x16(genaddr[0]);
+                  temp2 = read_x16(genaddr[0] + 2);
+               }
+               break;
+
+               case sz32:
+               {
+                  temp = read_x32(genaddr[0]);
+                  temp2 = read_x32(genaddr[0] + 4);
+               }
+               break;
+            }
+         
+            //printf("Reg = %u Bounds [%u - %u] Index = %u", 0, temp, temp2, temp3);
+
             if (temp >= temp3 && temp3 >= temp2)
             {
                r[(opcode >> 11) & 7] = temp3 - temp2;
@@ -1816,6 +1844,20 @@ void n32016_exec(uint32_t tubecycles)
             }
             else
                psr |= F_FLAG;
+         }
+         break;
+
+         case INDEX:
+         {
+            // r0, r1, r2
+            // 5, 7, 0x13 (19)
+            // accum = accum * (length+1) + index
+
+            temp  = r[(opcode >> 11) & 7];            // Accum
+            temp2 = ReadGen(0, LookUp.p.Size) + 1;    // (length+1)
+            temp3 = ReadGen(1, LookUp.p.Size);        // index
+
+            r[(opcode >> 11) & 7] = (temp * temp2) + temp3;
          }
          break;
 
@@ -1890,39 +1932,31 @@ void n32016_exec(uint32_t tubecycles)
 
          case SAVE:
             {
-               int c = 0;
+               int c;
 
                temp = read_x8(pc);
                pc++;
 
-               do
+               for (c = 0; c < 8; c++)
                {
                   if (temp & (1 << c))
                   {
                      pushd(r[c]);
                   }
-                  c++;
                }
-               while (c < 8);
             }
             break;
 
          case RESTORE:
             {
-               int c = 8;
-
+               int c;
                temp = read_x8(pc);
                pc++;
-
-               do
+               for (c = 0; c < 8; c++)
                {
-                  c--;
                   if (temp & (1 << c))
-                  {
-                     r[c] = popd(r[c]);
-                  }
+                     r[c ^ 7] = popd(r[c]);
                }
-               while (c > 0);
             }
             break;
 
