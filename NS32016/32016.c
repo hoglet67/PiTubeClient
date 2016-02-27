@@ -15,6 +15,7 @@ int nsoutput = 0;
 
 int nscfg;
 
+uint32_t Trace = 0;
 uint32_t tube_irq = 0;
 uint32_t r[8];
 uint32_t pc, sp[2], fp, sb, intbase;
@@ -46,6 +47,14 @@ void n32016_reset(uint32_t StartAddress)
 	psr = 0;
 
 	n32016_build_matrix();
+}
+
+void dump_mini(void)
+{
+   if (Trace)
+   {
+      printf("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
+   }
 }
 
 void n32016_dumpregs(char* pMessage)
@@ -702,6 +711,12 @@ void n32016_exec(uint32_t tubecycles)
             }
 
             LookUp.p.Size = (opcode >> 8) & 3;
+
+            if (LookUp.p.Function == CVTP)
+            {
+               LookUp.p.Size = sz32;
+            }
+
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
          }
@@ -1748,18 +1763,13 @@ void n32016_exec(uint32_t tubecycles)
          break;
 
          case CVTP:
-         {
-            // This is just some copy and paste rubbish!
- #if 0           
-            int32_t Offset = r[(opcode >> 11) & 7] % 8;
-            int32_t Length = getdisp();
-            int32_t Source = ReadGen(0, LookUp.p.Size);
-            int32_t Base = ReadGen(1, LookUp.p.Size);
-
-            temp = Base;
-            WriteSize = LookUp.p.Size;
+         {      
+            int32_t Offset    = r[(opcode >> 11) & 7] % 8;
+            int32_t Base      = genaddr[0];
+ 
+            temp = (Base * 8) + Offset;
+            WriteSize = sz32;
             WriteIndex = 1;
-#endif
          }
          break;
 
@@ -2090,6 +2100,13 @@ void n32016_exec(uint32_t tubecycles)
 
          case sz16:
          {
+#if 1
+            if (gentype[WriteIndex] && (genaddr[WriteIndex] == &r[7]))
+            {
+               printf("*** TEST = %u\n", temp);
+            }
+#endif
+            
             if (gentype[WriteIndex]) *((uint16_t*) genaddr[WriteIndex]) = temp;
             else
             {
@@ -2110,6 +2127,8 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
       }
+
+      dump_mini();
 
 #if 0
       // Test Suite Diverter ;)

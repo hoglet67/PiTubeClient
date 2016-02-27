@@ -38,7 +38,7 @@ const char* SizeLookup(uint8_t Size)
 	return "";
 }
 
-const char InstuctionText[InstructionCount][16] =
+const char InstuctionText[InstructionCount][8] =
 {
    // FORMAT 0
 	"BEQ", "BNE", "TRAP", "TRAP", "BH", "BLS", "BGT", "BLE",
