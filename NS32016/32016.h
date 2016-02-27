@@ -41,13 +41,20 @@ enum Formats
 	Format6,
 	Format7,
 	Format8,
+   Format9,
+   Format10,
+   Format11,
+   Format12,
+   Format13,
+   Format14,
    FormatCount,
 	FormatBad = 0xFF
 };
 
+#define F_BASE(in) ((in) << 4)
 enum Functions
 {
-   BEQ = 0x00,		            // Format 0
+   BEQ = F_BASE(Format0),
    BNE,
    TRAP_F1_02,
    TRAP_F1_03,
@@ -63,7 +70,7 @@ enum Functions
    BGE,
    BR,
 
-   BSR = 0x10,					// Format 1
+   BSR = F_BASE(Format1),
    RET,
    CXP,
    RXP,
@@ -80,7 +87,7 @@ enum Functions
    SVC,
    BPT,
 
-   ADDQ = 0x20,					// Format 2
+   ADDQ = F_BASE(Format2),
    CMPQ,
    SPR,
    Scond,
@@ -88,7 +95,7 @@ enum Functions
    MOVQ,
    LPR,
 
-   CXPD = 0x30,					// Format 3
+   CXPD = F_BASE(Format3),
    TRAP_F3_0001,
    BICPSR,
    TRAP_F3_0011,
@@ -105,7 +112,7 @@ enum Functions
    CASE,
    TRAP_F3_1111,
 
-   ADD = 0x40,					   // Format 4
+   ADD = F_BASE(Format4),
    CMP,
    BIC,
    TRAP_F4_0011,
@@ -121,12 +128,12 @@ enum Functions
    TBIT,
    XOR,
 
-   MOVS = 0x50,					// Format 5
+   MOVS = F_BASE(Format5),
    CMPS,
    SETCFG,
    SKPS,
 
-   ROT = 0x60,                // Format 6
+   ROT = F_BASE(Format6),
    ASH,
    CBIT,
    CBITI,
@@ -143,7 +150,7 @@ enum Functions
    IBIT,
    ADDP,
 
-   MOVM = 0x70,					// Format 7
+   MOVM = F_BASE(Format7),
    CMPM,
    INSS,
    EXTS,
@@ -160,7 +167,7 @@ enum Functions
    MOD,
    DIV,
 
-   EXT = 0x80,				  // Format 8
+   EXT = F_BASE(Format8),
    CVTP,
    INS,
    CHECK,
@@ -169,7 +176,36 @@ enum Functions
    MOVUS,
    MOVSU,
 
-   TRAP = 0x90,
+   MOVif = F_BASE(Format9),
+   LFSR,
+   MOVLF,
+   MOVFL,
+   ROUND,
+   TRUNC,
+   SFSR,
+   FLOOR,
+  
+   ADDf = F_BASE(Format11),
+   MOVf,
+   CMPf,
+   TRAP_F11_0011,
+   SUBf,
+   NEGf,
+   TRAP_F11_0110,
+   TRAP_F11_0111,
+   DIVf,
+   TRAP_F11_1001,
+   TRAP_F11_1010,
+   TRAP_F11_1011,
+   MULf,
+   ABSf,
+
+   RDVAL = F_BASE(Format14),
+   WRVAL,
+   LMR,
+   SMR,
+   
+   TRAP = F_BASE(FormatCount),
    InstructionCount,
 
    BAD = 0xFF

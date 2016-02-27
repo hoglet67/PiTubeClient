@@ -706,6 +706,24 @@ void n32016_exec(uint32_t tubecycles)
             getgen(opcode >> 14, 1);
          }
          break;
+
+         case Format9:
+         {
+            LookUp.p.Function += ((opcode >> 11) & 0x07);
+         }
+         break;
+
+         case Format11:
+         {
+            LookUp.p.Function += ((opcode >> 10) & 0x0F);
+         }
+         break;
+
+         case Format14:
+         {
+            LookUp.p.Function += ((opcode >> 10) & 0x0F);
+         }
+         break;
       }
 
       ShowInstruction(startpc, opcode, LookUp.p.Function, LookUp.p.Size);

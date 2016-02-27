@@ -76,6 +76,31 @@ const char InstuctionText[InstructionCount][16] =
    "EXT", "CVTP", "INS", "CHECK", "INDEX", "FFS", "MOVUS", "MOVSU",
    "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
 
+   // FORMAT 9
+   "MOVif","LFSR","MOVLF","MOVFL","ROUND","TRUNC","SFSR", "FLOOR",
+   "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
+
+   // FORMAT 10
+   "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
+   "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
+
+   // FORMAT 11
+   "ADDf", "MOVf", "CMPf", "TRAP", "SUBf", "NEGf", "TRAP", "TRAP",
+   "DIVf", "TRAP", "TRAP", "TRAP", "MULf", "ABSf", "TRAP", "TRAP",
+
+   // FORMAT 12
+   "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
+   "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
+
+   // FORMAT 13
+   "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
+   "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
+
+   // FORMAT 14
+   "RDVAL", "WRVAL", "LMR", "SMR", "TRAP", "TRAP", "TRAP", "TRAP",
+   "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
+
+   // Illegal
    "TRAP"
 };
 
@@ -161,7 +186,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Siz
 
 const uint8_t FormatSizes[FormatCount] =
 {
-   1, 1, 2, 2, 2, 3, 3, 3, 3
+   1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
 };
 
 #define FUNC(FORMAT, OFFSET) \
@@ -241,6 +266,42 @@ void n32016_build_matrix()
          CASE4(0x2E):
          {
             FUNC(Format8, 0);
+         }
+         break;
+
+         case 0x3E:
+         {
+            FUNC(Format9, 0);
+         }
+         break;
+
+         case 0x7E:
+         {
+            FUNC(Format10, 0);
+         }
+         break;
+
+         case 0xBE:
+         {
+            FUNC(Format11, 0);
+         }
+         break;
+
+         case 0xFE:
+         {
+            FUNC(Format12, 0);
+         }
+         break;
+
+         case 0x9E:
+         {
+            FUNC(Format13, 0);
+         }
+         break;
+
+         case 0x1E:
+         {
+            FUNC(Format14, 0);
          }
          break;
       }
