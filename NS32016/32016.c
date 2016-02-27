@@ -632,6 +632,7 @@ void n32016_exec(uint32_t tubecycles)
          case Format5:
          {
             LookUp.p.Function += ((opcode >> 10) & 0x0F);
+            LookUp.p.Size = (opcode >> 8) & 3;
             temp2 = (opcode >> 15) & 0xF;
          }
          break;
@@ -1050,7 +1051,8 @@ void n32016_exec(uint32_t tubecycles)
             WriteSize = LookUp.p.Size;
             break;
 
-         case MOVS:
+ #if 0
+          case MOVS:
          {
             if (temp2 & 3)
             {
@@ -1076,7 +1078,6 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-#if 0
          case 0x03: // MOVS dword
             if (temp2)
             {
@@ -1094,15 +1095,15 @@ void n32016_exec(uint32_t tubecycles)
             break;
 #endif
 
-         // Early CMPS Hacking
-         case CMPS:
+         case MOVS:
          {
+            Trace = 1;
             if (r[0])
             {
-               psr ^= ~F_FLAG;                              // Clear PSR F Bit
+               LookUp.p.Size = 
+               temp4 = (LookUp.p.Size + 1);
+               temp = read_n(r[1], LookUp.p.Size);
 
-               temp  = read_x8(r[1]);
-               //
                if (opcode & (1 << 17))                      // While Match
                {
                   if (temp != r[4])
@@ -1118,23 +1119,73 @@ void n32016_exec(uint32_t tubecycles)
                   }
                }
 
-               temp2 = read_x8(r[2]);
+               write_Arbitary(r[2], &temp, temp4);
+
+               if (opcode & (1 << 16))                      // Backwards
+               {
+                  r[1] -= temp4;
+                  r[2] -= temp4;
+               }
+               else
+               {
+                  r[1] += temp4;
+                  r[2] += temp4;
+               }
+
+               r[0]--;
+            }
+
+            if (r[0] == 0)
+            {
+               break;
+            }
+
+            pc = startpc;           // Not finsihed so come back again!
+         }
+         break;
+
+         case CMPS:
+         {
+            if (r[0])
+            {
+               psr ^= ~F_FLAG;                              // Clear PSR F Bit
+
+               temp = read_n(r[1], LookUp.p.Size);
+            
+               if (opcode & (1 << 17))                      // While Match
+               {
+                  if (temp != r[4])
+                  {
+                     break;
+                  }
+               }
+               else if (opcode & (1 << 18))                  // Until Match
+               {
+                  if (temp == r[4])
+                  {
+                     break;
+                  }
+               }
+
+               temp2 = read_n(r[2], LookUp.p.Size);
 
                if (CompareCommon(temp, temp2) == 0)
                {
                   break;
                }
 
+               temp4 = (LookUp.p.Size + 1);
                if (opcode & (1 << 16))                      // Backwards
                {
-                  r[1]--;
-                  r[2]--;
+                  r[1] -= temp4;
+                  r[2] -= temp4;
                }
                else
                {
-                  r[1]++;
-                  r[2]++;
+                  r[1] += temp4;
+                  r[2] += temp4;
                }
+
                r[0]--;
             }
 
@@ -1430,6 +1481,13 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(0, LookUp.p.Size);
             SIGN_EXTEND(temp);
             sp[SP] -= temp;
+         }
+         break;
+
+         case JSR:
+         {
+            pushd(pc);
+            pc = ReadGen(0, sz32);
          }
          break;
 
@@ -1807,7 +1865,6 @@ void n32016_exec(uint32_t tubecycles)
 
          case CHECK:
          {
-            Trace = 1;
             //temp3 = ReadGen(1, sz8);
             temp3 = ReadGen(1, LookUp.p.Size);          
 

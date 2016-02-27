@@ -105,6 +105,22 @@ uint32_t read_x32(uint32_t addr)
    return read_x8(addr) | (read_x8(addr + 1) << 8) | (read_x8(addr + 2) << 16) | (read_x8(addr + 3) << 24);
 }
 
+uint32_t read_n(uint32_t addr, uint32_t Size)
+{
+   if (Size < sz32)
+   {
+      if (addr + Size < IO_BASE)
+      {
+         uint32_t Result = 0;
+         memcpy(&Result, &ns32016ram[addr], (Size + 1));
+         return Result;
+      }
+   }
+
+   printf("Bad Read @ %06X\n", addr);
+   return 0;
+}
+
 void write_x8(uint32_t addr, uint8_t val)
 {
    //addr &= MEM_MASK;
