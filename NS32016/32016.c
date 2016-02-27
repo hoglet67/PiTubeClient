@@ -577,7 +577,7 @@ void n32016_exec(uint32_t tubecycles)
    uint32_t opcode, WriteSize, WriteIndex;
    uint32_t temp = 0, temp2, temp3, temp4;
    uint64_t temp64;
-   int c;
+
 
    while (tubecycles > 0)
    {
@@ -1476,6 +1476,8 @@ void n32016_exec(uint32_t tubecycles)
 
          case INSS:
          {
+            int c;
+
             // Read the immediate offset (3 bits) / length - 1 (5 bits) from the instruction
             temp3 = read_x8(pc);
             pc++;
@@ -1495,6 +1497,8 @@ void n32016_exec(uint32_t tubecycles)
 
          case EXTS:
          {
+            int c;
+
             // Read the immediate offset (3 bits) / length - 1 (5 bits) from the instruction
             temp3 = read_x8(pc);
             pc++;
@@ -1707,6 +1711,8 @@ void n32016_exec(uint32_t tubecycles)
 
          case EXT:
          {
+            int c;
+            
             temp = r[(opcode >> 11) & 7] & 31;
             temp2 = getdisp();
             temp3 = ReadGen(0, sz32);
@@ -1741,6 +1747,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case INS:
          {
+            int c;
             int32_t Offset = r[(opcode >> 11) & 7] % 8;
             int32_t Length = getdisp();
             int32_t Source = ReadGen(0, LookUp.p.Size); 
@@ -1854,58 +1861,79 @@ void n32016_exec(uint32_t tubecycles)
             break;
 
          case SAVE:
-            temp = read_x8(pc);
-            pc++;
-            for (c = 0; c < 8; c++)
             {
-               if (temp & (1 << c))
+               int c = 0;
+
+               temp = read_x8(pc);
+               pc++;
+
+               do
                {
-                  pushd(r[c]);
+                  if (temp & (1 << c))
+                  {
+                     pushd(r[c]);
+                  }
+                  c++;
                }
+               while (c < 8);
             }
             break;
 
          case RESTORE:
-            temp = read_x8(pc);
-            pc++;
-            for (c = 0; c < 8; c++)
             {
-               if (temp & (1 << c))
+               int c = 8;
+
+               temp = read_x8(pc);
+               pc++;
+
+               do
                {
-                  r[c ^ 7] = popd(r[c]);
+                  c--;
+                  if (temp & (1 << c))
+                  {
+                     r[c] = popd(r[c]);
+                  }
                }
+               while (c > 0);
             }
             break;
 
          case ENTER:
-            temp = read_x8(pc);
-            pc++;
-            temp2 = getdisp();
-            pushd(fp);
-            fp = sp[SP];
-            sp[SP] -= temp2;
-
-            for (c = 0; c < 8; c++)
             {
-               if (temp & (1 << c))
+               int c;
+
+               temp = read_x8(pc);
+               pc++;
+               temp2 = getdisp();
+               pushd(fp);
+               fp = sp[SP];
+               sp[SP] -= temp2;
+
+               for (c = 0; c < 8; c++)
                {
-                  pushd(r[c]);
+                  if (temp & (1 << c))
+                  {
+                     pushd(r[c]);
+                  }
                }
             }
             break;
 
          case EXIT:
-            temp = read_x8(pc);
-            pc++;
-            for (c = 0; c < 8; c++)
             {
-               if (temp & (1 << c))
+               int c;
+               temp = read_x8(pc);
+               pc++;
+               for (c = 0; c < 8; c++)
                {
-                  r[c ^ 7] = popd(r[c]);
+                  if (temp & (1 << c))
+                  {
+                     r[c ^ 7] = popd(r[c]);
+                  }
                }
-            }
-            sp[SP] = fp;
-            fp = popd();
+               sp[SP] = fp;
+               fp = popd();
+            }  
             break;
 
          case NOP:
