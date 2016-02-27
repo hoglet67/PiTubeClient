@@ -341,36 +341,6 @@ uint64_t readgenq(uint32_t c)
    return temp;
 }
 
-void writegenb(uint32_t c, uint8_t temp)
-{
-   if (gentype[c]) *((uint8_t*) genaddr[c]) = temp;
-   else
-   {
-      if (sdiff[c]) genaddr[c] = sp[SP] = sp[SP] - sdiff[c];
-      write_x8(genaddr[c], temp);
-   }
-}
-
-void writegenw(uint32_t c, uint16_t temp)
-{
-   if (gentype[c]) *((uint16_t*) genaddr[c]) = temp;
-   else
-   {
-      if (sdiff[c]) genaddr[c] = sp[SP] = sp[SP] - sdiff[c];
-      write_x16(genaddr[c], temp);
-   }
-}
-
-void writegenl(uint32_t c, uint32_t temp)
-{
-   if (gentype[c]) *((uint32_t*) genaddr[c]) = temp;
-   else
-   {
-      if (sdiff[c]) genaddr[c] = sp[SP] = sp[SP] - sdiff[c];
-      write_x32(genaddr[c], temp);
-   }
-}
-
 static uint16_t oldpsr;
 
 // From: http://homepage.cs.uiowa.edu/~jones/bcd/bcd.html
@@ -1586,7 +1556,8 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(0, LookUp.p.Size);
             if (sdiff[1])
                sdiff[1] = 4;
-            writegenl(1, temp);
+            WriteSize = sz32;
+            WriteIndex = 1;
          }
          break;
 
@@ -2062,19 +2033,34 @@ void n32016_exec(uint32_t tubecycles)
       {
          case sz8:
          {
-            writegenb(WriteIndex, temp);
+            if (gentype[WriteIndex]) *((uint8_t*) genaddr[WriteIndex]) = temp;
+            else
+            {
+               if (sdiff[WriteIndex]) genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
+               write_x8(genaddr[WriteIndex], temp);
+            }
          }
          break;
 
          case sz16:
          {
-            writegenw(WriteIndex, temp);
+            if (gentype[WriteIndex]) *((uint16_t*) genaddr[WriteIndex]) = temp;
+            else
+            {
+               if (sdiff[WriteIndex]) genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
+               write_x16(genaddr[WriteIndex], temp);
+            }
          }
          break;
 
          case sz32:
          {
-            writegenl(WriteIndex, temp);
+            if (gentype[WriteIndex]) *((uint32_t*) genaddr[WriteIndex]) = temp;
+            else
+            {
+               if (sdiff[WriteIndex]) genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
+               write_x32(genaddr[WriteIndex], temp);
+            }
          }
          break;
       }
