@@ -791,22 +791,19 @@ void n32016_exec(uint32_t tubecycles)
          {
             switch ((opcode >> 7) & 0xF)
             {
-               case 0x8:
-                  writegenl(0, fp);
-                  break;
-               case 0x9:
-                  writegenl(0, sp[SP]);
-                  break;
-               case 0xA:
-                  writegenl(0, sb);
-                  break;
-               case 0xF:
-                  writegenl(0, mod);
-                  break;
+               case 0x8: temp = fp;       break;
+               case 0x9: temp = sp[SP];   break;
+               case 0xA: temp = sb;       break;
+               case 0xF: temp = mod;      break;
+
                default:
+               {
                   n32016_dumpregs("Bad SPR reg");
-                  break;
+               }
+               break;
             }
+
+            WriteSize = sz32;
          }
          break;
 
@@ -1149,53 +1146,52 @@ void n32016_exec(uint32_t tubecycles)
 
          case ROT:
          {
+            temp2 = ReadGen(0, sz8);
+
             switch (LookUp.p.Size)
             {
                case sz8:
                {
-                  temp = ReadGen(0, sz8);
-                  if (temp & 0xE0)
+                  if (temp2 & 0xE0)
                   {
-                     temp |= 0xE0;
-                     temp = ((temp ^ 0xFF) + 1);
-                     temp = 8 - temp;
+                     temp2 |= 0xE0;
+                     temp2 = ((temp2 ^ 0xFF) + 1);
+                     temp2 = 8 - temp2;
                   }
-                  temp2 = ReadGen(1, sz8);
-                  temp2 = (temp2 << temp) | (temp2 >> (8 - temp));
-                  writegenb(1, temp2);
+                  temp = ReadGen(1, sz8);
+                  temp = (temp << temp2) | (temp >> (8 - temp2));
                }
                break;
 
                case sz16:
                {
-                  temp = ReadGen(0, sz8);
-                  if (temp & 0xE0) 
+                  if (temp2 & 0xE0) 
                   {
-                     temp |= 0xE0;
-                     temp = ((temp ^ 0xFF) + 1);
-                     temp = 16 - temp;
+                     temp2 |= 0xE0;
+                     temp2 = ((temp2 ^ 0xFF) + 1);
+                     temp2 = 16 - temp2;
                   }
-                  temp2 = ReadGen(1, sz16);
-                  temp2 = (temp2 << temp) | (temp2 >> (16 - temp));
-                  writegenw(1, temp2);
+                  temp = ReadGen(1, sz16);
+                  temp = (temp << temp2) | (temp >> (16 - temp2));
                }
                break;
 
                case sz32:
                {
-                  temp = ReadGen(0, sz8);
-                  if (temp & 0xE0)
+                  if (temp2 & 0xE0)
                   {
-                     temp |= 0xE0;
-                     temp = ((temp ^ 0xFF) + 1);
-                     temp = 32 - temp;
+                     temp2 |= 0xE0;
+                     temp2 = ((temp2 ^ 0xFF) + 1);
+                     temp2 = 32 - temp2;
                   }
-                  temp2 = ReadGen(1, sz32);
-                  temp2 = (temp2 << temp) | (temp2 >> (32 - temp));
-                  writegenl(1, temp2);
+                  temp = ReadGen(1, sz32);
+                  temp = (temp << temp2) | (temp >> (32 - temp2));
                }
                break;
             }
+
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
          }
          break;
 
@@ -1559,7 +1555,8 @@ void n32016_exec(uint32_t tubecycles)
             SIGN_EXTEND(temp);                                    // Editor need the useless semicolon
             if (sdiff[1])
                sdiff[1] = 4;
-            writegenw(1, temp);
+            WriteSize = sz16;
+            WriteIndex = 1;
          }
          break;
 
@@ -1569,7 +1566,8 @@ void n32016_exec(uint32_t tubecycles)
             SIGN_EXTEND(temp);
             if (sdiff[1])
                sdiff[1] = 4;
-            writegenl(1, temp);
+            WriteSize = sz32;
+            WriteIndex = 1;
          }
          break;
 
@@ -1578,7 +1576,8 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(0, sz8);
             if (sdiff[1])
                sdiff[1] = 4;
-            writegenw(1, temp);
+            WriteSize = sz16;
+            WriteIndex = 1;
          }
          break;
 
