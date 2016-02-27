@@ -127,156 +127,6 @@ int sdiff[2] =
 
 uint32_t nsimm[2];
 
-static void getgen(int gen, int c)
-{
-  uint32_t temp, temp2;
-
-  gen &= 0x1F;
-
-  if ((gen & 0x1C) == 0x1C)
-  {
-     genindex[c] = read_x8(pc);
-     pc++;
-  }
-  
-  StoreRegisters(c, gen);
-  switch (gen)
-  {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-    case 7:
-      gentype[c] = 1;
-      genaddr[c] = (uint32_t) & r[gen & 7];
-      break;
-
-    case 8:
-    case 9:
-    case 0xA:
-    case 0xB:
-    case 0xC:
-    case 0xD:
-    case 0xE:
-    case 0xF:
-      gentype[c] = 0;
-      genaddr[c] = r[gen & 7] + getdisp();
-      break;
-
-    case 0x10: // Frame memory relative
-      temp = getdisp();
-      temp2 = getdisp();
-      genaddr[c] = read_x32(fp + temp);
-      genaddr[c] += temp2;
-      gentype[c] = 0;
-      break;
-
-    case 0x11: // Stack memory relative
-      temp = getdisp();
-      temp2 = getdisp();
-      genaddr[c] = read_x32(sp[SP] + temp);
-      genaddr[c] += temp2;
-      gentype[c] = 0;
-      break;
-
-    case 0x12: // Static memory relative
-      temp = getdisp();
-      temp2 = getdisp();
-      genaddr[c] = read_x32(sb + temp);
-      genaddr[c] += temp2;
-      gentype[c] = 0;
-      break;
-
-    case 0x14: // Immediate
-      /*                genaddr[c]=pc;*/
-       gentype[c]=0;
-      gentype[c] = 1;
-      genaddr[c] = (uint32_t) & nsimm[c];
-      // Why can't they just decided on an endian and then stick to it?
-      if (LookUp.p.Size == sz8)
-        nsimm[c] = read_x8(pc);
-      else if (LookUp.p.Size == sz16)
-        nsimm[c] = (read_x8(pc) << 8) | read_x8(pc + 1);
-      else
-        nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
-      pc += (LookUp.p.Size + 1);
-      break;
-
-    case 0x15: // Absolute
-      gentype[c] = 0;
-      genaddr[c] = getdisp();
-      break;
-
-    case 0x16: // External
-      gentype[c] = 0;
-      temp = read_x32(mod + 4);
-      temp += getdisp();
-      temp2 = read_x32(temp);
-      genaddr[c] = temp2 + getdisp();
-      break;
-
-    case 0x17: // Stack
-      gentype[c] = 0;
-      sdiff[c] = (LookUp.p.Size + 1);
-      genaddr[c] = sp[SP];
-      /*                if (c)
-       {
-       sp[SP] -= (LookUp.p.Size + 1);
-       genaddr[c]=sp[SP];
-       }
-       else
-       {
-       genaddr[c]=sp[SP];
-       sp[SP] += (LookUp.p.Size + 1);
-       }*/
-      break;
-
-    case 0x18: // FP relative
-      gentype[c] = 0;
-      genaddr[c] = getdisp() + fp;
-      break;
-    case 0x19: // SP relative
-      gentype[c] = 0;
-      genaddr[c] = getdisp() + sp[SP];
-      break;
-    case 0x1A: // SB relative
-      gentype[c] = 0;
-      genaddr[c] = getdisp() + sb;
-      break;
-    case 0x1B: // PC relative
-      gentype[c] = 0;
-      genaddr[c] = getdisp() + startpc;
-      break;
-
-    case 0x1C: // EA + Rn
-    case 0x1D: // EA + Rn*2
-    case 0x1E: // EA + Rn*4
-    case 0x1F: // EA + Rn*8
-    {
-       uint32_t Shift = gen & 3;
-       getgen(genindex[c] >> 3, c);
-       if (!gentype[c])
-       {
-          genaddr[c] += (r[genindex[c] & 7] << Shift);
-       }
-       else
-       {
-          genaddr[c] = *(uint32_t*) genaddr[c] + (r[genindex[c] & 7] << Shift);
-       }
-
-       gentype[c] = 0;
-    }
-    break;
-
-    default:
-      n32016_dumpregs("Bad NS32016 gen mode");
-		break;
-  }
-}
-
 uint32_t ReadGen(uint32_t c, uint32_t Size)
 {
    uint32_t Temp = 0;
@@ -291,8 +141,8 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
 
       if (sdiff[c])
       {
-         genaddr[c]  = 
-         sp[SP]      = sp[SP] + sdiff[c];
+         genaddr[c]  =
+         sp[SP]      = (sp[SP] + sdiff[c]);
       }
    }
 
@@ -312,6 +162,160 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
    }
 
    return Temp;
+}
+
+static uint32_t getgen(int gen, int c)
+{
+   uint32_t temp, temp2;
+
+   gen &= 0x1F;
+
+   if ((gen & 0x1C) == 0x1C)
+   {
+      genindex[c] = read_x8(pc);
+      pc++;
+   }
+
+   StoreRegisters(c, gen);
+
+   switch (gen)
+   {
+      case 0:
+      case 1:
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+      case 6:
+      case 7:
+         gentype[c] = 1;
+         genaddr[c] = (uint32_t) &r[gen & 7];
+         break;
+
+      case 8:
+      case 9:
+      case 0xA:
+      case 0xB:
+      case 0xC:
+      case 0xD:
+      case 0xE:
+      case 0xF:
+         gentype[c] = 0;
+         genaddr[c] = r[gen & 7] + getdisp();
+         break;
+
+      case 0x10: // Frame memory relative
+         temp = getdisp();
+         temp2 = getdisp();
+         genaddr[c] = read_x32(fp + temp);
+         genaddr[c] += temp2;
+         gentype[c] = 0;
+         break;
+
+      case 0x11: // Stack memory relative
+         temp = getdisp();
+         temp2 = getdisp();
+         genaddr[c] = read_x32(sp[SP] + temp);
+         genaddr[c] += temp2;
+         gentype[c] = 0;
+         break;
+
+      case 0x12: // Static memory relative
+         temp = getdisp();
+         temp2 = getdisp();
+         genaddr[c] = read_x32(sb + temp);
+         genaddr[c] += temp2;
+         gentype[c] = 0;
+         break;
+
+      case 0x14: // Immediate
+      {
+         gentype[c] = 0;
+         gentype[c] = 1;
+         genaddr[c] = (uint32_t) & nsimm[c];
+         // Why can't they just decided on an endian and then stick to it?
+         if (LookUp.p.Size == sz8)
+            nsimm[c] = read_x8(pc);
+         else if (LookUp.p.Size == sz16)
+            nsimm[c] = (read_x8(pc) << 8) | read_x8(pc + 1);
+         else
+            nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
+         pc += (LookUp.p.Size + 1);
+      }
+      break;
+
+      case 0x15: // Absolute
+         gentype[c] = 0;
+         genaddr[c] = getdisp();
+         break;
+
+      case 0x16: // External
+         gentype[c] = 0;
+         temp = read_x32(mod + 4);
+         temp += getdisp();
+         temp2 = read_x32(temp);
+         genaddr[c] = temp2 + getdisp();
+         break;
+
+      case 0x17: // Stack
+         gentype[c] = 0;
+         sdiff[c] = (LookUp.p.Size + 1);
+         genaddr[c] = sp[SP];
+         /*                if (c)
+          {
+          sp[SP] -= (LookUp.p.Size + 1);
+          genaddr[c]=sp[SP];
+          }
+          else
+          {
+          genaddr[c]=sp[SP];
+          sp[SP] += (LookUp.p.Size + 1);
+          }*/
+         break;
+
+      case 0x18: // FP relative
+         gentype[c] = 0;
+         genaddr[c] = getdisp() + fp;
+         break;
+      case 0x19: // SP relative
+         gentype[c] = 0;
+         genaddr[c] = getdisp() + sp[SP];
+         break;
+      case 0x1A: // SB relative
+         gentype[c] = 0;
+         genaddr[c] = getdisp() + sb;
+         break;
+      case 0x1B: // PC relative
+         gentype[c] = 0;
+         genaddr[c] = getdisp() + startpc;
+         break;
+
+      case 0x1C: // EA + Rn
+      case 0x1D: // EA + Rn*2
+      case 0x1E: // EA + Rn*4
+      case 0x1F: // EA + Rn*8
+      {
+         uint32_t Shift = gen & 3;
+         getgen(genindex[c] >> 3, c);
+         if (!gentype[c])
+         {
+            genaddr[c] += (r[genindex[c] & 7] << Shift);
+         }
+         else
+         {
+            genaddr[c] = *(uint32_t*) genaddr[c] + (r[genindex[c] & 7] << Shift);
+         }
+
+         gentype[c] = 0;
+      }
+      break;
+
+      default:
+         n32016_dumpregs("Bad NS32016 gen mode");
+         break;
+   }
+
+   return ReadGen(c, LookUp.p.Size);
 }
 
 uint64_t readgenq(uint32_t c)
@@ -1249,50 +1253,17 @@ void n32016_exec(uint32_t tubecycles)
 
          case LSH:
          {
-            switch (LookUp.p.Size)
-            {
-               case sz8:
-               {
-                  temp = ReadGen(0, sz8);
-                  if (temp & 0xE0)
-                     temp |= 0xE0;
-                  temp2 = ReadGen(1, sz8);
-                  if (temp & 0xE0)
-                     temp2 >>= ((temp ^ 0xFF) + 1);
-                  else
-                     temp2 <<= temp;
-                  writegenb(1, temp2);
-               }
-               break;
+            temp2 = ReadGen(0, sz8);
+            if (temp2 & 0xE0)
+               temp2 |= 0xE0;
+            temp = ReadGen(1, LookUp.p.Size);
+            if (temp2 & 0xE0)
+               temp >>= ((temp2 ^ 0xFF) + 1);
+            else
+               temp <<= temp2;
 
-               case sz16:
-               {
-                  temp = ReadGen(0, sz8);
-                  if (temp & 0xE0)
-                     temp |= 0xE0;
-                  temp2 = ReadGen(1, sz16);
-                  if (temp & 0xE0)
-                     temp2 >>= ((temp ^ 0xFF) + 1);
-                  else
-                     temp2 <<= temp;
-                  writegenw(1, temp2);
-               }
-               break;
-
-               case sz32:
-               {
-                  temp = ReadGen(0, sz8);
-                  if (temp & 0xE0)
-                     temp |= 0xE0;
-                  temp2 = ReadGen(1, sz32);
-                  if (temp & 0xE0)
-                     temp2 >>= ((temp ^ 0xFF) + 1);
-                  else
-                     temp2 <<= temp;
-                  writegenl(1, temp2);
-               }
-               break;
-            }
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
          }
          break;
 
