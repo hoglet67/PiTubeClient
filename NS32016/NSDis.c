@@ -158,14 +158,16 @@ void RegLookUp(void)
    }
 }
 
-void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Postfix)
+void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction)
 {
 	if (pc < MEG16)
 	{
       const char* pText = "Bad NS32016 opcode";
-      if (Function < InstructionCount)
+      uint32_t Postfix = pInstruction->p.Size;
+
+      if (pInstruction->p.Function < InstructionCount)
       {
-         pText = InstuctionText[Function];
+         pText = InstuctionText[pInstruction->p.Function];
 
          if ((opcode & 0x80FF) == 0x800E)
          {
@@ -176,14 +178,6 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Pos
       printf("#%08u PC:%06X INST:%08X %s%s", ++OpCount, pc, opcode, pText, PostfixLookup(Postfix));
       RegLookUp();
       printf("\n");
-
-#if 0
-      if ((OpCount & 0xF) == 0)
-      {
-         printf(".\n");
-      }
-#endif
-
 		return;
 	}
 
@@ -240,7 +234,6 @@ uint8_t GetFunction(uint8_t FirstByte)
 
    return FormatBad;
 }
-
 
 void n32016_build_matrix()
 {

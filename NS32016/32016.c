@@ -12,8 +12,7 @@
 #include "PandoraV0_61.h"
 
 int nsoutput = 0;
-int nscfg;
-
+uint32_t nscfg;
 uint32_t Trace = 0;
 uint32_t tube_irq = 0;
 uint32_t r[8];
@@ -651,22 +650,26 @@ void n32016_exec(uint32_t tubecycles)
 
    while (tubecycles > 0)
    {
-      sdiff[0] = sdiff[1] = 0;
-      startpc = pc;
+      sdiff[0] = 
+      sdiff[1] = 0;
+      startpc  = pc;
       ClearRegs();
       opcode = read_x32(pc);
 
-      //if (startpc == 0x1C11)
-      //{
-      //   Trace = 1;
-      //}
+#if 0
+      // Useful way to be able to get a breakpoint on a particular instruction
+      if (startpc == 0x1C11)
+      {
+         Trace = 1;
+      }
+#endif
 
       LookUp.p.Function = FunctionLookup[opcode & 0xFF];
       uint32_t Format   = LookUp.p.Function >> 4;
 
-      pc += FormatSizes[Format];
-      WriteSize = szVaries;
-      WriteIndex = 0; // default to writing operand 0
+      pc += FormatSizes[Format];                                        // Add the basic number of bytes for a particular instruction
+      WriteSize = szVaries;                                             // The size a result may be written as
+      WriteIndex = 0;                                                   // Default to writing operand 0
 
       switch (Format)
       {
@@ -685,8 +688,8 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format3:
          {
-            LookUp.p.Size = opcode & 0x03;
             LookUp.p.Function += ((opcode >> 7) & 0x0F);
+            LookUp.p.Size = opcode & 0x03;
             getgen(opcode >> 11, 0);
          }
          break;
@@ -703,7 +706,6 @@ void n32016_exec(uint32_t tubecycles)
          {
             LookUp.p.Function += ((opcode >> 10) & 0x0F);
             LookUp.p.Size = (opcode & BIT(Translation)) ? sz8 : ((opcode >> 8) & 3);
-            temp2 = (opcode >> 15) & 0xF;
          }
          break;
 
@@ -813,7 +815,7 @@ void n32016_exec(uint32_t tubecycles)
          break;
       }
 
-      ShowInstruction(startpc, opcode, LookUp.p.Function, LookUp.p.Size);
+      ShowInstruction(startpc, opcode, &LookUp);
 
 #ifdef TEST_SUITE
       if (startpc == 0x1C95)
@@ -829,11 +831,205 @@ void n32016_exec(uint32_t tubecycles)
 
       switch (LookUp.p.Function)
       {
-         case SETCFG:
+         case BEQ:
+            if (psr & Z_FLAG)
+               pc = temp;
+            break;
+
+         case BNE:
+            if (!(psr & Z_FLAG))
+               pc = temp;
+            break;
+
+         case BH:
+            if (psr & L_FLAG)
+               pc = temp;
+            break;
+
+         case BLS:
+            if (!(psr & L_FLAG))
+               pc = temp;
+            break;
+
+         case BGT:
+            if (psr & N_FLAG)
+               pc = temp;
+            break;
+
+         case BLE:
+            if (!(psr & N_FLAG))
+               pc = temp;
+            break;
+
+         case BFS:
+            if (psr & F_FLAG)
+               pc = temp;
+            break;
+
+         case BFC:
+            if (!(psr & F_FLAG))
+               pc = temp;
+            break;
+
+         case BLO:
+            if (!(psr & (L_FLAG | Z_FLAG)))
+               pc = temp;
+            break;
+
+         case BHS:
+            if (psr & (L_FLAG | Z_FLAG))
+               pc = temp;
+            break;
+
+         case BLT:
+            if (!(psr & (N_FLAG | Z_FLAG)))
+               pc = temp;
+            break;
+
+         case BGE:
+            if (psr & (N_FLAG | Z_FLAG))
+               pc = temp;
+            break;
+
+         case BR:
+            pc = temp;
+            break;
+
+         case BSR:
          {
-            nscfg = temp;
+            temp = getdisp();
+            pushd(pc);
+            pc = startpc + temp;
          }
          break;
+
+         case RET:
+         {
+            temp = getdisp();
+            pc = popd();
+            sp[SP] += temp;
+         }
+         break;
+
+         case CXP:
+            temp = getdisp();
+            pushw(0);
+            pushw(mod);
+            pushd(pc);
+            temp2 = read_x32(mod + 4) + (4 * temp);
+            temp = read_x32(temp2);
+            mod = temp & 0xFFFF;
+            sb = read_x32(mod);
+            pc = read_x32(mod + 8) + (temp >> 16);
+            break;
+
+         case RXP:
+            temp = getdisp();
+            pc = popd();
+            temp2 = popd();
+            mod = temp2 & 0xFFFF;
+            sp[SP] += temp;
+            sb = read_x32(mod);
+            break;
+
+         case RETT:
+            temp = getdisp();
+            pc = popd();
+            mod = popw();
+            psr = popw();
+            sp[SP] += temp;
+            sb = read_x32(mod);
+            break;
+
+         case RETI:
+            printf("RETI ????");
+            break;
+
+         case SAVE:
+         {
+            int c;
+
+            temp = read_x8(pc);
+            pc++;
+
+            for (c = 0; c < 8; c++)
+            {
+               if (temp & BIT(c))
+               {
+                  pushd(r[c]);
+               }
+            }
+         }
+         break;
+
+         case RESTORE:
+         {
+            int c;
+            temp = read_x8(pc);
+            pc++;
+            for (c = 0; c < 8; c++)
+            {
+               if (temp & BIT(c))
+                  r[c ^ 7] = popd(r[c]);
+            }
+         }
+         break;
+
+         case ENTER:
+         {
+            int c;
+
+            temp = read_x8(pc);
+            pc++;
+            temp2 = getdisp();
+            pushd(fp);
+            fp = sp[SP];
+            sp[SP] -= temp2;
+
+            for (c = 0; c < 8; c++)
+            {
+               if (temp & BIT(c))
+               {
+                  pushd(r[c]);
+               }
+            }
+         }
+         break;
+
+         case EXIT:
+         {
+            int c;
+            temp = read_x8(pc);
+            pc++;
+            for (c = 0; c < 8; c++)
+            {
+               if (temp & BIT(c))
+               {
+                  r[c ^ 7] = popd(r[c]);
+               }
+            }
+            sp[SP] = fp;
+            fp = popd();
+         }
+         break;
+
+         case NOP:
+            break;
+
+         case SVC:
+            temp = psr;
+            psr &= ~0x700;
+            temp = read_x32(intbase + (5 * 4));
+            mod = temp & 0xFFFF;
+            temp3 = temp >> 16;
+            sb = read_x32(mod);
+            temp2 = read_x32(mod + 8);
+            pc = temp2 + temp3;
+            break;
+
+         case BPT:
+            printf("Breakpoint Trap\n");
+            break;
 
          case ADDQ:
          {
@@ -841,16 +1037,6 @@ void n32016_exec(uint32_t tubecycles)
             NIBBLE_EXTEND(temp2);
             temp = ReadGen(0, LookUp.p.Size);
 
-            update_add_flags(temp, temp2, 0);
-            temp += temp2;
-            WriteSize = LookUp.p.Size;
-         }
-         break;
-
-         case ADD: // ADD
-         {
-            temp = ReadGen(0, LookUp.p.Size);
-            temp2 = ReadGen(1, LookUp.p.Size);
             update_add_flags(temp, temp2, 0);
             temp += temp2;
             WriteSize = LookUp.p.Size;
@@ -964,7 +1150,7 @@ void n32016_exec(uint32_t tubecycles)
             WriteSize = LookUp.p.Size;
          break;
 
-         case ACB: // ACB
+         case ACB:
             temp2 = (opcode >> 7) & 0xF;
             NIBBLE_EXTEND(temp2)
             ;
@@ -1038,7 +1224,79 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         case CMP: // CMP
+         case CXPD:
+         {
+            temp = ReadGen(0, sz32);
+            pushw(0);
+            pushw(mod);
+            pushd(pc);
+            mod = temp & 0xFFFF;
+            temp3 = temp >> 16;
+            sb = read_x32(mod);
+            temp2 = read_x32(mod + 8);
+            pc = temp2 + temp3;
+         }
+         break;
+
+         case BICPSR:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            psr &= ~temp;
+         }
+         break;
+
+         case JUMP:
+         {
+            if (gentype[0])
+               pc = *(uint32_t *) genaddr[0];
+            else
+               pc = genaddr[0];
+         }
+         break;
+
+         case BISPSR:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            psr |= temp;
+         }
+         break;
+
+         case ADJSP:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            SIGN_EXTEND(temp);
+            sp[SP] -= temp;
+         }
+         break;
+
+         case JSR:
+         {
+            pushd(pc);
+            pc = ReadGen(0, sz32);
+         }
+         break;
+
+         case CASE:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+
+            if (temp & 0x80)
+               temp |= 0xFFFFFF00;
+            pc = startpc + temp;
+         }
+         break;
+
+         case ADD:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
+            update_add_flags(temp, temp2, 0);
+            temp += temp2;
+            WriteSize = LookUp.p.Size;
+         }
+         break;
+
+         case CMP:
          {
             temp2 = ReadGen(0, LookUp.p.Size);
             temp = ReadGen(1, LookUp.p.Size);
@@ -1047,7 +1305,7 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         case BIC: // BIC
+         case BIC:
             temp = ReadGen(0, LookUp.p.Size);
             temp2 = ReadGen(1, LookUp.p.Size);
 
@@ -1055,7 +1313,7 @@ void n32016_exec(uint32_t tubecycles)
             WriteSize = LookUp.p.Size;
          break;
 
-         case ADDC: // ADDC 
+         case ADDC:
             temp = ReadGen(0, LookUp.p.Size);
             temp2 = ReadGen(1, LookUp.p.Size);
             temp3 = (psr & C_FLAG) ? 1 : 0;
@@ -1191,6 +1449,13 @@ void n32016_exec(uint32_t tubecycles)
 
             StringRegisterUpdate(opcode);
             pc = startpc; // Not finsihed so come back again!
+         }
+         break;
+
+         case SETCFG:
+         {
+            pc++;                                                       // 32 Bit instuction so increment the pc
+            nscfg = opcode;                                             // Store the whole opcode as this includes the oprions
          }
          break;
 
@@ -1382,6 +1647,17 @@ void n32016_exec(uint32_t tubecycles)
             WriteIndex = 1;
          break;
 
+         case NEG:
+         {
+            temp = 0;
+            temp2 = ReadGen(0, LookUp.p.Size);
+            update_sub_flags(temp, temp2, 0);
+            temp -= temp2;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+         }
+         break;
+
          case NOT:
          {
             temp = ReadGen(0, LookUp.p.Size);
@@ -1391,12 +1667,16 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         case NEG:
+         case SUBP:
          {
-            temp = 0;
+            uint32_t carry = (psr & C_FLAG) ? 1 : 0;
             temp2 = ReadGen(0, LookUp.p.Size);
-            update_sub_flags(temp, temp2, 0);
-            temp -= temp2;
+            temp = ReadGen(1, LookUp.p.Size);
+            temp = bcd_sub(temp, temp2, LookUp.p.Size, &carry);
+            if (carry)
+               psr |= C_FLAG;
+            else
+               psr &= ~C_FLAG;
             WriteSize = LookUp.p.Size;
             WriteIndex = 1;
          }
@@ -1460,76 +1740,21 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         case CXPD:
+         case ADDP:
          {
-            temp = ReadGen(0, sz32);
-            pushw(0);
-            pushw(mod);
-            pushd(pc);
-            mod = temp & 0xFFFF;
-            temp3 = temp >> 16;
-            sb = read_x32(mod);
-            temp2 = read_x32(mod + 8);
-            pc = temp2 + temp3;
-         }
-         break;
-
-         case BICPSR:
-         {
-            temp = ReadGen(0, LookUp.p.Size);
-            psr &= ~temp;
-         }
-         break;
-
-         case JUMP:
-         {
-            if (gentype[0])
-               pc = *(uint32_t *) genaddr[0];
+            uint32_t carry = (psr & C_FLAG) ? 1 : 0;
+            temp2 = ReadGen(0, LookUp.p.Size);
+            temp = ReadGen(1, LookUp.p.Size);
+            temp = bcd_add(temp, temp2, LookUp.p.Size, &carry);
+            if (carry)
+               psr |= C_FLAG;
             else
-               pc = genaddr[0];
+               psr &= ~C_FLAG;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
          }
          break;
-
-         case BISPSR:
-         {
-            temp = ReadGen(0, LookUp.p.Size);
-            psr |= temp;
-         }
-         break;
-
-         case ADJSP:
-         {
-            temp = ReadGen(0, LookUp.p.Size);
-            SIGN_EXTEND(temp);
-            sp[SP] -= temp;
-         }
-         break;
-
-         case JSR:
-         {
-            pushd(pc);
-            pc = ReadGen(0, sz32);
-         }
-         break;
-
-         case CASE:
-         {
-            temp = ReadGen(0, LookUp.p.Size);
-
-            if (temp & 0x80)
-               temp |= 0xFFFFFF00;
-            pc = startpc + temp;
-         }
-         break;
-
-#if 0 
-            //OLD 32 bit Version
-            case 0xA:// ADJSP
-            temp2 = ReadGen(0, sz32);
-            sp[SP] -= temp2;
-            break;
-#endif
-
+ 
          case MOVM:
          {
             temp = getdisp() + (LookUp.p.Size + 1); // disp of 0 means move 1 byte
@@ -1647,17 +1872,6 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         case MOVXiD:
-         {
-            temp = ReadGen(0, LookUp.p.Size);
-            SIGN_EXTEND(temp);
-            if (sdiff[1])
-               sdiff[1] = 4;
-            WriteSize = sz32;
-            WriteIndex = 1;
-         }
-         break;
-
          case MOVZBW:
          {
             temp = ReadGen(0, sz8);
@@ -1671,6 +1885,17 @@ void n32016_exec(uint32_t tubecycles)
          case MOVZiD:
          {
             temp = ReadGen(0, LookUp.p.Size);
+            if (sdiff[1])
+               sdiff[1] = 4;
+            WriteSize = sz32;
+            WriteIndex = 1;
+         }
+         break;
+
+         case MOVXiD:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            SIGN_EXTEND(temp);
             if (sdiff[1])
                sdiff[1] = 4;
             WriteSize = sz32;
@@ -1692,6 +1917,16 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
+         case MUL:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
+            temp *= temp2;
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+         }
+         break;
+
          case DEI:
          {
             int size = (LookUp.p.Size + 1) << 3; // 8, 16  or 32 
@@ -1701,35 +1936,26 @@ void n32016_exec(uint32_t tubecycles)
                n32016_dumpregs("Divide by zero - DEI CE");
                break;
             }
+
             temp64 = readgenq(1); // dst
             switch (LookUp.p.Size)
             {
                case sz8:
                   temp64 = ((temp64 >> 24) & 0xFF00) | (temp64 & 0xFF);
-               break;
+                  break;
 
                case sz16:
                   temp64 = ((temp64 >> 16) & 0xFFFF0000) | (temp64 & 0xFFFF);
-               break;
+                  break;
             }
-            printf("temp = %08x\n", temp);
-            printf("temp64 = %016" PRIu64 "\n", temp64);
+            // printf("temp = %08x\n", temp);
+            // printf("temp64 = %016" PRIu64 "\n", temp64);
             temp64 = ((temp64 / temp) << size) | (temp64 % temp);
-            printf("result = %016" PRIu64 "\n", temp64);
+            //printf("result = %016" PRIu64 "\n", temp64);
             // Handle the writing to the upper half of dst locally here
             handle_mei_dei_upper_write(temp64);
             // Allow fallthrough write logic to write the lower half of dst
             temp = temp64;
-            WriteSize = LookUp.p.Size;
-            WriteIndex = 1;
-         }
-         break;
-
-         case MUL:
-         {
-            temp = ReadGen(0, LookUp.p.Size);
-            temp2 = ReadGen(1, LookUp.p.Size);
-            temp *= temp2;
             WriteSize = LookUp.p.Size;
             WriteIndex = 1;
          }
@@ -1744,6 +1970,7 @@ void n32016_exec(uint32_t tubecycles)
                n32016_dumpregs("Divide by zero - QUO CE");
                break;
             }
+
             switch (LookUp.p.Size)
             {
                case sz8:
@@ -1792,21 +2019,6 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         case DIV:
-         {
-            temp = ReadGen(0, LookUp.p.Size);
-            temp2 = ReadGen(1, LookUp.p.Size);
-            if (temp == 0)
-            {
-               n32016_dumpregs("Divide by zero - DIV CE");
-               break;
-            }
-            temp = div_operator(temp2, temp);
-            WriteSize = LookUp.p.Size;
-            WriteIndex = 1;
-         }
-         break;
-
          case MOD:
          {
             temp = ReadGen(0, LookUp.p.Size);
@@ -1817,6 +2029,22 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
             temp = mod_operator(temp2, temp);
+            WriteSize = LookUp.p.Size;
+            WriteIndex = 1;
+         }
+         break;
+
+         case DIV:
+         {
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
+            if (temp == 0)
+            {
+               n32016_dumpregs("Divide by zero - DIV CE");
+               break;
+            }
+
+            temp = div_operator(temp2, temp);
             WriteSize = LookUp.p.Size;
             WriteIndex = 1;
          }
@@ -1958,7 +2186,10 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(1, sz8); // offset is always 8 bits (also the result)
             // find the first set bit, starting at offset
             for (; temp < numbits && !(temp2 & BIT(temp)); temp++)
-               ;
+            {
+               continue;                  // No Body!
+            }
+
             if (temp < numbits)
             {
                // a set bit was found, return it in the offset operand
@@ -1972,236 +2203,6 @@ void n32016_exec(uint32_t tubecycles)
             }
             WriteIndex = 1;
             WriteSize = sz8;
-         }
-         break;
-
-         case BSR:
-            temp = getdisp();
-            pushd(pc);
-            pc = startpc + temp;
-         break;
-
-         case RET:
-            temp = getdisp();
-            pc = popd();
-            sp[SP] += temp;
-         break;
-
-         case CXP:
-            temp = getdisp();
-            pushw(0);
-            pushw(mod);
-            pushd(pc);
-            temp2 = read_x32(mod + 4) + (4 * temp);
-            temp = read_x32(temp2);
-            mod = temp & 0xFFFF;
-            sb = read_x32(mod);
-            pc = read_x32(mod + 8) + (temp >> 16);
-         break;
-
-         case RXP:
-            temp = getdisp();
-            pc = popd();
-            temp2 = popd();
-            mod = temp2 & 0xFFFF;
-            sp[SP] += temp;
-            sb = read_x32(mod);
-         break;
-
-         case RETT:
-            temp = getdisp();
-            pc = popd();
-            mod = popw();
-            psr = popw();
-            sp[SP] += temp;
-            sb = read_x32(mod);
-         break;
-
-         case RETI:
-            printf("RETI ????");
-         break;
-
-         case SAVE:
-         {
-            int c;
-
-            temp = read_x8(pc);
-            pc++;
-
-            for (c = 0; c < 8; c++)
-            {
-               if (temp & BIT(c))
-               {
-                  pushd(r[c]);
-               }
-            }
-         }
-         break;
-
-         case RESTORE:
-         {
-            int c;
-            temp = read_x8(pc);
-            pc++;
-            for (c = 0; c < 8; c++)
-            {
-               if (temp & BIT(c))
-                  r[c ^ 7] = popd(r[c]);
-            }
-         }
-         break;
-
-         case ENTER:
-         {
-            int c;
-
-            temp = read_x8(pc);
-            pc++;
-            temp2 = getdisp();
-            pushd(fp);
-            fp = sp[SP];
-            sp[SP] -= temp2;
-
-            for (c = 0; c < 8; c++)
-            {
-               if (temp & BIT(c))
-               {
-                  pushd(r[c]);
-               }
-            }
-         }
-         break;
-
-         case EXIT:
-         {
-            int c;
-            temp = read_x8(pc);
-            pc++;
-            for (c = 0; c < 8; c++)
-            {
-               if (temp & BIT(c))
-               {
-                  r[c ^ 7] = popd(r[c]);
-               }
-            }
-            sp[SP] = fp;
-            fp = popd();
-         }
-         break;
-
-         case NOP:
-            //temp = read_x8(pc);
-            //pc++;
-         break;
-
-         case SVC:
-            temp = psr;
-            psr &= ~0x700;
-            temp = read_x32(intbase + (5 * 4));
-            mod = temp & 0xFFFF;
-            temp3 = temp >> 16;
-            sb = read_x32(mod);
-            temp2 = read_x32(mod + 8);
-            pc = temp2 + temp3;
-         break;
-
-         case BPT:
-            //temp = read_x8(pc);
-            //pc++;
-            printf("BPT ??????\n");
-         break;
-
-         case BEQ: // BEQ
-            if (psr & Z_FLAG)
-               pc = temp;
-         break;
-
-         case BNE: // BNE
-            if (!(psr & Z_FLAG))
-               pc = temp;
-         break;
-
-         case BH: // BH
-            if (psr & L_FLAG)
-               pc = temp;
-         break;
-
-         case BLS: // BLS
-            if (!(psr & L_FLAG))
-               pc = temp;
-         break;
-
-         case BGT: // BGT
-            if (psr & N_FLAG)
-               pc = temp;
-         break;
-
-         case BLE: // BLE
-            if (!(psr & N_FLAG))
-               pc = temp;
-         break;
-
-         case BFS: // BFS
-            if (psr & F_FLAG)
-               pc = temp;
-         break;
-
-         case BFC: // BFC
-            if (!(psr & F_FLAG))
-               pc = temp;
-         break;
-
-         case BLO: // BLO
-            if (!(psr & (L_FLAG | Z_FLAG)))
-               pc = temp;
-         break;
-
-         case BHS: // BHS
-            if (psr & (L_FLAG | Z_FLAG))
-               pc = temp;
-         break;
-
-         case BLT: // BLT
-            if (!(psr & (N_FLAG | Z_FLAG)))
-               pc = temp;
-         break;
-
-         case BGE: // BGE
-            if (psr & (N_FLAG | Z_FLAG))
-               pc = temp;
-         break;
-
-         case BR: // BR
-            pc = temp;
-         break;
-
-         case ADDP: /*ADDP*/
-         {
-            uint32_t carry = (psr & C_FLAG) ? 1 : 0;
-            temp2 = ReadGen(0, LookUp.p.Size);
-            temp = ReadGen(1, LookUp.p.Size);
-            temp = bcd_add(temp, temp2, LookUp.p.Size, &carry);
-            if (carry)
-               psr |= C_FLAG;
-            else
-               psr &= ~C_FLAG;
-            WriteSize = LookUp.p.Size;
-            WriteIndex = 1;
-         }
-         break;
-
-         case SUBP: /*SUBP*/
-         {
-            uint32_t carry = (psr & C_FLAG) ? 1 : 0;
-            temp2 = ReadGen(0, LookUp.p.Size);
-            temp = ReadGen(1, LookUp.p.Size);
-            temp = bcd_sub(temp, temp2, LookUp.p.Size, &carry);
-            if (carry)
-               psr |= C_FLAG;
-            else
-               psr &= ~C_FLAG;
-            WriteSize = LookUp.p.Size;
-            WriteIndex = 1;
          }
          break;
 
