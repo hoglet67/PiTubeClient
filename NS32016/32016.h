@@ -232,10 +232,7 @@ typedef union
 	struct
 	{
 		uint8_t Size;
-		uint8_t Function;
-		uint8_t BaseSize;
-		uint8_t Source;
-		uint8_t Destination;		
+		uint8_t Function;		
 	} p;
 
 	uint32_t Whole;
@@ -251,8 +248,9 @@ extern void n32016_dumpregs();
 extern void n32016_build_matrix();
 
 extern uint32_t tube_irq;
-extern DecodeMatrix mat[256];
+uint8_t FunctionLookup[256];
 extern DecodeMatrix LookUp;
 extern uint32_t genaddr[2];
 extern int gentype[2];
+extern const uint8_t FormatSizes[FormatCount];
 

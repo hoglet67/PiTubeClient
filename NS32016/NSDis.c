@@ -6,6 +6,7 @@
 
 uint32_t OpCount = 0;
 uint8_t Regs[2];
+uint8_t FunctionLookup[256];
 
 void StoreRegisters(uint8_t Index, uint8_t Value)
 {
@@ -195,121 +196,60 @@ const uint8_t FormatSizes[FormatCount] =
    1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
 };
 
-#define FUNC(FORMAT, OFFSET) \
-   mat[Index].p.Function   = (((FORMAT) << 4) + (OFFSET)); \
-   mat[Index].p.BaseSize   = FormatSizes[FORMAT]
+#define FUNC(FORMAT, OFFSET) (((FORMAT) << 4) + (OFFSET)) 
+
+uint8_t GetFunction(uint8_t FirstByte)
+{
+   switch (FirstByte & 0x0F)
+   {
+      case 0x0A:     return FUNC(Format0, FirstByte >> 4);
+      case 0x02:     return FUNC(Format1, FirstByte >> 4);
+   
+      case 0x0C:
+      case 0x0D:
+      case 0x0F:
+      {
+         if ((FirstByte & 0x70) != 0x70)
+         {
+            return FUNC(Format2, (FirstByte >> 4) & 0x07);
+         }
+         
+         return FUNC(Format3, 0);
+      }
+      // No break due to return
+   }
+
+   if ((FirstByte & 0x03) != 0x02)
+   {
+      return FUNC(Format4, (FirstByte >> 2) & 0x0F);
+   }
+
+   switch (FirstByte)
+   {
+      case 0x0E:     return FUNC(Format5, 0);          // String instruction
+      case 0x4E:     return FUNC(Format6, 0);
+      case 0xCE:     return FUNC(Format7, 0);
+      CASE4(0x2E):   return FUNC(Format8, 0);
+      case 0x3E:     return FUNC(Format9, 0);
+      case 0x7E:     return FUNC(Format10, 0);
+      case 0xBE:     return FUNC(Format11, 0);
+      case 0xFE:     return FUNC(Format12, 0);
+      case 0x9E:     return FUNC(Format13, 0);
+      case 0x1E:     return FUNC(Format14, 0);
+   }
+
+   return FormatBad;
+}
+
 
 void n32016_build_matrix()
 {
    uint32_t Index;
 
-   memset(mat, 0xFF, sizeof(mat));
+   memset(FunctionLookup, FormatBad, sizeof(FunctionLookup));
 
    for (Index = 0; Index < 256; Index++)
    {
-      switch (Index & 0x0F)
-      {
-         case 0x0A:
-         {
-            FUNC(Format0, Index >> 4);
-            continue;
-         }
-         // No break due to continue
-
-         case 0x02:
-         {
-            FUNC(Format1, Index >> 4);
-            continue;
-         }
-         // No break due to continue
-
-         case 0x0C:
-         case 0x0D:
-         case 0x0F:
-         {
-            if ((Index & 0x70) != 0x70)
-            {
-               FUNC(Format2, (Index >> 4) & 0x07);
-            }
-            else
-            {
-               FUNC(Format3, 0);
-            }
-
-            mat[Index].p.Size = Index & 3;
-            continue;
-         }
-         // No break due to continue
-      }
-
-      if ((Index & 0x03) != 0x02)
-      {
-         FUNC(Format4, (Index >> 2) & 0x0F);
-         mat[Index].p.Size = Index & 3;
-         continue;
-      }
-
-      switch (Index)
-      {
-         case 0x0E:
-         {
-            FUNC(Format5, 0);          // String instruction
-         }
-         break;
-
-         case 0x4E:
-         {
-            FUNC(Format6, 0);
-         }
-         break;
-
-         case 0xCE:
-         {
-            FUNC(Format7, 0);
-         }
-         break;
-
-         CASE4(0x2E):
-         {
-            FUNC(Format8, 0);
-         }
-         break;
-
-         case 0x3E:
-         {
-            FUNC(Format9, 0);
-         }
-         break;
-
-         case 0x7E:
-         {
-            FUNC(Format10, 0);
-         }
-         break;
-
-         case 0xBE:
-         {
-            FUNC(Format11, 0);
-         }
-         break;
-
-         case 0xFE:
-         {
-            FUNC(Format12, 0);
-         }
-         break;
-
-         case 0x9E:
-         {
-            FUNC(Format13, 0);
-         }
-         break;
-
-         case 0x1E:
-         {
-            FUNC(Format14, 0);
-         }
-         break;
-      }
+      FunctionLookup[Index] = GetFunction(Index);
    }
 }

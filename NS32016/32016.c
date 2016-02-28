@@ -23,8 +23,6 @@ uint32_t startpc;
 
 uint32_t genaddr[2];
 int gentype[2];
-
-DecodeMatrix mat[256];
 DecodeMatrix LookUp;
 
 #define SP ((psr & S_FLAG) >> 9)
@@ -663,12 +661,14 @@ void n32016_exec(uint32_t tubecycles)
       //   Trace = 1;
       //}
 
-      LookUp = mat[opcode & 0xFF];
-      pc += LookUp.p.BaseSize;
+      LookUp.p.Function = FunctionLookup[opcode & 0xFF];
+      uint32_t Format   = LookUp.p.Function >> 4;
+
+      pc += FormatSizes[Format];
       WriteSize = szVaries;
       WriteIndex = 0; // default to writing operand 0
 
-      switch (LookUp.p.Function >> 4)
+      switch (Format)
       {
          case Format0:
          {
@@ -678,12 +678,14 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format2:
          {
+            LookUp.p.Size = opcode & 0x03;
             getgen(opcode >> 11, 0);
          }
          break;
 
          case Format3:
          {
+            LookUp.p.Size = opcode & 0x03;
             LookUp.p.Function += ((opcode >> 7) & 0x0F);
             getgen(opcode >> 11, 0);
          }
@@ -691,6 +693,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format4:
          {
+            LookUp.p.Size = opcode & 0x03;
             getgen(opcode >> 11, 1);
             getgen(opcode >> 6, 0);
          }
@@ -2225,7 +2228,7 @@ void n32016_exec(uint32_t tubecycles)
          case sz16:
          {
 #ifdef TEST_SUITE
-            if (gentype[WriteIndex] && (genaddr[WriteIndex] == &r[7]))
+            if (gentype[WriteIndex] && (((uint32_t*) genaddr[WriteIndex]) == &r[7]))
             {
                printf("*** TEST = %u\n", temp);
 #if 0
