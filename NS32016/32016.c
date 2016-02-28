@@ -1823,10 +1823,24 @@ void n32016_exec(uint32_t tubecycles)
          {
             int c;
 
+#if 0
             temp = r[(opcode >> 11) & 7] & 31;
             temp2 = getdisp();
             temp3 = ReadGen(0, sz32);
             temp4 = 0;
+#else            
+            temp4    = 0;
+            temp     = r[(opcode >> 11) & 7];                              // Offset
+            temp2    = getdisp();                                          // Length
+            temp3    = ReadGen(0, sz32);                                   // Base
+ 
+            if (gentype[1] == 0)                                           // If memory loaction
+            {
+               genaddr[WriteIndex] += temp / 8;
+               temp %= 8;                                                  // Offset within te first byte
+            }
+#endif
+
             for (c = 0; c < temp2; c++)
             {
                if (temp3 & BIT((c + temp) & 31))
