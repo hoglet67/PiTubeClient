@@ -668,7 +668,15 @@ void n32016_exec(uint32_t tubecycles)
       LookUp.p.Function = FunctionLookup[opcode & 0xFF];
       uint32_t Format   = LookUp.p.Function >> 4;
 
-      pc += FormatSizes[Format];                                        // Add the basic number of bytes for a particular instruction
+      if (Format < FormatCount)
+      {
+         pc += FormatSizes[Format];                                        // Add the basic number of bytes for a particular instruction
+      }
+      else
+      {
+         n32016_dumpregs("Bad Format");
+      }
+
       WriteSize = szVaries;                                             // The size a result may be written as
       WriteIndex = 0;                                                   // Default to writing operand 0
 
@@ -1455,7 +1463,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case SETCFG:
          {
-            pc++;                                                       // 32 Bit instuction so increment the pc
+            //pc++;                                                       // 32 Bit instuction so increment the pc
             nscfg = opcode;                                             // Store the whole opcode as this includes the oprions
          }
          break;
