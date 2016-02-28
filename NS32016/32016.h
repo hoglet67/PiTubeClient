@@ -16,6 +16,7 @@
 
 #define CASE2(in) case (in): case ((in) | 0x80)
 #define CASE4(in) case (in): case ((in) | 0x40): case ((in) | 0x80): case ((in) | 0xC0)
+#define BIT(in)   (1 <<(in))
 
 #define C_FLAG 0x01
 #define T_FLAG 0x02
@@ -215,8 +216,17 @@ enum DataSize
 {
 	sz8 = 0,
 	sz16 = 1,
+   Translating,
 	sz32 = 3,
 	szVaries = 0xFF,
+};
+
+enum StringBits
+{
+   Translation = 15,
+   Backwards   = 16,
+   UntilMatch  = 17,
+   WhileMatch  = 18
 };
 
 typedef union

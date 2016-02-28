@@ -11,8 +11,9 @@
 #include "mem32016.h"
 #include "PandoraV0_61.h"
 
-int nsoutput = 0;
+#define TEST_SUITE
 
+int nsoutput = 0;
 int nscfg;
 
 uint32_t Trace = 0;
@@ -54,7 +55,10 @@ void dump_mini(void)
    if (Trace)
    {
       printf("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
-      printf("R4=%08X R5=%08X R6=%08X R7=%08X\n\n", r[4], r[5], r[6], r[7]);
+      printf("R4=%08X R5=%08X R6=%08X R7=%08X\n", r[4], r[5], r[6], r[7]);
+      printf("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
+      printf("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
+      printf("\n");
    }
 }
 
@@ -137,6 +141,17 @@ int sdiff[2] =
 
 uint32_t nsimm[2];
 
+uint32_t Truncate(uint32_t Value, uint32_t Size)
+{
+   switch (Size)
+   {
+      case sz8:      return Value & 0x000000FF;
+      case sz16:     return Value & 0x0000FFFF;
+   }
+
+   return Value;
+}
+
 uint32_t ReadGen(uint32_t c, uint32_t Size)
 {
    uint32_t Temp = 0;
@@ -156,22 +171,7 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
       }
    }
 
-   switch (Size)
-   {
-      case sz8:
-      {
-         Temp &= 0xFF;
-      }
-      break;
-
-      case sz16:
-      {
-         Temp &= 0xFFFF;
-      }
-      break;
-   }
-
-   return Temp;
+   return Truncate(Temp, Size);
 }
 
 static uint32_t getgen(int gen, int c)
@@ -487,7 +487,7 @@ static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
 static uint32_t div_operator(uint32_t a, uint32_t b)
 {
    uint32_t ret;
-   int signmask = 1 << ((LookUp.p.Size << 3) + 7);
+   int signmask = BIT((LookUp.p.Size << 3) + 7);
    if ((a & signmask) && !(b & signmask))
    {
       // e.g. a = -16; b =  3 ===> a becomes -18
@@ -582,6 +582,63 @@ uint32_t CompareCommon(uint32_t temp, uint32_t temp2)
    return 0;
 }
 
+uint32_t StringPart2(uint32_t opcode, uint32_t Value)
+{
+   uint32_t Options = (opcode >> 17) & 3;
+
+   Trace = 1;
+
+   if (Options)
+   {
+      uint32_t Compare = Truncate(r[4], LookUp.p.Size);
+
+      if (Options == 1)                                  // While match
+      {
+         if (Value != Compare)
+         {
+            psr |= F_FLAG;                               // Set PSR F Bit
+            return 0;
+         }   
+      }
+
+      if (Options == 3)                                  // Until Match
+      {
+         if (Value == Compare)
+         {
+            psr |= F_FLAG;                               // Set PSR F Bit
+            return 0;
+         }
+      }
+   }
+
+   uint32_t Size = (LookUp.p.Size + 1);
+
+   if (opcode & BIT(Backwards))                          // Adjust R1
+   {
+      r[1] -= Size;
+   }
+   else
+   {
+      r[1] += Size;
+   }
+
+   if (((opcode >> 10) & 0x0F) != (SKPS & 0x0F))
+   {
+      if (opcode & BIT(Backwards))                       // Adjust R2 for all but SKPS
+      {
+         r[2] -= Size;
+      }
+      else
+      {
+         r[2] += Size;
+      }
+   }
+
+   r[0]--;                                               // Adjust R0
+   
+   return 1;
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteSize, WriteIndex;
@@ -595,6 +652,11 @@ void n32016_exec(uint32_t tubecycles)
       startpc = pc;
       ClearRegs();
       opcode = read_x32(pc);
+
+      //if (startpc == 0x1C11)
+      //{
+      //   Trace = 1;
+      //}
 
       LookUp = mat[opcode & 0xFF];
       pc += LookUp.p.BaseSize;
@@ -632,7 +694,7 @@ void n32016_exec(uint32_t tubecycles)
          case Format5:
          {
             LookUp.p.Function += ((opcode >> 10) & 0x0F);
-            LookUp.p.Size = (opcode >> 8) & 3;
+            LookUp.p.Size = (opcode & BIT(Translation)) ? sz8 : ((opcode >> 8) & 3);
             temp2 = (opcode >> 15) & 0xF;
          }
          break;
@@ -745,8 +807,13 @@ void n32016_exec(uint32_t tubecycles)
 
       ShowInstruction(startpc, opcode, LookUp.p.Function, LookUp.p.Size);
 
-#if 1 
-      if (startpc == 0x1CB2)
+#ifdef TEST_SUITE
+      if (startpc == 0x1C95)
+      {
+         n32016_dumpregs("Test Suite Pass!\n");
+      }
+
+      if (startpc == 0x1CAB)
       {
          n32016_dumpregs("Test Suite Failure!\n");
       }
@@ -1040,7 +1107,7 @@ void n32016_exec(uint32_t tubecycles)
                temp2 %= 8;
             }
             psr &= ~F_FLAG;
-            if (temp & (1 << temp2))
+            if (temp & BIT(temp2))
                psr |= F_FLAG;
             break;
 
@@ -1050,68 +1117,27 @@ void n32016_exec(uint32_t tubecycles)
             temp ^= temp2;
             WriteSize = LookUp.p.Size;
             break;
-
- #if 0
-          case MOVS:
-         {
-            if (temp2 & 3)
-            {
-               n32016_dumpregs("Bad NS32016 MOVS %08X");
-            }
-
-            while (r[0])
-            {
-               temp = read_x8(r[1]);
-               r[1]++;
-               if ((temp2 & 0xC) == 0xC && temp == r[4])
-               {
-                  break;
-               }
-               if ((temp2 & 0xC) == 0x4 && temp != r[4])
-               {
-                  break;
-               }
-               write_x8(r[2], temp);
-               r[2]++;
-               r[0]--;
-            }
-         }
-         break;
-
-         case 0x03: // MOVS dword
-            if (temp2)
-            {
-               n32016_dumpregs("Bad NS32016 MOVS");
-               break;
-            }
-            while (r[0])
-            {
-               temp = read_x32(r[1]);
-               r[1] += 4;
-               write_x32(r[2], temp);
-               r[2] += 4;
-               r[0]--;
-            }
-            break;
-#endif
-
+ 
          case MOVS:
          {
-            Trace = 1;
             if (r[0])
             {
-               LookUp.p.Size = 
                temp4 = (LookUp.p.Size + 1);
                temp = read_n(r[1], LookUp.p.Size);
 
-               if (opcode & (1 << 17))                      // While Match
+               if (opcode & BIT(15))                     // Translating
+               {
+                  temp = read_x8(r[3] + temp);           // Lookup the translation
+               }
+
+               if (opcode & BIT(17))                      // While Match
                {
                   if (temp != r[4])
                   {
                      break;
                   }
                }
-               else if (opcode & (1 << 18))                  // Until Match
+               else if (opcode & BIT(18))                  // Until Match
                {
                   if (temp == r[4])
                   {
@@ -1121,7 +1147,7 @@ void n32016_exec(uint32_t tubecycles)
 
                write_Arbitary(r[2], &temp, temp4);
 
-               if (opcode & (1 << 16))                      // Backwards
+               if (opcode & BIT(16))                      // Backwards
                {
                   r[1] -= temp4;
                   r[2] -= temp4;
@@ -1146,20 +1172,31 @@ void n32016_exec(uint32_t tubecycles)
 
          case CMPS:
          {
+            if (r[0] == 0)
+            {
+               psr &= ~F_FLAG;                              // Clear PSR F Bit
+               break;
+            }
+
             if (r[0])
             {
-               psr ^= ~F_FLAG;                              // Clear PSR F Bit
+               temp4 = (LookUp.p.Size + 1);
 
                temp = read_n(r[1], LookUp.p.Size);
             
-               if (opcode & (1 << 17))                      // While Match
+               if (opcode & BIT(15))                     // Translating
+               {
+                  temp = read_x8(r[3] + temp);           // Lookup the translation
+               }
+
+               if (opcode & BIT(17))                      // While Match
                {
                   if (temp != r[4])
                   {
                      break;
                   }
                }
-               else if (opcode & (1 << 18))                  // Until Match
+               else if (opcode & BIT(18))                  // Until Match
                {
                   if (temp == r[4])
                   {
@@ -1174,8 +1211,7 @@ void n32016_exec(uint32_t tubecycles)
                   break;
                }
 
-               temp4 = (LookUp.p.Size + 1);
-               if (opcode & (1 << 16))                      // Backwards
+               if (opcode & BIT(16))                      // Backwards
                {
                   r[1] -= temp4;
                   r[2] -= temp4;
@@ -1196,6 +1232,29 @@ void n32016_exec(uint32_t tubecycles)
             }
             
             pc = startpc;           // Not finsihed so come back again!
+         }
+         break;
+
+         case SKPS:
+         {
+            if (r[0] == 0)
+            {
+               psr &= ~F_FLAG;                              // Clear PSR F Bit
+               break;
+            }
+
+            temp = read_n(r[1], LookUp.p.Size);
+
+            if (opcode & BIT(Translation))
+            {
+               temp = read_x8(r[3] + temp);                 // Lookup the translation
+               write_x8(r[1], temp);                        // Write back
+            }
+
+            if (StringPart2(opcode, temp))
+            {
+               pc = startpc;                                         // Not finsihed so come back again!
+            }
          }
          break;
 
@@ -1344,19 +1403,19 @@ void n32016_exec(uint32_t tubecycles)
             }
             temp = ReadGen(1, WriteSize);
             psr &= ~F_FLAG;
-            if (temp & (1 << temp2))
+            if (temp & BIT(temp2))
                psr |= F_FLAG;
             if (LookUp.p.Function == IBIT)
             {
-               temp ^= 1 << temp2;
+               temp ^= BIT(temp2);
             }
             else if ((LookUp.p.Function == SBIT) || (LookUp.p.Function == SBITI))
             {
-               temp |= 1 << temp2;
+               temp |= BIT(temp2);
             }
             else
             {
-               temp &= ~(1 << temp2);
+               temp &= ~(BIT(temp2));
             }
             WriteIndex = 1;
             break;
@@ -1577,9 +1636,9 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(1, LookUp.p.Size);  // base operand
             for (c = 0; c <= (temp3 & 0x1F); c++)
             {
-               temp2 &= ~(1 << ((c + (temp3 >> 5)) & 31));
-               if (temp & (1 << c))
-                  temp2 |= (1 << ((c + (temp3 >> 5)) & 31));
+               temp2 &= ~(BIT((c + (temp3 >> 5)) & 31));
+               if (temp & BIT(c))
+                  temp2 |= BIT((c + (temp3 >> 5)) & 31);
             }
             temp = temp2;
             WriteSize = LookUp.p.Size;
@@ -1811,8 +1870,8 @@ void n32016_exec(uint32_t tubecycles)
             temp4 = 0;
             for (c = 0; c < temp2; c++)
             {
-               if (temp3 & (1 << ((c + temp) & 31)))
-                  temp4 |= (1 << c);
+               if (temp3 & BIT((c + temp) & 31))
+                  temp4 |= BIT(c);
             }
 
             temp = temp4;
@@ -1847,13 +1906,13 @@ void n32016_exec(uint32_t tubecycles)
                   break;      
                }
 
-               if (Source & (1 << c))
+               if (Source & BIT(c))
                { 
-                  Base |= (1 << (c + Offset));
+                  Base |= BIT(c + Offset);
                }
                else
                {
-                  Base &= ~(1 << (c + Offset));
+                  Base &= ~(BIT(c + Offset));
                }
             }
 
@@ -1924,7 +1983,7 @@ void n32016_exec(uint32_t tubecycles)
                temp2 = ReadGen(0, LookUp.p.Size);        // base is the variable size operand being scanned
                temp  = ReadGen(1, sz8);                  // offset is always 8 bits (also the result)
                // find the first set bit, starting at offset
-               for (;temp < numbits && !(temp2 & (1 << temp)); temp++);
+               for (;temp < numbits && !(temp2 & BIT(temp)); temp++);
                if (temp < numbits)
                {
                   // a set bit was found, return it in the offset operand
@@ -1996,7 +2055,7 @@ void n32016_exec(uint32_t tubecycles)
 
                for (c = 0; c < 8; c++)
                {
-                  if (temp & (1 << c))
+                  if (temp & BIT(c))
                   {
                      pushd(r[c]);
                   }
@@ -2011,7 +2070,7 @@ void n32016_exec(uint32_t tubecycles)
                pc++;
                for (c = 0; c < 8; c++)
                {
-                  if (temp & (1 << c))
+                  if (temp & BIT(c))
                      r[c ^ 7] = popd(r[c]);
                }
             }
@@ -2030,7 +2089,7 @@ void n32016_exec(uint32_t tubecycles)
 
                for (c = 0; c < 8; c++)
                {
-                  if (temp & (1 << c))
+                  if (temp & BIT(c))
                   {
                      pushd(r[c]);
                   }
@@ -2045,7 +2104,7 @@ void n32016_exec(uint32_t tubecycles)
                pc++;
                for (c = 0; c < 8; c++)
                {
-                  if (temp & (1 << c))
+                  if (temp & BIT(c))
                   {
                      r[c ^ 7] = popd(r[c]);
                   }
@@ -2191,10 +2250,16 @@ void n32016_exec(uint32_t tubecycles)
 
          case sz16:
          {
-#if 1
+#ifdef TEST_SUITE
             if (gentype[WriteIndex] && (genaddr[WriteIndex] == &r[7]))
             {
                printf("*** TEST = %u\n", temp);
+#if 0
+               if (temp == 207)
+               {
+                  Trace = 1;
+               }
+#endif
             }
 #endif
             

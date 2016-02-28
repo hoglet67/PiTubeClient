@@ -18,21 +18,15 @@ void ClearRegs(void)
    Regs[1] = 0xFF;
 }
 
-const char* SizeLookup(uint8_t Size)
+const char* PostfixLookup(uint8_t Postfix)
 {
-	switch (Size)
+   switch (Postfix)
 	{
-#if 1
-		case sz8:	return "B";
-		case sz16:	return "W";
-		case sz32:	return "D";
-#else
-      case sz8:	return "B x08";
-      case sz16:	return "W x16";
-      case sz32:	return "D x32";
-#endif
-
-		default:	break;
+		case sz8:	            return "B";
+		case sz16:	            return "W";
+      case Translating:       return "T";
+		case sz32:	            return "D";
+		default:                break;
 	}
 
 	return "";
@@ -108,6 +102,7 @@ const char* InstuctionLookup(uint8_t Function)
 {
 	if (Function < InstructionCount)
 	{
+
 		return InstuctionText[Function];
 	}
 
@@ -162,11 +157,22 @@ void RegLookUp(void)
    }
 }
 
-void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Size)
+void ShowInstruction(uint32_t pc, uint32_t opcode, uint8_t Function, uint8_t Postfix)
 {
 	if (pc < MEG16)
 	{
-      printf("#%08u PC:%06X INST:%08X %s%s", ++OpCount, pc, opcode, InstuctionLookup(Function), SizeLookup(Size));
+      const char* pText = "Bad NS32016 opcode";
+      if (Function < InstructionCount)
+      {
+         pText = InstuctionText[Function];
+
+         if ((opcode & 0x80FF) == 0x800E)
+         {
+            Postfix = Translating;
+         }
+      }
+
+      printf("#%08u PC:%06X INST:%08X %s%s", ++OpCount, pc, opcode, pText, PostfixLookup(Postfix));
       RegLookUp();
       printf("\n");
 

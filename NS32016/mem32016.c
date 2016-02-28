@@ -107,7 +107,7 @@ uint32_t read_x32(uint32_t addr)
 
 uint32_t read_n(uint32_t addr, uint32_t Size)
 {
-   if (Size < sz32)
+   if (Size <= sz32)
    {
       if (addr + Size < IO_BASE)
       {
