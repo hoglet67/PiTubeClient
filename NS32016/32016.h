@@ -247,10 +247,21 @@ extern void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruc
 extern void n32016_dumpregs();
 extern void n32016_build_matrix();
 
+#ifdef PC_SIMULATION
+extern void CloseTrace(void);
+#endif
+
+#ifdef TRACE_TO_FILE
+#define PiTRACE(...) fprintf(pTraceFile, __VA_ARGS__)
+extern FILE *pTraceFile;
+#else
+#define PiTRACE printf
+#endif
+
 extern uint32_t tube_irq;
 uint8_t FunctionLookup[256];
 extern DecodeMatrix LookUp;
 extern uint32_t genaddr[2];
 extern int gentype[2];
-extern const uint8_t FormatSizes[FormatCount];
+extern const uint8_t FormatSizes[FormatCount + 1];
 

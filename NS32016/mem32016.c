@@ -73,7 +73,7 @@ uint8_t read_x8(uint32_t addr)
       return tubeRead(addr >> 1);
    }
 
-   printf("Bad read_x8 @ %06X\n", addr);
+   //PiTRACE("Bad read_x8 @ %06X\n", addr);
    //n32016_dumpregs();
 
    return 0;
@@ -107,6 +107,8 @@ uint32_t read_x32(uint32_t addr)
    return read_x8(addr) | (read_x8(addr + 1) << 8) | (read_x8(addr + 2) << 16) | (read_x8(addr + 3) << 24);
 }
 
+#define TRACE_WRITEs
+
 uint32_t read_n(uint32_t addr, uint32_t Size)
 {
    if (Size <= sz32)
@@ -119,13 +121,17 @@ uint32_t read_n(uint32_t addr, uint32_t Size)
       }
    }
 
-   printf("Bad Read @ %06X\n", addr);
+   PiTRACE("Bad Read @ %06X\n", addr);
    return 0;
 }
 
 void write_x8(uint32_t addr, uint8_t val)
-{
-   //addr &= MEM_MASK;
+{ 
+  //addr &= MEM_MASK;
+
+#ifdef TRACE_WRITEs
+   PiTRACE(" @%06X = %02X\n", addr, val);
+#endif
 
    if (addr <= (RAM_SIZE - sizeof(uint8_t)))
    {
@@ -142,21 +148,25 @@ void write_x8(uint32_t addr, uint8_t val)
    if (addr == 0xF90000)
    {
 #ifdef PANDORA_ROM_PAGE_OUT
-      printf("Pandora ROM no longer occupying the entire memory space!\n")
+      PiTRACE("Pandora ROM no longer occupying the entire memory space!\n")
       memset(ns32016ram, 0, RAM_SIZE);
 #else
-      printf("Pandora ROM writes to 0xF90000\n");
+      PiTRACE("Pandora ROM writes to 0xF90000\n");
 #endif
 
       return;
    }
 
-   printf("Writing outside of RAM @%06X %02X\n", addr, val);
+   PiTRACE("Writing outside of RAM @%06X %02X\n", addr, val);
    //n32016_dumpregs();
 }
 
 void write_x16(uint32_t addr, uint16_t val)
 {
+#ifdef TRACE_WRITEs
+   PiTRACE(" @%06X = %04X\n", addr, val);
+#endif
+
 #ifdef NS_FAST_RAM
    if (addr <= (RAM_SIZE - sizeof(uint16_t)))
    {
@@ -171,6 +181,10 @@ void write_x16(uint32_t addr, uint16_t val)
 
 void write_x32(uint32_t addr, uint32_t val)
 {
+#ifdef TRACE_WRITEs
+   PiTRACE(" @%06X = %08X\n", addr, val);
+#endif
+
 #ifdef NS_FAST_RAM
    if (addr <= (RAM_SIZE - sizeof(uint32_t)))
    {
@@ -187,6 +201,19 @@ void write_x32(uint32_t addr, uint32_t val)
 
 void write_Arbitary(uint32_t addr, void* pData, uint32_t Size)
 {
+#ifdef TRACE_WRITEs
+   uint32_t Index;
+   register uint8_t* pV = (uint8_t*) pData;
+
+   PiTRACE(" @%06X =\n", addr);
+
+   for (Index = 0; Index < Size; Index++)
+   {
+      PiTRACE(" %02X", pV[Index]);
+   }
+   PiTRACE("\n");
+#endif
+
    //addr &= MEM_MASK;
 
 #ifdef NS_FAST_RAM

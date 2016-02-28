@@ -6,20 +6,43 @@
 #include "32016.h"
 #include "mem32016.h"
 
+#ifdef TRACE_TO_FILE
+FILE *pTraceFile = NULL;
+#endif
+
 void tubeWrite(unsigned char Address, unsigned char Data)
 {
-	printf("tubeWrite(%02X, %02X)\n", Address, Data);
+	PiTRACE("tubeWrite(%02X, %02X)\n", Address, Data);
 }
 
 unsigned char tubeRead(unsigned char Address)
 {
-	printf("tubeRead(%02X)\n", Address);
+	PiTRACE("tubeRead(%02X)\n", Address);
 
 	return 0;
 }
 
+void OpenTrace(const char *pFileName)
+{
+#ifdef TRACE_TO_FILE
+   pTraceFile = fopen(pFileName, "wb");
+#endif
+}
+
+void CloseTrace(void)
+{
+#ifdef TRACE_TO_FILE
+   if (pTraceFile)
+   {
+      fclose(pTraceFile);
+      pTraceFile = 0;
+   }
+#endif
+}
+
 int main(int argc, char* argv[])
 {
+   OpenTrace("PandoraTrace.txt");
    init_ram();
 
 #ifdef PANDORA_BASE

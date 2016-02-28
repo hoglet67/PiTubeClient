@@ -120,7 +120,7 @@ void RegLookUp(void)
       {
          if (Regs[Index] < 8)
          {
-            printf(" R%u", Regs[Index]);
+            PiTRACE(" R%u", Regs[Index]);
          }
          else if (Regs[Index] < 16)
          {
@@ -131,24 +131,24 @@ void RegLookUp(void)
             if (gentype[Index] == 0)
             {
                uint32_t  Address = genaddr[Index];
-               printf(" &%06X=", Address);
+               PiTRACE(" &%06X=", Address);
                switch (LookUp.p.Size)
                {
                   case sz8:
                   {
-                     printf("%02X", read_x8(Address));
+                     PiTRACE("%02X", read_x8(Address));
                   }
                   break;
 
                   case sz16:
                   {
-                     printf("%04X", read_x16(Address));
+                     PiTRACE("%04X", read_x16(Address));
                   }
                   break;
 
                   case sz32:
                   {
-                     printf("%08X", read_x32(Address));
+                     PiTRACE("%08X", read_x32(Address));
                   }
                   break; 
                }
@@ -175,19 +175,25 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction)
          }
       }
 
-      printf("#%08u PC:%06X INST:%08X %s%s", ++OpCount, pc, opcode, pText, PostfixLookup(Postfix));
-      RegLookUp();
-      printf("\n");
+      PiTRACE("#%08u PC:%06X INST:%08X %s%s", ++OpCount, pc, opcode, pText, PostfixLookup(Postfix));
+      //RegLookUp();
+      PiTRACE("\n");
+
+      if (OpCount >= 10000)
+      {
+         n32016_dumpregs("Lots of trace data here!");
+      }
+
 		return;
 	}
 
 
-	printf("PC is :%08X ?????\n", pc);
+	PiTRACE("PC is :%08X ?????\n", pc);
 }
 
-const uint8_t FormatSizes[FormatCount] =
+const uint8_t FormatSizes[FormatCount + 1] =
 {
-   1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3
+   1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0
 };
 
 #define FUNC(FORMAT, OFFSET) (((FORMAT) << 4) + (OFFSET)) 

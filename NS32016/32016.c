@@ -49,26 +49,27 @@ void dump_mini(void)
 {
    if (Trace)
    {
-      printf("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
-      printf("R4=%08X R5=%08X R6=%08X R7=%08X\n", r[4], r[5], r[6], r[7]);
-      printf("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
-      printf("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
-      printf("\n");
+      PiTRACE("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
+      PiTRACE("R4=%08X R5=%08X R6=%08X R7=%08X\n", r[4], r[5], r[6], r[7]);
+      PiTRACE("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
+      PiTRACE("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
+      PiTRACE("\n");
    }
 }
 
 void n32016_dumpregs(char* pMessage)
 {
-   printf("%s\n", pMessage);
-   printf("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
-   printf("R4=%08X R5=%08X R6=%08X R7=%08X\n", r[4], r[5], r[6], r[7]);
-   printf("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
-   printf("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
+   PiTRACE("%s\n", pMessage);
+   PiTRACE("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
+   PiTRACE("R4=%08X R5=%08X R6=%08X R7=%08X\n", r[4], r[5], r[6], r[7]);
+   PiTRACE("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
+   PiTRACE("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
 
 #ifdef PC_SIMULATION
 #ifdef WIN32
    system("pause");
 #endif
+   CloseTrace();
    exit(1);
 #endif
 }
@@ -132,8 +133,7 @@ static uint32_t getdisp()
 }
 
 int genindex[2];
-int sdiff[2] =
-{ 0, 0 };
+//int sdiff[2] ={ 0, 0 };
 
 uint32_t nsimm[2];
 
@@ -157,16 +157,19 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
    if (gentype[c])
    {
       Temp = *(uint32_t*) genaddr[c];
+      return Truncate(Temp, Size);
    }
-   else
+     
+   switch (Size)
    {
-      Temp = read_x32(genaddr[c]);
-
-      if (sdiff[c])
-      {
-         genaddr[c] = sp[SP] = (sp[SP] + sdiff[c]);
-      }
+      case sz8:   return read_x8(genaddr[c]);
+      case sz16:  return read_x16(genaddr[c]);
+      case sz32:  return read_x32(genaddr[c]);
    }
+
+#if 0
+   if (sdiff[c]) genaddr[c] = sp[SP] = (sp[SP] + sdiff[c]);
+#endif
 
    return Truncate(Temp, Size);
 }
@@ -266,7 +269,7 @@ static uint32_t getgen(int gen, int c)
 
       case 0x17: // Stack
          gentype[c] = 0;
-         sdiff[c] = (LookUp.p.Size + 1);
+         //sdiff[c] = (LookUp.p.Size + 1);
          genaddr[c] = sp[SP];
          /*                if (c)
           {
@@ -322,7 +325,7 @@ static uint32_t getgen(int gen, int c)
       break;
    }
 
-   return ReadGen(c, LookUp.p.Size);
+   return 0; //ReadGen(c, LookUp.p.Size);
 }
 
 uint64_t readgenq(uint32_t c)
@@ -336,13 +339,9 @@ uint64_t readgenq(uint32_t c)
    else
    {
       temp = read_x32(genaddr[c]);
-      if (sdiff[c])
-         genaddr[c] = sp[SP] = sp[SP] + sdiff[c];
+      //if (sdiff[c]) genaddr[c] = sp[SP] = sp[SP] + sdiff[c];
       temp |= read_x32(genaddr[c]);
-      if (sdiff[c])
-      {
-         genaddr[c] = sp[SP] = sp[SP] + sdiff[c];
-      }
+      //if (sdiff[c]) genaddr[c] = sp[SP] = sp[SP] + sdiff[c];
    }
 
    return temp;
@@ -354,7 +353,7 @@ static uint16_t oldpsr;
 static uint32_t bcd_add_16(uint32_t a, uint32_t b, uint32_t *carry)
 {
    uint32_t t1, t2; // unsigned 32-bit intermediate values
-   //printf("bcd_add_16: in  %08x %08x %08x\n", a, b, *carry);
+   //PiTRACE("bcd_add_16: in  %08x %08x %08x\n", a, b, *carry);
    if (*carry)
    {
       b++; // I'm 90% sure its OK to handle carry this way
@@ -368,14 +367,14 @@ static uint32_t bcd_add_16(uint32_t a, uint32_t b, uint32_t *carry)
    t2 = t1 - t2; // corrected BCD sum
    *carry = (t2 & 0xFFFF0000) ? 1 : 0;
    t2 &= 0xFFFF;
-   //printf("bcd_add_16: out %08x %08x\n", t2, *carry);
+   //PiTRACE("bcd_add_16: out %08x %08x\n", t2, *carry);
    return t2;
 }
 
 static uint32_t bcd_sub_16(uint32_t a, uint32_t b, uint32_t *carry)
 {
    uint32_t t1, t2; // unsigned 32-bit intermediate values
-   //printf("bcd_sub_16: in  %08x %08x %08x\n", a, b, *carry);
+   //PiTRACE("bcd_sub_16: in  %08x %08x %08x\n", a, b, *carry);
    if (*carry)
    {
       b++;
@@ -385,7 +384,7 @@ static uint32_t bcd_sub_16(uint32_t a, uint32_t b, uint32_t *carry)
    t2 = bcd_add_16(t1, 1, carry);
    t2 = bcd_add_16(a, t2, carry);
    *carry = 1 - *carry;
-   //printf("bcd_add_16: out %08x %08x\n", t2, *carry);
+   //PiTRACE("bcd_add_16: out %08x %08x\n", t2, *carry);
    return t2;
 }
 
@@ -466,7 +465,7 @@ static void update_add_flags(uint32_t a, uint32_t b, uint32_t cin)
       }
       break;
    }
-   //printf("ADD FLAGS: C=%d F=%d\n", (psr & C_FLAG) ? 1 : 0, (psr & F_FLAG) ? 1 : 0);
+   //PiTRACE("ADD FLAGS: C=%d F=%d\n", (psr & C_FLAG) ? 1 : 0, (psr & F_FLAG) ? 1 : 0);
 }
 
 static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
@@ -479,7 +478,7 @@ static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
       psr |= C_FLAG;
    if ((b ^ a) & (b ^ diff) & 0x80000000)
       psr |= F_FLAG;
-   //printf("SUB FLAGS: C=%d F=%d\n", (psr & C_FLAG) ? 1 : 0, (psr & F_FLAG) ? 1 : 0);
+   //PiTRACE("SUB FLAGS: C=%d F=%d\n", (psr & C_FLAG) ? 1 : 0, (psr & F_FLAG) ? 1 : 0);
 }
 
 // The difference between DIV and QUO occurs when the result (the quotient) is negative
@@ -651,24 +650,25 @@ void n32016_exec(uint32_t tubecycles)
 
    while (tubecycles > 0)
    {
-      sdiff[0] = 
-      sdiff[1] = 0;
+      //sdiff[0] = sdiff[1] = 0;
       startpc  = pc;
       ClearRegs();
       opcode = read_x32(pc);
 
-#if 0
+#if 1
       // Useful way to be able to get a breakpoint on a particular instruction
-      if (startpc == 0x1C11)
+      //if (startpc == 0)
+      if ((opcode == 0) && (startpc < 20))
       {
-         Trace = 1;
+         n32016_dumpregs("Oops how did I get here!");
+         //Trace = 1;
       }
 #endif
 
       LookUp.p.Function = FunctionLookup[opcode & 0xFF];
       uint32_t Format   = LookUp.p.Function >> 4;
 
-      if (Format < FormatCount)
+      if (Format < (FormatCount + 1))
       {
          pc += FormatSizes[Format];                                        // Add the basic number of bytes for a particular instruction
       }
@@ -679,6 +679,7 @@ void n32016_exec(uint32_t tubecycles)
 
       WriteSize = szVaries;                                             // The size a result may be written as
       WriteIndex = 0;                                                   // Default to writing operand 0
+      LookUp.p.Size = szVaries;
 
       switch (Format)
       {
@@ -951,7 +952,7 @@ void n32016_exec(uint32_t tubecycles)
             break;
 
          case RETI:
-            printf("RETI ????");
+            PiTRACE("RETI ????");
             break;
 
          case SAVE:
@@ -1037,7 +1038,7 @@ void n32016_exec(uint32_t tubecycles)
             break;
 
          case BPT:
-            printf("Breakpoint Trap\n");
+            PiTRACE("Breakpoint Trap\n");
             break;
 
          case ADDQ:
@@ -1222,7 +1223,7 @@ void n32016_exec(uint32_t tubecycles)
                      sb = temp;
                   break;
                   case 0xE:
-                     intbase = temp; // printf("INTBASE %08X %08X\n",temp,pc); 
+                     intbase = temp; // PiTRACE("INTBASE %08X %08X\n",temp,pc); 
                   break;
 
                   default:
@@ -1783,7 +1784,7 @@ void n32016_exec(uint32_t tubecycles)
             temp4 = (LookUp.p.Size + 1); // disp of 0 means move 1 byte/word/dword
             temp3 = (getdisp() / temp4) + 1;
 
-            //printf("CMP Size = %u Count = %u\n", temp4, temp3);
+            //PiTRACE("CMP Size = %u Count = %u\n", temp4, temp3);
             while (temp3--)
             {
                switch (LookUp.p.Size)
@@ -1874,8 +1875,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0, sz8);
             SIGN_EXTEND(temp); // Editor need the useless semicolon
-            if (sdiff[1])
-               sdiff[1] = 4;
+            //if (sdiff[1]) sdiff[1] = 4;
             WriteSize = sz16;
             WriteIndex = 1;
          }
@@ -1884,8 +1884,7 @@ void n32016_exec(uint32_t tubecycles)
          case MOVZBW:
          {
             temp = ReadGen(0, sz8);
-            if (sdiff[1])
-               sdiff[1] = 4;
+            //if (sdiff[1]) sdiff[1] = 4;
             WriteSize = sz16;
             WriteIndex = 1;
          }
@@ -1894,8 +1893,7 @@ void n32016_exec(uint32_t tubecycles)
          case MOVZiD:
          {
             temp = ReadGen(0, LookUp.p.Size);
-            if (sdiff[1])
-               sdiff[1] = 4;
+            //if (sdiff[1])sdiff[1] = 4;
             WriteSize = sz32;
             WriteIndex = 1;
          }
@@ -1905,8 +1903,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0, LookUp.p.Size);
             SIGN_EXTEND(temp);
-            if (sdiff[1])
-               sdiff[1] = 4;
+            //if (sdiff[1])sdiff[1] = 4;
             WriteSize = sz32;
             WriteIndex = 1;
          }
@@ -1957,10 +1954,10 @@ void n32016_exec(uint32_t tubecycles)
                   temp64 = ((temp64 >> 16) & 0xFFFF0000) | (temp64 & 0xFFFF);
                   break;
             }
-            // printf("temp = %08x\n", temp);
-            // printf("temp64 = %016" PRIu64 "\n", temp64);
+            // PiTRACE("temp = %08x\n", temp);
+            // PiTRACE("temp64 = %016" PRIu64 "\n", temp64);
             temp64 = ((temp64 / temp) << size) | (temp64 % temp);
-            //printf("result = %016" PRIu64 "\n", temp64);
+            //PiTRACE("result = %016" PRIu64 "\n", temp64);
             // Handle the writing to the upper half of dst locally here
             handle_mei_dei_upper_write(temp64);
             // Allow fallthrough write logic to write the lower half of dst
@@ -2162,7 +2159,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            //printf("Reg = %u Bounds [%u - %u] Index = %u", 0, temp, temp2, temp3);
+            //PiTRACE("Reg = %u Bounds [%u - %u] Index = %u", 0, temp, temp2, temp3);
 
             if (temp >= temp3 && temp3 >= temp2)
             {
@@ -2220,6 +2217,13 @@ void n32016_exec(uint32_t tubecycles)
          break;
       }
 
+#if 0
+      if (WriteSize == 255)
+      {
+         PiTRACE("\n");
+      }
+#endif
+   
       switch (WriteSize)
       {
          case sz8:
@@ -2228,8 +2232,7 @@ void n32016_exec(uint32_t tubecycles)
                *((uint8_t*) genaddr[WriteIndex]) = temp;
             else
             {
-               if (sdiff[WriteIndex])
-                  genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
+               //if (sdiff[WriteIndex]) genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
                write_x8(genaddr[WriteIndex], temp);
             }
          }
@@ -2240,7 +2243,7 @@ void n32016_exec(uint32_t tubecycles)
 #ifdef TEST_SUITE
             if (gentype[WriteIndex] && (((uint32_t*) genaddr[WriteIndex]) == &r[7]))
             {
-               printf("*** TEST = %u\n", temp);
+               PiTRACE("*** TEST = %u\n", temp);
 #if 0
                if (temp == 207)
                {
@@ -2254,8 +2257,7 @@ void n32016_exec(uint32_t tubecycles)
                *((uint16_t*) genaddr[WriteIndex]) = temp;
             else
             {
-               if (sdiff[WriteIndex])
-                  genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
+               //if (sdiff[WriteIndex])genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
                write_x16(genaddr[WriteIndex], temp);
             }
          }
@@ -2267,8 +2269,7 @@ void n32016_exec(uint32_t tubecycles)
                *((uint32_t*) genaddr[WriteIndex]) = temp;
             else
             {
-               if (sdiff[WriteIndex])
-                  genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
+               //if (sdiff[WriteIndex]) genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
                write_x32(genaddr[WriteIndex], temp);
             }
          }
