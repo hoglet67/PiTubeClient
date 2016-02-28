@@ -11,8 +11,6 @@
 #include "mem32016.h"
 #include "PandoraV0_61.h"
 
-#define TEST_SUITE
-
 int nsoutput = 0;
 int nscfg;
 

@@ -9,7 +9,7 @@
 #endif
 
 //#define PANDORA_ROM_PAGE_OUT
-#define LITTLE_ENDIAN
+#define NS_FAST_RAM
 
 void init_ram(void);
 

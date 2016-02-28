@@ -81,7 +81,7 @@ uint16_t read_x16(uint32_t addr)
 {
    //addr &= MEM_MASK;
 
-#ifdef LITTLE_ENDIAN
+#ifdef NS_FAST_RAM
    if (addr < IO_BASE)
    {
       return *((uint16_t*) &ns32016ram[addr]);
@@ -95,7 +95,7 @@ uint32_t read_x32(uint32_t addr)
 {
    //addr &= MEM_MASK;
 
-#ifdef LITTLE_ENDIAN
+#ifdef NS_FAST_RAM
    if (addr < IO_BASE)
    {
       return *((uint32_t*) &ns32016ram[addr]);
@@ -155,7 +155,7 @@ void write_x8(uint32_t addr, uint8_t val)
 
 void write_x16(uint32_t addr, uint16_t val)
 {
-#ifdef LITTLE_ENDIAN
+#ifdef NS_FAST_RAM
    if (addr <= (RAM_SIZE - sizeof(uint16_t)))
    {
       *((uint16_t*) (&ns32016ram[addr])) = val;
@@ -169,7 +169,7 @@ void write_x16(uint32_t addr, uint16_t val)
 
 void write_x32(uint32_t addr, uint32_t val)
 {
-#ifdef LITTLE_ENDIAN
+#ifdef NS_FAST_RAM
    if (addr <= (RAM_SIZE - sizeof(uint32_t)))
    {
       *((uint32_t*) (&ns32016ram[addr])) = val;
@@ -187,7 +187,7 @@ void write_Arbitary(uint32_t addr, void* pData, uint32_t Size)
 {
    //addr &= MEM_MASK;
 
-#ifdef LITTLE_ENDIAN
+#ifdef NS_FAST_RAM
    if ((addr + Size) <= RAM_SIZE)
    {
       memcpy(&ns32016ram[addr], pData, Size);
