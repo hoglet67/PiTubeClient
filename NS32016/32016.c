@@ -582,7 +582,7 @@ uint32_t CompareCommon(uint32_t temp, uint32_t temp2)
    return 0;
 }
 
-uint32_t StringPart2(uint32_t opcode, uint32_t Value)
+uint32_t StringMatching(uint32_t opcode, uint32_t Value)
 {
    uint32_t Options = (opcode >> 17) & 3;
 
@@ -597,7 +597,7 @@ uint32_t StringPart2(uint32_t opcode, uint32_t Value)
          if (Value != Compare)
          {
             psr |= F_FLAG;                               // Set PSR F Bit
-            return 0;
+            return 1;
          }   
       }
 
@@ -606,11 +606,16 @@ uint32_t StringPart2(uint32_t opcode, uint32_t Value)
          if (Value == Compare)
          {
             psr |= F_FLAG;                               // Set PSR F Bit
-            return 0;
+            return 1;
          }
       }
    }
 
+   return 0;
+}
+
+void StringRegisterUpdate(uint32_t opcode)
+{
    uint32_t Size = (LookUp.p.Size + 1);
 
    if (opcode & BIT(Backwards))                          // Adjust R1
@@ -635,8 +640,6 @@ uint32_t StringPart2(uint32_t opcode, uint32_t Value)
    }
 
    r[0]--;                                               // Adjust R0
-   
-   return 1;
 }
 
 void n32016_exec(uint32_t tubecycles)
@@ -644,7 +647,6 @@ void n32016_exec(uint32_t tubecycles)
    uint32_t opcode, WriteSize, WriteIndex;
    uint32_t temp = 0, temp2, temp3, temp4;
    uint64_t temp64;
-
 
    while (tubecycles > 0)
    {
@@ -1120,52 +1122,27 @@ void n32016_exec(uint32_t tubecycles)
  
          case MOVS:
          {
-            if (r[0])
+            if (r[0] == 0)
             {
-               temp4 = (LookUp.p.Size + 1);
-               temp = read_n(r[1], LookUp.p.Size);
-
-               if (opcode & BIT(15))                     // Translating
-               {
-                  temp = read_x8(r[3] + temp);           // Lookup the translation
-               }
-
-               if (opcode & BIT(17))                      // While Match
-               {
-                  if (temp != r[4])
-                  {
-                     break;
-                  }
-               }
-               else if (opcode & BIT(18))                  // Until Match
-               {
-                  if (temp == r[4])
-                  {
-                     break;
-                  }
-               }
-
-               write_Arbitary(r[2], &temp, temp4);
-
-               if (opcode & BIT(16))                      // Backwards
-               {
-                  r[1] -= temp4;
-                  r[2] -= temp4;
-               }
-               else
-               {
-                  r[1] += temp4;
-                  r[2] += temp4;
-               }
-
-               r[0]--;
+               psr &= ~F_FLAG;                              // Clear PSR F Bit
+               break;
             }
 
-            if (r[0] == 0)
+            temp = read_n(r[1], LookUp.p.Size);
+
+            if (opcode & BIT(15))                     // Translating
+            {
+               temp = read_x8(r[3] + temp);           // Lookup the translation
+            }
+
+            if (StringMatching(opcode, temp))
             {
                break;
             }
 
+            write_Arbitary(r[2], &temp, LookUp.p.Size + 1);
+
+            StringRegisterUpdate(opcode);
             pc = startpc;           // Not finsihed so come back again!
          }
          break;
@@ -1178,59 +1155,26 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            if (r[0])
-            {
-               temp4 = (LookUp.p.Size + 1);
-
-               temp = read_n(r[1], LookUp.p.Size);
+            temp = read_n(r[1], LookUp.p.Size);
             
-               if (opcode & BIT(15))                     // Translating
-               {
-                  temp = read_x8(r[3] + temp);           // Lookup the translation
-               }
-
-               if (opcode & BIT(17))                      // While Match
-               {
-                  if (temp != r[4])
-                  {
-                     break;
-                  }
-               }
-               else if (opcode & BIT(18))                  // Until Match
-               {
-                  if (temp == r[4])
-                  {
-                     break;
-                  }
-               }
-
-               temp2 = read_n(r[2], LookUp.p.Size);
-
-               if (CompareCommon(temp, temp2) == 0)
-               {
-                  break;
-               }
-
-               if (opcode & BIT(16))                      // Backwards
-               {
-                  r[1] -= temp4;
-                  r[2] -= temp4;
-               }
-               else
-               {
-                  r[1] += temp4;
-                  r[2] += temp4;
-               }
-
-               r[0]--;
+            if (opcode & BIT(15))                     // Translating
+            {
+               temp = read_x8(r[3] + temp);           // Lookup the translation
             }
 
-            if (r[0] == 0)
+            if (StringMatching(opcode, temp))
             {
-               psr |= F_FLAG; // Set PSR F Bit
                break;
             }
-            
+
+            temp2 = read_n(r[2], LookUp.p.Size);
+
+            if (CompareCommon(temp, temp2) == 0)
+            {
+               break;
+            }
+
+            StringRegisterUpdate(opcode);            
             pc = startpc;           // Not finsihed so come back again!
          }
          break;
@@ -1251,10 +1195,13 @@ void n32016_exec(uint32_t tubecycles)
                write_x8(r[1], temp);                        // Write back
             }
 
-            if (StringPart2(opcode, temp))
+            if (StringMatching(opcode, temp))
             {
-               pc = startpc;                                         // Not finsihed so come back again!
+               break;
             }
+
+            StringRegisterUpdate(opcode);
+            pc = startpc;                                         // Not finsihed so come back again!
          }
          break;
 
