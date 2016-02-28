@@ -18,7 +18,7 @@
 #include "rpi-aux.h"
 #include "rpi-interrupts.h"
 #include "../NS32016/32016.h"
-#include "../NS32016/PandoraV2_00.h"
+#include "../NS32016/mem32016.h"
 
 uint8_t Exit;
 
@@ -33,14 +33,7 @@ void copro_32016_init_hardware()
 
 static void copro_32016_reset()
 {
-  uint32_t Address;
-
-  for (Address = 0; Address < MEG16; Address += sizeof(PandoraV2_00))
-  {
-    memcpy(&ns32016ram[Address], PandoraV2_00, sizeof(PandoraV2_00));   // The ROM is everywhere at RESET!
-  }
-
-  n32016_reset();                                                       // Reset the device
+  n32016_reset (PANDORA_BASE); // Reset the device
 }
 
 void copro_32016_main(unsigned int r0, unsigned int r1, unsigned int atags)
@@ -48,17 +41,19 @@ void copro_32016_main(unsigned int r0, unsigned int r1, unsigned int atags)
   register unsigned int gpio;
   register unsigned int last_gpio = IRQ_PIN_MASK | NMI_PIN_MASK | RST_PIN_MASK;
 
-  RPI_EnableUart("Pi 32016 CoPro\r\n");                                 // Display Debug Boot Message
+  RPI_EnableUart("Pi 32016 CoPro\r\n"); // Display Debug Boot Message
 
   copro_32016_init_hardware();
 
   enable_MMU_and_IDCaches();
   _enable_unaligned_access();
 
+  init_ram();
+
   copro_32016_reset();
 
   Exit = 0;
-  in_isr = 1;                                                           // This ensures interrupts are not re-enabled in tube-lib.c
+  in_isr = 1; // This ensures interrupts are not re-enabled in tube-lib.c
 
   while (1)
   {
@@ -80,23 +75,23 @@ void copro_32016_main(unsigned int r0, unsigned int r1, unsigned int atags)
       {
         if (Exit)
         {
-          return;                                                       // Set Exit true while in Reset to switch to another co-pro
+          return; // Set Exit true while in Reset to switch to another co-pro
         }
 
         gpio = RPI_GpioBase->GPLEV0;
       }
-      while ((gpio & RST_PIN_MASK) == 0);                               // Wait for Reset to go high
+      while ((gpio & RST_PIN_MASK) == 0); // Wait for Reset to go high
     }
 
     tube_irq = 0;
     if ((gpio & IRQ_PIN_MASK) == 0)
     {
-      tube_irq |= 1;                                                    // IRQ is Active
+      tube_irq |= 1; // IRQ is Active
     }
 
     if ((gpio & NMI_PIN_MASK) == 0)
     {
-      tube_irq |= 2;                                                    // NMI is Active
+      tube_irq |= 2; // NMI is Active
     }
 
     last_gpio = gpio;

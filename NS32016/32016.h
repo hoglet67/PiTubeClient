@@ -6,13 +6,11 @@
 #define MEG1      0x0100000
 #define MEG2      0x0200000
 #define MEG4      0x0400000
-// I think the 32016 CoPro could support 16256K Bytes of RAM ;)
-#define MAX_RAM   (MEG16 - K128)
+#define MEG8      0x0800000
+#define MEG15     0x0F00000
 #define MEG16     0x1000000
 
 #define MEM_MASK 0xFFFFFF
-#define RAM_SIZE 0x100000
-//#define RAM_SIZE 0x400000
 
 #define CASE2(in) case (in): case ((in) | 0x80)
 #define CASE4(in) case (in): case ((in) | 0x40): case ((in) | 0x80): case ((in) | 0xC0)

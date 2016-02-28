@@ -44,10 +44,10 @@ DecodeMatrix LookUp;
 
 void n32016_reset(uint32_t StartAddress)
 {
-	pc = StartAddress;
-	psr = 0;
+   pc = StartAddress;
+   psr = 0;
 
-	n32016_build_matrix();
+   n32016_build_matrix();
 }
 
 void dump_mini(void)
@@ -100,39 +100,39 @@ static uint16_t popw()
 
 static uint32_t popd()
 {
-  uint32_t temp = read_x32(sp[SP]);
-  sp[SP] += 4;
+   uint32_t temp = read_x32(sp[SP]);
+   sp[SP] += 4;
 
-  return temp;
+   return temp;
 }
 
 static uint32_t getdisp()
 {
-  uint32_t addr = read_x8(pc);
-  pc++;
-  if (!(addr & 0x80))
-  {
-    return addr | ((addr & 0x40) ? 0xFFFFFF80 : 0);
-  }
+   uint32_t addr = read_x8(pc);
+   pc++;
+   if (!(addr & 0x80))
+   {
+      return addr | ((addr & 0x40) ? 0xFFFFFF80 : 0);
+   }
 
-  if (!(addr & 0x40))
-  {
-    addr &= 0x3F;
-    addr = (addr << 8) | read_x8(pc);
-    pc++;
+   if (!(addr & 0x40))
+   {
+      addr &= 0x3F;
+      addr = (addr << 8) | read_x8(pc);
+      pc++;
 
-    return addr | ((addr & 0x2000) ? 0xFFFFC000 : 0);
-  }
+      return addr | ((addr & 0x2000) ? 0xFFFFC000 : 0);
+   }
 
-  addr &= 0x3F;
-  addr = (addr << 24) | (read_x8(pc) << 16);
-  pc++;
-  addr = addr | (read_x8(pc) << 8);
-  pc++;
-  addr = addr | read_x8(pc);
-  pc++;
+   addr &= 0x3F;
+   addr = (addr << 24) | (read_x8(pc) << 16);
+   pc++;
+   addr = addr | (read_x8(pc) << 8);
+   pc++;
+   addr = addr | read_x8(pc);
+   pc++;
 
-  return addr | ((addr & 0x20000000) ? 0xC0000000 : 0);
+   return addr | ((addr & 0x20000000) ? 0xC0000000 : 0);
 }
 
 int genindex[2];
@@ -145,8 +145,10 @@ uint32_t Truncate(uint32_t Value, uint32_t Size)
 {
    switch (Size)
    {
-      case sz8:      return Value & 0x000000FF;
-      case sz16:     return Value & 0x0000FFFF;
+      case sz8:
+         return Value & 0x000000FF;
+      case sz16:
+         return Value & 0x0000FFFF;
    }
 
    return Value;
@@ -166,8 +168,7 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
 
       if (sdiff[c])
       {
-         genaddr[c]  =
-         sp[SP]      = (sp[SP] + sdiff[c]);
+         genaddr[c] = sp[SP] = (sp[SP] + sdiff[c]);
       }
    }
 
@@ -199,8 +200,8 @@ static uint32_t getgen(int gen, int c)
       case 6:
       case 7:
          gentype[c] = 1;
-         genaddr[c] = (uint32_t) &r[gen & 7];
-         break;
+         genaddr[c] = (uint32_t) & r[gen & 7];
+      break;
 
       case 8:
       case 9:
@@ -212,7 +213,7 @@ static uint32_t getgen(int gen, int c)
       case 0xF:
          gentype[c] = 0;
          genaddr[c] = r[gen & 7] + getdisp();
-         break;
+      break;
 
       case 0x10: // Frame memory relative
          temp = getdisp();
@@ -220,7 +221,7 @@ static uint32_t getgen(int gen, int c)
          genaddr[c] = read_x32(fp + temp);
          genaddr[c] += temp2;
          gentype[c] = 0;
-         break;
+      break;
 
       case 0x11: // Stack memory relative
          temp = getdisp();
@@ -228,7 +229,7 @@ static uint32_t getgen(int gen, int c)
          genaddr[c] = read_x32(sp[SP] + temp);
          genaddr[c] += temp2;
          gentype[c] = 0;
-         break;
+      break;
 
       case 0x12: // Static memory relative
          temp = getdisp();
@@ -236,7 +237,7 @@ static uint32_t getgen(int gen, int c)
          genaddr[c] = read_x32(sb + temp);
          genaddr[c] += temp2;
          gentype[c] = 0;
-         break;
+      break;
 
       case 0x14: // Immediate
       {
@@ -257,7 +258,7 @@ static uint32_t getgen(int gen, int c)
       case 0x15: // Absolute
          gentype[c] = 0;
          genaddr[c] = getdisp();
-         break;
+      break;
 
       case 0x16: // External
          gentype[c] = 0;
@@ -265,7 +266,7 @@ static uint32_t getgen(int gen, int c)
          temp += getdisp();
          temp2 = read_x32(temp);
          genaddr[c] = temp2 + getdisp();
-         break;
+      break;
 
       case 0x17: // Stack
          gentype[c] = 0;
@@ -281,24 +282,24 @@ static uint32_t getgen(int gen, int c)
           genaddr[c]=sp[SP];
           sp[SP] += (LookUp.p.Size + 1);
           }*/
-         break;
+      break;
 
       case 0x18: // FP relative
          gentype[c] = 0;
          genaddr[c] = getdisp() + fp;
-         break;
+      break;
       case 0x19: // SP relative
          gentype[c] = 0;
          genaddr[c] = getdisp() + sp[SP];
-         break;
+      break;
       case 0x1A: // SB relative
          gentype[c] = 0;
          genaddr[c] = getdisp() + sb;
-         break;
+      break;
       case 0x1B: // PC relative
          gentype[c] = 0;
          genaddr[c] = getdisp() + startpc;
-         break;
+      break;
 
       case 0x1C: // EA + Rn
       case 0x1D: // EA + Rn*2
@@ -322,7 +323,7 @@ static uint32_t getgen(int gen, int c)
 
       default:
          n32016_dumpregs("Bad NS32016 gen mode");
-         break;
+      break;
    }
 
    return ReadGen(c, LookUp.p.Size);
@@ -354,29 +355,33 @@ uint64_t readgenq(uint32_t c)
 static uint16_t oldpsr;
 
 // From: http://homepage.cs.uiowa.edu/~jones/bcd/bcd.html
-static uint32_t bcd_add_16(uint32_t a, uint32_t b, uint32_t *carry) {
-  uint32_t  t1, t2;              // unsigned 32-bit intermediate values
-  //printf("bcd_add_16: in  %08x %08x %08x\n", a, b, *carry);
-  if (*carry) {
-    b++;                         // I'm 90% sure its OK to handle carry this way
-  }                              // i.e. its OK if the ls digit of b becomes A
-  t1 = a + 0x06666666;
-  t2 = t1 ^ b;                   // sum without carry propagation
-  t1 = t1 + b;                   // provisional sum
-  t2 = t1 ^ t2;                  // all the binary carry bits
-  t2 = ~t2 & 0x11111110;         // just the BCD carry bits
-  t2 = (t2 >> 2) | (t2 >> 3);    // correction
-  t2 = t1 - t2;                  // corrected BCD sum
-  *carry = (t2 & 0xFFFF0000) ? 1 : 0;
-  t2 &= 0xFFFF;
-  //printf("bcd_add_16: out %08x %08x\n", t2, *carry);
-  return t2;
+static uint32_t bcd_add_16(uint32_t a, uint32_t b, uint32_t *carry)
+{
+   uint32_t t1, t2; // unsigned 32-bit intermediate values
+   //printf("bcd_add_16: in  %08x %08x %08x\n", a, b, *carry);
+   if (*carry)
+   {
+      b++; // I'm 90% sure its OK to handle carry this way
+   } // i.e. its OK if the ls digit of b becomes A
+   t1 = a + 0x06666666;
+   t2 = t1 ^ b; // sum without carry propagation
+   t1 = t1 + b; // provisional sum
+   t2 = t1 ^ t2; // all the binary carry bits
+   t2 = ~t2 & 0x11111110; // just the BCD carry bits
+   t2 = (t2 >> 2) | (t2 >> 3); // correction
+   t2 = t1 - t2; // corrected BCD sum
+   *carry = (t2 & 0xFFFF0000) ? 1 : 0;
+   t2 &= 0xFFFF;
+   //printf("bcd_add_16: out %08x %08x\n", t2, *carry);
+   return t2;
 }
 
-static uint32_t bcd_sub_16(uint32_t a, uint32_t b, uint32_t *carry) {
-   uint32_t  t1, t2;              // unsigned 32-bit intermediate values
+static uint32_t bcd_sub_16(uint32_t a, uint32_t b, uint32_t *carry)
+{
+   uint32_t t1, t2; // unsigned 32-bit intermediate values
    //printf("bcd_sub_16: in  %08x %08x %08x\n", a, b, *carry);
-   if (*carry) {
+   if (*carry)
+   {
       b++;
    }
    *carry = 0;
@@ -388,7 +393,8 @@ static uint32_t bcd_sub_16(uint32_t a, uint32_t b, uint32_t *carry) {
    return t2;
 }
 
-static uint32_t bcd_add(uint32_t a, uint32_t b, int size, uint32_t *carry) {
+static uint32_t bcd_add(uint32_t a, uint32_t b, int size, uint32_t *carry)
+{
    if (size == sz8)
    {
       uint32_t word = bcd_add_16(a, b, carry);
@@ -408,7 +414,8 @@ static uint32_t bcd_add(uint32_t a, uint32_t b, int size, uint32_t *carry) {
    }
 }
 
-static uint32_t bcd_sub(uint32_t a, uint32_t b, int size, uint32_t *carry) {
+static uint32_t bcd_sub(uint32_t a, uint32_t b, int size, uint32_t *carry)
+{
    if (size == sz8)
    {
       uint32_t word = bcd_sub_16(a, b, carry);
@@ -502,15 +509,15 @@ static uint32_t div_operator(uint32_t a, uint32_t b)
    {
       case sz8:
          ret = (int8_t) a / (int8_t) b;
-         break;
+      break;
 
       case sz16:
          ret = (int16_t) a / (int16_t) b;
-         break;
+      break;
 
       case sz32:
          ret = (int32_t) a / (int32_t) b;
-         break;
+      break;
    }
    return ret;
 }
@@ -532,7 +539,7 @@ static void handle_mei_dei_upper_write(uint64_t result)
             *(uint8_t *) (genaddr[1] + 4) = temp;
          else
             write_x8(genaddr[1] + 4, temp);
-         break;
+      break;
 
       case sz16:
          temp = result >> 16;
@@ -540,7 +547,7 @@ static void handle_mei_dei_upper_write(uint64_t result)
             *(uint16_t *) (genaddr[1] + 4) = temp;
          else
             write_x16(genaddr[1] + 4, temp);
-         break;
+      break;
 
       case sz32:
          temp = result >> 32;
@@ -548,7 +555,7 @@ static void handle_mei_dei_upper_write(uint64_t result)
             *(uint32_t *) (genaddr[1] + 4) = temp;
          else
             write_x32(genaddr[1] + 4, temp);
-         break;
+      break;
    }
 }
 
@@ -586,26 +593,24 @@ uint32_t StringMatching(uint32_t opcode, uint32_t Value)
 {
    uint32_t Options = (opcode >> 17) & 3;
 
-   Trace = 1;
-
    if (Options)
    {
       uint32_t Compare = Truncate(r[4], LookUp.p.Size);
 
-      if (Options == 1)                                  // While match
+      if (Options == 1) // While match
       {
          if (Value != Compare)
          {
-            psr |= F_FLAG;                               // Set PSR F Bit
+            psr |= F_FLAG; // Set PSR F Bit
             return 1;
-         }   
+         }
       }
 
-      if (Options == 3)                                  // Until Match
+      if (Options == 3) // Until Match
       {
          if (Value == Compare)
          {
-            psr |= F_FLAG;                               // Set PSR F Bit
+            psr |= F_FLAG; // Set PSR F Bit
             return 1;
          }
       }
@@ -618,7 +623,7 @@ void StringRegisterUpdate(uint32_t opcode)
 {
    uint32_t Size = (LookUp.p.Size + 1);
 
-   if (opcode & BIT(Backwards))                          // Adjust R1
+   if (opcode & BIT(Backwards)) // Adjust R1
    {
       r[1] -= Size;
    }
@@ -629,7 +634,7 @@ void StringRegisterUpdate(uint32_t opcode)
 
    if (((opcode >> 10) & 0x0F) != (SKPS & 0x0F))
    {
-      if (opcode & BIT(Backwards))                       // Adjust R2 for all but SKPS
+      if (opcode & BIT(Backwards)) // Adjust R2 for all but SKPS
       {
          r[2] -= Size;
       }
@@ -639,7 +644,7 @@ void StringRegisterUpdate(uint32_t opcode)
       }
    }
 
-   r[0]--;                                               // Adjust R0
+   r[0]--; // Adjust R0
 }
 
 void n32016_exec(uint32_t tubecycles)
@@ -865,10 +870,18 @@ void n32016_exec(uint32_t tubecycles)
          {
             switch ((opcode >> 7) & 0xF)
             {
-               case 0x8: temp = fp;       break;
-               case 0x9: temp = sp[SP];   break;
-               case 0xA: temp = sb;       break;
-               case 0xF: temp = mod;      break;
+               case 0x8:
+                  temp = fp;
+               break;
+               case 0x9:
+                  temp = sp[SP];
+               break;
+               case 0xA:
+                  temp = sb;
+               break;
+               case 0xF:
+                  temp = mod;
+               break;
 
                default:
                {
@@ -888,78 +901,79 @@ void n32016_exec(uint32_t tubecycles)
                case 0x0:
                   if (psr & Z_FLAG)
                      temp = 1;
-                  break;
+               break;
                case 0x1:
                   if (!(psr & Z_FLAG))
                      temp = 1;
-                  break;
+               break;
                case 0x2:
                   if (psr & C_FLAG)
                      temp = 1;
-                  break;
+               break;
                case 0x3:
                   if (!(psr & C_FLAG))
                      temp = 1;
-                  break;
+               break;
                case 0x4:
                   if (psr & L_FLAG)
                      temp = 1;
-                  break;
+               break;
                case 0x5:
                   if (!(psr & L_FLAG))
                      temp = 1;
-                  break;
+               break;
                case 0x6:
                   if (psr & N_FLAG)
                      temp = 1;
-                  break;
+               break;
                case 0x7:
                   if (!(psr & N_FLAG))
                      temp = 1;
-                  break;
+               break;
                case 0x8:
                   if (psr & F_FLAG)
                      temp = 1;
-                  break;
+               break;
                case 0x9:
                   if (!(psr & F_FLAG))
                      temp = 1;
-                  break;
+               break;
                case 0xA:
                   if (!(psr & (Z_FLAG | L_FLAG)))
                      temp = 1;
-                  break;
+               break;
                case 0xB:
                   if (psr & (Z_FLAG | L_FLAG))
                      temp = 1;
-                  break;
+               break;
                case 0xC:
                   if (!(psr & (Z_FLAG | N_FLAG)))
                      temp = 1;
-                  break;
+               break;
                case 0xD:
                   if (psr & (Z_FLAG | N_FLAG))
                      temp = 1;
-                  break;
+               break;
                case 0xE:
                   temp = 1;
-                  break;
+               break;
                case 0xF:
-                  break;
+               break;
             }
             WriteSize = LookUp.p.Size;
-            break;
+         break;
 
          case ACB: // ACB
             temp2 = (opcode >> 7) & 0xF;
-            NIBBLE_EXTEND(temp2);
+            NIBBLE_EXTEND(temp2)
+            ;
             temp = ReadGen(0, LookUp.p.Size);
             temp += temp2;
             WriteSize = LookUp.p.Size;
             temp2 = getdisp();
             if (temp & 0xFF)
                pc = startpc + temp2;
-            break;
+         break;
 
          case MOVQ:
          {
@@ -979,13 +993,13 @@ void n32016_exec(uint32_t tubecycles)
                {
                   case 0:
                      psr = (psr & 0xFF00) | (temp & 0xFF);
-                     break;
+                  break;
                   case 9:
                      sp[SP] = temp;
-                     break;
+                  break;
                   default:
                      n32016_dumpregs("Bad LPRB reg");
-                     break;
+                  break;
                }
             }
             else if (LookUp.p.Size == sz16)
@@ -994,10 +1008,10 @@ void n32016_exec(uint32_t tubecycles)
                {
                   case 15:
                      mod = temp;
-                     break;
+                  break;
                   default:
                      n32016_dumpregs("Bad LPRW reg");
-                     break;
+                  break;
                }
                break;
             }
@@ -1007,17 +1021,17 @@ void n32016_exec(uint32_t tubecycles)
                {
                   case 9:
                      sp[SP] = temp;
-                     break;
+                  break;
                   case 0xA:
                      sb = temp;
-                     break;
+                  break;
                   case 0xE:
                      intbase = temp; // printf("INTBASE %08X %08X\n",temp,pc); 
-                     break;
+                  break;
 
                   default:
                      n32016_dumpregs("Bad LPRD reg");
-                     break;
+                  break;
                }
             }
          }
@@ -1038,7 +1052,7 @@ void n32016_exec(uint32_t tubecycles)
 
             temp &= ~temp2;
             WriteSize = LookUp.p.Size;
-            break;
+         break;
 
          case ADDC: // ADDC 
             temp = ReadGen(0, LookUp.p.Size);
@@ -1048,19 +1062,19 @@ void n32016_exec(uint32_t tubecycles)
             temp += temp2;
             temp += temp3;
             WriteSize = LookUp.p.Size;
-            break;
+         break;
 
          case MOV:
             temp = ReadGen(1, LookUp.p.Size);
             WriteSize = LookUp.p.Size;
-            break;
+         break;
 
          case OR:
             temp2 = ReadGen(0, LookUp.p.Size);
             temp = ReadGen(1, LookUp.p.Size);
             temp |= temp2;
             WriteSize = LookUp.p.Size;
-            break;
+         break;
 
          case SUB:
             temp = ReadGen(0, LookUp.p.Size);
@@ -1068,7 +1082,7 @@ void n32016_exec(uint32_t tubecycles)
             update_sub_flags(temp, temp2, 0);
             temp -= temp2;
             WriteSize = LookUp.p.Size;
-            break;
+         break;
 
          case SUBC:
             temp = ReadGen(0, LookUp.p.Size);
@@ -1078,19 +1092,19 @@ void n32016_exec(uint32_t tubecycles)
             temp -= temp2;
             temp -= temp3;
             WriteSize = LookUp.p.Size;
-            break;
+         break;
 
          case ADDR:
             temp = genaddr[1];
             WriteSize = LookUp.p.Size;
-            break;
+         break;
 
          case AND:
             temp2 = ReadGen(0, LookUp.p.Size);
             temp = ReadGen(1, LookUp.p.Size);
             temp &= temp2;
             WriteSize = LookUp.p.Size;
-            break;
+         break;
 
          case TBIT:
             temp2 = ReadGen(1, LookUp.p.Size);
@@ -1111,28 +1125,28 @@ void n32016_exec(uint32_t tubecycles)
             psr &= ~F_FLAG;
             if (temp & BIT(temp2))
                psr |= F_FLAG;
-            break;
+         break;
 
          case XOR:
             temp2 = ReadGen(0, LookUp.p.Size);
             temp = ReadGen(1, LookUp.p.Size);
             temp ^= temp2;
             WriteSize = LookUp.p.Size;
-            break;
- 
+         break;
+
          case MOVS:
          {
             if (r[0] == 0)
             {
-               psr &= ~F_FLAG;                              // Clear PSR F Bit
+               psr &= ~F_FLAG; // Clear PSR F Bit
                break;
             }
 
             temp = read_n(r[1], LookUp.p.Size);
 
-            if (opcode & BIT(15))                     // Translating
+            if (opcode & BIT(15)) // Translating
             {
-               temp = read_x8(r[3] + temp);           // Lookup the translation
+               temp = read_x8(r[3] + temp); // Lookup the translation
             }
 
             if (StringMatching(opcode, temp))
@@ -1143,7 +1157,7 @@ void n32016_exec(uint32_t tubecycles)
             write_Arbitary(r[2], &temp, LookUp.p.Size + 1);
 
             StringRegisterUpdate(opcode);
-            pc = startpc;           // Not finsihed so come back again!
+            pc = startpc; // Not finsihed so come back again!
          }
          break;
 
@@ -1151,15 +1165,15 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (r[0] == 0)
             {
-               psr &= ~F_FLAG;                              // Clear PSR F Bit
+               psr &= ~F_FLAG; // Clear PSR F Bit
                break;
             }
 
             temp = read_n(r[1], LookUp.p.Size);
-            
-            if (opcode & BIT(15))                     // Translating
+
+            if (opcode & BIT(15)) // Translating
             {
-               temp = read_x8(r[3] + temp);           // Lookup the translation
+               temp = read_x8(r[3] + temp); // Lookup the translation
             }
 
             if (StringMatching(opcode, temp))
@@ -1174,8 +1188,8 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            StringRegisterUpdate(opcode);            
-            pc = startpc;           // Not finsihed so come back again!
+            StringRegisterUpdate(opcode);
+            pc = startpc; // Not finsihed so come back again!
          }
          break;
 
@@ -1183,7 +1197,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (r[0] == 0)
             {
-               psr &= ~F_FLAG;                              // Clear PSR F Bit
+               psr &= ~F_FLAG; // Clear PSR F Bit
                break;
             }
 
@@ -1191,8 +1205,8 @@ void n32016_exec(uint32_t tubecycles)
 
             if (opcode & BIT(Translation))
             {
-               temp = read_x8(r[3] + temp);                 // Lookup the translation
-               write_x8(r[1], temp);                        // Write back
+               temp = read_x8(r[3] + temp); // Lookup the translation
+               write_x8(r[1], temp); // Write back
             }
 
             if (StringMatching(opcode, temp))
@@ -1201,7 +1215,7 @@ void n32016_exec(uint32_t tubecycles)
             }
 
             StringRegisterUpdate(opcode);
-            pc = startpc;                                         // Not finsihed so come back again!
+            pc = startpc; // Not finsihed so come back again!
          }
          break;
 
@@ -1226,7 +1240,7 @@ void n32016_exec(uint32_t tubecycles)
 
                case sz16:
                {
-                  if (temp2 & 0xE0) 
+                  if (temp2 & 0xE0)
                   {
                      temp2 |= 0xE0;
                      temp2 = ((temp2 ^ 0xFF) + 1);
@@ -1324,13 +1338,13 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         // TODO, could merge this with TBIT if Format4 operand indexes were consistent (dst == index 0)
+            // TODO, could merge this with TBIT if Format4 operand indexes were consistent (dst == index 0)
          case IBIT:
          case CBIT:
          case SBIT:
-         // The SBITIB, SBITIW, and SBITID instructions, in addition, activate the Interlocked
-         // Operation output pin on the CPU, which may be used in multiprocessor systems to
-         // interlock accesses to semaphore bits. This aspect is not implemented here.
+            // The SBITIB, SBITIW, and SBITID instructions, in addition, activate the Interlocked
+            // Operation output pin on the CPU, which may be used in multiprocessor systems to
+            // interlock accesses to semaphore bits. This aspect is not implemented here.
          case CBITI:
          case SBITI:
             temp2 = ReadGen(0, LookUp.p.Size);
@@ -1365,7 +1379,7 @@ void n32016_exec(uint32_t tubecycles)
                temp &= ~(BIT(temp2));
             }
             WriteIndex = 1;
-            break;
+         break;
 
          case NOT:
          {
@@ -1386,7 +1400,7 @@ void n32016_exec(uint32_t tubecycles)
             WriteIndex = 1;
          }
          break;
- 
+
          case ABS:
          {
             temp = ReadGen(0, LookUp.p.Size);
@@ -1508,8 +1522,8 @@ void n32016_exec(uint32_t tubecycles)
          break;
 
 #if 0 
-         //OLD 32 bit Version
-         case 0xA: // ADJSP
+            //OLD 32 bit Version
+            case 0xA:// ADJSP
             temp2 = ReadGen(0, sz32);
             sp[SP] -= temp2;
             break;
@@ -1531,7 +1545,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case CMPM:
          {
-            temp4 = (LookUp.p.Size + 1);          // disp of 0 means move 1 byte/word/dword
+            temp4 = (LookUp.p.Size + 1); // disp of 0 means move 1 byte/word/dword
             temp3 = (getdisp() / temp4) + 1;
 
             //printf("CMP Size = %u Count = %u\n", temp4, temp3);
@@ -1541,7 +1555,7 @@ void n32016_exec(uint32_t tubecycles)
                {
                   case sz8:
                   {
-                     temp =  read_x8(genaddr[0]);
+                     temp = read_x8(genaddr[0]);
                      temp2 = read_x8(genaddr[1]);
                   }
                   break;
@@ -1560,7 +1574,7 @@ void n32016_exec(uint32_t tubecycles)
                   }
                   break;
                }
-               
+
                if (CompareCommon(temp, temp2) == 0)
                {
                   break;
@@ -1579,8 +1593,8 @@ void n32016_exec(uint32_t tubecycles)
             // Read the immediate offset (3 bits) / length - 1 (5 bits) from the instruction
             temp3 = read_x8(pc);
             pc++;
-            temp = ReadGen(0, LookUp.p.Size);   // src operand
-            temp2 = ReadGen(1, LookUp.p.Size);  // base operand
+            temp = ReadGen(0, LookUp.p.Size); // src operand
+            temp2 = ReadGen(1, LookUp.p.Size); // base operand
             for (c = 0; c <= (temp3 & 0x1F); c++)
             {
                temp2 &= ~(BIT((c + (temp3 >> 5)) & 31));
@@ -1624,7 +1638,7 @@ void n32016_exec(uint32_t tubecycles)
          case MOVXBW:
          {
             temp = ReadGen(0, sz8);
-            SIGN_EXTEND(temp);                                    // Editor need the useless semicolon
+            SIGN_EXTEND(temp); // Editor need the useless semicolon
             if (sdiff[1])
                sdiff[1] = 4;
             WriteSize = sz16;
@@ -1665,8 +1679,8 @@ void n32016_exec(uint32_t tubecycles)
 
          case MEI:
          {
-            temp = ReadGen(0, LookUp.p.Size);     // src
-            temp64 = ReadGen(1, LookUp.p.Size);   // dst
+            temp = ReadGen(0, LookUp.p.Size); // src
+            temp64 = ReadGen(1, LookUp.p.Size); // dst
             temp64 *= temp;
             // Handle the writing to the upper half of dst locally here
             handle_mei_dei_upper_write(temp64);
@@ -1679,23 +1693,23 @@ void n32016_exec(uint32_t tubecycles)
 
          case DEI:
          {
-            int size = (LookUp.p.Size + 1) << 3;  // 8, 16  or 32 
-            temp = ReadGen(0, LookUp.p.Size);     // src
+            int size = (LookUp.p.Size + 1) << 3; // 8, 16  or 32 
+            temp = ReadGen(0, LookUp.p.Size); // src
             if (temp == 0)
             {
                n32016_dumpregs("Divide by zero - DEI CE");
                break;
             }
-            temp64 = readgenq(1);                   // dst
+            temp64 = readgenq(1); // dst
             switch (LookUp.p.Size)
             {
-                  case sz8:
-                     temp64 = ((temp64 >> 24) & 0xFF00) | (temp64 & 0xFF);
-                     break;
+               case sz8:
+                  temp64 = ((temp64 >> 24) & 0xFF00) | (temp64 & 0xFF);
+               break;
 
-                  case sz16:
-                     temp64 = ((temp64 >> 16) & 0xFFFF0000) | (temp64 & 0xFFFF);
-                     break;
+               case sz16:
+                  temp64 = ((temp64 >> 16) & 0xFFFF0000) | (temp64 & 0xFFFF);
+               break;
             }
             printf("temp = %08x\n", temp);
             printf("temp64 = %016" PRIu64 "\n", temp64);
@@ -1733,15 +1747,15 @@ void n32016_exec(uint32_t tubecycles)
             {
                case sz8:
                   temp = (int8_t) temp2 / (int8_t) temp;
-                  break;
+               break;
 
                case sz16:
                   temp = (int16_t) temp2 / (int16_t) temp;
-                  break;
+               break;
 
                case sz32:
                   temp = (int32_t) temp2 / (int32_t) temp;
-                  break;
+               break;
             }
             WriteSize = LookUp.p.Size;
             WriteIndex = 1;
@@ -1762,15 +1776,15 @@ void n32016_exec(uint32_t tubecycles)
             {
                case sz8:
                   temp = (int8_t) temp2 % (int8_t) temp;
-                  break;
+               break;
 
                case sz16:
                   temp = (int16_t) temp2 % (int16_t) temp;
-                  break;
+               break;
 
                case sz32:
                   temp = (int32_t) temp2 % (int32_t) temp;
-                  break;
+               break;
             }
             WriteSize = LookUp.p.Size;
             WriteIndex = 1;
@@ -1810,7 +1824,7 @@ void n32016_exec(uint32_t tubecycles)
          case EXT:
          {
             int c;
-            
+
             temp = r[(opcode >> 11) & 7] & 31;
             temp2 = getdisp();
             temp3 = ReadGen(0, sz32);
@@ -1828,10 +1842,10 @@ void n32016_exec(uint32_t tubecycles)
          break;
 
          case CVTP:
-         {      
-            int32_t Offset    = r[(opcode >> 11) & 7] % 8;
-            int32_t Base      = genaddr[0];
- 
+         {
+            int32_t Offset = r[(opcode >> 11) & 7] % 8;
+            int32_t Base = genaddr[0];
+
             temp = (Base * 8) + Offset;
             WriteSize = sz32;
             WriteIndex = 1;
@@ -1843,18 +1857,18 @@ void n32016_exec(uint32_t tubecycles)
             int c;
             int32_t Offset = r[(opcode >> 11) & 7] % 8;
             int32_t Length = getdisp();
-            int32_t Source = ReadGen(0, LookUp.p.Size); 
-            int32_t Base   = ReadGen(1, LookUp.p.Size);
+            int32_t Source = ReadGen(0, LookUp.p.Size);
+            int32_t Base = ReadGen(1, LookUp.p.Size);
 
             for (c = 0; c < Length; c++)
             {
                if ((c + Offset) > 31)
                {
-                  break;      
+                  break;
                }
 
                if (Source & BIT(c))
-               { 
+               {
                   Base |= BIT(c + Offset);
                }
                else
@@ -1872,7 +1886,7 @@ void n32016_exec(uint32_t tubecycles)
          case CHECK:
          {
             //temp3 = ReadGen(1, sz8);
-            temp3 = ReadGen(1, LookUp.p.Size);          
+            temp3 = ReadGen(1, LookUp.p.Size);
 
             switch (LookUp.p.Size)
             {
@@ -1897,7 +1911,7 @@ void n32016_exec(uint32_t tubecycles)
                }
                break;
             }
-         
+
             //printf("Reg = %u Bounds [%u - %u] Index = %u", 0, temp, temp2, temp3);
 
             if (temp >= temp3 && temp3 >= temp2)
@@ -1916,48 +1930,49 @@ void n32016_exec(uint32_t tubecycles)
             // 5, 7, 0x13 (19)
             // accum = accum * (length+1) + index
 
-            temp  = r[(opcode >> 11) & 7];            // Accum
-            temp2 = ReadGen(0, LookUp.p.Size) + 1;    // (length+1)
-            temp3 = ReadGen(1, LookUp.p.Size);        // index
+            temp = r[(opcode >> 11) & 7]; // Accum
+            temp2 = ReadGen(0, LookUp.p.Size) + 1; // (length+1)
+            temp3 = ReadGen(1, LookUp.p.Size); // index
 
             r[(opcode >> 11) & 7] = (temp * temp2) + temp3;
          }
          break;
 
          case FFS:
+         {
+            int numbits = (LookUp.p.Size + 1) << 3; // number of bits: 8, 16 or 32
+            temp2 = ReadGen(0, LookUp.p.Size); // base is the variable size operand being scanned
+            temp = ReadGen(1, sz8); // offset is always 8 bits (also the result)
+            // find the first set bit, starting at offset
+            for (; temp < numbits && !(temp2 & BIT(temp)); temp++)
+               ;
+            if (temp < numbits)
             {
-               int numbits = (LookUp.p.Size + 1) << 3;   // number of bits: 8, 16 or 32
-               temp2 = ReadGen(0, LookUp.p.Size);        // base is the variable size operand being scanned
-               temp  = ReadGen(1, sz8);                  // offset is always 8 bits (also the result)
-               // find the first set bit, starting at offset
-               for (;temp < numbits && !(temp2 & BIT(temp)); temp++);
-               if (temp < numbits)
-               {
-                  // a set bit was found, return it in the offset operand
-                  psr &= ~F_FLAG;
-               }
-               else
-               {
-                  // no set bit was found, return 0 in the offset operand
-                  psr |= F_FLAG;
-                  temp = 0;
-               }
-               WriteIndex = 1;
-               WriteSize = sz8;
+               // a set bit was found, return it in the offset operand
+               psr &= ~F_FLAG;
             }
-            break;
+            else
+            {
+               // no set bit was found, return 0 in the offset operand
+               psr |= F_FLAG;
+               temp = 0;
+            }
+            WriteIndex = 1;
+            WriteSize = sz8;
+         }
+         break;
 
          case BSR:
             temp = getdisp();
             pushd(pc);
             pc = startpc + temp;
-            break;
+         break;
 
          case RET:
             temp = getdisp();
             pc = popd();
             sp[SP] += temp;
-            break;
+         break;
 
          case CXP:
             temp = getdisp();
@@ -1969,7 +1984,7 @@ void n32016_exec(uint32_t tubecycles)
             mod = temp & 0xFFFF;
             sb = read_x32(mod);
             pc = read_x32(mod + 8) + (temp >> 16);
-            break;
+         break;
 
          case RXP:
             temp = getdisp();
@@ -1978,7 +1993,7 @@ void n32016_exec(uint32_t tubecycles)
             mod = temp2 & 0xFFFF;
             sp[SP] += temp;
             sb = read_x32(mod);
-            break;
+         break;
 
          case RETT:
             temp = getdisp();
@@ -1987,84 +2002,84 @@ void n32016_exec(uint32_t tubecycles)
             psr = popw();
             sp[SP] += temp;
             sb = read_x32(mod);
-            break;
+         break;
 
          case RETI:
             printf("RETI ????");
-            break;
+         break;
 
          case SAVE:
+         {
+            int c;
+
+            temp = read_x8(pc);
+            pc++;
+
+            for (c = 0; c < 8; c++)
             {
-               int c;
-
-               temp = read_x8(pc);
-               pc++;
-
-               for (c = 0; c < 8; c++)
+               if (temp & BIT(c))
                {
-                  if (temp & BIT(c))
-                  {
-                     pushd(r[c]);
-                  }
+                  pushd(r[c]);
                }
             }
-            break;
+         }
+         break;
 
          case RESTORE:
+         {
+            int c;
+            temp = read_x8(pc);
+            pc++;
+            for (c = 0; c < 8; c++)
             {
-               int c;
-               temp = read_x8(pc);
-               pc++;
-               for (c = 0; c < 8; c++)
-               {
-                  if (temp & BIT(c))
-                     r[c ^ 7] = popd(r[c]);
-               }
+               if (temp & BIT(c))
+                  r[c ^ 7] = popd(r[c]);
             }
-            break;
+         }
+         break;
 
          case ENTER:
+         {
+            int c;
+
+            temp = read_x8(pc);
+            pc++;
+            temp2 = getdisp();
+            pushd(fp);
+            fp = sp[SP];
+            sp[SP] -= temp2;
+
+            for (c = 0; c < 8; c++)
             {
-               int c;
-
-               temp = read_x8(pc);
-               pc++;
-               temp2 = getdisp();
-               pushd(fp);
-               fp = sp[SP];
-               sp[SP] -= temp2;
-
-               for (c = 0; c < 8; c++)
+               if (temp & BIT(c))
                {
-                  if (temp & BIT(c))
-                  {
-                     pushd(r[c]);
-                  }
+                  pushd(r[c]);
                }
             }
-            break;
+         }
+         break;
 
          case EXIT:
+         {
+            int c;
+            temp = read_x8(pc);
+            pc++;
+            for (c = 0; c < 8; c++)
             {
-               int c;
-               temp = read_x8(pc);
-               pc++;
-               for (c = 0; c < 8; c++)
+               if (temp & BIT(c))
                {
-                  if (temp & BIT(c))
-                  {
-                     r[c ^ 7] = popd(r[c]);
-                  }
+                  r[c ^ 7] = popd(r[c]);
                }
-               sp[SP] = fp;
-               fp = popd();
-            }  
-            break;
+            }
+            sp[SP] = fp;
+            fp = popd();
+         }
+         break;
 
          case NOP:
             //temp = read_x8(pc);
             //pc++;
-            break;
+         break;
 
          case SVC:
             temp = psr;
@@ -2075,81 +2090,81 @@ void n32016_exec(uint32_t tubecycles)
             sb = read_x32(mod);
             temp2 = read_x32(mod + 8);
             pc = temp2 + temp3;
-            break;
+         break;
 
          case BPT:
             //temp = read_x8(pc);
             //pc++;
             printf("BPT ??????\n");
-            break;
+         break;
 
          case BEQ: // BEQ
             if (psr & Z_FLAG)
                pc = temp;
-            break;
+         break;
 
          case BNE: // BNE
             if (!(psr & Z_FLAG))
                pc = temp;
-            break;
+         break;
 
          case BH: // BH
             if (psr & L_FLAG)
                pc = temp;
-            break;
+         break;
 
          case BLS: // BLS
             if (!(psr & L_FLAG))
                pc = temp;
-            break;
+         break;
 
          case BGT: // BGT
             if (psr & N_FLAG)
                pc = temp;
-            break;
+         break;
 
          case BLE: // BLE
             if (!(psr & N_FLAG))
                pc = temp;
-            break;
+         break;
 
          case BFS: // BFS
             if (psr & F_FLAG)
                pc = temp;
-            break;
+         break;
 
          case BFC: // BFC
             if (!(psr & F_FLAG))
                pc = temp;
-            break;
+         break;
 
          case BLO: // BLO
             if (!(psr & (L_FLAG | Z_FLAG)))
                pc = temp;
-            break;
+         break;
 
          case BHS: // BHS
             if (psr & (L_FLAG | Z_FLAG))
                pc = temp;
-            break;
+         break;
 
          case BLT: // BLT
             if (!(psr & (N_FLAG | Z_FLAG)))
                pc = temp;
-            break;
+         break;
 
          case BGE: // BGE
             if (psr & (N_FLAG | Z_FLAG))
                pc = temp;
-            break;
+         break;
 
          case BR: // BR
             pc = temp;
-            break;
+         break;
 
          case ADDP: /*ADDP*/
          {
-            int carry = (psr & C_FLAG) ? 1 : 0;
+            uint32_t carry = (psr & C_FLAG) ? 1 : 0;
             temp2 = ReadGen(0, LookUp.p.Size);
             temp = ReadGen(1, LookUp.p.Size);
             temp = bcd_add(temp, temp2, LookUp.p.Size, &carry);
@@ -2164,7 +2179,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case SUBP: /*SUBP*/
          {
-            int carry = (psr & C_FLAG) ? 1 : 0;
+            uint32_t carry = (psr & C_FLAG) ? 1 : 0;
             temp2 = ReadGen(0, LookUp.p.Size);
             temp = ReadGen(1, LookUp.p.Size);
             temp = bcd_sub(temp, temp2, LookUp.p.Size, &carry);
@@ -2179,17 +2194,19 @@ void n32016_exec(uint32_t tubecycles)
 
          default:
             n32016_dumpregs("Bad NS32016 opcode");
-            break;
+         break;
       }
 
       switch (WriteSize)
       {
          case sz8:
          {
-            if (gentype[WriteIndex]) *((uint8_t*) genaddr[WriteIndex]) = temp;
+            if (gentype[WriteIndex])
+               *((uint8_t*) genaddr[WriteIndex]) = temp;
             else
             {
-               if (sdiff[WriteIndex]) genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
+               if (sdiff[WriteIndex])
+                  genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
                write_x8(genaddr[WriteIndex], temp);
             }
          }
@@ -2209,11 +2226,13 @@ void n32016_exec(uint32_t tubecycles)
 #endif
             }
 #endif
-            
-            if (gentype[WriteIndex]) *((uint16_t*) genaddr[WriteIndex]) = temp;
+
+            if (gentype[WriteIndex])
+               *((uint16_t*) genaddr[WriteIndex]) = temp;
             else
             {
-               if (sdiff[WriteIndex]) genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
+               if (sdiff[WriteIndex])
+                  genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
                write_x16(genaddr[WriteIndex], temp);
             }
          }
@@ -2221,10 +2240,12 @@ void n32016_exec(uint32_t tubecycles)
 
          case sz32:
          {
-            if (gentype[WriteIndex]) *((uint32_t*) genaddr[WriteIndex]) = temp;
+            if (gentype[WriteIndex])
+               *((uint32_t*) genaddr[WriteIndex]) = temp;
             else
             {
-               if (sdiff[WriteIndex]) genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
+               if (sdiff[WriteIndex])
+                  genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
                write_x32(genaddr[WriteIndex], temp);
             }
          }

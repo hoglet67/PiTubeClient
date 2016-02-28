@@ -18,7 +18,7 @@
 #include "PandoraV2_00.h"
 #endif
 
-uint8_t ns32016ram[MEG16 + 8];				// Extra 8 bytes as we can read that far off the end of RAM
+uint8_t ns32016ram[MEG16];
 
 void init_ram(void)
 {
@@ -26,7 +26,7 @@ void init_ram(void)
    memset(ns32016ram, 0, sizeof(ns32016ram));
    memcpy(ns32016ram, boot_rom, sizeof(boot_rom));
 #elif defined(PANDORA_BASE)
-   memcpy(&ns32016ram[0xF00000], PandoraV2_00, sizeof(PandoraV2_00));
+   memcpy(&ns32016ram[PANDORA_BASE], PandoraV2_00, sizeof(PandoraV2_00));
 #else
    uint32_t Address;
 
@@ -71,8 +71,8 @@ uint8_t read_x8(uint32_t addr)
       return tubeRead(addr >> 1);
    }
 
-   printf("Bad Read @ %06X\n", addr);
-   n32016_dumpregs();
+   printf("Bad read_x8 @ %06X\n", addr);
+   //n32016_dumpregs();
 
    return 0;
 }
@@ -137,16 +137,20 @@ void write_x8(uint32_t addr, uint8_t val)
       return;
    }
 
-#ifdef PANDORA_ROM_PAGE_OUT
    if (addr == 0xF90000)
    {
-      memset(ns32016ram, 0, MEG4);
+#ifdef PANDORA_ROM_PAGE_OUT
+      printf("Pandora ROM no longer occupying the entire memory space!\n")
+      memset(ns32016ram, 0, RAM_SIZE);
+#else
+      printf("Pandora ROM writes to 0xF90000\n");
+#endif
+
       return;
    }
-#endif  
 
-   printf("Bad Write @%06X %02X\n", addr, val);
-   n32016_dumpregs();
+   printf("Writing outside of RAM @%06X %02X\n", addr, val);
+   //n32016_dumpregs();
 }
 
 void write_x16(uint32_t addr, uint16_t val)
@@ -179,7 +183,7 @@ void write_x32(uint32_t addr, uint32_t val)
    write_x8(addr, (val >> 24));
 }
 
-void write_Arbitary(uint32_t addr, uint8_t* pData, uint32_t Size)
+void write_Arbitary(uint32_t addr, void* pData, uint32_t Size)
 {
    //addr &= MEM_MASK;
 
@@ -191,9 +195,10 @@ void write_Arbitary(uint32_t addr, uint8_t* pData, uint32_t Size)
    }
 #endif
 
+   register uint8_t* pValue = (uint8_t*) pData;
    while (Size--)
    {
-      write_x8(addr++, *pData++);
+      write_x8(addr++, *pValue++);
    }
 }
 
