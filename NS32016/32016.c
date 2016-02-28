@@ -1822,32 +1822,24 @@ void n32016_exec(uint32_t tubecycles)
          case EXT:
          {
             int c;
+         
+            int32_t Offset = r[(opcode >> 11) & 7];                              // Offset
+            temp2          = getdisp();                                          // Length
+            temp3          = ReadGen(0, sz32);                                   // Base
+            temp           = 0;                                                  // Result starts at zero
 
-#if 0
-            temp = r[(opcode >> 11) & 7] & 31;
-            temp2 = getdisp();
-            temp3 = ReadGen(0, sz32);
-            temp4 = 0;
-#else            
-            temp4    = 0;
-            temp     = r[(opcode >> 11) & 7];                              // Offset
-            temp2    = getdisp();                                          // Length
-            temp3    = ReadGen(0, sz32);                                   // Base
- 
-            if (gentype[1] == 0)                                           // If memory loaction
+            if (gentype[1] == 0)                                                 // If memory loaction
             {
-               genaddr[WriteIndex] += temp / 8;
-               temp %= 8;                                                  // Offset within te first byte
+               genaddr[WriteIndex] += Offset / 8;                                // Cast to signed as negative is allowed
+               Offset %= 8;                                                      // Offset within te first byte
             }
-#endif
 
             for (c = 0; c < temp2; c++)
             {
-               if (temp3 & BIT((c + temp) & 31))
-                  temp4 |= BIT(c);
+               if (temp3 & BIT((c + Offset) & 31))
+                  temp |= BIT(c);
             }
 
-            temp = temp4;
             WriteSize = LookUp.p.Size;
             WriteIndex = 1;
          }
@@ -1871,6 +1863,12 @@ void n32016_exec(uint32_t tubecycles)
             int32_t Length = getdisp();
             int32_t Source = ReadGen(0, LookUp.p.Size);
             int32_t Base = ReadGen(1, LookUp.p.Size);
+
+            if (gentype[1] == 0)                                           // If memory loaction
+            {
+               genaddr[WriteIndex] += Offset / 8;              // Cast to signed as negative is allowed
+               Offset %= 8;                                                // Offset within te first byte
+            }
 
             for (c = 0; c < Length; c++)
             {
