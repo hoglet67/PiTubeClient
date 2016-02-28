@@ -65,11 +65,12 @@ void n32016_dumpregs(char* pMessage)
    printf("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
    printf("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
 
+#ifdef PC_SIMULATION
 #ifdef WIN32
    system("pause");
 #endif
-
    exit(1);
+#endif
 }
 
 static void pushw(uint16_t val)

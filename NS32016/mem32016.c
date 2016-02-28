@@ -37,6 +37,7 @@ void init_ram(void)
 #endif
 }
 
+#if 0
 void dump_ram(void)
 {
    FILE *f = fopen("32016.dmp", "wb");
@@ -46,6 +47,7 @@ void dump_ram(void)
       fclose(f);
    }
 }
+#endif
 
 // Tube Access
 // FFFFF0 - R1 status
