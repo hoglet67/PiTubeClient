@@ -25,75 +25,81 @@ uint8_t Exit;
 void copro_32016_init_hardware()
 {
 #ifdef JTAG_DEBUG
-  enable_JTAG();
+   enable_JTAG();
 #endif
 
-  enable_SoftTube();
+   enable_SoftTube();
 }
 
 static void copro_32016_reset()
 {
-  n32016_reset (PANDORA_BASE); // Reset the device
+#ifdef PANDORA_BASE
+   n32016_reset (PANDORA_BASE); // Start directly in the ROM
+#else
+   n32016_reset(0); // Start at 0 just like the original
+#endif
 }
 
 void copro_32016_main(unsigned int r0, unsigned int r1, unsigned int atags)
 {
-  register unsigned int gpio;
-  register unsigned int last_gpio = IRQ_PIN_MASK | NMI_PIN_MASK | RST_PIN_MASK;
+   register unsigned int gpio;
+   register unsigned int last_gpio = IRQ_PIN_MASK | NMI_PIN_MASK | RST_PIN_MASK;
 
-  RPI_EnableUart("Pi 32016 CoPro\r\n"); // Display Debug Boot Message
+   RPI_EnableUart("Pi 32016 CoPro\r\n"); // Display Debug Boot Message
 
-  copro_32016_init_hardware();
+   copro_32016_init_hardware();
 
-  enable_MMU_and_IDCaches();
-  _enable_unaligned_access();
+   enable_MMU_and_IDCaches();
+   _enable_unaligned_access();
 
-  init_ram();
+   init_ram();
 
-  copro_32016_reset();
+   copro_32016_reset();
 
-  Exit = 0;
-  in_isr = 1; // This ensures interrupts are not re-enabled in tube-lib.c
+   Exit = 0;
+   in_isr = 1; // This ensures interrupts are not re-enabled in tube-lib.c
 
-  while (1)
-  {
-    n32016_exec(1);
+   while (1)
+   {
+      n32016_exec(1);
 
-    gpio = RPI_GpioBase->GPLEV0;
+      gpio = RPI_GpioBase->GPLEV0;
 
-    if (gpio == last_gpio)
-    {
-      continue;
-    }
-
-    if ((gpio & RST_PIN_MASK) == 0)
-    {
-      printf("RST!!\r\n");
-      copro_32016_reset();
-
-      do
+#if 0
+      if (gpio == last_gpio)
       {
-        if (Exit)
-        {
-          return; // Set Exit true while in Reset to switch to another co-pro
-        }
-
-        gpio = RPI_GpioBase->GPLEV0;
+         continue;
       }
-      while ((gpio & RST_PIN_MASK) == 0); // Wait for Reset to go high
-    }
+#endif
 
-    tube_irq = 0;
-    if ((gpio & IRQ_PIN_MASK) == 0)
-    {
-      tube_irq |= 1; // IRQ is Active
-    }
+      if ((gpio & RST_PIN_MASK) == 0)
+      {
+         printf("RST!!\r\n");
+         copro_32016_reset();
 
-    if ((gpio & NMI_PIN_MASK) == 0)
-    {
-      tube_irq |= 2; // NMI is Active
-    }
+         do
+         {
+            if (Exit)
+            {
+               return; // Set Exit true while in Reset to switch to another co-pro
+            }
 
-    last_gpio = gpio;
-  }
+            gpio = RPI_GpioBase->GPLEV0;
+         }
+         while ((gpio & RST_PIN_MASK) == 0); // Wait for Reset to go high
+      }
+
+      tube_irq = 0;
+      if ((gpio & IRQ_PIN_MASK) == 0)
+      {
+         tube_irq |= 1; // IRQ is Active
+      }
+
+      if ((gpio & NMI_PIN_MASK) == 0)
+      {
+         tube_irq |= 2; // NMI is Active
+      }
+
+      last_gpio = gpio;
+   }
 }

@@ -12,14 +12,15 @@ FILE *pTraceFile = NULL;
 
 void tubeWrite(unsigned char Address, unsigned char Data)
 {
-	PiTRACE("tubeWrite(%02X, %02X)\n", Address, Data);
+   unsigned char temp = (Data < 0x20) ? 0x20 : Data;
+   PiTRACE("tubeWrite(%02X, %02X) %c\n", Address, Data, temp);
 }
 
 unsigned char tubeRead(unsigned char Address)
 {
 	PiTRACE("tubeRead(%02X)\n", Address);
 
-	return 0;
+   return 0x40;
 }
 
 void OpenTrace(const char *pFileName)

@@ -16,6 +16,7 @@
 #define COPRO_32016   6
 #define COPRO_ECO_CLK 7
 
+//#define COPRO COPRO_80186
 #define COPRO COPRO_32016
 
 void kernel_main(unsigned int r0, unsigned int r1, unsigned int atags)
