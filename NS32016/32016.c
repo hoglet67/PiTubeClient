@@ -318,7 +318,7 @@ static uint32_t getgen(int gen, int c)
       {
          uint32_t Shift = gen & 3;
          getgen(genindex[c] >> 3, c);
-         if (gentype[c] == Register)
+         if (gentype[c] == Memory)
          {
             genaddr[c] += (r[genindex[c] & 7] << Shift);
          }

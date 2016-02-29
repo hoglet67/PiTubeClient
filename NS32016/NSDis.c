@@ -126,6 +126,10 @@ void RegLookUp(void)
          {
 
          }
+         else if (Regs[Index] == 0x17)
+         {
+            PiTRACE(" TOS");
+         }
          else
          {
             if (gentype[Index] == Memory)
@@ -176,13 +180,15 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction)
       }
 
       PiTRACE("#%08u PC:%06X INST:%08X %s%s", ++OpCount, pc, opcode, pText, PostfixLookup(Postfix));
-      //RegLookUp();
+      RegLookUp();
       PiTRACE("\n");
 
+#if 0
       if (OpCount >= 10000)
       {
          n32016_dumpregs("Lots of trace data here!");
       }
+#endif
 
 		return;
 	}
