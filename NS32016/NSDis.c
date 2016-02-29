@@ -183,7 +183,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction)
       RegLookUp();
       PiTRACE("\n");
 
-#if 0
+#ifndef TEST_SUITE
       if (OpCount >= 10000)
       {
          n32016_dumpregs("Lots of trace data here!");

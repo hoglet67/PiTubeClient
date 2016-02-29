@@ -116,7 +116,7 @@ static uint32_t popd()
 uint32_t PopArbitary(uint32_t Size)
 {
    uint32_t Result = read_n(sp[SP], Size);
-   sp[SP] += Size;
+   sp[SP] += Size + 1;
 
    return Result;
 }
@@ -189,7 +189,7 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
      
       case TOS:
       {
-         return PopArbitary(Size +  1);
+         return PopArbitary(Size);
       }
       // No break due to return
    }
@@ -263,7 +263,6 @@ static uint32_t getgen(int gen, int c)
 
       case 0x14: // Immediate
       {
-         gentype[c] = Memory;
          gentype[c] = Register;
          genaddr[c] = (uint32_t) & nsimm[c];
          // Why can't they just decided on an endian and then stick to it?
@@ -291,6 +290,7 @@ static uint32_t getgen(int gen, int c)
       break;
 
       case 0x17: // Top of Stack
+         genaddr[c] = sp[SP];
          gentype[c] = TOS;
       break;
 
@@ -318,7 +318,7 @@ static uint32_t getgen(int gen, int c)
       {
          uint32_t Shift = gen & 3;
          getgen(genindex[c] >> 3, c);
-         if (gentype[c] == Memory)
+         if (gentype[c] != Register)
          {
             genaddr[c] += (r[genindex[c] & 7] << Shift);
          }
@@ -666,6 +666,12 @@ void n32016_exec(uint32_t tubecycles)
 #if 1
       // Useful way to be able to get a breakpoint on a particular instruction
       //if (startpc == 0)
+      if (startpc == 0xF00153)
+      {
+         printf("Here!\n");
+         //n32016_dumpregs("Oops how did I get here!");
+      }
+
       if ((opcode == 0) && (startpc < 20))
       {
          n32016_dumpregs("Oops how did I get here!");
@@ -2069,7 +2075,7 @@ void n32016_exec(uint32_t tubecycles)
             temp3          = ReadGen(0, sz32);                                   // Base
             temp           = 0;                                                  // Result starts at zero
 
-            if (gentype[1] == Memory)                                            // If memory loaction
+            if (gentype[1] != Register)                                            // If memory loaction
             {
                genaddr[WriteIndex] += Offset / 8;                                // Cast to signed as negative is allowed
                Offset %= 8;                                                      // Offset within te first byte
@@ -2105,7 +2111,7 @@ void n32016_exec(uint32_t tubecycles)
             int32_t Source = ReadGen(0, LookUp.p.Size);
             int32_t Base = ReadGen(1, LookUp.p.Size);
 
-            if (gentype[1] == Memory)                                           // If memory loaction
+            if (gentype[1] == Register)                                           // If memory loaction
             {
                genaddr[WriteIndex] += Offset / 8;                               // Cast to signed as negative is allowed
                Offset %= 8;                                                     // Offset within te first byte

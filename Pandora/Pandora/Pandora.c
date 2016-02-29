@@ -12,7 +12,7 @@ FILE *pTraceFile = NULL;
 
 void tubeWrite(unsigned char Address, unsigned char Data)
 {
-   unsigned char temp = (Data < 0x20) ? 0x20 : Data;
+   unsigned char temp = (Data < ' ') ? ' ' : Data;
    PiTRACE("tubeWrite(%02X, %02X) %c\n", Address, Data, temp);
 }
 
