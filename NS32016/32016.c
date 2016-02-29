@@ -154,7 +154,7 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
 {
    uint32_t Temp = 0;
 
-   if (gentype[c])
+   if (gentype[c] == Register)
    {
       Temp = *(uint32_t*) genaddr[c];
       return Truncate(Temp, Size);
@@ -198,7 +198,7 @@ static uint32_t getgen(int gen, int c)
       case 5:
       case 6:
       case 7:
-         gentype[c] = 1;
+         gentype[c] = Register;
          genaddr[c] = (uint32_t) & r[gen & 7];
       break;
 
@@ -210,7 +210,7 @@ static uint32_t getgen(int gen, int c)
       case 0xD:
       case 0xE:
       case 0xF:
-         gentype[c] = 0;
+         gentype[c] = Memory;
          genaddr[c] = r[gen & 7] + getdisp();
       break;
 
@@ -219,7 +219,7 @@ static uint32_t getgen(int gen, int c)
          temp2 = getdisp();
          genaddr[c] = read_x32(fp + temp);
          genaddr[c] += temp2;
-         gentype[c] = 0;
+         gentype[c] = Memory;
       break;
 
       case 0x11: // Stack memory relative
@@ -227,7 +227,7 @@ static uint32_t getgen(int gen, int c)
          temp2 = getdisp();
          genaddr[c] = read_x32(sp[SP] + temp);
          genaddr[c] += temp2;
-         gentype[c] = 0;
+         gentype[c] = Memory;
       break;
 
       case 0x12: // Static memory relative
@@ -235,13 +235,13 @@ static uint32_t getgen(int gen, int c)
          temp2 = getdisp();
          genaddr[c] = read_x32(sb + temp);
          genaddr[c] += temp2;
-         gentype[c] = 0;
+         gentype[c] = Memory;
       break;
 
       case 0x14: // Immediate
       {
-         gentype[c] = 0;
-         gentype[c] = 1;
+         gentype[c] = Memory;
+         gentype[c] = Register;
          genaddr[c] = (uint32_t) & nsimm[c];
          // Why can't they just decided on an endian and then stick to it?
          if (LookUp.p.Size == sz8)
@@ -255,12 +255,12 @@ static uint32_t getgen(int gen, int c)
       break;
 
       case 0x15: // Absolute
-         gentype[c] = 0;
+         gentype[c] = Memory;
          genaddr[c] = getdisp();
       break;
 
       case 0x16: // External
-         gentype[c] = 0;
+         gentype[c] = Memory;
          temp = read_x32(mod + 4);
          temp += getdisp();
          temp2 = read_x32(temp);
@@ -268,7 +268,7 @@ static uint32_t getgen(int gen, int c)
       break;
 
       case 0x17: // Stack
-         gentype[c] = 0;
+         gentype[c] = Memory;
          //sdiff[c] = (LookUp.p.Size + 1);
          genaddr[c] = sp[SP];
          /*                if (c)
@@ -284,19 +284,19 @@ static uint32_t getgen(int gen, int c)
       break;
 
       case 0x18: // FP relative
-         gentype[c] = 0;
+         gentype[c] = Memory;
          genaddr[c] = getdisp() + fp;
       break;
       case 0x19: // SP relative
-         gentype[c] = 0;
+         gentype[c] = Memory;
          genaddr[c] = getdisp() + sp[SP];
       break;
       case 0x1A: // SB relative
-         gentype[c] = 0;
+         gentype[c] = Memory;
          genaddr[c] = getdisp() + sb;
       break;
       case 0x1B: // PC relative
-         gentype[c] = 0;
+         gentype[c] = Memory;
          genaddr[c] = getdisp() + startpc;
       break;
 
@@ -316,7 +316,7 @@ static uint32_t getgen(int gen, int c)
             genaddr[c] = *(uint32_t*) genaddr[c] + (r[genindex[c] & 7] << Shift);
          }
 
-         gentype[c] = 0;
+         gentype[c] = Memory;
       }
       break;
 
@@ -2065,7 +2065,7 @@ void n32016_exec(uint32_t tubecycles)
             temp3          = ReadGen(0, sz32);                                   // Base
             temp           = 0;                                                  // Result starts at zero
 
-            if (gentype[1] == 0)                                                 // If memory loaction
+            if (gentype[1] == Memory)                                            // If memory loaction
             {
                genaddr[WriteIndex] += Offset / 8;                                // Cast to signed as negative is allowed
                Offset %= 8;                                                      // Offset within te first byte
@@ -2101,10 +2101,10 @@ void n32016_exec(uint32_t tubecycles)
             int32_t Source = ReadGen(0, LookUp.p.Size);
             int32_t Base = ReadGen(1, LookUp.p.Size);
 
-            if (gentype[1] == 0)                                           // If memory loaction
+            if (gentype[1] == Memory)                                           // If memory loaction
             {
-               genaddr[WriteIndex] += Offset / 8;              // Cast to signed as negative is allowed
-               Offset %= 8;                                                // Offset within te first byte
+               genaddr[WriteIndex] += Offset / 8;                               // Cast to signed as negative is allowed
+               Offset %= 8;                                                     // Offset within te first byte
             }
 
             for (c = 0; c < Length; c++)
@@ -2228,7 +2228,7 @@ void n32016_exec(uint32_t tubecycles)
       {
          case sz8:
          {
-            if (gentype[WriteIndex])
+            if (gentype[WriteIndex] == Register)
                *((uint8_t*) genaddr[WriteIndex]) = temp;
             else
             {
@@ -2241,7 +2241,7 @@ void n32016_exec(uint32_t tubecycles)
          case sz16:
          {
 #ifdef TEST_SUITE
-            if (gentype[WriteIndex] && (((uint32_t*) genaddr[WriteIndex]) == &r[7]))
+            if ((gentype[WriteIndex] == Register) && (((uint32_t*) genaddr[WriteIndex]) == &r[7]))
             {
                PiTRACE("*** TEST = %u\n", temp);
 #if 0
@@ -2253,7 +2253,7 @@ void n32016_exec(uint32_t tubecycles)
             }
 #endif
 
-            if (gentype[WriteIndex])
+            if (gentype[WriteIndex] == Register)
                *((uint16_t*) genaddr[WriteIndex]) = temp;
             else
             {
@@ -2265,7 +2265,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case sz32:
          {
-            if (gentype[WriteIndex])
+            if (gentype[WriteIndex] == Register)
                *((uint32_t*) genaddr[WriteIndex]) = temp;
             else
             {

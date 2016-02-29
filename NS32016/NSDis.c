@@ -128,7 +128,7 @@ void RegLookUp(void)
          }
          else
          {
-            if (gentype[Index] == 0)
+            if (gentype[Index] == Memory)
             {
                uint32_t  Address = genaddr[Index];
                PiTRACE(" &%06X=", Address);

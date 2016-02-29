@@ -50,6 +50,13 @@ enum Formats
 	FormatBad = 0xFF
 };
 
+enum hh
+{
+   Memory,
+   Register,
+   TOS
+};
+
 #define F_BASE(in) ((in) << 4)
 enum Functions
 {
