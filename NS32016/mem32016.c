@@ -205,11 +205,11 @@ void write_Arbitary(uint32_t addr, void* pData, uint32_t Size)
    uint32_t Index;
    register uint8_t* pV = (uint8_t*) pData;
 
-   PiTRACE(" @%06X =\n", addr);
+   PiTRACE("?@%06X =", addr);
 
    for (Index = 0; Index < Size; Index++)
    {
-      PiTRACE(" %02X", pV[Index]);
+      PiTRACE("%02X", pV[Index]);
    }
    PiTRACE("\n");
 #endif

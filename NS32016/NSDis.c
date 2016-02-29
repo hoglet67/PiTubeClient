@@ -193,8 +193,15 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction)
 		return;
 	}
 
-
 	PiTRACE("PC is :%08X ?????\n", pc);
+}
+
+void ShowRegisterWrite(uint32_t Index, uint32_t Value)
+{
+   if (Regs[Index] < 8)
+   {
+      PiTRACE(" R%u = %08X\n", Regs[Index], Value);
+   }
 }
 
 const uint8_t FormatSizes[FormatCount + 1] =

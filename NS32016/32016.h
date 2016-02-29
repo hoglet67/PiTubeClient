@@ -50,11 +50,50 @@ enum Formats
 	FormatBad = 0xFF
 };
 
-enum hh
+enum OpTypes
 {
    Memory,
    Register,
    TOS
+};
+
+enum Operands
+{
+   R0,
+   R1,
+   R2,
+   R3,
+   R4,
+   R5,
+   R6,
+   R7,
+
+   R0_Offset,
+   R1_Offset,
+   R2_Offset,
+   R3_Offset,
+   R4_Offset,
+   R5_Offset,
+   R6_Offset,
+   R7_Offset,
+
+   FrameRelative,
+   StackRelative,
+   StaticRelative,
+   
+   IllegalOperand,
+   Immediate,
+   Absolute,
+   External,
+   TopOfStack,
+   FpRelative,
+   SpRelative,
+   SbRelative,
+   PcRelative,
+   EaPlusRn,
+   EaPlus2Rn,
+   EaPlus4Rn,
+   EaPlus8Rn
 };
 
 #define F_BASE(in) ((in) << 4)
@@ -253,7 +292,7 @@ extern void ClearRegs(void);
 extern void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction);
 extern void n32016_dumpregs();
 extern void n32016_build_matrix();
-
+extern void ShowRegisterWrite(uint32_t Index, uint32_t Value);
 #ifdef PC_SIMULATION
 extern void CloseTrace(void);
 #endif
@@ -271,4 +310,5 @@ extern DecodeMatrix LookUp;
 extern uint32_t genaddr[2];
 extern int gentype[2];
 extern const uint8_t FormatSizes[FormatCount + 1];
+#define PrintSP(in) PiTRACE("(%u) SP = %06X\n", __LINE__, (in))
 

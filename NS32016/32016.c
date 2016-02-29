@@ -80,19 +80,23 @@ void n32016_dumpregs(char* pMessage)
 static void pushw(uint16_t val)
 {
    sp[SP] -= 2;
+   PrintSP(sp[SP]);
    write_x16(sp[SP], val);
 }
 
 static void pushd(uint32_t val)
 {
    sp[SP] -= 4;
-
+   PrintSP(sp[SP]);
    write_x32(sp[SP], val);
 }
 
 void PushArbitary(uint32_t Value, uint32_t Size)
 {
    sp[SP] -= Size;
+   PrintSP(sp[SP]);
+
+   PiTRACE("PushArbitary:");
 
    write_Arbitary(sp[SP], &Value, Size);
 }
@@ -101,6 +105,7 @@ static uint16_t popw()
 {
    uint16_t temp = read_x16(sp[SP]);
    sp[SP] += 2;
+   PrintSP(sp[SP]);
 
    return temp;
 }
@@ -109,6 +114,7 @@ static uint32_t popd()
 {
    uint32_t temp = read_x32(sp[SP]);
    sp[SP] += 4;
+   PrintSP(sp[SP]);
 
    return temp;
 }
@@ -117,6 +123,7 @@ uint32_t PopArbitary(uint32_t Size)
 {
    uint32_t Result = read_n(sp[SP], Size);
    sp[SP] += Size + 1;
+   PrintSP(sp[SP]);
 
    return Result;
 }
@@ -197,47 +204,65 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
    return 0;
 }
 
-static uint32_t getgen(int gen, int c)
+static void getgen(int gen, int c)
 {
    uint32_t temp, temp2;
 
    gen &= 0x1F;
+   StoreRegisters(c, gen);
 
-   if ((gen & 0x1C) == 0x1C)
+   if (gen <= R7)
+   {
+      genaddr[c] = (uint32_t) & r[gen & 7];
+      gentype[c] = Register;
+      return;
+   }
+
+   if (gen == Immediate)
+   {
+      genaddr[c] = (uint32_t) & nsimm[c];
+
+      // Why can't they just decided on an endian and then stick to it?
+      if (LookUp.p.Size == sz8)
+         nsimm[c] = read_x8(pc);
+      else if (LookUp.p.Size == sz16)
+         nsimm[c] = (read_x8(pc) << 8) | read_x8(pc + 1);
+      else
+         nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
+      pc += (LookUp.p.Size + 1);
+      gentype[c] = Register;
+      return;
+   }
+
+   gentype[c] = Memory;
+
+   if (gen <= R7_Offset)
+   {
+      genaddr[c] = r[gen & 7] + getdisp();
+      return;
+   }
+
+   if (gen >= EaPlusRn)
    {
       genindex[c] = read_x8(pc);
       pc++;
-   }
 
-   StoreRegisters(c, gen);
+      uint32_t Shift = gen & 3;
+      getgen(genindex[c] >> 3, c);
+      if (gentype[c] != Register)
+      {
+         genaddr[c] += (r[genindex[c] & 7] << Shift);
+      }
+      else
+      {
+         genaddr[c] = *(uint32_t*) genaddr[c] + (r[genindex[c] & 7] << Shift);
+      }
+      return;
+   }
 
    switch (gen)
    {
-      case 0:
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-      case 6:
-      case 7:
-         gentype[c] = Register;
-         genaddr[c] = (uint32_t) & r[gen & 7];
-      break;
-
-      case 8:
-      case 9:
-      case 0xA:
-      case 0xB:
-      case 0xC:
-      case 0xD:
-      case 0xE:
-      case 0xF:
-         gentype[c] = Memory;
-         genaddr[c] = r[gen & 7] + getdisp();
-      break;
-
-      case 0x10: // Frame memory relative
+      case FrameRelative:
          temp = getdisp();
          temp2 = getdisp();
          genaddr[c] = read_x32(fp + temp);
@@ -245,7 +270,7 @@ static uint32_t getgen(int gen, int c)
          gentype[c] = Memory;
       break;
 
-      case 0x11: // Stack memory relative
+      case StackRelative:
          temp = getdisp();
          temp2 = getdisp();
          genaddr[c] = read_x32(sp[SP] + temp);
@@ -253,7 +278,7 @@ static uint32_t getgen(int gen, int c)
          gentype[c] = Memory;
       break;
 
-      case 0x12: // Static memory relative
+      case StaticRelative:
          temp = getdisp();
          temp2 = getdisp();
          genaddr[c] = read_x32(sb + temp);
@@ -261,82 +286,48 @@ static uint32_t getgen(int gen, int c)
          gentype[c] = Memory;
       break;
 
-      case 0x14: // Immediate
+      case Immediate:
       {
-         gentype[c] = Register;
-         genaddr[c] = (uint32_t) & nsimm[c];
-         // Why can't they just decided on an endian and then stick to it?
-         if (LookUp.p.Size == sz8)
-            nsimm[c] = read_x8(pc);
-         else if (LookUp.p.Size == sz16)
-            nsimm[c] = (read_x8(pc) << 8) | read_x8(pc + 1);
-         else
-            nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
-         pc += (LookUp.p.Size + 1);
       }
       break;
 
-      case 0x15: // Absolute
+      case Absolute:
          gentype[c] = Memory;
          genaddr[c] = getdisp();
       break;
 
-      case 0x16: // External
-         gentype[c] = Memory;
+      case External:
          temp = read_x32(mod + 4);
          temp += getdisp();
          temp2 = read_x32(temp);
          genaddr[c] = temp2 + getdisp();
       break;
 
-      case 0x17: // Top of Stack
+      case TopOfStack:
          genaddr[c] = sp[SP];
          gentype[c] = TOS;
       break;
 
-      case 0x18: // FP relative
-         gentype[c] = Memory;
+      case FpRelative:
          genaddr[c] = getdisp() + fp;
       break;
-      case 0x19: // SP relative
-         gentype[c] = Memory;
+
+      case SpRelative:
          genaddr[c] = getdisp() + sp[SP];
       break;
-      case 0x1A: // SB relative
-         gentype[c] = Memory;
+
+      case SbRelative:
          genaddr[c] = getdisp() + sb;
       break;
-      case 0x1B: // PC relative
-         gentype[c] = Memory;
+
+      case PcRelative:
          genaddr[c] = getdisp() + startpc;
-      break;
-
-      case 0x1C: // EA + Rn
-      case 0x1D: // EA + Rn*2
-      case 0x1E: // EA + Rn*4
-      case 0x1F: // EA + Rn*8
-      {
-         uint32_t Shift = gen & 3;
-         getgen(genindex[c] >> 3, c);
-         if (gentype[c] != Register)
-         {
-            genaddr[c] += (r[genindex[c] & 7] << Shift);
-         }
-         else
-         {
-            genaddr[c] = *(uint32_t*) genaddr[c] + (r[genindex[c] & 7] << Shift);
-         }
-
-         gentype[c] = Memory;
-      }
       break;
 
       default:
          n32016_dumpregs("Bad NS32016 gen mode");
       break;
    }
-
-   return 0; //ReadGen(c, LookUp.p.Size);
 }
 
 uint64_t readgenq(uint32_t c)
@@ -664,9 +655,14 @@ void n32016_exec(uint32_t tubecycles)
       opcode = read_x32(pc);
 
 #if 1
+      if (startpc == 0xF00276)
+      {
+         n32016_dumpregs("Tube Read Loop!");
+      }
+
       // Useful way to be able to get a breakpoint on a particular instruction
       //if (startpc == 0)
-      if (startpc == 0xF00153)
+      if (startpc == 0xF001E9)
       {
          printf("Here!\n");
          //n32016_dumpregs("Oops how did I get here!");
@@ -707,6 +703,11 @@ void n32016_exec(uint32_t tubecycles)
          {
             LookUp.p.Size = opcode & 0x03;
             getgen(opcode >> 11, 0);
+
+            if (LookUp.p.Function <= RETT)
+            {
+               temp = getdisp();
+            }
          }
          break;
 
@@ -921,7 +922,6 @@ void n32016_exec(uint32_t tubecycles)
 
          case BSR:
          {
-            temp = getdisp();
             pushd(pc);
             pc = startpc + temp;
          }
@@ -929,14 +929,13 @@ void n32016_exec(uint32_t tubecycles)
 
          case RET:
          {
-            temp = getdisp();
             pc = popd();
             sp[SP] += temp;
+            PrintSP(sp[SP]);
          }
          break;
 
          case CXP:
-            temp = getdisp();
             pushw(0);
             pushw(mod);
             pushd(pc);
@@ -948,20 +947,20 @@ void n32016_exec(uint32_t tubecycles)
             break;
 
          case RXP:
-            temp = getdisp();
             pc = popd();
             temp2 = popd();
             mod = temp2 & 0xFFFF;
             sp[SP] += temp;
+            PrintSP(sp[SP]);
             sb = read_x32(mod);
             break;
 
          case RETT:
-            temp = getdisp();
             pc = popd();
             mod = popw();
             psr = popw();
             sp[SP] += temp;
+            PrintSP(sp[SP]);
             sb = read_x32(mod);
             break;
 
@@ -1009,6 +1008,7 @@ void n32016_exec(uint32_t tubecycles)
             pushd(fp);
             fp = sp[SP];
             sp[SP] -= temp2;
+            PrintSP(sp[SP]);
 
             for (c = 0; c < 8; c++)
             {
@@ -1033,6 +1033,7 @@ void n32016_exec(uint32_t tubecycles)
                }
             }
             sp[SP] = fp;
+            PrintSP(sp[SP]);
             fp = popd();
          }
          break;
@@ -1176,8 +1177,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case ACB:
             temp2 = (opcode >> 7) & 0xF;
-            NIBBLE_EXTEND(temp2)
-            ;
+            NIBBLE_EXTEND(temp2);
             temp = ReadGen(0, LookUp.p.Size);
             temp += temp2;
             WriteSize = LookUp.p.Size;
@@ -1207,6 +1207,7 @@ void n32016_exec(uint32_t tubecycles)
                   break;
                   case 9:
                      sp[SP] = temp;
+                     PrintSP(sp[SP]);
                   break;
                   default:
                      n32016_dumpregs("Bad LPRB reg");
@@ -1232,6 +1233,7 @@ void n32016_exec(uint32_t tubecycles)
                {
                   case 9:
                      sp[SP] = temp;
+                     PrintSP(sp[SP]);
                   break;
                   case 0xA:
                      sb = temp;
@@ -1290,6 +1292,7 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(0, LookUp.p.Size);
             SIGN_EXTEND(temp);
             sp[SP] -= temp;
+            PrintSP(sp[SP]);
          }
          break;
 
@@ -1378,7 +1381,13 @@ void n32016_exec(uint32_t tubecycles)
          break;
 
          case ADDR:
-            temp = genaddr[1];
+            if (gentype[1] == TOS)
+            {
+               printf("TOS\n");
+            }
+
+            temp = (gentype[1] == TOS) ? sp[SP] : genaddr[1];
+            //temp = genaddr[1];
             WriteSize = LookUp.p.Size;
          break;
 
@@ -2236,64 +2245,59 @@ void n32016_exec(uint32_t tubecycles)
    
       if (WriteSize <= sz32)
       {
-         if (gentype[WriteIndex] == TOS)
+         switch (gentype[WriteIndex])
          {
-            PushArbitary(temp, WriteSize + 1);
-         }
-         else
-         {
-            switch (WriteSize)
+            case Memory:
             {
-               case sz8:
+               switch (WriteSize)
                {
-                  if (gentype[WriteIndex] == Register)
-                     *((uint8_t*) genaddr[WriteIndex]) = temp;
-                  else
-                  {
-                     write_x8(genaddr[WriteIndex], temp);
-                  }
-               }
-               break;
-
-               case sz16:
-               {
-      #ifdef TEST_SUITE
-                  if ((gentype[WriteIndex] == Register) && (((uint32_t*) genaddr[WriteIndex]) == &r[7]))
-                  {
-                     PiTRACE("*** TEST = %u\n", temp);
-      #if 0
-                     if (temp == 207)
+                  case sz8:   write_x8( genaddr[WriteIndex], temp);   break;
+                  case sz16:  write_x16(genaddr[WriteIndex], temp);  // break;
+#ifdef TEST_SUITE
+                     if ((gentype[WriteIndex] == Register) && (((uint32_t*) genaddr[WriteIndex]) == &r[7]))
                      {
-                        Trace = 1;
+                        PiTRACE("*** TEST = %u\n", temp);
+#if 0
+                        if (temp == 207)
+                        {
+                           Trace = 1;
+                        }
+#endif
                      }
-      #endif
-                  }
-      #endif
-
-                  if (gentype[WriteIndex] == Register)
-                     *((uint16_t*) genaddr[WriteIndex]) = temp;
-                  else
-                  {
-                     write_x16(genaddr[WriteIndex], temp);
-                  }
+#endif
+                  break;
+                  case sz32:  write_x32(genaddr[WriteIndex], temp);  break;
                }
-               break;
-
-               case sz32:
-               {
-                  if (gentype[WriteIndex] == Register)
-                     *((uint32_t*) genaddr[WriteIndex]) = temp;
-                  else
-                  {
-                     write_x32(genaddr[WriteIndex], temp);
-                  }
-               }
-               break;
             }
+            break;
+            
+            case Register:
+            {
+               switch (WriteSize)
+               {
+                  case sz8:   *((uint8_t*)   genaddr[WriteIndex]) = temp;     break;
+                  case sz16:  *((uint16_t*)  genaddr[WriteIndex]) = temp;     break;
+                  case sz32:  *((uint32_t*)  genaddr[WriteIndex]) = temp;     break;
+               }
+
+               ShowRegisterWrite(WriteIndex, Truncate(temp, WriteSize));
+            }
+            break;
+
+            case TOS:
+            {
+               PushArbitary(temp, WriteSize + 1);
+            }
+            break;
          }
       }
 
-      dump_mini();
+#if 0
+      if (Trace)
+      {
+         dump_mini();
+      }
+#endif
 
 #if 0
       // Test Suite Diverter ;)
