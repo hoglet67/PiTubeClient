@@ -22,6 +22,9 @@ uint32_t startpc;
 
 uint32_t genaddr[2];
 int gentype[2];
+int genindex[2];
+uint32_t nsimm[2];
+
 DecodeMatrix LookUp;
 
 #define SP ((psr & S_FLAG) >> 9)
@@ -87,6 +90,13 @@ static void pushd(uint32_t val)
    write_x32(sp[SP], val);
 }
 
+void PushArbitary(uint32_t Value, uint32_t Size)
+{
+   sp[SP] -= Size;
+
+   write_Arbitary(sp[SP], &Value, Size);
+}
+
 static uint16_t popw()
 {
    uint16_t temp = read_x16(sp[SP]);
@@ -101,6 +111,14 @@ static uint32_t popd()
    sp[SP] += 4;
 
    return temp;
+}
+
+uint32_t PopArbitary(uint32_t Size)
+{
+   uint32_t Result = read_n(sp[SP], Size);
+   sp[SP] += Size;
+
+   return Result;
 }
 
 static uint32_t getdisp()
@@ -132,11 +150,6 @@ static uint32_t getdisp()
    return addr | ((addr & 0x20000000) ? 0xC0000000 : 0);
 }
 
-int genindex[2];
-//int sdiff[2] ={ 0, 0 };
-
-uint32_t nsimm[2];
-
 uint32_t Truncate(uint32_t Value, uint32_t Size)
 {
    switch (Size)
@@ -154,24 +167,34 @@ uint32_t ReadGen(uint32_t c, uint32_t Size)
 {
    uint32_t Temp = 0;
 
-   if (gentype[c] == Register)
+   switch (gentype[c])
    {
-      Temp = *(uint32_t*) genaddr[c];
-      return Truncate(Temp, Size);
-   }
+      case Memory:
+      {
+         switch (Size)
+         {
+            case sz8:   return read_x8(genaddr[c]);
+            case sz16:  return read_x16(genaddr[c]);
+            case sz32:  return read_x32(genaddr[c]);
+         }
+      }
+      break;
+
+      case Register:
+      {
+         Temp = *(uint32_t*) genaddr[c];
+         return Truncate(Temp, Size);
+      }
+      // No break due to return
      
-   switch (Size)
-   {
-      case sz8:   return read_x8(genaddr[c]);
-      case sz16:  return read_x16(genaddr[c]);
-      case sz32:  return read_x32(genaddr[c]);
+      case TOS:
+      {
+         return PopArbitary(Size +  1);
+      }
+      // No break due to return
    }
 
-#if 0
-   if (sdiff[c]) genaddr[c] = sp[SP] = (sp[SP] + sdiff[c]);
-#endif
-
-   return Truncate(Temp, Size);
+   return 0;
 }
 
 static uint32_t getgen(int gen, int c)
@@ -267,20 +290,8 @@ static uint32_t getgen(int gen, int c)
          genaddr[c] = temp2 + getdisp();
       break;
 
-      case 0x17: // Stack
-         gentype[c] = Memory;
-         //sdiff[c] = (LookUp.p.Size + 1);
-         genaddr[c] = sp[SP];
-         /*                if (c)
-          {
-          sp[SP] -= (LookUp.p.Size + 1);
-          genaddr[c]=sp[SP];
-          }
-          else
-          {
-          genaddr[c]=sp[SP];
-          sp[SP] += (LookUp.p.Size + 1);
-          }*/
+      case 0x17: // Top of Stack
+         gentype[c] = TOS;
       break;
 
       case 0x18: // FP relative
@@ -307,7 +318,7 @@ static uint32_t getgen(int gen, int c)
       {
          uint32_t Shift = gen & 3;
          getgen(genindex[c] >> 3, c);
-         if (!gentype[c])
+         if (gentype[c] == Register)
          {
             genaddr[c] += (r[genindex[c] & 7] << Shift);
          }
@@ -332,16 +343,14 @@ uint64_t readgenq(uint32_t c)
 {
    uint64_t temp;
 
-   if (gentype[c])
+   if (gentype[c] == Register)
    {
       temp = *(uint64_t *) genaddr[c];
    }
    else
    {
-      temp = read_x32(genaddr[c]);
-      //if (sdiff[c]) genaddr[c] = sp[SP] = sp[SP] + sdiff[c];
+      temp = read_x32(genaddr[c]);              // This bonkers!
       temp |= read_x32(genaddr[c]);
-      //if (sdiff[c]) genaddr[c] = sp[SP] = sp[SP] + sdiff[c];
    }
 
    return temp;
@@ -530,7 +539,7 @@ static void handle_mei_dei_upper_write(uint64_t result)
    {
       case sz8:
          temp = result >> 8;
-         if (gentype[1])
+         if (gentype[1] == Register)
             *(uint8_t *) (genaddr[1] + 4) = temp;
          else
             write_x8(genaddr[1] + 4, temp);
@@ -538,7 +547,7 @@ static void handle_mei_dei_upper_write(uint64_t result)
 
       case sz16:
          temp = result >> 16;
-         if (gentype[1])
+         if (gentype[1] == Register)
             *(uint16_t *) (genaddr[1] + 4) = temp;
          else
             write_x16(genaddr[1] + 4, temp);
@@ -546,7 +555,7 @@ static void handle_mei_dei_upper_write(uint64_t result)
 
       case sz32:
          temp = result >> 32;
-         if (gentype[1])
+         if (gentype[1] == Register)
             *(uint32_t *) (genaddr[1] + 4) = temp;
          else
             write_x32(genaddr[1] + 4, temp);
@@ -650,7 +659,6 @@ void n32016_exec(uint32_t tubecycles)
 
    while (tubecycles > 0)
    {
-      //sdiff[0] = sdiff[1] = 0;
       startpc  = pc;
       ClearRegs();
       opcode = read_x32(pc);
@@ -1257,7 +1265,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case JUMP:
          {
-            if (gentype[0])
+            if (gentype[0] == Register)
                pc = *(uint32_t *) genaddr[0];
             else
                pc = genaddr[0];
@@ -1377,7 +1385,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case TBIT:
             temp2 = ReadGen(1, LookUp.p.Size);
-            if (gentype[0])
+            if (gentype[0] == Register)
             {
                // operand 0 is a register
                temp = ReadGen(0, sz32);
@@ -1624,7 +1632,7 @@ void n32016_exec(uint32_t tubecycles)
          case CBITI:
          case SBITI:
             temp2 = ReadGen(0, LookUp.p.Size);
-            if (gentype[1])
+            if (gentype[1] == Register)
             {
                // operand 0 is a register
                WriteSize = sz32;
@@ -1875,7 +1883,6 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0, sz8);
             SIGN_EXTEND(temp); // Editor need the useless semicolon
-            //if (sdiff[1]) sdiff[1] = 4;
             WriteSize = sz16;
             WriteIndex = 1;
          }
@@ -1884,7 +1891,6 @@ void n32016_exec(uint32_t tubecycles)
          case MOVZBW:
          {
             temp = ReadGen(0, sz8);
-            //if (sdiff[1]) sdiff[1] = 4;
             WriteSize = sz16;
             WriteIndex = 1;
          }
@@ -1893,7 +1899,6 @@ void n32016_exec(uint32_t tubecycles)
          case MOVZiD:
          {
             temp = ReadGen(0, LookUp.p.Size);
-            //if (sdiff[1])sdiff[1] = 4;
             WriteSize = sz32;
             WriteIndex = 1;
          }
@@ -1903,7 +1908,6 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0, LookUp.p.Size);
             SIGN_EXTEND(temp);
-            //if (sdiff[1])sdiff[1] = 4;
             WriteSize = sz32;
             WriteIndex = 1;
          }
@@ -2224,56 +2228,63 @@ void n32016_exec(uint32_t tubecycles)
       }
 #endif
    
-      switch (WriteSize)
+      if (WriteSize <= sz32)
       {
-         case sz8:
+         if (gentype[WriteIndex] == TOS)
          {
-            if (gentype[WriteIndex] == Register)
-               *((uint8_t*) genaddr[WriteIndex]) = temp;
-            else
-            {
-               //if (sdiff[WriteIndex]) genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
-               write_x8(genaddr[WriteIndex], temp);
-            }
+            PushArbitary(temp, WriteSize + 1);
          }
-         break;
-
-         case sz16:
+         else
          {
-#ifdef TEST_SUITE
-            if ((gentype[WriteIndex] == Register) && (((uint32_t*) genaddr[WriteIndex]) == &r[7]))
+            switch (WriteSize)
             {
-               PiTRACE("*** TEST = %u\n", temp);
-#if 0
-               if (temp == 207)
+               case sz8:
                {
-                  Trace = 1;
+                  if (gentype[WriteIndex] == Register)
+                     *((uint8_t*) genaddr[WriteIndex]) = temp;
+                  else
+                  {
+                     write_x8(genaddr[WriteIndex], temp);
+                  }
                }
-#endif
-            }
-#endif
+               break;
 
-            if (gentype[WriteIndex] == Register)
-               *((uint16_t*) genaddr[WriteIndex]) = temp;
-            else
-            {
-               //if (sdiff[WriteIndex])genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
-               write_x16(genaddr[WriteIndex], temp);
+               case sz16:
+               {
+      #ifdef TEST_SUITE
+                  if ((gentype[WriteIndex] == Register) && (((uint32_t*) genaddr[WriteIndex]) == &r[7]))
+                  {
+                     PiTRACE("*** TEST = %u\n", temp);
+      #if 0
+                     if (temp == 207)
+                     {
+                        Trace = 1;
+                     }
+      #endif
+                  }
+      #endif
+
+                  if (gentype[WriteIndex] == Register)
+                     *((uint16_t*) genaddr[WriteIndex]) = temp;
+                  else
+                  {
+                     write_x16(genaddr[WriteIndex], temp);
+                  }
+               }
+               break;
+
+               case sz32:
+               {
+                  if (gentype[WriteIndex] == Register)
+                     *((uint32_t*) genaddr[WriteIndex]) = temp;
+                  else
+                  {
+                     write_x32(genaddr[WriteIndex], temp);
+                  }
+               }
+               break;
             }
          }
-         break;
-
-         case sz32:
-         {
-            if (gentype[WriteIndex] == Register)
-               *((uint32_t*) genaddr[WriteIndex]) = temp;
-            else
-            {
-               //if (sdiff[WriteIndex]) genaddr[WriteIndex] = sp[SP] = sp[SP] - sdiff[WriteIndex];
-               write_x32(genaddr[WriteIndex], temp);
-            }
-         }
-         break;
       }
 
       dump_mini();
