@@ -48,6 +48,17 @@ set( CMAKE_EXE_LINKER_FLAGS "-Wl,-T,${PROJECT_SOURCE_DIR}/rpi.ld" )
 
 add_executable( tube-client
     tube-client.c
+# 32016 Co Pro
+    copro-32016.c
+    copro-32016.h
+    ../../NS32016/32016.c
+    ../../NS32016/32016.h
+    ../../NS32016/boot_rom.h
+    ../../NS32016/mem32016.c
+    ../../NS32016/mem32016.h
+    ../../NS32016/NSDis.c
+    ../../NS32016/PandoraV0_61.h
+    ../../NS32016/PandoraV2_00.h
 # 80186 Co Pro
     copro-80186.c
     copro-80186.h
