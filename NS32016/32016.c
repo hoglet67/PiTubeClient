@@ -130,8 +130,8 @@ uint32_t PopArbitary(uint32_t Size)
 
 static uint32_t getdisp()
 {
-   uint32_t addr = read_x8(pc);
-   pc++;
+   uint32_t addr = READ_PC_BYTE();
+
    if (!(addr & 0x80))
    {
       return addr | ((addr & 0x40) ? 0xFFFFFF80 : 0);
@@ -140,19 +140,15 @@ static uint32_t getdisp()
    if (!(addr & 0x40))
    {
       addr &= 0x3F;
-      addr = (addr << 8) | read_x8(pc);
-      pc++;
-
+      addr = (addr << 8) | READ_PC_BYTE();
+  
       return addr | ((addr & 0x2000) ? 0xFFFFC000 : 0);
    }
 
    addr &= 0x3F;
-   addr = (addr << 24) | (read_x8(pc) << 16);
-   pc++;
-   addr = addr | (read_x8(pc) << 8);
-   pc++;
-   addr = addr | read_x8(pc);
-   pc++;
+   addr = (addr << 24) | (READ_PC_BYTE() << 16);
+   addr = addr | (READ_PC_BYTE() << 8);
+   addr = addr | READ_PC_BYTE();
 
    return addr | ((addr & 0x20000000) ? 0xC0000000 : 0);
 }
@@ -244,9 +240,8 @@ static void getgen(int gen, int c)
 
    if (gen >= EaPlusRn)
    {
-      genindex[c] = read_x8(pc);
-      pc++;
-
+      genindex[c] = READ_PC_BYTE();
+  
       uint32_t Shift = gen & 3;
       getgen(genindex[c] >> 3, c);
       if (gentype[c] != Register)
@@ -1002,8 +997,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             int c;
 
-            temp = read_x8(pc);
-            pc++;
+            temp = READ_PC_BYTE();
 
             for (c = 0; c < 8; c++)
             {
@@ -1018,8 +1012,8 @@ void n32016_exec(uint32_t tubecycles)
          case RESTORE:
          {
             int c;
-            temp = read_x8(pc);
-            pc++;
+            temp = READ_PC_BYTE();
+
             for (c = 0; c < 8; c++)
             {
                if (temp & BIT(c))
@@ -1032,8 +1026,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             int c;
 
-            temp = read_x8(pc);
-            pc++;
+            temp = READ_PC_BYTE();
             temp2 = getdisp();
             pushd(fp);
             fp = sp[SP];
@@ -1053,8 +1046,8 @@ void n32016_exec(uint32_t tubecycles)
          case EXIT:
          {
             int c;
-            temp = read_x8(pc);
-            pc++;
+            temp = READ_PC_BYTE();
+ 
             for (c = 0; c < 8; c++)
             {
                if (temp & BIT(c))
@@ -1453,7 +1446,6 @@ void n32016_exec(uint32_t tubecycles)
 
          case SETCFG:
          {
-            //pc++;                                                       // 32 Bit instuction so increment the pc
             nscfg = opcode;                                             // Store the whole opcode as this includes the oprions
          }
          break;
@@ -1818,8 +1810,7 @@ void n32016_exec(uint32_t tubecycles)
             int c;
 
             // Read the immediate offset (3 bits) / length - 1 (5 bits) from the instruction
-            temp3 = read_x8(pc);
-            pc++;
+            temp3 = READ_PC_BYTE();
             temp = ReadGen(0, LookUp.p.Size); // src operand
             temp2 = ReadGen(1, LookUp.p.Size); // base operand
             for (c = 0; c <= (temp3 & 0x1F); c++)
@@ -1839,8 +1830,7 @@ void n32016_exec(uint32_t tubecycles)
             int c;
 
             // Read the immediate offset (3 bits) / length - 1 (5 bits) from the instruction
-            temp3 = read_x8(pc);
-            pc++;
+            temp3 = READ_PC_BYTE();
             temp = ReadGen(0, LookUp.p.Size);
             temp2 = 0;
             temp >>= (temp3 >> 5); // Shift by offset
