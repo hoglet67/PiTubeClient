@@ -1269,9 +1269,7 @@ void n32016_exec(uint32_t tubecycles)
          case CASE:
          {
             temp = ReadGen(0, LookUp.p.Size);
-
-            if (temp & 0x80)
-               temp |= 0xFFFFFF00;
+            SIGN_EXTEND(temp);
             pc = startpc + temp;
          }
          break;
