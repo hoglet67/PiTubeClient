@@ -69,6 +69,10 @@ void n32016_dumpregs(char* pMessage)
    PiTRACE("FP=%08"PRIX32" INTBASE=%08"PRIX32" PSR=%04"PRIX16" MOD=%04"PRIX16"\n", fp, intbase, psr, mod);
 
 #ifdef PC_SIMULATION
+#ifdef TRACE_TO_FILE
+   printf("\n");
+#endif
+
 #ifdef WIN32
    system("pause");
 #endif
@@ -713,24 +717,29 @@ void n32016_exec(uint32_t tubecycles)
       opcode = read_x32(pc);
 
 #if 1
+#ifndef TEST_SUITE
       if (startpc == 0xF00276)
       {
          n32016_dumpregs("Tube Read Loop!");
       }
+#endif
 
       // Useful way to be able to get a breakpoint on a particular instruction
       //if (startpc == 0)
+#if 0     
       if (startpc == 0xF001E9)
       {
          printf("Here!\n");
          //n32016_dumpregs("Oops how did I get here!");
       }
 
+
       if ((opcode == 0) && (startpc < 20))
       {
          n32016_dumpregs("Oops how did I get here!");
          //Trace = 1;
       }
+#endif
 #endif
 
       LookUp.p.Function = FunctionLookup[opcode & 0xFF];

@@ -14,6 +14,10 @@ void tubeWrite(unsigned char Address, unsigned char Data)
 {
    unsigned char temp = (Data < ' ') ? ' ' : Data;
    PiTRACE("tubeWrite(%02X, %02X) %c\n", Address, Data, temp);
+   
+#ifdef TRACE_TO_FILE
+   putchar(temp);
+#endif
 }
 
 unsigned char tubeRead(unsigned char Address)
