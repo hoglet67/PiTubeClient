@@ -163,7 +163,7 @@ void RegLookUp(void)
    }
 }
 
-void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction)
+void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction, uint32_t Disp)
 {
 	if (pc < MEG16)
 	{
@@ -182,6 +182,13 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction)
 
       PiTRACE("#%08"PRIu32" PC:%06"PRIX32" INST:%08"PRIX32" %s%s", ++OpCount, pc, opcode, pText, PostfixLookup(Postfix));
       RegLookUp();
+
+      if (pInstruction->p.Function <= BSR)
+      {
+         uint32_t Address = pc + Disp;
+         PiTRACE(" &%06"PRIX32" ", Address);
+      }
+
       PiTRACE("\n");
 
 #ifndef TEST_SUITE

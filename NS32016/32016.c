@@ -903,7 +903,7 @@ void n32016_exec(uint32_t tubecycles)
          break;
       }
 
-      ShowInstruction(startpc, opcode, &LookUp);
+      ShowInstruction(startpc, opcode, &LookUp, temp);
 
 #ifdef TEST_SUITE
       if (startpc == 0x1C95)

@@ -289,7 +289,7 @@ extern void n32016_reset(uint32_t StartAddress);
 extern void n32016_exec(uint32_t tubecycles);
 extern void StoreRegisters(uint8_t Index, uint8_t Value);
 extern void ClearRegs(void);
-extern void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction);
+extern void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction, uint32_t Disp);
 extern void n32016_dumpregs();
 extern void n32016_build_matrix();
 extern void ShowRegisterWrite(uint32_t Index, uint32_t Value);
