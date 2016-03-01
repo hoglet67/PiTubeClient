@@ -1138,7 +1138,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            WriteSize = sz32;
+            WriteSize = LookUp.p.Size;
          }
          break;
 
