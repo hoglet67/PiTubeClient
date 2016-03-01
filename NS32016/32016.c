@@ -1300,8 +1300,8 @@ void n32016_exec(uint32_t tubecycles)
 
          case CMP:
          {
-            temp2 = ReadGen(0, LookUp.p.Size);
-            temp = ReadGen(1, LookUp.p.Size);
+            temp = ReadGen(0, LookUp.p.Size);
+            temp2 = ReadGen(1, LookUp.p.Size);
 
             CompareCommon(temp, temp2);
          }
