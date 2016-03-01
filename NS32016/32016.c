@@ -2283,6 +2283,8 @@ void n32016_exec(uint32_t tubecycles)
       tubecycles--;
       if (tube_irq & 2)
       {
+         // NMI is edge sensitive, so it should be cleared here
+         tube_irq &= ~2;
          temp = psr;
          psr &= ~0xF00;
          pushw(temp);
@@ -2297,6 +2299,7 @@ void n32016_exec(uint32_t tubecycles)
       }
       else if ((tube_irq & 1) && (psr & 0x800))
       {
+         // IRQ is level sensitive, so the called should maintain the state
          temp = psr;
          psr &= ~0xF00;
          pushw(temp);
