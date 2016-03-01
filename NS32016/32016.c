@@ -642,6 +642,78 @@ void StringRegisterUpdate(uint32_t opcode)
    r[0]--; // Adjust R0
 }
 
+uint32_t CheckCondition(uint32_t Pattern)
+{
+   uint32_t bResult = 0;
+
+   switch (Pattern & 0xF)
+   {
+      case 0x0:
+         if (psr & Z_FLAG)
+            bResult = 1;
+         break;
+      case 0x1:
+         if (!(psr & Z_FLAG))
+            bResult = 1;
+         break;
+      case 0x2:
+         if (psr & C_FLAG)
+            bResult = 1;
+         break;
+      case 0x3:
+         if (!(psr & C_FLAG))
+            bResult = 1;
+         break;
+      case 0x4:
+         if (psr & L_FLAG)
+            bResult = 1;
+         break;
+      case 0x5:
+         if (!(psr & L_FLAG))
+            bResult = 1;
+         break;
+      case 0x6:
+         if (psr & N_FLAG)
+            bResult = 1;
+         break;
+      case 0x7:
+         if (!(psr & N_FLAG))
+            bResult = 1;
+         break;
+      case 0x8:
+         if (psr & F_FLAG)
+            bResult = 1;
+         break;
+      case 0x9:
+         if (!(psr & F_FLAG))
+            bResult = 1;
+         break;
+      case 0xA:
+         if (!(psr & (Z_FLAG | L_FLAG)))
+            bResult = 1;
+         break;
+      case 0xB:
+         if (psr & (Z_FLAG | L_FLAG))
+            bResult = 1;
+         break;
+      case 0xC:
+         if (!(psr & (Z_FLAG | N_FLAG)))
+            bResult = 1;
+         break;
+      case 0xD:
+         if (psr & (Z_FLAG | N_FLAG))
+            bResult = 1;
+         break;
+      case 0xE:
+         bResult = 1;
+         break;
+      case 0xF:
+         break;
+   }
+
+   return bResult;
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteSize, WriteIndex;
@@ -699,15 +771,20 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
+         case Format1:
+         {
+            if (LookUp.p.Function <= RETT)
+            {
+               temp = getdisp();
+            }
+         }
+         break;
+
          case Format2:
          {
             LookUp.p.Size = opcode & 0x03;
             getgen(opcode >> 11, 0);
 
-            if (LookUp.p.Function <= RETT)
-            {
-               temp = getdisp();
-            }
          }
          break;
 
@@ -857,68 +934,30 @@ void n32016_exec(uint32_t tubecycles)
       switch (LookUp.p.Function)
       {
          case BEQ:
-            if (psr & Z_FLAG)
-               pc = temp;
-            break;
-
          case BNE:
-            if (!(psr & Z_FLAG))
-               pc = temp;
-            break;
-
          case BH:
-            if (psr & L_FLAG)
-               pc = temp;
-            break;
-
          case BLS:
-            if (!(psr & L_FLAG))
-               pc = temp;
-            break;
-
          case BGT:
-            if (psr & N_FLAG)
-               pc = temp;
-            break;
-
          case BLE:
-            if (!(psr & N_FLAG))
-               pc = temp;
-            break;
-
          case BFS:
-            if (psr & F_FLAG)
-               pc = temp;
-            break;
-
          case BFC:
-            if (!(psr & F_FLAG))
-               pc = temp;
-            break;
-
          case BLO:
-            if (!(psr & (L_FLAG | Z_FLAG)))
-               pc = temp;
-            break;
-
          case BHS:
-            if (psr & (L_FLAG | Z_FLAG))
-               pc = temp;
-            break;
-
          case BLT:
-            if (!(psr & (N_FLAG | Z_FLAG)))
-               pc = temp;
-            break;
-
          case BGE:
-            if (psr & (N_FLAG | Z_FLAG))
-               pc = temp;
-            break;
+         {
+            if (CheckCondition(LookUp.p.Function) == 0)
+            {
+               break;
+            }
+         }
+         // Fall Through
 
          case BR:
+         {
             pc = temp;
-            break;
+         }
+         break;
 
          case BSR:
          {
@@ -1107,71 +1146,7 @@ void n32016_exec(uint32_t tubecycles)
          break;
 
          case Scond:
-            temp = 0;
-            switch ((opcode >> 7) & 0xF)
-            {
-               case 0x0:
-                  if (psr & Z_FLAG)
-                     temp = 1;
-               break;
-               case 0x1:
-                  if (!(psr & Z_FLAG))
-                     temp = 1;
-               break;
-               case 0x2:
-                  if (psr & C_FLAG)
-                     temp = 1;
-               break;
-               case 0x3:
-                  if (!(psr & C_FLAG))
-                     temp = 1;
-               break;
-               case 0x4:
-                  if (psr & L_FLAG)
-                     temp = 1;
-               break;
-               case 0x5:
-                  if (!(psr & L_FLAG))
-                     temp = 1;
-               break;
-               case 0x6:
-                  if (psr & N_FLAG)
-                     temp = 1;
-               break;
-               case 0x7:
-                  if (!(psr & N_FLAG))
-                     temp = 1;
-               break;
-               case 0x8:
-                  if (psr & F_FLAG)
-                     temp = 1;
-               break;
-               case 0x9:
-                  if (!(psr & F_FLAG))
-                     temp = 1;
-               break;
-               case 0xA:
-                  if (!(psr & (Z_FLAG | L_FLAG)))
-                     temp = 1;
-               break;
-               case 0xB:
-                  if (psr & (Z_FLAG | L_FLAG))
-                     temp = 1;
-               break;
-               case 0xC:
-                  if (!(psr & (Z_FLAG | N_FLAG)))
-                     temp = 1;
-               break;
-               case 0xD:
-                  if (psr & (Z_FLAG | N_FLAG))
-                     temp = 1;
-               break;
-               case 0xE:
-                  temp = 1;
-               break;
-               case 0xF:
-               break;
-            }
+            temp = CheckCondition(opcode >> 7);
             WriteSize = LookUp.p.Size;
          break;
 
