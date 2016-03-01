@@ -98,9 +98,9 @@ void TubeInterrupt(void) {
       _escape_handler_wrapper(flag & 0x40, env->handler[ESCAPE_HANDLER].handler);
     } else {
       // Event
-      unsigned char y = receiveByte(R1);
-      unsigned char x = receiveByte(R1);
-      unsigned char a = receiveByte(R1);
+      unsigned char y = receiveByte(R1_ID);
+      unsigned char x = receiveByte(R1_ID);
+      unsigned char a = receiveByte(R1_ID);
       in_isr = 0;
       env->handler[EVENT_HANDLER].handler(a, x, y);
     }
@@ -116,21 +116,21 @@ void TubeInterrupt(void) {
       printf("R4 type = %02x\r\n",type);
     }
     if (type == 0xff) {
-      receiveByte(R2); // always 0
+      receiveByte(R2_ID); // always 0
       // Build the error block
       ErrorBlock_type *eblk = &isrErrorBlock;
-      eblk->errorNum = receiveByte(R2);
-      receiveString(R2, 0x00, eblk->errorMsg);
+      eblk->errorNum = receiveByte(R2_ID);
+      receiveString(R2_ID, 0x00, eblk->errorMsg);
       in_isr = 0;
       // SWI OS_GenerateError need the error block in R0
       OS_GenerateError(eblk);
     } else {
-      unsigned char id = receiveByte(R4);
+      unsigned char id = receiveByte(R4_ID);
       if (type <= 4 || type == 6 || type == 7) {
-        unsigned char a3 = receiveByte(R4);
-        unsigned char a2 = receiveByte(R4);
-        unsigned char a1 = receiveByte(R4);
-        unsigned char a0 = receiveByte(R4);
+        unsigned char a3 = receiveByte(R4_ID);
+        unsigned char a2 = receiveByte(R4_ID);
+        unsigned char a1 = receiveByte(R4_ID);
+        unsigned char a0 = receiveByte(R4_ID);
         address = (unsigned char *)((a3 << 24) + (a2 << 16) + (a1 << 8) + a0);
         if (DEBUG) {
           printf("Transfer = %02x %02x %08x\r\n", type, id, (unsigned int)address);
@@ -144,7 +144,7 @@ void TubeInterrupt(void) {
         // Type 5 : tube release
       } else {
         // Every thing else has a sync byte
-        receiveByte(R4);
+        receiveByte(R4_ID);
       }
       // The data transfers are done by polling the GPIO bits for IRQ and NMI
       count = 0;

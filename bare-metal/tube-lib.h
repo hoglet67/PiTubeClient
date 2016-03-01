@@ -8,10 +8,10 @@
 #define CMD_WRITE 0x80
 #define CMD_READ  0xC0
 
-#define R1 1
-#define R2 2
-#define R3 3
-#define R4 4
+#define R1_ID 1
+#define R2_ID 2
+#define R3_ID 3
+#define R4_ID 4
 
 #define R1_STATUS 0
 #define R1_DATA   1

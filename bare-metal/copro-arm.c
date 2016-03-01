@@ -72,8 +72,8 @@ void defaultErrorHandler(ErrorBuffer_type *eb) {
   if (DEBUG) {
     printf("Error = %p %02x %s\r\n", eb->errorAddr, eb->errorBlock.errorNum, eb->errorBlock.errorMsg);
   }
-  sendString(R1, 0x00, eb->errorBlock.errorMsg);
-  sendString(R1, 0x00, "\n\r");
+  sendString(R1_ID, 0x00, eb->errorBlock.errorMsg);
+  sendString(R1_ID, 0x00, "\n\r");
   OS_Exit();
 }
 
@@ -265,12 +265,12 @@ void tube_Reset() {
 
   // Send the reset message
   printf( "Sending banner\r\n" );
-  sendString(R1, 0x00, banner);
-  sendByte(R1, 0x00);
+  sendString(R1_ID, 0x00, banner);
+  sendByte(R1_ID, 0x00);
   printf( "Banner sent, awaiting response\r\n" );
 
   // Wait for the reponse in R2
-  receiveByte(R2);
+  receiveByte(R2_ID);
   printf( "Received response\r\n" );
 }
 
