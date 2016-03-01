@@ -767,7 +767,7 @@ void n32016_exec(uint32_t tubecycles)
       {
          case Format0:
          {
-            temp = startpc + getdisp();
+            temp = getdisp();
          }
          break;
 
@@ -955,7 +955,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case BR:
          {
-            pc = temp;
+            pc = startpc + temp;
          }
          break;
 
