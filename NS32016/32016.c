@@ -1785,6 +1785,8 @@ void n32016_exec(uint32_t tubecycles)
             //PiTRACE("CMP Size = %u Count = %u\n", temp4, temp3);
             while (temp3--)
             {
+               // Avoid a "might be uninitialized" warning
+               temp2 = 0;
                switch (LookUp.p.Size)
                {
                   case sz8:
@@ -2129,6 +2131,8 @@ void n32016_exec(uint32_t tubecycles)
             //temp3 = ReadGen(1, sz8);
             temp3 = ReadGen(1, LookUp.p.Size);
 
+            // Avoid a "might be uninitialized" warning
+            temp2 = 0;
             switch (LookUp.p.Size)
             {
                case sz8:
