@@ -47,7 +47,7 @@ void kernel_main(unsigned int r0, unsigned int r1, unsigned int atags)
    }
    else if (COPRO == COPRO_32016)
    {
-      // Not yet!
+      copro_32016_main(r0, r1, atags); 
    }
    else if (COPRO == COPRO_ECO_CLK)
    {
