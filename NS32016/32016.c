@@ -1340,10 +1340,12 @@ void n32016_exec(uint32_t tubecycles)
          break;
 
          case ADDR:
+#if 0
             if (gentype[1] == TOS)
             {
                printf("TOS\n");
             }
+#endif
 
             temp = (gentype[1] == TOS) ? sp[SP] : genaddr[1];
             //temp = genaddr[1];
