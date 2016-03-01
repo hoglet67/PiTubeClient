@@ -310,6 +310,6 @@ extern DecodeMatrix LookUp;
 extern uint32_t genaddr[2];
 extern int gentype[2];
 extern const uint8_t FormatSizes[FormatCount + 1];
-#define PrintSP(in) PiTRACE("(%u) SP = %06"PRIu32"\n", __LINE__, (in))
+#define PrintSP(in) PiTRACE("(%u) SP = %06"PRIX32"\n", __LINE__, (in))
 #define READ_PC_BYTE() read_x8(pc++) 
 
