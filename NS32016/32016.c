@@ -488,7 +488,7 @@ static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
 // This case is detected if the sign bits of the two operands differ
 static uint32_t div_operator(uint32_t a, uint32_t b)
 {
-   uint32_t ret;
+   uint32_t ret = 0;
    int signmask = BIT((LookUp.p.Size << 3) + 7);
    if ((a & signmask) && !(b & signmask))
    {
