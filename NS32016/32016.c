@@ -52,10 +52,10 @@ void dump_mini(void)
 {
    if (Trace)
    {
-      PiTRACE("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
-      PiTRACE("R4=%08X R5=%08X R6=%08X R7=%08X\n", r[4], r[5], r[6], r[7]);
-      PiTRACE("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
-      PiTRACE("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
+      PiTRACE("R0=%08"PRIX32" R1=%08"PRIX32" R2=%08"PRIX32" R3=%08"PRIX32"\n", r[0], r[1], r[2], r[3]);
+      PiTRACE("R4=%08"PRIX32" R5=%08"PRIX32" R6=%08"PRIX32" R7=%08"PRIX32"\n", r[4], r[5], r[6], r[7]);
+      PiTRACE("PC=%08"PRIX32" SB=%08"PRIX32" SP0=%08"PRIX32" SP1=%08"PRIX32"\n", pc, sb, sp[0], sp[1]);
+      PiTRACE("FP=%08"PRIX32" INTBASE=%08"PRIX32" PSR=%04"PRIX16" MOD=%04"PRIX16"\n", fp, intbase, psr, mod);
       PiTRACE("\n");
    }
 }
@@ -63,10 +63,10 @@ void dump_mini(void)
 void n32016_dumpregs(char* pMessage)
 {
    PiTRACE("%s\n", pMessage);
-   PiTRACE("R0=%08X R1=%08X R2=%08X R3=%08X\n", r[0], r[1], r[2], r[3]);
-   PiTRACE("R4=%08X R5=%08X R6=%08X R7=%08X\n", r[4], r[5], r[6], r[7]);
-   PiTRACE("PC=%08X SB=%08X SP0=%08X SP1=%08X\n", pc, sb, sp[0], sp[1]);
-   PiTRACE("FP=%08X INTBASE=%08X PSR=%04X MOD=%04X\n", fp, intbase, psr, mod);
+   PiTRACE("R0=%08"PRIX32" R1=%08"PRIX32" R2=%08"PRIX32" R3=%08"PRIX32"\n", r[0], r[1], r[2], r[3]);
+   PiTRACE("R4=%08"PRIX32" R5=%08"PRIX32" R6=%08"PRIX32" R7=%08"PRIX32"\n", r[4], r[5], r[6], r[7]);
+   PiTRACE("PC=%08"PRIX32" SB=%08"PRIX32" SP0=%08"PRIX32" SP1=%08"PRIX32"\n", pc, sb, sp[0], sp[1]);
+   PiTRACE("FP=%08"PRIX32" INTBASE=%08"PRIX32" PSR=%04"PRIX16" MOD=%04"PRIX16"\n", fp, intbase, psr, mod);
 
 #ifdef PC_SIMULATION
 #ifdef WIN32
@@ -1214,7 +1214,7 @@ void n32016_exec(uint32_t tubecycles)
                      sb = temp;
                   break;
                   case 0xE:
-                     intbase = temp; // PiTRACE("INTBASE %08X %08X\n",temp,pc); 
+                     intbase = temp; // PiTRACE("INTBASE %08"PRIX32" %08"PRIX32"\n",temp,pc); 
                   break;
 
                   default:

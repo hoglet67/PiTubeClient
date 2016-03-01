@@ -5,6 +5,7 @@
 // By Simon R. Ellwood
 
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,7 +74,7 @@ uint8_t read_x8(uint32_t addr)
       return tubeRead(addr >> 1);
    }
 
-   //PiTRACE("Bad read_x8 @ %06X\n", addr);
+   //PiTRACE("Bad read_x8 @ %06"PRIX32"\n", addr);
    //n32016_dumpregs();
 
    return 0;
@@ -121,7 +122,7 @@ uint32_t read_n(uint32_t addr, uint32_t Size)
       }
    }
 
-   PiTRACE("Bad Read @ %06X\n", addr);
+   PiTRACE("Bad Read @ %06"PRIX32"\n", addr);
    return 0;
 }
 
@@ -130,7 +131,7 @@ void write_x8(uint32_t addr, uint8_t val)
   //addr &= MEM_MASK;
 
 #ifdef TRACE_WRITEs
-   PiTRACE(" @%06X = %02X\n", addr, val);
+   PiTRACE(" @%06"PRIX32" = %02"PRIX8"\n", addr, val);
 #endif
 
    if (addr <= (RAM_SIZE - sizeof(uint8_t)))
@@ -157,14 +158,14 @@ void write_x8(uint32_t addr, uint8_t val)
       return;
    }
 
-   PiTRACE("Writing outside of RAM @%06X %02X\n", addr, val);
+   PiTRACE("Writing outside of RAM @%06"PRIX32" %02"PRIX8"\n", addr, val);
    //n32016_dumpregs();
 }
 
 void write_x16(uint32_t addr, uint16_t val)
 {
 #ifdef TRACE_WRITEs
-   PiTRACE(" @%06X = %04X\n", addr, val);
+   PiTRACE(" @%06"PRIX32" = %04"PRIX16"\n", addr, val);
 #endif
 
 #ifdef NS_FAST_RAM
@@ -182,7 +183,7 @@ void write_x16(uint32_t addr, uint16_t val)
 void write_x32(uint32_t addr, uint32_t val)
 {
 #ifdef TRACE_WRITEs
-   PiTRACE(" @%06X = %08X\n", addr, val);
+   PiTRACE(" @%06"PRIX32" = %08"PRIX32"\n", addr, val);
 #endif
 
 #ifdef NS_FAST_RAM
@@ -205,11 +206,11 @@ void write_Arbitary(uint32_t addr, void* pData, uint32_t Size)
    uint32_t Index;
    register uint8_t* pV = (uint8_t*) pData;
 
-   PiTRACE("?@%06X =", addr);
+   PiTRACE("?@%06"PRIX32" =", addr);
 
    for (Index = 0; Index < Size; Index++)
    {
-      PiTRACE("%02X", pV[Index]);
+      PiTRACE("%02"PRIX8, pV[Index]);
    }
    PiTRACE("\n");
 #endif

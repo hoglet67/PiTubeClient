@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 #include "32016.h"
@@ -135,24 +136,24 @@ void RegLookUp(void)
             if (gentype[Index] == Memory)
             {
                uint32_t  Address = genaddr[Index];
-               PiTRACE(" &%06X=", Address);
+               PiTRACE(" &%06"PRIX32"=", Address);
                switch (LookUp.p.Size)
                {
                   case sz8:
                   {
-                     PiTRACE("%02X", read_x8(Address));
+                     PiTRACE("%02"PRIX8, read_x8(Address));
                   }
                   break;
 
                   case sz16:
                   {
-                     PiTRACE("%04X", read_x16(Address));
+                     PiTRACE("%04"PRIX16, read_x16(Address));
                   }
                   break;
 
                   case sz32:
                   {
-                     PiTRACE("%08X", read_x32(Address));
+                     PiTRACE("%08"PRIX32, read_x32(Address));
                   }
                   break; 
                }
@@ -179,7 +180,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction)
          }
       }
 
-      PiTRACE("#%08u PC:%06X INST:%08X %s%s", ++OpCount, pc, opcode, pText, PostfixLookup(Postfix));
+      PiTRACE("#%08"PRIu32" PC:%06"PRIX32" INST:%08"PRIX32" %s%s", ++OpCount, pc, opcode, pText, PostfixLookup(Postfix));
       RegLookUp();
       PiTRACE("\n");
 
@@ -193,14 +194,14 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction)
 		return;
 	}
 
-	PiTRACE("PC is :%08X ?????\n", pc);
+	PiTRACE("PC is :%08"PRIX32" ?????\n", pc);
 }
 
 void ShowRegisterWrite(uint32_t Index, uint32_t Value)
 {
    if (Regs[Index] < 8)
    {
-      PiTRACE(" R%u = %08X\n", Regs[Index], Value);
+      PiTRACE(" R%u = %08"PRIX32"\n", Regs[Index], Value);
    }
 }
 
