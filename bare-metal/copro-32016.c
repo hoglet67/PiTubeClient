@@ -1,9 +1,9 @@
 /*
- * Arm2 Co Pro Emulation
+ * 32016 Co Pro Emulation
  *
- * (c) 2015 David Banks
+ * (c) 2016 Simon Ellwood (fordp)
+ * (c) 2016 David Banks (hoglet)
  * 
- * based on code by from MAME
  */
 
 #define JTAG_DEBUG
@@ -19,6 +19,8 @@
 #include "rpi-interrupts.h"
 #include "../NS32016/32016.h"
 #include "../NS32016/mem32016.h"
+
+#define PANDORA_BASE 0xF00000
 
 uint8_t Exit;
 

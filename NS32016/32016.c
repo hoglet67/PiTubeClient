@@ -2271,7 +2271,7 @@ void n32016_exec(uint32_t tubecycles)
       }
 #endif
 
-      tubecycles -= 8;
+      tubecycles--;
       if (tube_irq & 2)
       {
          temp = psr;
