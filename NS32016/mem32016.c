@@ -108,8 +108,6 @@ uint32_t read_x32(uint32_t addr)
    return read_x8(addr) | (read_x8(addr + 1) << 8) | (read_x8(addr + 2) << 16) | (read_x8(addr + 3) << 24);
 }
 
-#define TRACE_WRITEs
-
 uint32_t read_n(uint32_t addr, uint32_t Size)
 {
    if (Size <= sz32)

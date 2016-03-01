@@ -292,7 +292,13 @@ extern void ClearRegs(void);
 extern void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction, uint32_t Disp);
 extern void n32016_dumpregs();
 extern void n32016_build_matrix();
+
+#ifdef SHOW_REG_WRITES
 extern void ShowRegisterWrite(uint32_t Index, uint32_t Value);
+#else
+#define ShowRegisterWrite(...)
+#endif
+
 #ifdef PC_SIMULATION
 extern void CloseTrace(void);
 #endif
@@ -310,6 +316,12 @@ extern DecodeMatrix LookUp;
 extern uint32_t genaddr[2];
 extern int gentype[2];
 extern const uint8_t FormatSizes[FormatCount + 1];
+
+#ifdef SHOW_STACK
 #define PrintSP(in) PiTRACE("(%u) SP = %06"PRIX32"\n", __LINE__, (in))
+#else
+#define PrintSP(in)
+#endif
+
 #define READ_PC_BYTE() read_x8(pc++) 
 

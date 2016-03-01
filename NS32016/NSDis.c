@@ -121,7 +121,12 @@ void RegLookUp(void)
       {
          if (Regs[Index] < 8)
          {
-            PiTRACE(" R%u", Regs[Index]);
+            if ((Index == 1) && (Regs[0] < 8))        // Hack for now
+            {
+               PiTRACE(",");
+            }
+
+            PiTRACE("R%u", Regs[Index]);
          }
          else if (Regs[Index] < 16)
          {
@@ -129,8 +134,9 @@ void RegLookUp(void)
          }
          else if (Regs[Index] == 0x17)
          {
-            PiTRACE(" TOS");
+            PiTRACE("TOS");
          }
+#if 0
          else
          {
             if (gentype[Index] == Memory)
@@ -159,6 +165,7 @@ void RegLookUp(void)
                }
             }
          }
+#endif
       }
    }
 }
@@ -180,7 +187,11 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction, u
          }
       }
 
-      PiTRACE("#%08"PRIu32" PC:%06"PRIX32" INST:%08"PRIX32" %s%s", ++OpCount, pc, opcode, pText, PostfixLookup(Postfix));
+      //PiTRACE("#%08"PRIu32" ", ++OpCount);
+      PiTRACE("PC: % 06"PRIX32" ", pc);
+      PiTRACE("INST: % 08"PRIX32" ", opcode);
+      PiTRACE("%s%s", pText, PostfixLookup(Postfix));
+
       RegLookUp();
 
       if (pInstruction->p.Function <= BSR)
@@ -204,6 +215,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction, u
 	PiTRACE("PC is :%08"PRIX32" ?????\n", pc);
 }
 
+#ifdef SHOW_REG_WRITES
 void ShowRegisterWrite(uint32_t Index, uint32_t Value)
 {
    if (Regs[Index] < 8)
@@ -211,6 +223,7 @@ void ShowRegisterWrite(uint32_t Index, uint32_t Value)
       PiTRACE(" R%u = %08"PRIX32"\n", Regs[Index], Value);
    }
 }
+#endif
 
 const uint8_t FormatSizes[FormatCount + 1] =
 {
