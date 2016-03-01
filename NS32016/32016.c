@@ -326,7 +326,7 @@ uint64_t readgenq(uint32_t c)
    }
    else
    {
-      temp = read_x32(genaddr[c]);              // This bonkers!
+      temp = read_x32(genaddr[c]);              // This is bonkers!
       temp |= read_x32(genaddr[c]);
    }
 
@@ -703,7 +703,7 @@ uint32_t CheckCondition(uint32_t Pattern)
 void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteSize, WriteIndex;
-   uint32_t temp = 0, temp2, temp3, temp4;
+   uint32_t temp = 0, temp2, temp3;
    uint64_t temp64;
 
    while (tubecycles > 0)
@@ -1762,7 +1762,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case CMPM:
          {
-            temp4 = (LookUp.p.Size + 1); // disp of 0 means move 1 byte/word/dword
+            uint32_t temp4 = (LookUp.p.Size + 1); // disp of 0 means move 1 byte/word/dword
             temp3 = (getdisp() / temp4) + 1;
 
             //PiTRACE("CMP Size = %u Count = %u\n", temp4, temp3);
@@ -1828,6 +1828,7 @@ void n32016_exec(uint32_t tubecycles)
          case EXTS:
          {
             int c;
+            uint32_t temp4 = 1;
 
             // Read the immediate offset (3 bits) / length - 1 (5 bits) from the instruction
             temp3 = READ_PC_BYTE();
@@ -1836,7 +1837,6 @@ void n32016_exec(uint32_t tubecycles)
             temp >>= (temp3 >> 5); // Shift by offset
             temp3 &= 0x1F; // Mask off the lower 5 Bits which are number of bits to extract
 
-            temp4 = 1;
             for (c = 0; c <= temp3; c++)
             {
                if (temp & temp4) // Copy the ones
