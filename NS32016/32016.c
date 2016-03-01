@@ -1067,6 +1067,10 @@ void n32016_exec(uint32_t tubecycles)
          case SVC:
             temp = psr;
             psr &= ~0x700;
+            // In SVC, the address pushed is the address of the SVC opcode
+            pushw(temp);
+            pushw(mod);
+            pushd(startpc);
             temp = read_x32(intbase + (5 * 4));
             mod = temp & 0xFFFF;
             temp3 = temp >> 16;
