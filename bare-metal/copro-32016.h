@@ -1,1 +1,1 @@
-extern void copro_80186_main(unsigned int r0, unsigned int r1, unsigned int atags);
+extern void copro_32016_main(unsigned int r0, unsigned int r1, unsigned int atags);

@@ -43,7 +43,9 @@ static void copro_32016_reset()
 void copro_32016_main(unsigned int r0, unsigned int r1, unsigned int atags)
 {
    register unsigned int gpio;
+#if 0
    register unsigned int last_gpio = IRQ_PIN_MASK | NMI_PIN_MASK | RST_PIN_MASK;
+#endif
 
    RPI_EnableUart("Pi 32016 CoPro\r\n"); // Display Debug Boot Message
 
@@ -100,6 +102,8 @@ void copro_32016_main(unsigned int r0, unsigned int r1, unsigned int atags)
          tube_irq |= 2; // NMI is Active
       }
 
+#if 0
       last_gpio = gpio;
+#endif
    }
 }

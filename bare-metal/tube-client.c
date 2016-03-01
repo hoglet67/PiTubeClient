@@ -5,6 +5,7 @@
 #include "copro-lib6502.h"
 #include "copro-65tube.h"
 #include "copro-80186.h"
+#include "copro-32016.h"
 #include "../EconetClock/EconetClock.h"
 
 #define COPRO_ARM     0
