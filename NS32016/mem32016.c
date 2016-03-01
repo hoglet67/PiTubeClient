@@ -27,13 +27,13 @@ void init_ram(void)
    memset(ns32016ram, 0, sizeof(ns32016ram));
    memcpy(ns32016ram, boot_rom, sizeof(boot_rom));
 #elif defined(PANDORA_BASE)
-   memcpy(&ns32016ram[PANDORA_BASE], PandoraV2_00, sizeof(PandoraV2_00));
+   memcpy(ns32016ram + PANDORA_BASE, PandoraV2_00, sizeof(PandoraV2_00));
 #else
    uint32_t Address;
 
    for (Address = 0; Address < MEG16; Address += sizeof(PandoraV2_00))
    {
-      memcpy(&ns32016ram[Address], PandoraV2_00, sizeof(PandoraV2_00));
+      memcpy(ns32016ram + Address, PandoraV2_00, sizeof(PandoraV2_00));
    }
 #endif
 }
@@ -87,7 +87,7 @@ uint16_t read_x16(uint32_t addr)
 #ifdef NS_FAST_RAM
    if (addr < IO_BASE)
    {
-      return *((uint16_t*) &ns32016ram[addr]);
+      return *((uint16_t*) (ns32016ram + addr));
    }
 #endif
 
@@ -101,7 +101,7 @@ uint32_t read_x32(uint32_t addr)
 #ifdef NS_FAST_RAM
    if (addr < IO_BASE)
    {
-      return *((uint32_t*) &ns32016ram[addr]);
+      return *((uint32_t*) (ns32016ram + addr));
    }
 #endif
 
@@ -117,7 +117,7 @@ uint32_t read_n(uint32_t addr, uint32_t Size)
       if (addr + Size < IO_BASE)
       {
          uint32_t Result = 0;
-         memcpy(&Result, &ns32016ram[addr], (Size + 1));
+         memcpy(&Result, ns32016ram + addr, (Size + 1));
          return Result;
       }
    }
@@ -171,7 +171,7 @@ void write_x16(uint32_t addr, uint16_t val)
 #ifdef NS_FAST_RAM
    if (addr <= (RAM_SIZE - sizeof(uint16_t)))
    {
-      *((uint16_t*) (&ns32016ram[addr])) = val;
+      *((uint16_t*) (ns32016ram + addr)) = val;
       return;
    }
 #endif
@@ -189,7 +189,7 @@ void write_x32(uint32_t addr, uint32_t val)
 #ifdef NS_FAST_RAM
    if (addr <= (RAM_SIZE - sizeof(uint32_t)))
    {
-      *((uint32_t*) (&ns32016ram[addr])) = val;
+      *((uint32_t*) (ns32016ram + addr)) = val;
       return;
    }
 #endif
@@ -220,7 +220,7 @@ void write_Arbitary(uint32_t addr, void* pData, uint32_t Size)
 #ifdef NS_FAST_RAM
    if ((addr + Size) <= RAM_SIZE)
    {
-      memcpy(&ns32016ram[addr], pData, Size);
+      memcpy(ns32016ram + addr, pData, Size);
       return;
    }
 #endif
