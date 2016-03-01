@@ -267,7 +267,6 @@ static void getgen(int gen, int c)
          temp2 = getdisp();
          genaddr[c] = read_x32(fp + temp);
          genaddr[c] += temp2;
-         gentype[c] = Memory;
       break;
 
       case StackRelative:
@@ -275,24 +274,16 @@ static void getgen(int gen, int c)
          temp2 = getdisp();
          genaddr[c] = read_x32(sp[SP] + temp);
          genaddr[c] += temp2;
-         gentype[c] = Memory;
-      break;
+       break;
 
       case StaticRelative:
          temp = getdisp();
          temp2 = getdisp();
          genaddr[c] = read_x32(sb + temp);
          genaddr[c] += temp2;
-         gentype[c] = Memory;
-      break;
-
-      case Immediate:
-      {
-      }
-      break;
+       break;
 
       case Absolute:
-         gentype[c] = Memory;
          genaddr[c] = getdisp();
       break;
 
