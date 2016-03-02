@@ -713,34 +713,9 @@ void n32016_exec(uint32_t tubecycles)
    while (tubecycles > 0)
    {
       startpc  = pc;
-      ClearRegs();
       opcode = read_x32(pc);
 
-#if 1
-#ifndef TEST_SUITE
-      if (startpc == 0xF00276)
-      {
-         n32016_dumpregs("Tube Read Loop!");
-      }
-#endif
-
-      // Useful way to be able to get a breakpoint on a particular instruction
-      //if (startpc == 0)
-#if 0     
-      if (startpc == 0xF001E9)
-      {
-         printf("Here!\n");
-         //n32016_dumpregs("Oops how did I get here!");
-      }
-
-
-      if ((opcode == 0) && (startpc < 20))
-      {
-         n32016_dumpregs("Oops how did I get here!");
-         //Trace = 1;
-      }
-#endif
-#endif
+      BreakPoint(startpc, opcode);
 
       LookUp.p.Function = FunctionLookup[opcode & 0xFF];
       uint32_t Format   = LookUp.p.Function >> 4;
@@ -913,18 +888,6 @@ void n32016_exec(uint32_t tubecycles)
       }
 
       ShowInstruction(startpc, opcode, &LookUp, temp);
-
-#ifdef TEST_SUITE
-      if (startpc == 0x1C95)
-      {
-         n32016_dumpregs("Test Suite Pass!\n");
-      }
-
-      if (startpc == 0x1CAB)
-      {
-         n32016_dumpregs("Test Suite Failure!\n");
-      }
-#endif
 
       switch (LookUp.p.Function)
       {
@@ -1154,7 +1117,7 @@ void n32016_exec(uint32_t tubecycles)
             temp += temp2;
             WriteSize = LookUp.p.Size;
             temp2 = getdisp();
-            if (temp & 0xFF)
+            if (Truncate(temp, LookUp.p.Size))
                pc = startpc + temp2;
          break;
 

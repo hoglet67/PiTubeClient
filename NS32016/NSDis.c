@@ -170,6 +170,35 @@ void RegLookUp(void)
    }
 }
 
+void BreakPoint(uint32_t pc, uint32_t opcode)
+{
+#if 1
+#ifndef TEST_SUITE
+   if (startpc == 0xF00276)
+   {
+      n32016_dumpregs("Tube Read Loop!");
+   }
+#endif
+
+// Useful way to be able to get a breakpoint on a particular instruction
+//if (startpc == 0)
+#if 0     
+   if (startpc == 0xF001E9)
+   {
+      printf("Here!\n");
+      //n32016_dumpregs("Oops how did I get here!");
+   }
+
+
+   if ((opcode == 0) && (startpc < 20))
+   {
+      n32016_dumpregs("Oops how did I get here!");
+      //Trace = 1;
+   }
+#endif
+#endif
+}
+
 void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction, uint32_t Disp)
 {
 	if (pc < MEG16)
@@ -190,7 +219,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction, u
       //PiTRACE("#%08"PRIu32" ", ++OpCount);
       PiTRACE("PC: % 06"PRIX32" ", pc);
       PiTRACE("INST: % 08"PRIX32" ", opcode);
-      PiTRACE("%s%s", pText, PostfixLookup(Postfix));
+      PiTRACE("%s%s ", pText, PostfixLookup(Postfix));
 
       RegLookUp();
 
@@ -201,6 +230,15 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction, u
       }
 
       PiTRACE("\n");
+
+      ClearRegs();
+
+#ifdef TEST_SUITE
+      if (pc >= 0x1C95)
+      {
+         n32016_dumpregs("Test Suite Complete!\n");
+      }
+#endif
 
 #ifndef TEST_SUITE
       if (OpCount >= 10000)
