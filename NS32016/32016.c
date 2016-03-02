@@ -722,7 +722,7 @@ void n32016_exec(uint32_t tubecycles)
    {
       WriteSize = szVaries;                                             // The size a result may be written as
       WriteIndex = 0;                                                   // Default to writing operand 0
-      OpSize.Whole = 0xFFFF;
+      OpSize.Whole = 0;
       ClearRegs();
 
       startpc  = pc;
@@ -2140,15 +2140,8 @@ void n32016_exec(uint32_t tubecycles)
             n32016_dumpregs("Bad NS32016 opcode");
          break;
       }
-
-#if 0
-      if (WriteSize == 255)
-      {
-         PiTRACE("\n");
-      }
-#endif
-   
-      if (WriteSize <= sz32)
+ 
+      if (WriteSize && (WriteSize <= sz32))
       {
          switch (gentype[WriteIndex])
          {
@@ -2156,10 +2149,8 @@ void n32016_exec(uint32_t tubecycles)
             {
                switch (WriteSize)
                {
-                  case sz8:   write_x8( genaddr[WriteIndex], temp);   break;
-                  case sz16:  write_x16(genaddr[WriteIndex], temp);  // break;
-
-                  break;
+                  case sz8:   write_x8( genaddr[WriteIndex], temp);  break;
+                  case sz16:  write_x16(genaddr[WriteIndex], temp);  break;
                   case sz32:  write_x32(genaddr[WriteIndex], temp);  break;
                }
             }
@@ -2169,9 +2160,9 @@ void n32016_exec(uint32_t tubecycles)
             {
                switch (WriteSize)
                {
-                  case sz8:   *((uint8_t*)   genaddr[WriteIndex]) = temp;     break;
-                  case sz16:  *((uint16_t*)  genaddr[WriteIndex]) = temp;     break;
-                  case sz32:  *((uint32_t*)  genaddr[WriteIndex]) = temp;     break;
+                  case sz8:   *((uint8_t*)   genaddr[WriteIndex]) = temp;  break;
+                  case sz16:  *((uint16_t*)  genaddr[WriteIndex]) = temp;  break;
+                  case sz32:  *((uint32_t*)  genaddr[WriteIndex]) = temp;  break;
                }
 
                ShowRegisterWrite(WriteIndex, Truncate(temp, WriteSize));
