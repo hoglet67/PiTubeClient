@@ -258,11 +258,11 @@ enum Functions
 
 enum DataSize
 {
-	sz8 = 0,
-	sz16 = 1,
-   Translating,
-	sz32 = 3,
-	szVaries = 0xFF,
+   szVaries = 0,
+	sz8 = 1,
+	sz16 = 2,
+   Translating = 3,
+	sz32 = 4,
 };
 
 typedef union

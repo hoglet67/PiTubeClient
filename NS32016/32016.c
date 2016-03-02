@@ -132,8 +132,8 @@ static uint32_t popd()
 
 uint32_t PopArbitary(uint32_t Size)
 {
-   uint32_t Result = read_n(sp[SP], Size + 1);
-   sp[SP] += Size + 1;
+   uint32_t Result = read_n(sp[SP], Size);
+   sp[SP] += Size;
    PrintSP(sp[SP]);
 
    return Result;
@@ -236,7 +236,7 @@ static void getgen(int gen, int c)
          nsimm[c] = (read_x8(pc) << 8) | read_x8(pc + 1);
       else
          nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
-      pc += (OpSize.Op[c] + 1);
+      pc += OpSize.Op[c];
       gentype[c] = Register;
       return;
    }
@@ -486,7 +486,7 @@ static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
 static uint32_t div_operator(uint32_t a, uint32_t b)
 {
    uint32_t ret = 0;
-   int signmask = BIT((OpSize.Op[0] << 3) + 7);
+   int signmask = BIT(((OpSize.Op[0] - 1) << 3) + 7);
    if ((a & signmask) && !(b & signmask))
    {
       // e.g. a = -16; b =  3 ===> a becomes -18
@@ -613,7 +613,7 @@ uint32_t StringMatching(uint32_t opcode, uint32_t Value)
 
 void StringRegisterUpdate(uint32_t opcode)
 {
-   uint32_t Size = (OpSize.Op[0] + 1);
+   uint32_t Size = OpSize.Op[0];
 
    if (opcode & BIT(Backwards)) // Adjust R1
    {
@@ -1352,7 +1352,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            temp = read_n(r[1], OpSize.Op[0] + 1);
+            temp = read_n(r[1], OpSize.Op[0]);
 
             if (opcode & BIT(15)) // Translating
             {
@@ -1364,7 +1364,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            write_Arbitary(r[2], &temp, OpSize.Op[0] + 1);
+            write_Arbitary(r[2], &temp, OpSize.Op[0]);
 
             StringRegisterUpdate(opcode);
             pc = startpc; // Not finsihed so come back again!
@@ -1379,7 +1379,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            temp = read_n(r[1], OpSize.Op[0] + 1);
+            temp = read_n(r[1], OpSize.Op[0]);
 
             if (opcode & BIT(15)) // Translating
             {
@@ -1391,7 +1391,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            temp2 = read_n(r[2], OpSize.Op[0] + 1);
+            temp2 = read_n(r[2], OpSize.Op[0]);
 
             if (CompareCommon(temp, temp2) == 0)
             {
@@ -1417,7 +1417,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            temp = read_n(r[1], OpSize.Op[0] + 1);
+            temp = read_n(r[1], OpSize.Op[0]);
 
             if (opcode & BIT(Translation))
             {
@@ -1712,7 +1712,7 @@ void n32016_exec(uint32_t tubecycles)
  
          case MOVM:
          {
-            temp = getdisp() + (OpSize.Op[0] + 1); // disp of 0 means move 1 byte
+            temp = getdisp() + OpSize.Op[0];                      // disp of 0 means move 1 byte
             while (temp)
             {
                temp2 = read_x8(genaddr[0]);
@@ -1726,7 +1726,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case CMPM:
          {
-            uint32_t temp4 = (OpSize.Op[0] + 1); // disp of 0 means move 1 byte/word/dword
+            uint32_t temp4 = OpSize.Op[0];                                 // disp of 0 means move 1 byte/word/dword
             temp3 = (getdisp() / temp4) + 1;
 
             //PiTRACE("CMP Size = %u Count = %u\n", temp4, temp3);
@@ -1855,7 +1855,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case DEI:
          {
-            int size = (OpSize.Op[0] + 1) << 3; // 8, 16  or 32 
+            int size = OpSize.Op[0] << 3;                      // 8, 16  or 32 
             temp = ReadGen(0); // src
             if (temp == 0)
             {
@@ -2110,7 +2110,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case FFS:
          {
-            int numbits = (OpSize.Op[0] + 1) << 3; // number of bits: 8, 16 or 32
+            int numbits = OpSize.Op[0] << 3;          // number of bits: 8, 16 or 32
             temp2 = ReadGen(0); // base is the variable size operand being scanned
             OpSize.Op[1] = sz8;
             temp = ReadGen(1); // offset is always 8 bits (also the result)
@@ -2180,7 +2180,7 @@ void n32016_exec(uint32_t tubecycles)
 
             case TOS:
             {
-               PushArbitary(temp, WriteSize + 1);
+               PushArbitary(temp, WriteSize);
             }
             break;
          }
