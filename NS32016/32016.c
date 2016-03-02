@@ -709,6 +709,7 @@ void n32016_exec(uint32_t tubecycles)
    uint32_t opcode, WriteSize, WriteIndex;
    uint32_t temp = 0, temp2, temp3;
    uint64_t temp64;
+   uint32_t Function;
 
    while (tubecycles > 0)
    {
@@ -717,8 +718,8 @@ void n32016_exec(uint32_t tubecycles)
 
       BreakPoint(startpc, opcode);
 
-      LookUp.p.Function = FunctionLookup[opcode & 0xFF];
-      uint32_t Format   = LookUp.p.Function >> 4;
+      Function = FunctionLookup[opcode & 0xFF];
+      uint32_t Format   = Function >> 4;
 
       if (Format < (FormatCount + 1))
       {
@@ -743,7 +744,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format1:
          {
-            if (LookUp.p.Function <= RETT)
+            if (Function <= RETT)
             {
                temp = getdisp();
             }
@@ -760,7 +761,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format3:
          {
-            LookUp.p.Function += ((opcode >> 7) & 0x0F);
+            Function += ((opcode >> 7) & 0x0F);
             LookUp.p.Size = opcode & 0x03;
             getgen(opcode >> 11, 0);
          }
@@ -776,17 +777,17 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format5:
          {
-            LookUp.p.Function += ((opcode >> 10) & 0x0F);
+            Function += ((opcode >> 10) & 0x0F);
             LookUp.p.Size = (opcode & BIT(Translation)) ? sz8 : ((opcode >> 8) & 3);
          }
          break;
 
          case Format6:
          {
-            LookUp.p.Function += ((opcode >> 10) & 0x0F);
+            Function += ((opcode >> 10) & 0x0F);
 
             // Ordering important here, as getgen uses LookUp.p.Size
-            switch (LookUp.p.Function)
+            switch (Function)
             {
                case ROT:
                case ASH:
@@ -811,7 +812,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format7:
          {
-            LookUp.p.Function += ((opcode >> 10) & 0x0F);
+            Function += ((opcode >> 10) & 0x0F);
             LookUp.p.Size = (opcode >> 8) & 3;
 
             getgen(opcode >> 19, 0);
@@ -829,36 +830,36 @@ void n32016_exec(uint32_t tubecycles)
                   {
                      case 0x0C80:
                      {
-                        LookUp.p.Function = MOVUS;
+                        Function = MOVUS;
                      }
                      break;
 
                      case 0x1C80:
                      {
-                        LookUp.p.Function = MOVSU;
+                        Function = MOVSU;
                      }
                      break;
 
                      default:
                      {
-                        LookUp.p.Function = TRAP;
+                        Function = TRAP;
                      }
                      break;
                   }
                }
                else
                {
-                  LookUp.p.Function = (opcode & 0x40) ? FFS : INDEX;
+                  Function = (opcode & 0x40) ? FFS : INDEX;
                }
             }
             else
             {
-               LookUp.p.Function += ((opcode >> 6) & 3);
+               Function += ((opcode >> 6) & 3);
             }
 
             LookUp.p.Size = (opcode >> 8) & 3;
 
-            if (LookUp.p.Function == CVTP)
+            if (Function == CVTP)
             {
                LookUp.p.Size = sz32;
             }
@@ -870,26 +871,26 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format9:
          {
-            LookUp.p.Function += ((opcode >> 11) & 0x07);
+            Function += ((opcode >> 11) & 0x07);
          }
          break;
 
          case Format11:
          {
-            LookUp.p.Function += ((opcode >> 10) & 0x0F);
+            Function += ((opcode >> 10) & 0x0F);
          }
          break;
 
          case Format14:
          {
-            LookUp.p.Function += ((opcode >> 10) & 0x0F);
+            Function += ((opcode >> 10) & 0x0F);
          }
          break;
       }
 
-      ShowInstruction(startpc, opcode, &LookUp, temp);
+      ShowInstruction(startpc, opcode, Function, LookUp.p.Size, temp);
 
-      switch (LookUp.p.Function)
+      switch (Function)
       {
          case BEQ:
          case BNE:
@@ -904,7 +905,7 @@ void n32016_exec(uint32_t tubecycles)
          case BLT:
          case BGE:
          {
-            if (CheckCondition(LookUp.p.Function) == 0)
+            if (CheckCondition(Function) == 0)
             {
                break;
             }
@@ -1572,11 +1573,11 @@ void n32016_exec(uint32_t tubecycles)
             psr &= ~F_FLAG;
             if (temp & BIT(temp2))
                psr |= F_FLAG;
-            if (LookUp.p.Function == IBIT)
+            if (Function == IBIT)
             {
                temp ^= BIT(temp2);
             }
-            else if ((LookUp.p.Function == SBIT) || (LookUp.p.Function == SBITI))
+            else if ((Function == SBIT) || (Function == SBITI))
             {
                temp |= BIT(temp2);
             }

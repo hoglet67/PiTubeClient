@@ -174,7 +174,7 @@ void BreakPoint(uint32_t pc, uint32_t opcode)
 {
 #if 1
 #ifndef TEST_SUITE
-   if (startpc == 0xF00276)
+   if (pc == 0xF00276)
    {
       n32016_dumpregs("Tube Read Loop!");
    }
@@ -199,16 +199,16 @@ void BreakPoint(uint32_t pc, uint32_t opcode)
 #endif
 }
 
-void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction, uint32_t Disp)
+void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize, uint32_t Disp)
 {
 	if (pc < MEG16)
 	{
       const char* pText = "Bad NS32016 opcode";
-      uint32_t Postfix = pInstruction->p.Size;
+      uint32_t Postfix = OperandSize;
 
-      if (pInstruction->p.Function < InstructionCount)
+      if (Function < InstructionCount)
       {
-         pText = InstuctionText[pInstruction->p.Function];
+         pText = InstuctionText[Function];
 
          if ((opcode & 0x80FF) == 0x800E)
          {
@@ -223,7 +223,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, DecodeMatrix* pInstruction, u
 
       RegLookUp();
 
-      if (pInstruction->p.Function <= BSR)
+      if (Function <= BSR)
       {
          uint32_t Address = pc + Disp;
          PiTRACE(" &%06"PRIX32" ", Address);
