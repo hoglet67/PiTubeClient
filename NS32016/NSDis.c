@@ -143,7 +143,7 @@ void RegLookUp(void)
             {
                uint32_t  Address = genaddr[Index];
                PiTRACE(" &%06"PRIX32"=", Address);
-               switch (LookUp.p.Size)
+               switch (OpSize.Op[0])
                {
                   case sz8:
                   {
@@ -231,8 +231,6 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 
       PiTRACE("\n");
 
-      ClearRegs();
-
 #ifdef TEST_SUITE
       if (pc >= 0x1C95)
       {
@@ -253,15 +251,26 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 	PiTRACE("PC is :%08"PRIX32" ?????\n", pc);
 }
 
-#ifdef SHOW_REG_WRITES
+
 void ShowRegisterWrite(uint32_t Index, uint32_t Value)
 {
-   if (Regs[Index] < 8)
+   if (Regs[Index] < 32)
    {
-      PiTRACE(" R%u = %08"PRIX32"\n", Regs[Index], Value);
+#ifdef SHOW_REG_WRITES
+      if (Regs[Index] < 8)
+      {
+         PiTRACE(" R%u = %08"PRIX32"\n", Regs[Index], Value);
+      }
+#endif
+
+#ifdef TEST_SUITE
+      if (Regs[Index] == 7)
+      {
+         PiTRACE("*** TEST = %u\n", Value);
+      }
+#endif
    }
 }
-#endif
 
 const uint8_t FormatSizes[FormatCount + 1] =
 {

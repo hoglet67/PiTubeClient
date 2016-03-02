@@ -265,6 +265,15 @@ enum DataSize
 	szVaries = 0xFF,
 };
 
+typedef union
+{
+   uint8_t Op[2];
+   uint16_t Whole;
+} OperandSizeType;
+
+#define SET_OP_SIZE(in) OpSize.Whole = OpSizeLookup[(in) & 0x03]
+//#define SET_OP_SIZE(in) OpSize.Op[0] = ((in) & 0x03)
+
 enum StringBits
 {
    Translation = 15,
@@ -272,17 +281,6 @@ enum StringBits
    UntilMatch  = 17,
    WhileMatch  = 18
 };
-
-typedef union
-{
-	struct
-	{
-		uint8_t Size;
-		uint8_t Function;		
-	} p;
-
-	uint32_t Whole;
-} DecodeMatrix;
 
 extern void n32016_init();
 extern void n32016_reset(uint32_t StartAddress);
@@ -292,8 +290,9 @@ extern void ClearRegs(void);
 extern void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize, uint32_t Disp);
 extern void n32016_dumpregs();
 extern void n32016_build_matrix();
+extern void BreakPoint(uint32_t pc, uint32_t opcode);
 
-#ifdef SHOW_REG_WRITES
+#if 1
 extern void ShowRegisterWrite(uint32_t Index, uint32_t Value);
 #else
 #define ShowRegisterWrite(...)
@@ -312,7 +311,6 @@ extern FILE *pTraceFile;
 
 extern uint32_t tube_irq;
 uint8_t FunctionLookup[256];
-extern DecodeMatrix LookUp;
 extern uint32_t genaddr[2];
 extern int gentype[2];
 extern const uint8_t FormatSizes[FormatCount + 1];
