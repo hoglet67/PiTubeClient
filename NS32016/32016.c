@@ -1543,7 +1543,7 @@ void n32016_exec(uint32_t tubecycles)
          case LSH:
          {
             OpSize.Op[0] = sz8;
-            temp2 = ReadGen(0, sz8);
+            temp2 = ReadGen(0);
             if (temp2 & 0xE0)
                temp2 |= 0xE0;
             temp = ReadGen(1);
@@ -1689,8 +1689,9 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0);
             temp = ~temp;
-            WriteIndex = 1;
             WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
+
          }
          break;
 
@@ -1794,7 +1795,8 @@ void n32016_exec(uint32_t tubecycles)
 
          case MOVXBW:
          {
-            temp = ReadGen(0, sz8);
+            OpSize.Op[0] = sz8;
+            temp = ReadGen(0);
             SIGN_EXTEND(0, temp); // Editor need the useless semicolon
             WriteSize = sz16;
             WriteIndex = 1;
@@ -1803,7 +1805,8 @@ void n32016_exec(uint32_t tubecycles)
 
          case MOVZBW:
          {
-            temp = ReadGen(0, sz8);
+            OpSize.Op[0] = sz8;
+            temp = ReadGen(0);
             WriteSize = sz16;
             WriteIndex = 1;
          }
