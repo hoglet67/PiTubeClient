@@ -1607,7 +1607,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(0);
             update_sub_flags(temp, temp2, 0);
             temp -= temp2;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -1616,8 +1616,8 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0);
             temp ^= 1;
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
-            WriteSize = OpSize.Op[0];
          }
          break;
 
@@ -1631,7 +1631,7 @@ void n32016_exec(uint32_t tubecycles)
                psr |= C_FLAG;
             else
                psr &= ~C_FLAG;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -1680,7 +1680,7 @@ void n32016_exec(uint32_t tubecycles)
                }
                break;
             }
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -1690,7 +1690,7 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(0);
             temp = ~temp;
             WriteIndex = 1;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -1704,7 +1704,7 @@ void n32016_exec(uint32_t tubecycles)
                psr |= C_FLAG;
             else
                psr &= ~C_FLAG;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -1760,7 +1760,7 @@ void n32016_exec(uint32_t tubecycles)
                   temp2 |= BIT((c + (temp3 >> 5)) & 31);
             }
             temp = temp2;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -1787,7 +1787,7 @@ void n32016_exec(uint32_t tubecycles)
                temp4 <<= 1;
             }
             temp = temp2;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -1835,7 +1835,7 @@ void n32016_exec(uint32_t tubecycles)
             handle_mei_dei_upper_write(temp64);
             // Allow fallthrough write logic to write the lower half of dst
             temp = temp64;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -1845,7 +1845,7 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(0);
             temp2 = ReadGen(1);
             temp *= temp2;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -1879,7 +1879,7 @@ void n32016_exec(uint32_t tubecycles)
             handle_mei_dei_upper_write(temp64);
             // Allow fallthrough write logic to write the lower half of dst
             temp = temp64;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -1908,7 +1908,7 @@ void n32016_exec(uint32_t tubecycles)
                   temp = (int32_t) temp2 / (int32_t) temp;
                break;
             }
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -1937,7 +1937,7 @@ void n32016_exec(uint32_t tubecycles)
                   temp = (int32_t) temp2 % (int32_t) temp;
                break;
             }
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -1952,7 +1952,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
             temp = mod_operator(temp2, temp);
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -1968,7 +1968,7 @@ void n32016_exec(uint32_t tubecycles)
             }
 
             temp = div_operator(temp2, temp);
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
@@ -2043,7 +2043,7 @@ void n32016_exec(uint32_t tubecycles)
             }
 
             temp = Base;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
          break;
