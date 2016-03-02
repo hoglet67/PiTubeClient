@@ -1133,54 +1133,27 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0, LookUp.p.Size);
 
-            if (LookUp.p.Size == sz8)
+            switch ((opcode >> 7) & 0xF)
             {
-               switch ((opcode >> 7) & 0xF)
-               {
-                  case 0:
-                     psr = (psr & 0xFF00) | (temp & 0xFF);
+               case 0:
+                  psr = (psr & 0xFF00) | (temp & 0xFF);
                   break;
-                  case 9:
-                     sp[SP] = temp;
-                     PrintSP(sp[SP]);
+               case 9:
+                  sp[SP] = temp;
+                  PrintSP(sp[SP]);
                   break;
-                  default:
-                     n32016_dumpregs("Bad LPRB reg");
+               case 15:
+                  mod = temp;
                   break;
-               }
-            }
-            else if (LookUp.p.Size == sz16)
-            {
-               switch ((opcode >> 7) & 0xF)
-               {
-                  case 15:
-                     mod = temp;
+               case 0xA:
+                  sb = temp;
                   break;
-                  default:
-                     n32016_dumpregs("Bad LPRW reg");
+               case 0xE:
+                  intbase = temp; // PiTRACE("INTBASE %08"PRIX32" %08"PRIX32"\n",temp,pc); 
                   break;
-               }
-               break;
-            }
-            else
-            {
-               switch ((opcode >> 7) & 0xF)
-               {
-                  case 9:
-                     sp[SP] = temp;
-                     PrintSP(sp[SP]);
+               default:
+                  n32016_dumpregs("Bad LPR reg");
                   break;
-                  case 0xA:
-                     sb = temp;
-                  break;
-                  case 0xE:
-                     intbase = temp; // PiTRACE("INTBASE %08"PRIX32" %08"PRIX32"\n",temp,pc); 
-                  break;
-
-                  default:
-                     n32016_dumpregs("Bad LPRD reg");
-                  break;
-               }
             }
          }
          break;
