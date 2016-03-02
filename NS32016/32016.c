@@ -125,7 +125,7 @@ static uint32_t popd()
 
 uint32_t PopArbitary(uint32_t Size)
 {
-   uint32_t Result = read_n(sp[SP], Size);
+   uint32_t Result = read_n(sp[SP], Size + 1);
    sp[SP] += Size + 1;
    PrintSP(sp[SP]);
 
@@ -1342,7 +1342,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            temp = read_n(r[1], LookUp.p.Size);
+            temp = read_n(r[1], LookUp.p.Size + 1);
 
             if (opcode & BIT(15)) // Translating
             {
@@ -1369,7 +1369,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            temp = read_n(r[1], LookUp.p.Size);
+            temp = read_n(r[1], LookUp.p.Size + 1);
 
             if (opcode & BIT(15)) // Translating
             {
@@ -1381,7 +1381,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            temp2 = read_n(r[2], LookUp.p.Size);
+            temp2 = read_n(r[2], LookUp.p.Size + 1);
 
             if (CompareCommon(temp, temp2) == 0)
             {
@@ -1407,7 +1407,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            temp = read_n(r[1], LookUp.p.Size);
+            temp = read_n(r[1], LookUp.p.Size + 1);
 
             if (opcode & BIT(Translation))
             {

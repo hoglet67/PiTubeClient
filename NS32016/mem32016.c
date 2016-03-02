@@ -110,12 +110,12 @@ uint32_t read_x32(uint32_t addr)
 
 uint32_t read_n(uint32_t addr, uint32_t Size)
 {
-   if (Size <= sz32)
+   if (Size <= sizeof(uint32_t))
    {
-      if (addr + Size < IO_BASE)
+      if ((addr + Size) <= IO_BASE)
       {
          uint32_t Result = 0;
-         memcpy(&Result, ns32016ram + addr, (Size + 1));
+         memcpy(&Result, ns32016ram + addr, Size);
          return Result;
       }
    }
