@@ -1717,32 +1717,9 @@ void n32016_exec(uint32_t tubecycles)
             //PiTRACE("CMP Size = %u Count = %u\n", temp4, temp3);
             while (temp3--)
             {
-               // Avoid a "might be uninitialized" warning
-               temp2 = 0;
-               switch (LookUp.p.Size)
-               {
-                  case sz8:
-                  {
-                     temp = read_x8(genaddr[0]);
-                     temp2 = read_x8(genaddr[1]);
-                  }
-                  break;
-
-                  case sz16:
-                  {
-                     temp = read_x16(genaddr[0]);
-                     temp2 = read_x16(genaddr[1]);
-                  }
-                  break;
-
-                  case sz32:
-                  {
-                     temp = read_x16(genaddr[0]);
-                     temp2 = read_x16(genaddr[1]);
-                  }
-                  break;
-               }
-
+               temp  = read_n(genaddr[0], temp4);
+               temp2 = read_n(genaddr[1], temp4);
+ 
                if (CompareCommon(temp, temp2) == 0)
                {
                   break;
