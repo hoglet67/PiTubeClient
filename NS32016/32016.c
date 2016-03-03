@@ -28,7 +28,6 @@ uint32_t startpc;
 uint16_t Regs[2];
 uint32_t genaddr[2];
 int gentype[2];
-int genindex[2];
 uint32_t nsimm[2];
 OperandSizeType OpSize;
 
@@ -267,7 +266,6 @@ static void GetGenPhase2(int gen, int c)
             nsimm[c] = _byteswap_ushort(read_x16(pc));
          else
             nsimm[c] = _byteswap_ulong(read_x32(pc));
-            //nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
 #else
          if (OpSize.Op[c] == sz8)
             nsimm[c] = read_x8(pc);
@@ -292,18 +290,18 @@ static void GetGenPhase2(int gen, int c)
 
       if (gen >= EaPlusRn)
       {
-         genindex[c] = gen >> 8;
+         temp = (gen >> 8) & 7;
 
          uint32_t Shift = gen & 3;
-         GetGenPhase2(genindex[c] >> 3, c);
+         GetGenPhase2(gen >> 11, c);
 
          if (gentype[c] != Register)
          {
-            genaddr[c] += (r[genindex[c] & 7] << Shift);
+            genaddr[c] += (r[temp] << Shift);
          }
          else
          {
-            genaddr[c] = *((uint32_t*) genaddr[c]) + (r[genindex[c] & 7] << Shift);
+            genaddr[c] = *((uint32_t*) genaddr[c]) + (r[temp] << Shift);
          }
 
          gentype[c] = Memory;                               // Force Memory
