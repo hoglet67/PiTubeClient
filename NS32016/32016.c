@@ -1587,13 +1587,14 @@ void n32016_exec(uint32_t tubecycles)
 
          case LSH:
          {
-            OpSize.Op[0] = sz8;
             temp2 = ReadGen(0);
-            if (temp2 & 0xE0)
-               temp2 |= 0xE0;
             temp = ReadGen(1);
+
             if (temp2 & 0xE0)
+            {
+               temp2 |= 0xE0;
                temp >>= ((temp2 ^ 0xFF) + 1);
+            }
             else
                temp <<= temp2;
 
