@@ -187,6 +187,7 @@ void BreakPoint(uint32_t pc, uint32_t opcode)
 #endif
 }
 
+#ifdef SHOW_INSTRUCTIONS
 void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize, uint32_t Disp)
 {
 	if (pc < MEG16)
@@ -238,7 +239,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 
 	PiTRACE("PC is :%08"PRIX32" ?????\n", pc);
 }
-
+#endif
 
 void ShowRegisterWrite(uint32_t Index, uint32_t Value)
 {

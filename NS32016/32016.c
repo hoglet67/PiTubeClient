@@ -208,6 +208,12 @@ uint32_t ReadGen(uint32_t c)
          return PopArbitary(OpSize.Op[c]);
       }
       // No break due to return
+
+      case OpImmediate:
+      {
+         return Truncate(nsimm[c], OpSize.Op[c]);
+      }
+      break;
    }
 
    return 0;
@@ -259,7 +265,7 @@ static void GetGenPhase2(int gen, int c)
          else
             nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
          pc += OpSize.Op[c];
-         gentype[c] = Register;
+         gentype[c] = OpImmediate;
          return;
       }
 
@@ -1324,8 +1330,6 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(0);
             temp = ReadGen(1);
             CompareCommon(temp, temp2);
-            WriteSize = OpSize.Op[1];
-            WriteIndex = 1;
          }
          break;
 
@@ -2254,6 +2258,7 @@ void n32016_exec(uint32_t tubecycles)
 
       if (TrapFlags)
       {
+         DoTrap:
          n32016_dumpregs("Bad NS32016 opcode");
       }
 
@@ -2290,6 +2295,12 @@ void n32016_exec(uint32_t tubecycles)
                PushArbitary(temp, WriteSize);
             }
             break;
+
+            case OpImmediate:
+            {
+               SET_TRAP(IllegalWritingImmediate);
+               goto DoTrap;
+            }
          }
       }
 
