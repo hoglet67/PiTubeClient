@@ -143,6 +143,45 @@ uint32_t PopArbitary(uint32_t Size)
    return Result;
 }
 
+//#ifdef BYTE_SWAP
+#if 1
+static uint32_t getdisp()
+{ 
+   uint32_t addr = read_x32(pc++);
+
+   if ((addr & 0x80) == 0)                                          // 8 Bit Operand
+   {
+      if (addr & 0x40)                                               // Negative
+      {
+         return addr | 0xFFFFFF80;
+      }
+      
+      return addr & 0xFF;
+   }
+
+   addr = _byteswap_ulong(addr);                                     // Now LSB at the top
+
+   if ((addr & 0x40000000) == 0)                                     // 14 Bit Operand
+   {
+      pc++;
+      addr >>= 16;
+
+      if (addr & 0x2000)                                             // Negative
+      {
+         return addr | 0xFFFFC000;
+      }
+
+      return addr & 0x3FFF;
+   }
+
+   pc += 3;                                                            // 30 Bit Operand
+   if (addr & 0x20000000)                                              // Negative
+   {
+      return addr;                                                     // Top three bits already set!
+   }
+   return addr & 0x3FFFFFFF;
+}
+#else
 static uint32_t getdisp()
 {
    uint32_t addr = READ_PC_BYTE();
@@ -167,6 +206,7 @@ static uint32_t getdisp()
 
    return addr | ((addr & 0x20000000) ? 0xC0000000 : 0);
 }
+#endif
 
 uint32_t Truncate(uint32_t Value, uint32_t Size)
 {
