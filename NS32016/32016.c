@@ -915,8 +915,17 @@ void n32016_exec(uint32_t tubecycles)
          break;
       }
 
-      GetGenPhase2(Regs[0], 0);
-      GetGenPhase2(Regs[1], 1);
+      // Temporary work around until we make operand numbering consistent
+      if (Format == Format4 || Format == Format4 || Format == Format4 || Format == Format4)
+      {
+         GetGenPhase2(Regs[1], 1);
+         GetGenPhase2(Regs[0], 0);
+      }
+      else
+      {
+         GetGenPhase2(Regs[0], 0);
+         GetGenPhase2(Regs[1], 1);
+      }
 
       ShowInstruction(startpc, opcode, Function, OpSize.Op[0], temp);
 
