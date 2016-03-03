@@ -215,8 +215,6 @@ uint32_t ReadGen(uint32_t c)
 
 static void getgen(int gen, int c)
 {
-   uint32_t temp, temp2;
-
    gen &= 0x1F;
    Regs[c] = gen;
 
@@ -768,10 +766,6 @@ void n32016_exec(uint32_t tubecycles)
       {
          pc += FormatSizes[Format];                                        // Add the basic number of bytes for a particular instruction
       }
-      else
-      {
-         n32016_dumpregs("Bad Format");
-      }
 
       switch (Format)
       {
@@ -1151,7 +1145,7 @@ void n32016_exec(uint32_t tubecycles)
 
                default:
                {
-                  n32016_dumpregs("Bad SPR reg");
+                  SET_TRAP(IllegalSpecialReading);
                }
                break;
             }
@@ -1207,7 +1201,7 @@ void n32016_exec(uint32_t tubecycles)
                   intbase = temp; // PiTRACE("INTBASE %08"PRIX32" %08"PRIX32"\n",temp,pc); 
                   break;
                default:
-                  n32016_dumpregs("Bad LPR reg");
+                  SET_TRAP(IllegalSpecialWriting);
                   break;
             }
          }

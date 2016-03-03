@@ -262,6 +262,9 @@ enum TrapTypes
    DivideByZero            = BIT(1),
    IllegalImmediate        = BIT(2),
    IllegalDoubleIndexing   = BIT(3),
+   IllegalSpecialReading   = BIT(4),
+   IllegalSpecialWriting   = BIT(5),
+
 };
 
 #define SET_TRAP(in) TrapFlags |= (in)
