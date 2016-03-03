@@ -265,7 +265,12 @@ enum TrapTypes
    IllegalDoubleIndexing   = BIT(4),
    IllegalSpecialReading   = BIT(5),
    IllegalSpecialWriting   = BIT(6),
+};
 
+enum OperandsPostitions
+{
+   Oper1,
+   Oper2
 };
 
 #define SET_TRAP(in) TrapFlags |= (in)

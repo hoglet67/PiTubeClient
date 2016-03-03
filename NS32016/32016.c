@@ -749,7 +749,7 @@ void n32016_exec(uint32_t tubecycles)
 
    while (tubecycles > 0)
    {
-      WriteSize      = szVaries;                                             // The size a result may be written as
+      WriteSize      = szVaries;                                            // The size a result may be written as
       WriteIndex     = 0;                                                   // Default to writing operand 0
       OpSize.Whole   = 0;
       TrapFlags      = 0; 
@@ -805,8 +805,8 @@ void n32016_exec(uint32_t tubecycles)
          case Format4:
          {
             SET_OP_SIZE(opcode);
-            getgen(opcode >> 11, 1);
-            getgen(opcode >> 6, 0);
+            getgen(opcode >> 11, 0);
+            getgen(opcode >> 6, 1);
          }
          break;
 
@@ -927,6 +927,7 @@ void n32016_exec(uint32_t tubecycles)
          break;
       }
 
+#if 0
       // Temporary work around until we make operand numbering consistent
       if (Format == Format4 || Format == Format4 || Format == Format4 || Format == Format4)
       {
@@ -934,6 +935,7 @@ void n32016_exec(uint32_t tubecycles)
          GetGenPhase2(Regs[0], 0);
       }
       else
+#endif
       {
          GetGenPhase2(Regs[0], 0);
          GetGenPhase2(Regs[1], 1);
@@ -1277,119 +1279,143 @@ void n32016_exec(uint32_t tubecycles)
 
          case ADD:
          {
-            temp = ReadGen(0);
-            temp2 = ReadGen(1);
+            temp2 = ReadGen(0);
+            temp = ReadGen(1);
+
             update_add_flags(temp, temp2, 0);
             temp += temp2;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
          }
          break;
 
          case CMP:
          {
-            temp = ReadGen(0);
-            temp2 = ReadGen(1);
-
+            temp2 = ReadGen(0);
+            temp = ReadGen(1);
             CompareCommon(temp, temp2);
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
          }
          break;
 
          case BIC:
-            temp = ReadGen(0);
-            temp2 = ReadGen(1);
-
+         {
+            temp2 = ReadGen(0);
+            temp = ReadGen(1);
             temp &= ~temp2;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
+         }
          break;
 
          case ADDC:
-            temp = ReadGen(0);
-            temp2 = ReadGen(1);
+         {
+            temp2 = ReadGen(0);
+            temp = ReadGen(1);
+
             temp3 = (psr & C_FLAG) ? 1 : 0;
             update_add_flags(temp, temp2, temp3);
             temp += temp2;
             temp += temp3;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
+         }
          break;
 
          case MOV:
-            temp = ReadGen(1);
-            WriteSize = OpSize.Op[0];
+         {
+            temp = ReadGen(0);
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
+         }
          break;
 
          case OR:
-            temp2 = ReadGen(0);
-            temp = ReadGen(1);
+         {
+            temp = ReadGen(0);
+            temp2 = ReadGen(1);
             temp |= temp2;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
+         }
          break;
 
          case SUB:
-            temp = ReadGen(0);
-            temp2 = ReadGen(1);
+         {
+            temp2 = ReadGen(0);
+            temp = ReadGen(1);
             update_sub_flags(temp, temp2, 0);
             temp -= temp2;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
+         }
          break;
 
          case SUBC:
-            temp = ReadGen(0);
-            temp2 = ReadGen(1);
+         {
+            temp2 = ReadGen(0);
+            temp = ReadGen(1);
             temp3 = (psr & C_FLAG) ? 1 : 0;
             update_sub_flags(temp, temp2, temp3);
             temp -= temp2;
             temp -= temp3;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
+         }
          break;
 
          case ADDR:
-#if 0
-            if (gentype[1] == TOS)
-            {
-               printf("TOS\n");
-            }
-#endif
-
-            temp = (gentype[1] == TOS) ? sp[SP] : genaddr[1];
-            //temp = genaddr[1];
-            WriteSize = OpSize.Op[0];
+         {
+            temp = genaddr[0];
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
+         }
          break;
 
          case AND:
+         {
             temp2 = ReadGen(0);
             temp = ReadGen(1);
             temp &= temp2;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
+         }
          break;
 
          case TBIT:
-            temp2 = ReadGen(1);
-            if (gentype[0] == Register)
+         {
+            temp2 = ReadGen(0);
+            if (gentype[1] == Register)
             {
                // operand 0 is a register
-               OpSize.Op[0] = sz32;
-               temp = ReadGen(0);
+               OpSize.Op[1] = sz32;
+               temp = ReadGen(1);
                temp2 &= 31;
             }
             else
             {
                // operand0 is memory
                // TODO: this should probably use the DIV and MOD opersator functions
-               genaddr[0] += temp2 / 8;
-               OpSize.Op[0] = sz8;
-               temp = ReadGen(0);
+               genaddr[1] += temp2 / 8;
+               OpSize.Op[1] = sz8;
+               temp = ReadGen(1);
                temp2 %= 8;
             }
             psr &= ~F_FLAG;
             if (temp & BIT(temp2))
                psr |= F_FLAG;
+         }
          break;
 
          case XOR:
-            temp2 = ReadGen(0);
-            temp = ReadGen(1);
+         {
+            temp = ReadGen(0);
+            temp2 = ReadGen(1);
             temp ^= temp2;
-            WriteSize = OpSize.Op[0];
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
+         }
          break;
 
          case MOVS:
