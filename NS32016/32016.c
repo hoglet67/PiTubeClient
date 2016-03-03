@@ -545,16 +545,19 @@ static uint32_t mod_operator(uint32_t a, uint32_t b)
    return a - div_operator(a, b) * b;
 }
 
+// Handle the writing to the upper half of mei/dei destination
 static void handle_mei_dei_upper_write(uint64_t result)
 {
    uint32_t temp;
-   // Handle the writing to the upper half of dst locally here
+   // Writing to an odd register is strictly speaking undefined
+   // But BBC Basic relies on a particular behaviour that the NS32016 has in this case
+   uint32_t reg_addr = genaddr[1] + ((Regs[1] & 1) ? -4 : 4);
    switch (OpSize.Op[0])
    {
       case sz8:
          temp = result >> 8;
          if (gentype[1] == Register)
-            *(uint8_t *) (genaddr[1] + 4) = temp;
+            *(uint8_t *) (reg_addr) = temp;
          else
             write_x8(genaddr[1] + 4, temp);
       break;
@@ -562,7 +565,7 @@ static void handle_mei_dei_upper_write(uint64_t result)
       case sz16:
          temp = result >> 16;
          if (gentype[1] == Register)
-            *(uint16_t *) (genaddr[1] + 4) = temp;
+            *(uint16_t *) (reg_addr) = temp;
          else
             write_x16(genaddr[1] + 4, temp);
       break;
@@ -570,7 +573,7 @@ static void handle_mei_dei_upper_write(uint64_t result)
       case sz32:
          temp = result >> 32;
          if (gentype[1] == Register)
-            *(uint32_t *) (genaddr[1] + 4) = temp;
+            *(uint32_t *) (reg_addr) = temp;
          else
             write_x32(genaddr[1] + 4, temp);
       break;
