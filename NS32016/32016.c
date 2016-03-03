@@ -28,7 +28,6 @@ uint32_t startpc;
 uint16_t Regs[2];
 uint32_t genaddr[2];
 int gentype[2];
-uint32_t nsimm[2];
 OperandSizeType OpSize;
 
 const uint16_t OpSizeLookup[4] =
@@ -214,7 +213,7 @@ uint32_t ReadGen(uint32_t c)
 
       case OpImmediate:
       {
-         return Truncate(nsimm[c], OpSize.Op[c]);
+         return Truncate(genaddr[c], OpSize.Op[c]);
       }
       // No break due to return
    }
@@ -261,18 +260,18 @@ static void GetGenPhase2(int gen, int c)
          // Why can't they just decided on an endian and then stick to it?
 #ifdef BYTE_SWAP
          if (OpSize.Op[c] == sz8)
-            nsimm[c] = read_x8(pc);
+            genaddr[c] = read_x8(pc);
          else if (OpSize.Op[c] == sz16)
-            nsimm[c] = _byteswap_ushort(read_x16(pc));
+            genaddr[c] = _byteswap_ushort(read_x16(pc));
          else
-            nsimm[c] = _byteswap_ulong(read_x32(pc));
+            genaddr[c] = _byteswap_ulong(read_x32(pc));
 #else
          if (OpSize.Op[c] == sz8)
-            nsimm[c] = read_x8(pc);
+            genaddr[c] = read_x8(pc);
          else if (OpSize.Op[c] == sz16)
-            nsimm[c] = (read_x8(pc) << 8) | read_x8(pc + 1);
+            genaddr[c] = (read_x8(pc) << 8) | read_x8(pc + 1);
          else
-            nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
+            genaddr[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
 #endif
 
          pc += OpSize.Op[c];
