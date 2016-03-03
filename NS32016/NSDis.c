@@ -25,7 +25,7 @@ const char* PostfixLookup(uint8_t Postfix)
 const char InstuctionText[InstructionCount][8] =
 {
    // FORMAT 0
-	"BEQ", "BNE", "TRAP", "TRAP", "BH", "BLS", "BGT", "BLE",
+	"BEQ", "BNE", "BCS", "BCC", "BH", "BLS", "BGT", "BLE",
    "BFS", "BFC", "BLO", "BHS", "BLT", "BGE", "BR", "TRAP", 
 
    // FORMAT 1	

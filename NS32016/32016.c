@@ -942,6 +942,8 @@ void n32016_exec(uint32_t tubecycles)
       {
          case BEQ:
          case BNE:
+         case BCS:
+         case BCC:
          case BH:
          case BLS:
          case BGT:

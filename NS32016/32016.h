@@ -101,8 +101,8 @@ enum Functions
 {
    BEQ = F_BASE(Format0),
    BNE,
-   TRAP_F1_02,
-   TRAP_F1_03,
+   BCS,
+   BCC,
    BH,
    BLS,
    BGT,
