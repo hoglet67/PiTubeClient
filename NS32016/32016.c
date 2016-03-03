@@ -12,6 +12,7 @@
 #include "PandoraV0_61.h"
 
 int nsoutput = 0;
+uint32_t TrapFlags;
 uint32_t nscfg;
 uint32_t Trace = 0;
 uint32_t tube_irq = 0;
@@ -223,8 +224,15 @@ static void getgen(int gen, int c)
    {
       Regs[c] |= READ_PC_BYTE() << 8;
 
-      // TODO : Check for immediate
-      // TODO : Check for double EaPlusRn
+      if ((Regs[c] & 0xF800) == (Immediate << 11))
+      {
+         SET_TRAP(IllegalImmediate);
+      }
+
+      if ((Regs[c] & 0xF800) >= (EaPlusRn << 11))
+      {
+         SET_TRAP(IllegalDoubleIndexing);
+      }
    }
 }
 
@@ -740,12 +748,13 @@ void n32016_exec(uint32_t tubecycles)
 
    while (tubecycles > 0)
    {
-      WriteSize = szVaries;                                             // The size a result may be written as
-      WriteIndex = 0;                                                   // Default to writing operand 0
-      OpSize.Whole = 0;
+      WriteSize      = szVaries;                                             // The size a result may be written as
+      WriteIndex     = 0;                                                   // Default to writing operand 0
+      OpSize.Whole   = 0;
+      TrapFlags      = 0; 
 
-      Regs[0] =
-      Regs[1] = 0xFFFF;
+      Regs[0]        =
+      Regs[1]        = 0xFFFF;
 
       startpc  = pc;
       opcode = read_x32(pc);
@@ -911,6 +920,12 @@ void n32016_exec(uint32_t tubecycles)
          case Format14:
          {
             Function += ((opcode >> 10) & 0x0F);
+         }
+         break;
+
+         default:
+         {
+            SET_TRAP(UnknownFormat);
          }
          break;
       }
@@ -1893,7 +1908,7 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(0); // src
             if (temp == 0)
             {
-               n32016_dumpregs("Divide by zero - DEI CE");
+               SET_TRAP(DivideByZero);
                break;
             }
 
@@ -1927,7 +1942,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(1);
             if (temp == 0)
             {
-               n32016_dumpregs("Divide by zero - QUO CE");
+               SET_TRAP(DivideByZero);
                break;
             }
 
@@ -1956,7 +1971,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(1);
             if (temp == 0)
             {
-               n32016_dumpregs("Divide by zero - REM CE");
+               SET_TRAP(DivideByZero);
                break;
             }
 
@@ -1985,7 +2000,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(1);
             if (temp == 0)
             {
-               n32016_dumpregs("Divide by zero - MOD CE");
+               SET_TRAP(DivideByZero);
                break;
             }
             temp = mod_operator(temp2, temp);
@@ -2000,7 +2015,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(1);
             if (temp == 0)
             {
-               n32016_dumpregs("Divide by zero - DIV CE");
+               SET_TRAP(DivideByZero);
                break;
             }
 
@@ -2169,12 +2184,13 @@ void n32016_exec(uint32_t tubecycles)
             WriteSize = sz8;
          }
          break;
-
-         default:
-            n32016_dumpregs("Bad NS32016 opcode");
-         break;
       }
- 
+
+      if (TrapFlags)
+      {
+         n32016_dumpregs("Bad NS32016 opcode");
+      }
+
       if (WriteSize && (WriteSize <= sz32))
       {
          switch (gentype[WriteIndex])

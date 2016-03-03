@@ -258,7 +258,7 @@ void ShowRegisterWrite(uint32_t Index, uint32_t Value)
 
          if (Value == 137)
          {
-            PiTRACE("*** BREAKPOINT\n", Value);
+            PiTRACE("*** BREAKPOINT\n");
          }
       }
 #endif

@@ -256,6 +256,16 @@ enum Functions
    BAD = 0xFF
 };
 
+enum TrapTypes
+{
+   UnknownFormat           = BIT(0),
+   DivideByZero            = BIT(1),
+   IllegalImmediate        = BIT(2),
+   IllegalDoubleIndexing   = BIT(3),
+};
+
+#define SET_TRAP(in) TrapFlags |= (in)
+
 enum DataSize
 {
    szVaries = 0,
