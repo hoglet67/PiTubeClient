@@ -1534,9 +1534,9 @@ void n32016_exec(uint32_t tubecycles)
 
          case ASH:
          {
-            OpSize.Op[0] = sz8;
             temp2 = ReadGen(0);
             temp = ReadGen(1);
+
             // Test if the shift is negative (i.e. a right shift)
             if (temp2 & 0xE0)
             {
