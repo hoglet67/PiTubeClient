@@ -11,6 +11,10 @@
 #include "mem32016.h"
 #include "PandoraV0_61.h"
 
+#ifdef WIN32
+#define BYTE_SWAP
+#endif
+
 int nsoutput = 0;
 uint32_t TrapFlags;
 uint32_t nscfg;
@@ -154,7 +158,7 @@ static uint32_t getdisp()
    {
       addr &= 0x3F;
       addr = (addr << 8) | READ_PC_BYTE();
-  
+
       return addr | ((addr & 0x2000) ? 0xFFFFC000 : 0);
    }
 
@@ -213,7 +217,7 @@ uint32_t ReadGen(uint32_t c)
       {
          return Truncate(nsimm[c], OpSize.Op[c]);
       }
-      break;
+      // No break due to return
    }
 
    return 0;
@@ -248,22 +252,31 @@ static void GetGenPhase2(int gen, int c)
    {
       if (gen <= R7)
       {
-         genaddr[c] = (uint32_t)& r[gen & 7];
+         genaddr[c] = (uint32_t) &r[gen];
          gentype[c] = Register;
          return;
       }
 
       if (gen == Immediate)
       {
-         genaddr[c] = (uint32_t)& nsimm[c];
-
          // Why can't they just decided on an endian and then stick to it?
+#ifdef BYTE_SWAP
+         if (OpSize.Op[c] == sz8)
+            nsimm[c] = read_x8(pc);
+         else if (OpSize.Op[c] == sz16)
+            nsimm[c] = _byteswap_ushort(read_x16(pc));
+         else
+            nsimm[c] = _byteswap_ulong(read_x32(pc));
+            //nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
+#else
          if (OpSize.Op[c] == sz8)
             nsimm[c] = read_x8(pc);
          else if (OpSize.Op[c] == sz16)
             nsimm[c] = (read_x8(pc) << 8) | read_x8(pc + 1);
          else
             nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
+#endif
+
          pc += OpSize.Op[c];
          gentype[c] = OpImmediate;
          return;
