@@ -259,11 +259,12 @@ enum Functions
 enum TrapTypes
 {
    UnknownFormat           = BIT(0),
-   DivideByZero            = BIT(1),
-   IllegalImmediate        = BIT(2),
-   IllegalDoubleIndexing   = BIT(3),
-   IllegalSpecialReading   = BIT(4),
-   IllegalSpecialWriting   = BIT(5),
+   UnknownInstruction      = BIT(1),
+   DivideByZero            = BIT(2),
+   IllegalImmediate        = BIT(3),
+   IllegalDoubleIndexing   = BIT(4),
+   IllegalSpecialReading   = BIT(5),
+   IllegalSpecialWriting   = BIT(6),
 
 };
 

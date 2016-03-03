@@ -2178,6 +2178,19 @@ void n32016_exec(uint32_t tubecycles)
             WriteSize = sz8;
          }
          break;
+
+         default:
+         {
+            if (Function < TRAP)
+            {
+               SET_TRAP(UnknownInstruction);
+            }
+            else
+            {
+               SET_TRAP(UnknownFormat);         // Probably already set but belt and braces here!
+            }
+         }
+         break;
       }
 
       if (TrapFlags)
