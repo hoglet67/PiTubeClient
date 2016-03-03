@@ -370,8 +370,6 @@ uint64_t readgenq(uint32_t c)
    return temp;
 }
 
-static uint16_t oldpsr;
-
 // From: http://homepage.cs.uiowa.edu/~jones/bcd/bcd.html
 static uint32_t bcd_add_16(uint32_t a, uint32_t b, uint32_t *carry)
 {
@@ -747,7 +745,39 @@ void n32016_exec(uint32_t tubecycles)
    uint64_t temp64;
    uint32_t Function;
 
-   while (tubecycles > 0)
+   if (tube_irq & 2)
+   {
+      // NMI is edge sensitive, so it should be cleared here
+      tube_irq &= ~2;
+      temp = psr;
+      psr &= ~0xF00;
+      pushw(temp);
+      pushw(mod);
+      pushd(pc);
+      temp = read_x32(intbase + (1 * 4));
+      mod = temp & 0xFFFF;
+      temp3 = temp >> 16;
+      sb = read_x32(mod);
+      temp2 = read_x32(mod + 8);
+      pc = temp2 + temp3;
+   }
+   else if ((tube_irq & 1) && (psr & 0x800))
+   {
+      // IRQ is level sensitive, so the called should maintain the state
+      temp = psr;
+      psr &= ~0xF00;
+      pushw(temp);
+      pushw(mod);
+      pushd(pc);
+      temp = read_x32(intbase);
+      mod = temp & 0xFFFF;
+      temp3 = temp >> 16;
+      sb = read_x32(mod);
+      temp2 = read_x32(mod + 8);
+      pc = temp2 + temp3;
+   }
+
+   while (tubecycles--)
    {
       WriteSize      = szVaries;                                            // The size a result may be written as
       WriteIndex     = 0;                                                   // Default to writing operand 0
@@ -2277,40 +2307,5 @@ void n32016_exec(uint32_t tubecycles)
          pc = 0x001AD9;
       }
 #endif
-
-      tubecycles--;
-      if (tube_irq & 2)
-      {
-         // NMI is edge sensitive, so it should be cleared here
-         tube_irq &= ~2;
-         temp = psr;
-         psr &= ~0xF00;
-         pushw(temp);
-         pushw(mod);
-         pushd(pc);
-         temp = read_x32(intbase + (1 * 4));
-         mod = temp & 0xFFFF;
-         temp3 = temp >> 16;
-         sb = read_x32(mod);
-         temp2 = read_x32(mod + 8);
-         pc = temp2 + temp3;
-      }
-      else if ((tube_irq & 1) && (psr & 0x800))
-      {
-         // IRQ is level sensitive, so the called should maintain the state
-         temp = psr;
-         psr &= ~0xF00;
-         pushw(temp);
-         pushw(mod);
-         pushd(pc);
-         temp = read_x32(intbase);
-         mod = temp & 0xFFFF;
-         temp3 = temp >> 16;
-         sb = read_x32(mod);
-         temp2 = read_x32(mod + 8);
-         pc = temp2 + temp3;
-      }
-
-      oldpsr = psr;
    }
 }
