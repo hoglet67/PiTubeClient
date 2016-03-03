@@ -20,6 +20,7 @@ uint32_t pc, sp[2], fp, sb, intbase;
 uint16_t psr, mod;
 uint32_t startpc;
 
+uint16_t Regs[2];
 uint32_t genaddr[2];
 int gentype[2];
 int genindex[2];
@@ -216,114 +217,133 @@ static void getgen(int gen, int c)
    uint32_t temp, temp2;
 
    gen &= 0x1F;
-   StoreRegisters(c, gen);
-
-   if (gen <= R7)
-   {
-      genaddr[c] = (uint32_t) & r[gen & 7];
-      gentype[c] = Register;
-      return;
-   }
-
-   if (gen == Immediate)
-   {
-      genaddr[c] = (uint32_t) & nsimm[c];
-
-      // Why can't they just decided on an endian and then stick to it?
-      if (OpSize.Op[c] == sz8)
-         nsimm[c] = read_x8(pc);
-      else if (OpSize.Op[c] == sz16)
-         nsimm[c] = (read_x8(pc) << 8) | read_x8(pc + 1);
-      else
-         nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
-      pc += OpSize.Op[c];
-      gentype[c] = Register;
-      return;
-   }
-
-   gentype[c] = Memory;
-
-   if (gen <= R7_Offset)
-   {
-      genaddr[c] = r[gen & 7] + getdisp();
-      return;
-   }
+   Regs[c] = gen;
 
    if (gen >= EaPlusRn)
    {
-      genindex[c] = READ_PC_BYTE();
-  
-      uint32_t Shift = gen & 3;
-      getgen(genindex[c] >> 3, c);
-      if (gentype[c] != Register)
-      {
-         genaddr[c] += (r[genindex[c] & 7] << Shift);
-      }
-      else
-      {
-         genaddr[c] = *(uint32_t*) genaddr[c] + (r[genindex[c] & 7] << Shift);
-      }
-      return;
+      Regs[c] |= READ_PC_BYTE() << 8;
+
+      // TODO : Check for immediate
+      // TODO : Check for double EaPlusRn
    }
+}
 
-   switch (gen)
+static void GetGenPhase2(int gen, int c)
+{
+   uint32_t temp, temp2;
+
+   if (gen < 0xFFFF)                                              // Does this Operand exist ?
    {
-      case FrameRelative:
-         temp = getdisp();
-         temp2 = getdisp();
-         genaddr[c] = read_x32(fp + temp);
-         genaddr[c] += temp2;
-      break;
+      if (gen <= R7)
+      {
+         genaddr[c] = (uint32_t)& r[gen & 7];
+         gentype[c] = Register;
+         return;
+      }
 
-      case StackRelative:
-         temp = getdisp();
-         temp2 = getdisp();
-         genaddr[c] = read_x32(sp[SP] + temp);
-         genaddr[c] += temp2;
-       break;
+      if (gen == Immediate)
+      {
+         genaddr[c] = (uint32_t)& nsimm[c];
 
-      case StaticRelative:
-         temp = getdisp();
-         temp2 = getdisp();
-         genaddr[c] = read_x32(sb + temp);
-         genaddr[c] += temp2;
-       break;
+         // Why can't they just decided on an endian and then stick to it?
+         if (OpSize.Op[c] == sz8)
+            nsimm[c] = read_x8(pc);
+         else if (OpSize.Op[c] == sz16)
+            nsimm[c] = (read_x8(pc) << 8) | read_x8(pc + 1);
+         else
+            nsimm[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
+         pc += OpSize.Op[c];
+         gentype[c] = Register;
+         return;
+      }
 
-      case Absolute:
-         genaddr[c] = getdisp();
-      break;
+      gentype[c] = Memory;
 
-      case External:
-         temp = read_x32(mod + 4);
-         temp += getdisp();
-         temp2 = read_x32(temp);
-         genaddr[c] = temp2 + getdisp();
-      break;
+      if (gen <= R7_Offset)
+      {
+         genaddr[c] = r[gen & 7] + getdisp();
+         return;
+      }
 
-      case TopOfStack:
-         genaddr[c] = sp[SP];
-         gentype[c] = TOS;
-      break;
+      if (gen >= EaPlusRn)
+      {
+         genindex[c] = gen >> 8;
 
-      case FpRelative:
-         genaddr[c] = getdisp() + fp;
-      break;
+         uint32_t Shift = gen & 3;
+         GetGenPhase2(genindex[c] >> 3, c);
 
-      case SpRelative:
-         genaddr[c] = getdisp() + sp[SP];
-      break;
+         if (gentype[c] != Register)
+         {
+            genaddr[c] += (r[genindex[c] & 7] << Shift);
+         }
+         else
+         {
+            genaddr[c] = *((uint32_t*) genaddr[c]) + (r[genindex[c] & 7] << Shift);
+         }
 
-      case SbRelative:
-         genaddr[c] = getdisp() + sb;
-      break;
+         gentype[c] = Memory;                               // Force Memory
+         return;
+      }
 
-      case PcRelative:
-         genaddr[c] = getdisp() + startpc;
-      break;
+      switch (gen)
+      {
+         case FrameRelative:
+            temp = getdisp();
+            temp2 = getdisp();
+            genaddr[c] = read_x32(fp + temp);
+            genaddr[c] += temp2;
+            break;
 
-      default:
-         n32016_dumpregs("Bad NS32016 gen mode");
-      break;
+         case StackRelative:
+            temp = getdisp();
+            temp2 = getdisp();
+            genaddr[c] = read_x32(sp[SP] + temp);
+            genaddr[c] += temp2;
+            break;
+
+         case StaticRelative:
+            temp = getdisp();
+            temp2 = getdisp();
+            genaddr[c] = read_x32(sb + temp);
+            genaddr[c] += temp2;
+            break;
+
+         case Absolute:
+            genaddr[c] = getdisp();
+            break;
+
+         case External:
+            temp = read_x32(mod + 4);
+            temp += getdisp();
+            temp2 = read_x32(temp);
+            genaddr[c] = temp2 + getdisp();
+            break;
+
+         case TopOfStack:
+            genaddr[c] = sp[SP];
+            gentype[c] = TOS;
+            break;
+
+         case FpRelative:
+            genaddr[c] = getdisp() + fp;
+            break;
+
+         case SpRelative:
+            genaddr[c] = getdisp() + sp[SP];
+            break;
+
+         case SbRelative:
+            genaddr[c] = getdisp() + sb;
+            break;
+
+         case PcRelative:
+            genaddr[c] = getdisp() + startpc;
+            break;
+
+         default:
+            n32016_dumpregs("Bad NS32016 gen mode");
+            break;
+      }
    }
 }
 
@@ -723,7 +743,9 @@ void n32016_exec(uint32_t tubecycles)
       WriteSize = szVaries;                                             // The size a result may be written as
       WriteIndex = 0;                                                   // Default to writing operand 0
       OpSize.Whole = 0;
-      ClearRegs();
+
+      Regs[0] =
+      Regs[1] = 0xFFFF;
 
       startpc  = pc;
       opcode = read_x32(pc);
@@ -892,6 +914,9 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
       }
+
+      GetGenPhase2(Regs[0], 0);
+      GetGenPhase2(Regs[1], 1);
 
       ShowInstruction(startpc, opcode, Function, OpSize.Op[0], temp);
 

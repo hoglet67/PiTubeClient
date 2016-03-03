@@ -6,19 +6,7 @@
 #include "mem32016.h"
 
 uint32_t OpCount = 0;
-uint8_t Regs[2];
 uint8_t FunctionLookup[256];
-
-void StoreRegisters(uint8_t Index, uint8_t Value)
-{
-   Regs[Index] = Value;
-}
-
-void ClearRegs(void)
-{
-   Regs[0] = 
-   Regs[1] = 0xFF;
-}
 
 const char* PostfixLookup(uint8_t Postfix)
 {
@@ -267,6 +255,11 @@ void ShowRegisterWrite(uint32_t Index, uint32_t Value)
       if (Regs[Index] == 7)
       {
          PiTRACE("*** TEST = %u\n", Value);
+
+         if (Value == 137)
+         {
+            PiTRACE("*** BREAKPOINT\n", Value);
+         }
       }
 #endif
    }
