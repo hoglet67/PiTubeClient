@@ -1485,8 +1485,8 @@ void n32016_exec(uint32_t tubecycles)
 
          case ROT:
          {
-            OpSize.Op[0] = sz8;
             temp2 = ReadGen(0);
+            temp  = ReadGen(1);
 
             switch (OpSize.Op[1])
             {
@@ -1498,7 +1498,6 @@ void n32016_exec(uint32_t tubecycles)
                      temp2 = ((temp2 ^ 0xFF) + 1);
                      temp2 = 8 - temp2;
                   }
-                  temp = ReadGen(1);
                   temp = (temp << temp2) | (temp >> (8 - temp2));
                }
                break;
@@ -1511,7 +1510,6 @@ void n32016_exec(uint32_t tubecycles)
                      temp2 = ((temp2 ^ 0xFF) + 1);
                      temp2 = 16 - temp2;
                   }
-                  temp = ReadGen(1);
                   temp = (temp << temp2) | (temp >> (16 - temp2));
                }
                break;
@@ -1524,7 +1522,6 @@ void n32016_exec(uint32_t tubecycles)
                      temp2 = ((temp2 ^ 0xFF) + 1);
                      temp2 = 32 - temp2;
                   }
-                  temp = ReadGen(1);
                   temp = (temp << temp2) | (temp >> (32 - temp2));
                }
                break;
