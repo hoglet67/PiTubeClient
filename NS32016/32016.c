@@ -1236,6 +1236,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case JUMP:
          {
+            // JUMP is in access class addr, so ReadGen() cannot be used
             if (gentype[0] == Register)
                pc = *(uint32_t *) genaddr[0];
             else
@@ -1261,9 +1262,12 @@ void n32016_exec(uint32_t tubecycles)
 
          case JSR:
          {
+            // JSR is in access class addr, so ReadGen() cannot be used
             pushd(pc);
-            OpSize.Op[0] = sz32;
-            pc = ReadGen(0);
+            if (gentype[0] == Register)
+               pc = *(uint32_t *) genaddr[0];
+            else
+               pc = genaddr[0];
          }
          break;
 
