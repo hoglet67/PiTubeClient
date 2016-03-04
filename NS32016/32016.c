@@ -91,49 +91,42 @@ void n32016_dumpregs(char* pMessage)
 
 static void pushw(uint16_t val)
 {
-   sp[SP] -= 2;
-   PrintSP(sp[SP]);
-   write_x16(sp[SP], val);
+   DEC_SP(2);
+   write_x16(GET_SP(), val);
 }
 
 static void pushd(uint32_t val)
 {
-   sp[SP] -= 4;
-   PrintSP(sp[SP]);
-   write_x32(sp[SP], val);
+   DEC_SP(4);
+   write_x32(GET_SP(), val);
 }
 
 void PushArbitary(uint32_t Value, uint32_t Size)
 {
-   sp[SP] -= Size;
-   PrintSP(sp[SP]);
-
-   write_Arbitary(sp[SP], &Value, Size);
+   DEC_SP(Size);
+   write_Arbitary(GET_SP(), &Value, Size);
 }
 
 static uint16_t popw()
 {
-   uint16_t temp = read_x16(sp[SP]);
-   sp[SP] += 2;
-   PrintSP(sp[SP]);
+   uint16_t temp = read_x16(GET_SP());
+   INC_SP(2);
 
    return temp;
 }
 
 static uint32_t popd()
 {
-   uint32_t temp = read_x32(sp[SP]);
-   sp[SP] += 4;
-   PrintSP(sp[SP]);
+   uint32_t temp = read_x32(GET_SP());
+   INC_SP(4);
 
    return temp;
 }
 
 uint32_t PopArbitary(uint32_t Size)
 {
-   uint32_t Result = read_n(sp[SP], Size);
-   sp[SP] += Size;
-   PrintSP(sp[SP]);
+   uint32_t Result = read_n(GET_SP(), Size);
+   INC_SP(Size);
 
    return Result;
 }
@@ -417,7 +410,7 @@ static void GetGenPhase2(int gen, int c)
          case StackRelative:
             temp = getdisp();
             temp2 = getdisp();
-            genaddr[c] = read_x32(sp[SP] + temp);
+            genaddr[c] = read_x32(GET_SP() + temp);
             genaddr[c] += temp2;
             break;
 
@@ -440,7 +433,7 @@ static void GetGenPhase2(int gen, int c)
             break;
 
          case TopOfStack:
-            genaddr[c] = sp[SP];
+            genaddr[c] = GET_SP();
             gentype[c] = TOS;
             break;
 
@@ -449,7 +442,7 @@ static void GetGenPhase2(int gen, int c)
             break;
 
          case SpRelative:
-            genaddr[c] = getdisp() + sp[SP];
+            genaddr[c] = getdisp() + GET_SP();
             break;
 
          case SbRelative:
@@ -1134,8 +1127,7 @@ void n32016_exec(uint32_t tubecycles)
          case RET:
          {
             pc = popd();
-            sp[SP] += temp;
-            PrintSP(sp[SP]);
+            INC_SP(temp);
          }
          break;
 
@@ -1154,8 +1146,7 @@ void n32016_exec(uint32_t tubecycles)
             pc = popd();
             temp2 = popd();
             mod = temp2 & 0xFFFF;
-            sp[SP] += temp;
-            PrintSP(sp[SP]);
+            INC_SP(temp);
             sb = read_x32(mod);
             break;
 
@@ -1163,8 +1154,7 @@ void n32016_exec(uint32_t tubecycles)
             pc = popd();
             mod = popw();
             psr = popw();
-            sp[SP] += temp;
-            PrintSP(sp[SP]);
+            INC_SP(temp);
             sb = read_x32(mod);
             break;
 
@@ -1208,9 +1198,8 @@ void n32016_exec(uint32_t tubecycles)
             temp = READ_PC_BYTE();
             temp2 = getdisp();
             pushd(fp);
-            fp = sp[SP];
-            sp[SP] -= temp2;
-            PrintSP(sp[SP]);
+            fp = GET_SP();
+            DEC_SP(temp2);
 
             for (c = 0; c < 8; c++)
             {
@@ -1234,8 +1223,7 @@ void n32016_exec(uint32_t tubecycles)
                   r[c ^ 7] = popd(r[c]);
                }
             }
-            sp[SP] = fp;
-            PrintSP(sp[SP]);
+            SET_SP(fp);
             fp = popd();
          }
          break;
@@ -1292,7 +1280,7 @@ void n32016_exec(uint32_t tubecycles)
                   temp = fp;
                break;
                case 0x9:
-                  temp = sp[SP];
+                  temp = GET_SP();
                break;
                case 0xA:
                   temp = sb;
@@ -1346,8 +1334,7 @@ void n32016_exec(uint32_t tubecycles)
                   psr = (psr & 0xFF00) | (temp & 0xFF);
                   break;
                case 9:
-                  sp[SP] = temp;
-                  PrintSP(sp[SP]);
+                  SET_SP(temp);
                   break;
                case 15:
                   mod = temp;
@@ -1415,8 +1402,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0);
             SIGN_EXTEND(OpSize.Op[0], temp);
-            sp[SP] -= temp;
-            PrintSP(sp[SP]);
+            DEC_SP(temp);
          }
          break;
 

@@ -327,6 +327,11 @@ typedef union
 #define intbase      PR.INTBASE
 #define mod          PR.MOD
 
+#define SET_SP(in)   sp[SP] = (in);     PrintSP("Set SP:");
+#define INC_SP(in)   sp[SP] += (in);    PrintSP("Inc SP:");
+#define DEC_SP(in)   sp[SP] -= (in);    PrintSP("Dec SP:");
+#define GET_SP()     sp[SP]
+
 
 #define SET_OP_SIZE(in) OpSize.Whole = OpSizeLookup[(in) & 0x03]
 //#define SET_OP_SIZE(in) OpSize.Op[0] = ((in) & 0x03)
@@ -377,10 +382,11 @@ extern uint32_t genaddr[2];
 extern int gentype[2];
 extern const uint8_t FormatSizes[FormatCount + 1];
 
+#define SHOW_STACK
 #ifdef SHOW_STACK
-#define PrintSP(in) PiTRACE("(%u) SP = %06"PRIX32"\n", __LINE__, (in))
+#define PrintSP(str) PiTRACE("(%u) %s %06"PRIX32"\n", __LINE__, (str), GET_SP())
 #else
-#define PrintSP(in)
+#define PrintSP()
 #endif
 
 #define READ_PC_BYTE() read_x8(pc++) 
