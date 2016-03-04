@@ -206,8 +206,9 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
       }
 
       //PiTRACE("#%08"PRIu32" ", ++OpCount);
-      PiTRACE("PC: % 06"PRIX32" ", pc);
-      PiTRACE("INST: % 08"PRIX32" ", opcode);
+      PiTRACE("PC: % 06"   PRIX32 " ", pc);
+      PiTRACE("INST: % 08" PRIX32 " ", opcode);
+      PiTRACE("F%01" PRIu32 ":", Function >> 4);
       PiTRACE("%s%s ", pText, PostfixLookup(Postfix));
 
       RegLookUp();

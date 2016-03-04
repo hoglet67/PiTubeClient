@@ -119,7 +119,7 @@ uint32_t read_n(uint32_t addr, uint32_t Size)
       }
    }
 
-   PiTRACE("Bad Read @ %06"PRIX32"\n", addr);
+   PiTRACE("Bad Read @ %06" PRIu32 "\n", addr);
    return 0;
 }
 
