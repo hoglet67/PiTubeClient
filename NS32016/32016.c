@@ -2240,7 +2240,7 @@ void n32016_exec(uint32_t tubecycles)
             int32_t Source = ReadGen(0);
             int32_t Base = ReadGen(1);
 
-            if (gentype[1] == Register)                                           // If memory loaction
+            if (gentype[1] != Register)                                         // If memory loaction
             {
                genaddr[WriteIndex] += Offset / 8;                               // Cast to signed as negative is allowed
                Offset %= 8;                                                     // Offset within te first byte
