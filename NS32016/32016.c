@@ -36,10 +36,10 @@ const uint16_t OpSizeLookup[4] =
 
 #define SP ((psr & S_FLAG) >> 9)
 
-#define SIGN_EXTEND(op, reg) \
-  if ((OpSize.Op[op] == sz8) && (reg & 0x80)) { \
+#define SIGN_EXTEND(size, reg) \
+  if ((size == sz8) && (reg & 0x80)) { \
     reg |= 0xFFFFFF00; \
-  } else if ((OpSize.Op[op] == sz16) && (reg & 0x8000)) { \
+    } else if ((size == sz16) && (reg & 0x8000)) { \
     reg |= 0xFFFF0000; \
   }
 
@@ -658,7 +658,7 @@ static void handle_mei_dei_upper_write(uint64_t result)
    switch (OpSize.Op[0])
    {
       case sz8:
-         temp = result >> 8;
+         temp = (uint8_t) (result >> 8);
          if (gentype[1] == Register)
             *(uint8_t *) (reg_addr) = temp;
          else
@@ -666,7 +666,7 @@ static void handle_mei_dei_upper_write(uint64_t result)
       break;
 
       case sz16:
-         temp = result >> 16;
+         temp = (uint16_t) (result >> 16);
          if (gentype[1] == Register)
             *(uint16_t *) (reg_addr) = temp;
          else
@@ -674,7 +674,7 @@ static void handle_mei_dei_upper_write(uint64_t result)
       break;
 
       case sz32:
-         temp = result >> 32;
+         temp = (uint32_t) (result >> 32);
          if (gentype[1] == Register)
             *(uint32_t *) (reg_addr) = temp;
          else
@@ -854,7 +854,6 @@ void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteSize, WriteIndex;
    uint32_t temp = 0, temp2, temp3;
-   uint64_t temp64;
    uint32_t Function;
 
    if (tube_irq & 2)
@@ -1271,7 +1270,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = (opcode >> 7) & 0xF;
             NIBBLE_EXTEND(temp2);
             temp = ReadGen(0);
-            SIGN_EXTEND(0, temp);
+            SIGN_EXTEND(OpSize.Op[0], temp);
             CompareCommon(temp, temp2);
          }
          break;
@@ -1399,7 +1398,7 @@ void n32016_exec(uint32_t tubecycles)
          case ADJSP:
          {
             temp = ReadGen(0);
-            SIGN_EXTEND(0, temp);
+            SIGN_EXTEND(OpSize.Op[0], temp);
             sp[SP] -= temp;
             PrintSP(sp[SP]);
          }
@@ -1419,7 +1418,7 @@ void n32016_exec(uint32_t tubecycles)
          case CASE:
          {
             temp = ReadGen(0);
-            SIGN_EXTEND(0, temp);
+            SIGN_EXTEND(OpSize.Op[0], temp);
             pc = startpc + temp;
          }
          break;
@@ -1965,7 +1964,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case INSS:
          {
-            int c;
+            uint32_t c;
 
             // Read the immediate offset (3 bits) / length - 1 (5 bits) from the instruction
             temp3 = READ_PC_BYTE();
@@ -1985,7 +1984,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case EXTS:
          {
-            int c;
+            uint32_t c;
             uint32_t temp4 = 1;
 
             // Read the immediate offset (3 bits) / length - 1 (5 bits) from the instruction
@@ -2014,7 +2013,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             OpSize.Op[0] = sz8;
             temp = ReadGen(0);
-            SIGN_EXTEND(0, temp); // Editor need the useless semicolon
+            SIGN_EXTEND(sz8, temp); // Editor need the useless semicolon
             WriteSize = sz16;
             WriteIndex = 1;
          }
@@ -2040,7 +2039,7 @@ void n32016_exec(uint32_t tubecycles)
          case MOVXiD:
          {
             temp = ReadGen(0);
-            SIGN_EXTEND(0, temp);
+            SIGN_EXTEND(OpSize.Op[0], temp);
             WriteSize = sz32;
             WriteIndex = 1;
          }
@@ -2049,12 +2048,12 @@ void n32016_exec(uint32_t tubecycles)
          case MEI:
          {
             temp = ReadGen(0); // src
-            temp64 = ReadGen(1); // dst
+            uint64_t temp64 = ReadGen(1); // dst
             temp64 *= temp;
             // Handle the writing to the upper half of dst locally here
             handle_mei_dei_upper_write(temp64);
             // Allow fallthrough write logic to write the lower half of dst
-            temp = temp64;
+            temp = (uint32_t) temp64;
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
@@ -2080,7 +2079,7 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 
-            temp64 = readgenq(1); // dst
+            uint64_t temp64 = readgenq(1); // dst
             switch (OpSize.Op[0])
             {
                case sz8:
@@ -2098,7 +2097,7 @@ void n32016_exec(uint32_t tubecycles)
             // Handle the writing to the upper half of dst locally here
             handle_mei_dei_upper_write(temp64);
             // Allow fallthrough write logic to write the lower half of dst
-            temp = temp64;
+            temp = (uint32_t) temp64;
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
@@ -2195,7 +2194,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case EXT:
          {
-            int c;
+            uint32_t c;
          
             int32_t Offset = r[(opcode >> 11) & 7];                              // Offset
             temp2          = getdisp();                                          // Length
@@ -2327,7 +2326,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case FFS:
          {
-            int numbits = OpSize.Op[0] << 3;          // number of bits: 8, 16 or 32
+            uint32_t numbits = OpSize.Op[0] << 3;          // number of bits: 8, 16 or 32
             temp2 = ReadGen(0); // base is the variable size operand being scanned
             OpSize.Op[1] = sz8;
             temp = ReadGen(1); // offset is always 8 bits (also the result)
