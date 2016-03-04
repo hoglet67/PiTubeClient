@@ -56,7 +56,7 @@ void n32016_reset(uint32_t StartAddress)
    pc = StartAddress;
    psr = 0;
 
-   // PR.BPC = 0x20F; Example Breakpoint
+   //PR.BPC = 0x20F; //Example Breakpoint
    PR.BPC = 0xFFFFFFFF;
 }
 
@@ -863,11 +863,12 @@ void n32016_exec(uint32_t tubecycles)
 
    while (tubecycles--)
    {
+      CLEAR_TRAP();
+
       WriteSize      = szVaries;                                            // The size a result may be written as
       WriteIndex     = 0;                                                   // Default to writing operand 0
       OpSize.Whole   = 0;
-      TrapFlags      = 0; 
-
+ 
       Regs[0]        =
       Regs[1]        = 0xFFFF;
 
