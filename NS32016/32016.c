@@ -107,8 +107,6 @@ void PushArbitary(uint32_t Value, uint32_t Size)
    sp[SP] -= Size;
    PrintSP(sp[SP]);
 
-   PiTRACE("PushArbitary:");
-
    write_Arbitary(sp[SP], &Value, Size);
 }
 
@@ -316,6 +314,16 @@ uint32_t ReadGen(uint32_t c)
    return 0;
 }
 
+uint32_t ReadAddress(uint32_t c)
+{
+   if (gentype[0] == Register)
+   {
+      return *(uint32_t *) genaddr[0];
+   }
+ 
+   return genaddr[0];
+}
+
 static void getgen(int gen, int c)
 {
    gen &= 0x1F;
@@ -469,7 +477,7 @@ uint64_t readgenq(uint32_t c)
    else
    {
       temp = read_x32(genaddr[c]);              // This is bonkers!
-      temp |= read_x32(genaddr[c]);
+      temp |= ((uint64_t) read_x32(genaddr[c + 4])) << 32;
    }
 
    return temp;
@@ -1381,10 +1389,7 @@ void n32016_exec(uint32_t tubecycles)
          case JUMP:
          {
             // JUMP is in access class addr, so ReadGen() cannot be used
-            if (gentype[0] == Register)
-               pc = *(uint32_t *) genaddr[0];
-            else
-               pc = genaddr[0];
+            pc = ReadAddress(0);
          }
          break;
 
@@ -1408,10 +1413,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             // JSR is in access class addr, so ReadGen() cannot be used
             pushd(pc);
-            if (gentype[0] == Register)
-               pc = *(uint32_t *) genaddr[0];
-            else
-               pc = genaddr[0];
+            pc = ReadAddress(0);
          }
          break;
 
