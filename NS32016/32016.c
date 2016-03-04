@@ -641,14 +641,21 @@ uint32_t CompareCommon(uint32_t temp, uint32_t temp2)
 
    if (OpSize.Op[0] == sz8)
    {
-      if (((signed char) temp2) > ((signed char) temp))
+      if (((int8_t) temp2) > ((int8_t) temp))
       {
          psr |= N_FLAG;
       }
    }
-   else if (OpSize.Op[0] == sz32)
+   else if (OpSize.Op[0] == sz16)
    {
-      if (((signed long) temp2) > ((signed long) temp))
+      if (((int16_t) temp2) > ((int16_t) temp))
+      {
+         psr |= N_FLAG;
+      }
+   }
+   else
+   {
+      if (((int32_t) temp2) > ((int32_t) temp))
       {
          psr |= N_FLAG;
       }
