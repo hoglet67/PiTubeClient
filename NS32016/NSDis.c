@@ -26,7 +26,7 @@ const char InstuctionText[InstructionCount][8] =
 {
    // FORMAT 0
 	"BEQ", "BNE", "BCS", "BCC", "BH", "BLS", "BGT", "BLE",
-   "BFS", "BFC", "BLO", "BHS", "BLT", "BGE", "BR", "TRAP", 
+   "BFS", "BFC", "BLO", "BHS", "BLT", "BGE", "BR", "BN", 
 
    // FORMAT 1	
    "BSR", "RET", "CXP", "RXP", "RETT", "RETI", "SAVE", "RESTORE",

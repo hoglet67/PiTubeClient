@@ -1101,6 +1101,7 @@ void n32016_exec(uint32_t tubecycles)
          case BHS:
          case BLT:
          case BGE:
+         case BN:
          {
             if (CheckCondition(Function) == 0)
             {

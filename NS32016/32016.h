@@ -115,6 +115,7 @@ enum Functions
    BLT,
    BGE,
    BR,
+   BN,
 
    BSR = F_BASE(Format1),
    RET,
