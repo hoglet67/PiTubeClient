@@ -12,13 +12,14 @@
 #include "defs.h"
 
 int nsoutput = 0;
+ProcessorRegisters PR;
+
 uint32_t TrapFlags;
 uint32_t nscfg;
 uint32_t Trace = 0;
 uint32_t tube_irq = 0;
 uint32_t r[8];
-uint32_t pc, sp[2], fp, sb, intbase;
-uint16_t psr, mod;
+uint32_t pc, sp[2];
 uint32_t startpc;
 
 uint16_t Regs[2];
@@ -1357,6 +1358,16 @@ void n32016_exec(uint32_t tubecycles)
                case 0xE:
                   intbase = temp; // PiTRACE("INTBASE %08"PRIX32" %08"PRIX32"\n",temp,pc); 
                   break;
+
+               case 5:
+               case 6:
+               case 7:
+               {
+                  SET_TRAP(IllegalSpecialWriting);
+               }
+               break;
+
+
                default:
                   SET_TRAP(IllegalSpecialWriting);
                   break;

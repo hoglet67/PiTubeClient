@@ -293,6 +293,41 @@ typedef union
    uint16_t Whole;
 } OperandSizeType;
 
+typedef union
+{
+   struct
+   {
+      uint32_t UPSR;
+      uint32_t DCR;
+      uint32_t BPC;
+      uint32_t DSR;
+      uint32_t CAR;
+
+      uint32_t NotUsed_0101;
+      uint32_t NotUsed_0110;
+      uint32_t NotUsed_0111;
+
+      uint32_t FP;
+      uint32_t SP_Not_Used;
+      uint32_t SB;
+      uint32_t USP;
+      uint32_t CFG;
+      uint32_t PSR;
+      uint32_t INTBASE;
+      uint32_t MOD;
+   };
+
+   uint32_t Direct[16];
+} ProcessorRegisters;
+
+
+#define fp           PR.FP
+#define sb           PR.SB
+#define psr          PR.PSR
+#define intbase      PR.INTBASE
+#define mod          PR.MOD
+
+
 #define SET_OP_SIZE(in) OpSize.Whole = OpSizeLookup[(in) & 0x03]
 //#define SET_OP_SIZE(in) OpSize.Op[0] = ((in) & 0x03)
 
