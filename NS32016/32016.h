@@ -258,25 +258,13 @@ enum Functions
    BAD = 0xFF
 };
 
-enum TrapTypes
-{
-   UnknownFormat           = BIT(0),
-   UnknownInstruction      = BIT(1),
-   DivideByZero            = BIT(2),
-   IllegalImmediate        = BIT(3),
-   IllegalDoubleIndexing   = BIT(4),
-   IllegalSpecialReading   = BIT(5),
-   IllegalSpecialWriting   = BIT(6),
-   IllegalWritingImmediate = BIT(7),
-};
+
 
 enum OperandsPostitions
 {
    Oper1,
    Oper2
 };
-
-#define SET_TRAP(in) TrapFlags |= (in)
 
 enum DataSize
 {
@@ -308,7 +296,7 @@ typedef union
       uint32_t NotUsed_0111;
 
       uint32_t FP;
-      uint32_t SP_Not_Used;
+      uint32_t SP;
       uint32_t SB;
       uint32_t USP;
       uint32_t CFG;
@@ -327,11 +315,13 @@ typedef union
 #define intbase      PR.INTBASE
 #define mod          PR.MOD
 
-#define SET_SP(in)   sp[SP] = (in);     PrintSP("Set SP:");
-#define INC_SP(in)   sp[SP] += (in);    PrintSP("Inc SP:");
-#define DEC_SP(in)   sp[SP] -= (in);    PrintSP("Dec SP:");
-#define GET_SP()     sp[SP]
-
+//#define SP ((psr & S_FLAG) >> 9)
+//#define STACK_P      sp[SP]
+#define STACK_P      PR.SP
+#define SET_SP(in)   STACK_P = (in);     PrintSP("Set SP:");
+#define INC_SP(in)   STACK_P += (in);    PrintSP("Inc SP:");
+#define DEC_SP(in)   STACK_P -= (in);    PrintSP("Dec SP:");
+#define GET_SP()     STACK_P
 
 #define SET_OP_SIZE(in) OpSize.Whole = OpSizeLookup[(in) & 0x03]
 //#define SET_OP_SIZE(in) OpSize.Op[0] = ((in) & 0x03)
@@ -350,6 +340,10 @@ extern void n32016_exec(uint32_t tubecycles);
 extern void n32016_dumpregs();
 extern void n32016_build_matrix();
 extern void BreakPoint(uint32_t pc, uint32_t opcode);
+
+extern ProcessorRegisters PR;
+extern uint32_t r[8];
+extern uint32_t pc;
 extern uint16_t Regs[2];
 
 #define SHOW_INSTRUCTIONS
@@ -382,11 +376,11 @@ extern uint32_t genaddr[2];
 extern int gentype[2];
 extern const uint8_t FormatSizes[FormatCount + 1];
 
-#define SHOW_STACK
+//#define SHOW_STACK
 #ifdef SHOW_STACK
 #define PrintSP(str) PiTRACE("(%u) %s %06"PRIX32"\n", __LINE__, (str), GET_SP())
 #else
-#define PrintSP()
+#define PrintSP(str)
 #endif
 
 #define READ_PC_BYTE() read_x8(pc++) 

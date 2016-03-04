@@ -10,16 +10,19 @@
 #include "32016.h"
 #include "mem32016.h"
 #include "defs.h"
+#include "Trap.h"
 
 int nsoutput = 0;
-ProcessorRegisters PR;
 
-uint32_t TrapFlags;
+ProcessorRegisters PR;
+uint32_t r[8];
+uint32_t pc;
+
 uint32_t nscfg;
 uint32_t Trace = 0;
 uint32_t tube_irq = 0;
-uint32_t r[8];
-uint32_t pc, sp[2];
+
+
 uint32_t startpc;
 
 uint16_t Regs[2];
@@ -35,8 +38,6 @@ const uint16_t OpSizeLookup[4] =
    (sz32 << 8) + sz32
 };
 
-#define SP ((psr & S_FLAG) >> 9)
-
 #define SIGN_EXTEND(size, reg) \
   if ((size == sz8) && (reg & 0x80)) { \
     reg |= 0xFFFFFF00; \
@@ -50,43 +51,13 @@ const uint16_t OpSizeLookup[4] =
 
 void n32016_reset(uint32_t StartAddress)
 {
+   n32016_build_matrix();
+
    pc = StartAddress;
    psr = 0;
 
-   n32016_build_matrix();
-}
-
-void dump_mini(void)
-{
-   if (Trace)
-   {
-      PiTRACE("R0=%08"PRIX32" R1=%08"PRIX32" R2=%08"PRIX32" R3=%08"PRIX32"\n", r[0], r[1], r[2], r[3]);
-      PiTRACE("R4=%08"PRIX32" R5=%08"PRIX32" R6=%08"PRIX32" R7=%08"PRIX32"\n", r[4], r[5], r[6], r[7]);
-      PiTRACE("PC=%08"PRIX32" SB=%08"PRIX32" SP0=%08"PRIX32" SP1=%08"PRIX32"\n", pc, sb, sp[0], sp[1]);
-      PiTRACE("FP=%08"PRIX32" INTBASE=%08"PRIX32" PSR=%04"PRIX16" MOD=%04"PRIX16"\n", fp, intbase, psr, mod);
-      PiTRACE("\n");
-   }
-}
-
-void n32016_dumpregs(char* pMessage)
-{
-   PiTRACE("%s\n", pMessage);
-   PiTRACE("R0=%08"PRIX32" R1=%08"PRIX32" R2=%08"PRIX32" R3=%08"PRIX32"\n", r[0], r[1], r[2], r[3]);
-   PiTRACE("R4=%08"PRIX32" R5=%08"PRIX32" R6=%08"PRIX32" R7=%08"PRIX32"\n", r[4], r[5], r[6], r[7]);
-   PiTRACE("PC=%08"PRIX32" SB=%08"PRIX32" SP0=%08"PRIX32" SP1=%08"PRIX32"\n", pc, sb, sp[0], sp[1]);
-   PiTRACE("FP=%08"PRIX32" INTBASE=%08"PRIX32" PSR=%04"PRIX16" MOD=%04"PRIX16"\n", fp, intbase, psr, mod);
-
-#ifdef PC_SIMULATION
-#ifdef TRACE_TO_FILE
-   printf("\n");
-#endif
-
-#ifdef WIN32
-   system("pause");
-#endif
-   CloseTrace();
-   exit(1);
-#endif
+   // PR.BPC = 0x20F; Example Breakpoint
+   PR.BPC = 0xFFFFFFFF;
 }
 
 static void pushw(uint16_t val)
@@ -903,6 +874,12 @@ void n32016_exec(uint32_t tubecycles)
       startpc  = pc;
       opcode = read_x32(pc);
 
+      if (pc == PR.BPC)
+      {
+         SET_TRAP(BreakPointHit);
+         goto DoTrap;
+      }
+
       BreakPoint(startpc, opcode);
 
       Function = FunctionLookup[opcode & 0xFF];
@@ -1326,25 +1303,16 @@ void n32016_exec(uint32_t tubecycles)
 
          case LPR:
          {
-            temp = ReadGen(0);
+            temp  = ReadGen(0);
+            temp2 = (opcode >> 7) & 0xF;
 
-            switch ((opcode >> 7) & 0xF)
+            switch (temp2)
             {
                case 0:
+               {
                   psr = (psr & 0xFF00) | (temp & 0xFF);
-                  break;
-               case 9:
-                  SET_SP(temp);
-                  break;
-               case 15:
-                  mod = temp;
-                  break;
-               case 0xA:
-                  sb = temp;
-                  break;
-               case 0xE:
-                  intbase = temp; // PiTRACE("INTBASE %08"PRIX32" %08"PRIX32"\n",temp,pc); 
-                  break;
+               }
+               break;
 
                case 5:
                case 6:
@@ -1354,10 +1322,37 @@ void n32016_exec(uint32_t tubecycles)
                }
                break;
 
+               case 9:
+               {
+                  SET_SP(temp);
+               }
+               break;
 
+
+#if 1
+               default:
+               {
+                  PR.Direct[temp2] = temp;
+               }
+               break;
+
+#else
+
+
+               case 10:
+                  sb = temp;
+                  break;
+               case 14:
+                  intbase = temp; // PiTRACE("INTBASE %08"PRIX32" %08"PRIX32"\n",temp,pc); 
+                  break;
+               case 15:
+                  mod = temp;
+                  break;
                default:
                   SET_TRAP(IllegalSpecialWriting);
                   break;
+#endif
+
             }
          }
          break;

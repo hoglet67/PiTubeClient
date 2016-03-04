@@ -75,7 +75,6 @@ uint8_t read_x8(uint32_t addr)
    }
 
    //PiTRACE("Bad read_x8 @ %06"PRIX32"\n", addr);
-   //n32016_dumpregs();
 
    return 0;
 }
@@ -157,7 +156,6 @@ void write_x8(uint32_t addr, uint8_t val)
    }
 
    PiTRACE("Writing outside of RAM @%06"PRIX32" %02"PRIX8"\n", addr, val);
-   //n32016_dumpregs();
 }
 
 void write_x16(uint32_t addr, uint16_t val)
