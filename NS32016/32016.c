@@ -143,8 +143,7 @@ uint32_t PopArbitary(uint32_t Size)
    return Result;
 }
 
-//#ifdef BYTE_SWAP
-#if 1
+#ifdef BYTE_SWAP
 static uint32_t getdisp()
 { 
    uint32_t addr = read_x32(pc++);
