@@ -9,11 +9,7 @@
 #include <string.h>
 #include "32016.h"
 #include "mem32016.h"
-#include "PandoraV0_61.h"
-
-#ifdef WIN32
-#define BYTE_SWAP
-#endif
+#include "defs.h"
 
 int nsoutput = 0;
 uint32_t TrapFlags;
@@ -144,6 +140,65 @@ uint32_t PopArbitary(uint32_t Size)
 }
 
 #ifdef BYTE_SWAP
+
+#if 1
+static uint32_t getdisp()
+{ 
+   // Displacements are in Little Endian and need to be sign extended
+
+   MultiReg Addr;
+   Addr.u32 = SWAP32(read_x32(pc++));
+
+   switch (Addr.u32 >> 29)
+   {
+      case 0:                                                          // 7 Bit Posative
+      case 1:
+      {
+         return Addr.u8.Value;
+      }
+      // No break due to return
+
+      case 2:                                                         // 7 Bit Negative
+      case 3:
+      {
+         return Addr.u8.Value | 0xFFFFFF80;
+      }
+      // No break due to return
+
+      case 4:                                                          // 14 Bit Posative
+      {
+         pc++;
+         return Addr.u16.Value & 0x3FFF;
+      }
+      // No break due to return
+
+      case 5:                                                          // 14 Bit Negative
+      {
+         pc++;
+         return Addr.u16.Value | 0xFFFFC000;
+      }
+      // No break due to return
+
+      case 6:                                                         // 30 Bit Posative
+      {
+         pc += 3;
+         return Addr.u32 & 0x3FFFFFFF;
+      }
+      // No break due to return
+   
+      case 7:                                                        // 30 Bit Negative
+      {
+         pc += 3;
+         return Addr.u32; 
+      }
+      // No break due to return
+   }
+
+   return 0;                                                               // Unreaable code
+}
+
+#else
+
 static uint32_t getdisp()
 { 
    uint32_t addr = read_x32(pc++);
@@ -158,8 +213,8 @@ static uint32_t getdisp()
       return addr & 0xFF;
    }
 
-   addr = _byteswap_ulong(addr);                                     // Now LSB at the top
-
+   addr = SWAP32(addr);                                              // Now LSB at the top
+   
    if ((addr & 0x40000000) == 0)                                     // 14 Bit Operand
    {
       pc++;
@@ -180,6 +235,7 @@ static uint32_t getdisp()
    }
    return addr & 0x3FFFFFFF;
 }
+#endif
 #else
 static uint32_t getdisp()
 {
@@ -283,8 +339,6 @@ static void getgen(int gen, int c)
 
 static void GetGenPhase2(int gen, int c)
 {
-   uint32_t temp, temp2;
-
    if (gen < 0xFFFF)                                              // Does this Operand exist ?
    {
       if (gen <= R7)
@@ -297,21 +351,15 @@ static void GetGenPhase2(int gen, int c)
       if (gen == Immediate)
       {
          // Why can't they just decided on an endian and then stick to it?
-#ifdef BYTE_SWAP
+         MultiReg temp3;
+
+         temp3.u32 = SWAP32(read_x32(pc));
          if (OpSize.Op[c] == sz8)
-            genaddr[c] = read_x8(pc);
+            genaddr[c] = temp3.u8.Value;
          else if (OpSize.Op[c] == sz16)
-            genaddr[c] = _byteswap_ushort(read_x16(pc));
+            genaddr[c] = temp3.u16.Value;
          else
-            genaddr[c] = _byteswap_ulong(read_x32(pc));
-#else
-         if (OpSize.Op[c] == sz8)
-            genaddr[c] = read_x8(pc);
-         else if (OpSize.Op[c] == sz16)
-            genaddr[c] = (read_x8(pc) << 8) | read_x8(pc + 1);
-         else
-            genaddr[c] = (read_x8(pc) << 24) | (read_x8(pc + 1) << 16) | (read_x8(pc + 2) << 8) | read_x8(pc + 3);
-#endif
+            genaddr[c] = temp3.u32;
 
          pc += OpSize.Op[c];
          gentype[c] = OpImmediate;
@@ -325,6 +373,8 @@ static void GetGenPhase2(int gen, int c)
          genaddr[c] = r[gen & 7] + getdisp();
          return;
       }
+
+      uint32_t temp, temp2;
 
       if (gen >= EaPlusRn)
       {
