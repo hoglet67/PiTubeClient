@@ -17,6 +17,7 @@ int nsoutput = 0;
 ProcessorRegisters PR;
 uint32_t r[8];
 uint32_t pc;
+uint32_t sp[2];
 
 uint32_t nscfg;
 uint32_t Trace = 0;

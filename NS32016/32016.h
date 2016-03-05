@@ -315,9 +315,11 @@ typedef union
 #define intbase      PR.INTBASE
 #define mod          PR.MOD
 
-//#define SP ((psr & S_FLAG) >> 9)
-//#define STACK_P      sp[SP]
-#define STACK_P      PR.SP
+extern uint32_t sp[2];
+
+#define SP ((psr & S_FLAG) >> 9)
+#define STACK_P      sp[SP]
+//#define STACK_P      PR.SP
 #define SET_SP(in)   STACK_P = (in);     PrintSP("Set SP:");
 #define INC_SP(in)   STACK_P += (in);    PrintSP("Inc SP:");
 #define DEC_SP(in)   STACK_P -= (in);    PrintSP("Dec SP:");
