@@ -955,6 +955,8 @@ void n32016_exec(uint32_t tubecycles)
          {
             Function += ((opcode >> 10) & 0x0F);
             SET_OP_SIZE(opcode >> 8);
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
 
             // Ordering important here, as getgen uses Operand Size
             switch (Function)
@@ -977,6 +979,8 @@ void n32016_exec(uint32_t tubecycles)
          {
             Function += ((opcode >> 10) & 0x0F);
             SET_OP_SIZE(opcode >> 8);
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
 
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
@@ -1026,6 +1030,9 @@ void n32016_exec(uint32_t tubecycles)
             {
                SET_OP_SIZE(3);               // 32 Bit
             }
+
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
 
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
