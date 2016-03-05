@@ -10,6 +10,8 @@
 
 uint32_t TrapFlags;
 
+#define TrapTRACE printf
+
 const char TrapText[TrapCount][40] =
 {
    "Break Point Hit",
@@ -26,21 +28,21 @@ const char TrapText[TrapCount][40] =
 
 void Dump(void)
 {
-   PiTRACE("R0=%08"PRIX32" R1=%08"PRIX32" R2=%08"PRIX32" R3=%08"PRIX32"\n", r[0], r[1], r[2], r[3]);
-   PiTRACE("R4=%08"PRIX32" R5=%08"PRIX32" R6=%08"PRIX32" R7=%08"PRIX32"\n", r[4], r[5], r[6], r[7]);
-   PiTRACE("PC=%08"PRIX32" SB=%08"PRIX32" SP=%08"PRIX32" TRAP=%08"PRIX32"\n", pc, sb, GET_SP(), TrapFlags);
-   PiTRACE("FP=%08"PRIX32" INTBASE=%08"PRIX32" PSR=%04"PRIX16" MOD=%04"PRIX16"\n", fp, intbase, psr, mod);
+   TrapTRACE("R0=%08"PRIX32" R1=%08"PRIX32" R2=%08"PRIX32" R3=%08"PRIX32"\n", r[0], r[1], r[2], r[3]);
+   TrapTRACE("R4=%08"PRIX32" R5=%08"PRIX32" R6=%08"PRIX32" R7=%08"PRIX32"\n", r[4], r[5], r[6], r[7]);
+   TrapTRACE("PC=%08"PRIX32" SB=%08"PRIX32" SP=%08"PRIX32" TRAP=%08"PRIX32"\n", pc, sb, GET_SP(), TrapFlags);
+   TrapTRACE("FP=%08"PRIX32" INTBASE=%08"PRIX32" PSR=%04"PRIX16" MOD=%04"PRIX16"\n", fp, intbase, psr, mod);
    
    uint32_t Count, Pattern = BIT(0);
    for (Count = 0; Count < TrapCount; Count++, Pattern <<= 1)
    {
       if (TrapFlags & Pattern)
       {
-         PiTRACE("%s\n", TrapText[Count]);
+         TrapTRACE("%s\n", TrapText[Count]);
       }
    }
 
-   PiTRACE("\n");
+   TrapTRACE("\n");
 }
 
 void n32016_dumpregs(char* pMessage)

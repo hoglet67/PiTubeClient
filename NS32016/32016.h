@@ -258,8 +258,6 @@ enum Functions
    BAD = 0xFF
 };
 
-
-
 enum OperandsPostitions
 {
    Oper1,
@@ -326,7 +324,6 @@ extern uint32_t sp[2];
 #define GET_SP()     STACK_P
 
 #define SET_OP_SIZE(in) OpSize.Whole = OpSizeLookup[(in) & 0x03]
-//#define SET_OP_SIZE(in) OpSize.Op[0] = ((in) & 0x03)
 
 enum StringBits
 {
@@ -348,7 +345,6 @@ extern uint32_t r[8];
 extern uint32_t pc;
 extern uint16_t Regs[2];
 
-#define SHOW_INSTRUCTIONS
 #ifdef SHOW_INSTRUCTIONS
 extern void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize, uint32_t Disp);
 #else
@@ -368,8 +364,10 @@ extern void CloseTrace(void);
 #ifdef TRACE_TO_FILE
 #define PiTRACE(...) fprintf(pTraceFile, __VA_ARGS__)
 extern FILE *pTraceFile;
-#else
+#elif defined(TRACE_TO_CONSOLE)
 #define PiTRACE printf
+#else
+#define PiTRACE(...)
 #endif
 
 extern uint32_t tube_irq;
