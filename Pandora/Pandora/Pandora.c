@@ -5,6 +5,7 @@
 
 #include "32016.h"
 #include "mem32016.h"
+#include "Profile.h"
 
 #ifdef TRACE_TO_FILE
 FILE *pTraceFile = NULL;
@@ -48,6 +49,7 @@ void CloseTrace(void)
 int main(int argc, char* argv[])
 {
    OpenTrace("PandoraTrace.txt");
+   ProfileInit();
    init_ram();
 
 #ifdef PANDORA_BASE

@@ -7,6 +7,7 @@
 #include "mem32016.h"
 #include "defs.h"
 #include "Trap.h"
+#include "Profile.h"
 
 uint32_t TrapFlags;
 
@@ -43,6 +44,8 @@ void Dump(void)
    }
 
    TrapTRACE("\n");
+
+   ProfileDump();
 }
 
 void n32016_dumpregs(char* pMessage)

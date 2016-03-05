@@ -197,6 +197,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 
       if (Function < InstructionCount)
       {
+         ProfileAdd(Function);
          pText = InstuctionText[Function];
 
          if ((opcode & 0x80FF) == 0x800E)
