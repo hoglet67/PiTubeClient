@@ -16,18 +16,19 @@
 #define CASE4(in) case (in): case ((in) | 0x40): case ((in) | 0x80): case ((in) | 0xC0)
 #define BIT(in)   (1 <<(in))
 
-#define C_FLAG 0x01
-#define T_FLAG 0x02
-#define L_FLAG 0x04
-#define F_FLAG 0x20
-#define V_FLAG 0x20
-#define Z_FLAG 0x40
-#define N_FLAG 0x80
+#define TEST(in) ((in) ? 1 : 0)
+#define C_FLAG PR.PSR.c_flag
+#define T_FLAG PR.PSR.t_flag
+#define L_FLAG PR.PSR.l_flag
+#define F_FLAG PR.PSR.f_v_flag
+#define V_FLAG PR.PSR.f_v_flag
+#define Z_FLAG PR.PSR.z_flag
+#define N_FLAG PR.PSR.n_flag
 
-#define U_FLAG 0x100
-#define S_FLAG 0x200
-#define P_FLAG 0x400
-#define I_FLAG 0x800
+#define U_FLAG PR.PSR.u_flag
+#define S_FLAG PR.PSR.s_flag
+#define P_FLAG PR.PSR.p_flag
+#define I_FLAG PR.PSR.i_flag
 
 enum Formats
 {
@@ -283,20 +284,20 @@ typedef union
 {
    struct
    {
-      unsigned c_flag : 1;
-      unsigned t_flag : 1;
-      unsigned l_flag : 1;
-      unsigned Bit3   : 1;
+      unsigned c_flag   : 1;          // 0x0001
+      unsigned t_flag   : 1;          // 0x0002
+      unsigned l_flag   : 1;          // 0x0004
+      unsigned Bit3     : 1;          // 0x0008
 
-      unsigned f_flag : 1;
-      unsigned v_flag : 1;
-      unsigned z_flag : 1;
-      unsigned n_flag : 1;
+      unsigned Bit4     : 1;          // 0x0010
+      unsigned f_v_flag : 1;          // 0x0020
+      unsigned z_flag   : 1;          // 0x0040
+      unsigned n_flag   : 1;          // 0x0080
 
-      unsigned u_flag : 1;
-      unsigned s_flag : 1;
-      unsigned p_flag : 1;
-      unsigned i_flag : 1;
+      unsigned u_flag   : 1;          // 0x0100
+      unsigned s_flag   : 1;          // 0x0200
+      unsigned p_flag   : 1;          // 0x0400
+      unsigned i_flag   : 1;          // 0x0800
 
       unsigned NU     : 20;
    };
@@ -348,8 +349,7 @@ typedef union
 
 extern uint32_t sp[2];
 
-#define SP ((psr & S_FLAG) >> 9)
-#define STACK_P      sp[SP]
+#define STACK_P      sp[S_FLAG]
 //#define STACK_P      PR.SP
 #define SET_SP(in)   STACK_P = (in);     PrintSP("Set SP:");
 #define INC_SP(in)   STACK_P += (in);    PrintSP("Inc SP:");

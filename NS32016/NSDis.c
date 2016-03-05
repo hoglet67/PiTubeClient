@@ -193,7 +193,13 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 {
 	if (pc < MEG16)
 	{
+      //PiTRACE("#%08"PRIu32" ", ++OpCount);
+      PiTRACE("PC: % 06"   PRIX32 " ", pc);
+      PiTRACE("INST: % 08" PRIX32 " ", opcode);
+      PiTRACE("F%01" PRIu32 ":", Function >> 4);
+
       const char* pText = "Bad NS32016 opcode";
+
       uint32_t Postfix = OperandSize;
 
       if (Function < InstructionCount)
@@ -207,18 +213,37 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
          }
       }
 
-      //PiTRACE("#%08"PRIu32" ", ++OpCount);
-      PiTRACE("PC: % 06"   PRIX32 " ", pc);
-      PiTRACE("INST: % 08" PRIX32 " ", opcode);
-      PiTRACE("F%01" PRIu32 ":", Function >> 4);
-      PiTRACE("%s%s ", pText, PostfixLookup(Postfix));
+      if (Function == Scond)
+      {
+         uint32_t Condition = ((opcode >> 7) & 0x0F);
+         PiTRACE("S%s%s ", &InstuctionText[Condition][1], PostfixLookup(Postfix));            // Offset by 1 to loose the 'B'
+      }
+      else
+      {
+         PiTRACE("%s%s ", pText, PostfixLookup(Postfix));
+      }
 
       RegLookUp();
 
-      if (Function <= BSR)
+      switch (Function)
       {
-         uint32_t Address = pc + Disp;
-         PiTRACE(" &%06"PRIX32" ", Address);
+         case Scond:
+         {
+            if (Regs[0] < 8)
+            {
+               uint32_t Condition = ((opcode >> 7) & 0x0F);
+
+               PiTRACE(" %s", &InstuctionText[Condition][1]);            // Offset by 1 to loose the 'B'
+            }
+         }
+         break;
+
+         case BSR:
+         {
+            uint32_t Address = pc + Disp;
+            PiTRACE(" &%06"PRIX32" ", Address);
+         }
+         break;
       }
 
       PiTRACE("\n");

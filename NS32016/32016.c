@@ -535,37 +535,32 @@ static void update_add_flags(uint32_t a, uint32_t b, uint32_t cin)
    // TODO: Check the carry logic here is correct
    // I suspect there is a corner case where b=&FFFFFFFF and cin=1
    uint32_t sum = a + b + cin;
-   psr &= ~(C_FLAG | F_FLAG);
+
    switch (OpSize.Op[0])
    {
       case sz8:
       {
-         if (sum & 0x100)
-            psr |= C_FLAG;
-         if ((a ^ sum) & (b ^ sum) & 0x80)
-            psr |= F_FLAG;
+         C_FLAG = TEST(sum & 0x100);
+         F_FLAG = TEST((a ^ sum) & (b ^ sum) & 0x80);
       }
       break;
 
       case sz16:
       {
-         if (sum & 0x10000)
-            psr |= C_FLAG;
-         if ((a ^ sum) & (b ^ sum) & 0x8000)
-            psr |= F_FLAG;
+         C_FLAG = TEST(sum & 0x10000);
+         F_FLAG = TEST((a ^ sum) & (b ^ sum) & 0x8000);
       }
       break;
 
       case sz32:
       {
-         if (sum < a)
-            psr |= C_FLAG;
-         if ((a ^ sum) & (b ^ sum) & 0x80000000)
-            psr |= F_FLAG;
+         C_FLAG = TEST(sum < a);
+         F_FLAG = TEST((a ^ sum) & (b ^ sum) & 0x80000000);
       }
       break;
    }
-   //PiTRACE("ADD FLAGS: C=%d F=%d\n", (psr & C_FLAG) ? 1 : 0, (psr & F_FLAG) ? 1 : 0);
+
+   //PiTRACE("ADD FLAGS: C=%d F=%d\n", C_FLAG, F_FLAG);
 }
 
 static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
@@ -573,12 +568,11 @@ static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
    // TODO: Check the carry logic here is correct
    // I suspect there is a corner case where b=&FFFFFFFF and cin=1
    uint32_t diff = a - b - cin;
-   psr &= ~(C_FLAG | F_FLAG);
-   if (diff > a)
-      psr |= C_FLAG;
-   if ((b ^ a) & (b ^ diff) & 0x80000000)
-      psr |= F_FLAG;
-   //PiTRACE("SUB FLAGS: C=%d F=%d\n", (psr & C_FLAG) ? 1 : 0, (psr & F_FLAG) ? 1 : 0);
+
+   C_FLAG = TEST(diff > a);
+   F_FLAG = ((b ^ a) & (b ^ diff) & 0x80000000);
+
+   //PiTRACE("SUB FLAGS: C=%d F=%d\n", C_FLAG, F_FLAG);
 }
 
 // The difference between DIV and QUO occurs when the result (the quotient) is negative
@@ -659,39 +653,24 @@ static void handle_mei_dei_upper_write(uint64_t result)
 
 uint32_t CompareCommon(uint32_t temp, uint32_t temp2)
 {
-   psr &= ~(Z_FLAG | N_FLAG | L_FLAG);
-   if (temp2 > temp)
-      psr |= L_FLAG;
+   L_FLAG = TEST(temp2 > temp);
 
    if (OpSize.Op[0] == sz8)
    {
-      if (((int8_t) temp2) > ((int8_t) temp))
-      {
-         psr |= N_FLAG;
-      }
+      N_FLAG = TEST(((int8_t) temp2) > ((int8_t) temp));
    }
    else if (OpSize.Op[0] == sz16)
    {
-      if (((int16_t) temp2) > ((int16_t) temp))
-      {
-         psr |= N_FLAG;
-      }
+      N_FLAG = TEST(((int16_t) temp2) > ((int16_t) temp));
    }
    else
    {
-      if (((int32_t) temp2) > ((int32_t) temp))
-      {
-         psr |= N_FLAG;
-      }
+      N_FLAG = TEST(((int32_t) temp2) > ((int32_t) temp));
    }
 
-   if (temp == temp2)
-   {
-      psr |= Z_FLAG;
-      return 1;
-   }
+   Z_FLAG = TEST(temp == temp2);
 
-   return 0;
+   return Z_FLAG;
 }
 
 uint32_t StringMatching(uint32_t opcode, uint32_t Value)
@@ -706,7 +685,7 @@ uint32_t StringMatching(uint32_t opcode, uint32_t Value)
       {
          if (Value != Compare)
          {
-            psr |= F_FLAG; // Set PSR F Bit
+            F_FLAG = 1; // Set PSR F Bit
             return 1;
          }
       }
@@ -715,7 +694,7 @@ uint32_t StringMatching(uint32_t opcode, uint32_t Value)
       {
          if (Value == Compare)
          {
-            psr |= F_FLAG; // Set PSR F Bit
+            F_FLAG = 1; // Set PSR F Bit
             return 1;
          }
       }
@@ -759,59 +738,63 @@ uint32_t CheckCondition(uint32_t Pattern)
    switch (Pattern & 0xF)
    {
       case 0x0:
-         if (psr & Z_FLAG)
+         if (Z_FLAG)
             bResult = 1;
          break;
       case 0x1:
-         if (!(psr & Z_FLAG))
+         if (!Z_FLAG)
             bResult = 1;
          break;
       case 0x2:
-         if (psr & C_FLAG)
+         if (C_FLAG)
             bResult = 1;
          break;
       case 0x3:
-         if (!(psr & C_FLAG))
+         if (!C_FLAG)
             bResult = 1;
          break;
       case 0x4:
-         if (psr & L_FLAG)
+         if (L_FLAG)
             bResult = 1;
          break;
       case 0x5:
-         if (!(psr & L_FLAG))
+         if (!L_FLAG)
             bResult = 1;
          break;
       case 0x6:
-         if (psr & N_FLAG)
+         if (N_FLAG)
             bResult = 1;
          break;
       case 0x7:
-         if (!(psr & N_FLAG))
+         if (!N_FLAG)
             bResult = 1;
          break;
       case 0x8:
-         if (psr & F_FLAG)
+         if (F_FLAG)
             bResult = 1;
          break;
       case 0x9:
-         if (!(psr & F_FLAG))
+         if (!F_FLAG)
             bResult = 1;
          break;
       case 0xA:
-         if (!(psr & (Z_FLAG | L_FLAG)))
+         if (!(psr & (0x40 | 0x04)))
+         //if (!(Z_FLAG || L_FLAG))
             bResult = 1;
          break;
       case 0xB:
-         if (psr & (Z_FLAG | L_FLAG))
+         if (psr & (0x40 | 0x04))
+         //if (Z_FLAG || L_FLAG)
             bResult = 1;
          break;
       case 0xC:
-         if (!(psr & (Z_FLAG | N_FLAG)))
+         if (!(psr & (0x40 | 0x80)))
+         //if (!(Z_FLAG || N_FLAG))
             bResult = 1;
          break;
       case 0xD:
-         if (psr & (Z_FLAG | N_FLAG))
+         if (psr & (0x40 | 0x80))
+         //if (Z_FLAG || N_FLAG)
             bResult = 1;
          break;
       case 0xE:
@@ -1499,7 +1482,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(0);
             temp = ReadGen(1);
 
-            temp3 = (psr & C_FLAG) ? 1 : 0;
+            temp3 = C_FLAG;
             update_add_flags(temp, temp2, temp3);
             temp += temp2;
             temp += temp3;
@@ -1541,7 +1524,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp2 = ReadGen(0);
             temp = ReadGen(1);
-            temp3 = (psr & C_FLAG) ? 1 : 0;
+            temp3 = C_FLAG;
             update_sub_flags(temp, temp2, temp3);
             temp -= temp2;
             temp -= temp3;
@@ -1572,12 +1555,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp2 = BitPrefix();
             temp = ReadGen(1);
-
-            psr &= ~F_FLAG;
-            if (temp & BIT(temp2))
-            {
-               psr |= F_FLAG;
-            }
+            F_FLAG = TEST(temp & BIT(temp2));
             continue;
          }
          // No break due to continue
@@ -1598,7 +1576,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (r[0] == 0)
             {
-               psr &= ~F_FLAG; // Clear PSR F Bit
+               F_FLAG = 0;
                continue;
             }
 
@@ -1626,7 +1604,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (r[0] == 0)
             {
-               psr &= ~F_FLAG; // Clear PSR F Bit
+               F_FLAG = 0;
                continue;
             }
 
@@ -1665,7 +1643,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (r[0] == 0)
             {
-               psr &= ~F_FLAG; // Clear PSR F Bit
+               F_FLAG = 0;
                continue;
             }
 
@@ -1835,9 +1813,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = BitPrefix();
 
             temp = ReadGen(1);
-            psr &= ~F_FLAG;
-            if (temp & BIT(temp2))
-               psr |= F_FLAG;
+            F_FLAG = TEST(temp & BIT(temp2));
 
             if (Function == IBIT)
             {
@@ -1878,14 +1854,11 @@ void n32016_exec(uint32_t tubecycles)
 
          case SUBP:
          {
-            uint32_t carry = (psr & C_FLAG) ? 1 : 0;
+            uint32_t carry = C_FLAG;
             temp2 = ReadGen(0);
             temp = ReadGen(1);
             temp = bcd_sub(temp, temp2, OpSize.Op[0], &carry);
-            if (carry)
-               psr |= C_FLAG;
-            else
-               psr &= ~C_FLAG;
+            C_FLAG = TEST(carry);
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
@@ -1900,7 +1873,7 @@ void n32016_exec(uint32_t tubecycles)
                {
                   if (temp == 0x80)
                   {
-                     psr |= F_FLAG;
+                     F_FLAG = 1;
                   }
                   if (temp & 0x80)
                   {
@@ -1913,7 +1886,7 @@ void n32016_exec(uint32_t tubecycles)
                {
                   if (temp == 0x8000)
                   {
-                     psr |= F_FLAG;
+                     F_FLAG = 1;
                   }
                   if (temp & 0x8000)
                   {
@@ -1926,7 +1899,7 @@ void n32016_exec(uint32_t tubecycles)
                {
                   if (temp == 0x80000000)
                   {
-                     psr |= F_FLAG;
+                     F_FLAG = 1;
                   }
                   if (temp & 0x80000000)
                   {
@@ -1952,14 +1925,11 @@ void n32016_exec(uint32_t tubecycles)
 
          case ADDP:
          {
-            uint32_t carry = (psr & C_FLAG) ? 1 : 0;
+            uint32_t carry = C_FLAG;
             temp2 = ReadGen(0);
             temp = ReadGen(1);
             temp = bcd_add(temp, temp2, OpSize.Op[0], &carry);
-            if (carry)
-               psr |= C_FLAG;
-            else
-               psr &= ~C_FLAG;
+            C_FLAG = TEST(carry);
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
@@ -2342,10 +2312,10 @@ void n32016_exec(uint32_t tubecycles)
             if (temp >= temp3 && temp3 >= temp2)
             {
                r[(opcode >> 11) & 7] = temp3 - temp2;
-               psr &= ~F_FLAG;
+               F_FLAG = 0;
             }
             else
-               psr |= F_FLAG;
+               F_FLAG = 1;
          }
          break;
 
@@ -2378,12 +2348,12 @@ void n32016_exec(uint32_t tubecycles)
             if (temp < numbits)
             {
                // a set bit was found, return it in the offset operand
-               psr &= ~F_FLAG;
+               F_FLAG = 0;
             }
             else
             {
                // no set bit was found, return 0 in the offset operand
-               psr |= F_FLAG;
+               F_FLAG = 1;
                temp = 0;
             }
             WriteIndex = 1;
