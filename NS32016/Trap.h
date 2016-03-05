@@ -2,15 +2,16 @@
 enum TrapTypes
 {
    BreakPointHit = BIT(0),
-   ReservedAddressingMode = BIT(1),
-   UnknownFormat = BIT(2),
-   UnknownInstruction = BIT(3),
-   DivideByZero = BIT(4),
-   IllegalImmediate = BIT(5),
-   IllegalDoubleIndexing = BIT(6),
-   IllegalSpecialReading = BIT(7),
-   IllegalSpecialWriting = BIT(8),
-   IllegalWritingImmediate = BIT(9),
+   BreakPointTrap = BIT(1),
+   ReservedAddressingMode = BIT(2),
+   UnknownFormat = BIT(3),
+   UnknownInstruction = BIT(4),
+   DivideByZero = BIT(5),
+   IllegalImmediate = BIT(6),
+   IllegalDoubleIndexing = BIT(7),
+   IllegalSpecialReading = BIT(8),
+   IllegalSpecialWriting = BIT(9),
+   IllegalWritingImmediate = BIT(10),
 };
 
 #define TrapCount 10

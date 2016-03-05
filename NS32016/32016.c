@@ -1049,24 +1049,22 @@ void n32016_exec(uint32_t tubecycles)
          break;
       }
 
-#if 0
-      // Temporary work around until we make operand numbering consistent
-      if (Format == Format4 || Format == Format4 || Format == Format4 || Format == Format4)
+      GetGenPhase2(Regs[0], 0);
+      GetGenPhase2(Regs[1], 1);
+
+
+      if (TrapFlags)
       {
-         GetGenPhase2(Regs[1], 1);
-         GetGenPhase2(Regs[0], 0);
-      }
-      else
-#endif
-      {
-         GetGenPhase2(Regs[0], 0);
-         GetGenPhase2(Regs[1], 1);
+         DoTrap:
+         n32016_dumpregs("Bad NS32016 opcode");
       }
 
       ShowInstruction(startpc, opcode, Function, OpSize.Op[0], temp);
 
       switch (Function)
       {
+         // Format 0 : Branches
+
          case BEQ:
          case BNE:
          case BCS:
@@ -1085,7 +1083,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (CheckCondition(Function) == 0)
             {
-               break;
+               continue;
             }
          }
          // Fall Through
@@ -1093,24 +1091,30 @@ void n32016_exec(uint32_t tubecycles)
          case BR:
          {
             pc = startpc + temp;
+            continue;
          }
-         break;
+         // No break due to continue
+
+         // Format 1
 
          case BSR:
          {
             pushd(pc);
             pc = startpc + temp;
+            continue;
          }
-         break;
+         // No break due to continue
 
          case RET:
          {
             pc = popd();
             INC_SP(temp);
+            continue;
          }
-         break;
+         // No break due to continue
 
          case CXP:
+         {
             pushw(0);
             pushw(mod);
             pushd(pc);
@@ -1119,27 +1123,37 @@ void n32016_exec(uint32_t tubecycles)
             mod = temp & 0xFFFF;
             sb = read_x32(mod);
             pc = read_x32(mod + 8) + (temp >> 16);
-            break;
+            continue;
+         }
+         // No break due to continue
 
          case RXP:
+         {
             pc = popd();
             temp2 = popd();
             mod = temp2 & 0xFFFF;
             INC_SP(temp);
             sb = read_x32(mod);
-            break;
+            continue;
+         }
+         // No break due to continue
 
          case RETT:
+         {
             pc = popd();
             mod = popw();
             psr = popw();
             INC_SP(temp);
             sb = read_x32(mod);
-            break;
+            continue;
+         }
+         // No break due to continue
 
+#if 0
          case RETI:
             PiTRACE("RETI ????");
             break;
+#endif
 
          case SAVE:
          {
@@ -1154,8 +1168,9 @@ void n32016_exec(uint32_t tubecycles)
                   pushd(r[c]);
                }
             }
+            continue;
          }
-         break;
+         // No break due to continue
 
          case RESTORE:
          {
@@ -1167,8 +1182,9 @@ void n32016_exec(uint32_t tubecycles)
                if (temp & BIT(c))
                   r[c ^ 7] = popd(r[c]);
             }
+            continue;
          }
-         break;
+         // No break due to continue
 
          case ENTER:
          {
@@ -1187,8 +1203,9 @@ void n32016_exec(uint32_t tubecycles)
                   pushd(r[c]);
                }
             }
+            continue;
          }
-         break;
+         // No break due to continue
 
          case EXIT:
          {
@@ -1204,13 +1221,18 @@ void n32016_exec(uint32_t tubecycles)
             }
             SET_SP(fp);
             fp = popd();
+            continue;
          }
-         break;
+         // No break due to continue
 
          case NOP:
-            break;
+         {
+            continue;
+         }
+         // No break due to continue
 
          case SVC:
+         {
             temp = psr;
             psr &= ~0x700;
             // In SVC, the address pushed is the address of the SVC opcode
@@ -1223,12 +1245,19 @@ void n32016_exec(uint32_t tubecycles)
             sb = read_x32(mod);
             temp2 = read_x32(mod + 8);
             pc = temp2 + temp3;
-            break;
+            continue;
+         }
+         // No break due to continue
 
          case BPT:
-            PiTRACE("Breakpoint Trap\n");
-            break;
+         {
+            SET_TRAP(BreakPointTrap);
+            goto DoTrap;
+         }
+         // No break due to goto
 
+         // Format 2
+         
          case ADDQ:
          {
             temp2 = (opcode >> 7) & 0xF;
@@ -1248,12 +1277,15 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(0);
             SIGN_EXTEND(OpSize.Op[0], temp);
             CompareCommon(temp, temp2);
+            continue;
          }
-         break;
+         // No break due to continue
 
          case SPR:
          {
-            switch ((opcode >> 7) & 0xF)
+            temp2 = (opcode >> 7) & 0xF;
+
+            switch (temp2)
             {
                case 0x8:
                   temp = fp;
@@ -1289,10 +1321,10 @@ void n32016_exec(uint32_t tubecycles)
             NIBBLE_EXTEND(temp2);
             temp = ReadGen(0);
             temp += temp2;
-            WriteSize = OpSize.Op[0];
             temp2 = getdisp();
             if (Truncate(temp, OpSize.Op[0]))
                pc = startpc + temp2;
+            WriteSize = OpSize.Op[0];
          break;
 
          case MOVQ:
@@ -1330,34 +1362,16 @@ void n32016_exec(uint32_t tubecycles)
                }
                break;
 
-
-#if 1
                default:
                {
                   PR.Direct[temp2] = temp;
                }
                break;
-
-#else
-
-
-               case 10:
-                  sb = temp;
-                  break;
-               case 14:
-                  intbase = temp; // PiTRACE("INTBASE %08"PRIX32" %08"PRIX32"\n",temp,pc); 
-                  break;
-               case 15:
-                  mod = temp;
-                  break;
-               default:
-                  SET_TRAP(IllegalSpecialWriting);
-                  break;
-#endif
-
             }
          }
          break;
+     
+         // Format 3
 
          case CXPD:
          {
@@ -1371,53 +1385,63 @@ void n32016_exec(uint32_t tubecycles)
             sb = read_x32(mod);
             temp2 = read_x32(mod + 8);
             pc = temp2 + temp3;
+            continue;
          }
-         break;
+         // No break due to continue
 
          case BICPSR:
          {
             temp = ReadGen(0);
             psr &= ~temp;
+            continue;
          }
-         break;
+         // No break due to continue
 
          case JUMP:
          {
             // JUMP is in access class addr, so ReadGen() cannot be used
             pc = ReadAddress(0);
+            continue;
          }
-         break;
+         // No break due to continue
 
          case BISPSR:
          {
             temp = ReadGen(0);
             psr |= temp;
+            continue;
          }
-         break;
+         // No break due to continue
+
 
          case ADJSP:
          {
             temp = ReadGen(0);
             SIGN_EXTEND(OpSize.Op[0], temp);
             DEC_SP(temp);
+            continue;
          }
-         break;
+         // No break due to continue
 
          case JSR:
          {
             // JSR is in access class addr, so ReadGen() cannot be used
             pushd(pc);
             pc = ReadAddress(0);
+            continue;
          }
-         break;
+         // No break due to continue
 
          case CASE:
          {
             temp = ReadGen(0);
             SIGN_EXTEND(OpSize.Op[0], temp);
             pc = startpc + temp;
+            continue;
          }
-         break;
+         // No break due to continue
+
+         // Format 4
 
          case ADD:
          {
@@ -1436,8 +1460,9 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(0);
             temp = ReadGen(1);
             CompareCommon(temp, temp2);
+            continue;
          }
-         break;
+         // No break due to continue
 
          case BIC:
          {
@@ -2362,12 +2387,6 @@ void n32016_exec(uint32_t tubecycles)
          break;
       }
 
-      if (TrapFlags)
-      {
-         DoTrap:
-         n32016_dumpregs("Bad NS32016 opcode");
-      }
-
       if (WriteSize && (WriteSize <= sz32))
       {
          switch (gentype[WriteIndex])
@@ -2409,20 +2428,5 @@ void n32016_exec(uint32_t tubecycles)
             }
          }
       }
-
-#if 0
-      if (Trace)
-      {
-         dump_mini();
-      }
-#endif
-
-#if 0
-      // Test Suite Diverter ;)
-      if (pc == 0x001CB2)
-      {
-         pc = 0x001AD9;
-      }
-#endif
    }
 }

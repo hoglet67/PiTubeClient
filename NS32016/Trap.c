@@ -16,6 +16,7 @@ uint32_t TrapFlags;
 const char TrapText[TrapCount][40] =
 {
    "Break Point Hit",
+   "Break Point Trap"
    "Reserved Addressing Mode",
    "Unknown Format",
    "Unknown Instruction",
