@@ -64,7 +64,7 @@ void copro_32016_main(unsigned int r0, unsigned int r1, unsigned int atags)
    tube_irq = 0;
    while (1)
    {
-      n32016_exec(1);
+      n32016_exec(4);
 
       gpio = RPI_GpioBase->GPLEV0;
 
