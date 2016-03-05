@@ -825,7 +825,7 @@ uint32_t BitPrefix(void)
       temp2 %= 8;
    }
 
-   return temp2;
+   return BIT(temp2);
 }
 
 void n32016_exec(uint32_t tubecycles)
@@ -1555,7 +1555,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp2 = BitPrefix();
             temp = ReadGen(1);
-            F_FLAG = TEST(temp & BIT(temp2));
+            F_FLAG = TEST(temp & temp2);
             continue;
          }
          // No break due to continue
@@ -1636,6 +1636,7 @@ void n32016_exec(uint32_t tubecycles)
          case SETCFG:
          {
             nscfg = opcode;                                             // Store the whole opcode as this includes the options
+            continue;
          }
          // No break due to continue
 
@@ -1803,33 +1804,44 @@ void n32016_exec(uint32_t tubecycles)
 
             // TODO, could merge this with TBIT if Format4 operand indexes were consistent (dst == index 0)
          case IBIT:
-         case CBIT:
-         case SBIT:
-            // The SBITIB, SBITIW, and SBITID instructions, in addition, activate the Interlocked
-            // Operation output pin on the CPU, which may be used in multiprocessor systems to
-            // interlock accesses to semaphore bits. This aspect is not implemented here.
-         case CBITI:
-         case SBITI:
+         {
             temp2 = BitPrefix();
-
-            temp = ReadGen(1);
-            F_FLAG = TEST(temp & BIT(temp2));
-
-            if (Function == IBIT)
-            {
-               temp ^= BIT(temp2);
-            }
-            else if ((Function == SBIT) || (Function == SBITI))
-            {
-               temp |= BIT(temp2);
-            }
-            else
-            {
-               temp &= ~(BIT(temp2));
-            }
-
+            temp  = ReadGen(1);
+            F_FLAG = TEST(temp & temp2);
+            temp ^= temp2;
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
+         }
+         break;
+
+         case CBIT:
+         case CBITI:
+         // The CBITI instructions, in addition, activate the Interlocked
+         // Operation output pin on the CPU, which may be used in multiprocessor systems to
+         // interlock accesses to semaphore bits. This aspect is not implemented here.
+         {
+            temp2 = BitPrefix();
+            temp = ReadGen(1);
+            F_FLAG = TEST(temp & temp2);
+            temp &= ~(temp2);
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
+         }
+         break;
+
+         case SBIT:
+         case SBITI:
+         {
+            // The SBITI instructions, in addition, activate the Interlocked
+            // Operation output pin on the CPU, which may be used in multiprocessor systems to
+            // interlock accesses to semaphore bits. This aspect is not implemented here.
+            temp2 = BitPrefix();
+            temp = ReadGen(1);
+            F_FLAG = TEST(temp & temp2);
+            temp |= temp2;
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
+         }
          break;
 
          case NEG:
