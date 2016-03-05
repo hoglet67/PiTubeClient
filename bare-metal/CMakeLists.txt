@@ -59,6 +59,8 @@ add_executable( tube-client
     ../../NS32016/NSDis.c
     ../../NS32016/PandoraV0_61.h
     ../../NS32016/PandoraV2_00.h
+    ../../NS32016/Trap.c
+    ../../NS32016/Trap.h
 # 80186 Co Pro
     copro-80186.c
     copro-80186.h
