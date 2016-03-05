@@ -1570,23 +1570,8 @@ void n32016_exec(uint32_t tubecycles)
 
          case TBIT:
          {
-            temp2 = ReadGen(0);
-            if (gentype[1] == Register)
-            {
-               // operand 0 is a register
-               OpSize.Op[1] = sz32;
-               temp = ReadGen(1);
-               temp2 &= 31;
-            }
-            else
-            {
-               // operand0 is memory
-               // TODO: this should probably use the DIV and MOD opersator functions
-               genaddr[1] += temp2 / 8;
-               OpSize.Op[1] = sz8;
-               temp = ReadGen(1);
-               temp2 %= 8;
-            }
+            temp2 = BitPrefix();
+            temp = ReadGen(1);
 
             psr &= ~F_FLAG;
             if (temp & BIT(temp2))

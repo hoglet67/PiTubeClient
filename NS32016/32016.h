@@ -283,6 +283,39 @@ typedef union
 {
    struct
    {
+      unsigned c_flag : 1;
+      unsigned t_flag : 1;
+      unsigned l_flag : 1;
+      unsigned Bit3   : 1;
+
+      unsigned f_flag : 1;
+      unsigned v_flag : 1;
+      unsigned z_flag : 1;
+      unsigned n_flag : 1;
+
+      unsigned u_flag : 1;
+      unsigned s_flag : 1;
+      unsigned p_flag : 1;
+      unsigned i_flag : 1;
+
+      unsigned NU     : 20;
+   };
+
+   struct
+   {
+      uint8_t lsb;
+      uint8_t msb;
+      uint8_t byte3;
+      uint8_t byte4;
+    };
+
+   uint32_t Whole;
+} PsrType;
+
+typedef union
+{
+   struct
+   {
       uint32_t UPSR;
       uint32_t DCR;
       uint32_t BPC;
@@ -298,7 +331,7 @@ typedef union
       uint32_t SB;
       uint32_t USP;
       uint32_t CFG;
-      uint32_t PSR;
+      PsrType  PSR;
       uint32_t INTBASE;
       uint32_t MOD;
    };
@@ -309,7 +342,7 @@ typedef union
 
 #define fp           PR.FP
 #define sb           PR.SB
-#define psr          PR.PSR
+#define psr          PR.PSR.Whole
 #define intbase      PR.INTBASE
 #define mod          PR.MOD
 
