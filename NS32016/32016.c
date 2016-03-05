@@ -442,7 +442,7 @@ uint64_t readgenq(uint32_t c)
    else
    {
       temp = read_x32(genaddr[c]);              // This is bonkers!
-      temp |= ((uint64_t) read_x32(genaddr[c + 4])) << 32;
+      temp |= ((uint64_t) read_x32(genaddr[c] + 4)) << 32;
    }
 
    return temp;
