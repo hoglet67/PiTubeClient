@@ -1413,7 +1413,6 @@ void n32016_exec(uint32_t tubecycles)
          }
          // No break due to continue
 
-
          case ADJSP:
          {
             temp = ReadGen(0);
@@ -1567,11 +1566,15 @@ void n32016_exec(uint32_t tubecycles)
                temp = ReadGen(1);
                temp2 %= 8;
             }
+
             psr &= ~F_FLAG;
             if (temp & BIT(temp2))
+            {
                psr |= F_FLAG;
+            }
+            continue;
          }
-         break;
+         // No break due to continue
 
          case XOR:
          {
@@ -1583,12 +1586,14 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
+         // Format 5
+
          case MOVS:
          {
             if (r[0] == 0)
             {
                psr &= ~F_FLAG; // Clear PSR F Bit
-               break;
+               continue;
             }
 
             temp = read_n(r[1], OpSize.Op[0]);
@@ -1600,60 +1605,62 @@ void n32016_exec(uint32_t tubecycles)
 
             if (StringMatching(opcode, temp))
             {
-               break;
+               continue;
             }
 
             write_Arbitary(r[2], &temp, OpSize.Op[0]);
 
             StringRegisterUpdate(opcode);
             pc = startpc; // Not finsihed so come back again!
+            continue;
          }
-         break;
+         // No break due to continue
 
          case CMPS:
          {
             if (r[0] == 0)
             {
                psr &= ~F_FLAG; // Clear PSR F Bit
-               break;
+               continue;
             }
 
             temp = read_n(r[1], OpSize.Op[0]);
 
             if (opcode & BIT(15)) // Translating
             {
-               temp = read_x8(r[3] + temp); // Lookup the translation
+               temp = read_x8(r[3] + temp);                               // Lookup the translation
             }
 
             if (StringMatching(opcode, temp))
             {
-               break;
+               continue;
             }
 
             temp2 = read_n(r[2], OpSize.Op[0]);
 
             if (CompareCommon(temp, temp2) == 0)
             {
-               break;
+               continue;
             }
 
             StringRegisterUpdate(opcode);
-            pc = startpc; // Not finsihed so come back again!
+            pc = startpc;                                               // Not finsihed so come back again!
+            continue;
          }
-         break;
+         // No break due to continue
 
          case SETCFG:
          {
-            nscfg = opcode;                                             // Store the whole opcode as this includes the oprions
+            nscfg = opcode;                                             // Store the whole opcode as this includes the options
          }
-         break;
+         // No break due to continue
 
          case SKPS:
          {
             if (r[0] == 0)
             {
                psr &= ~F_FLAG; // Clear PSR F Bit
-               break;
+               continue;
             }
 
             temp = read_n(r[1], OpSize.Op[0]);
@@ -1666,19 +1673,34 @@ void n32016_exec(uint32_t tubecycles)
 
             if (StringMatching(opcode, temp))
             {
-               break;
+               continue;
             }
 
             StringRegisterUpdate(opcode);
             pc = startpc; // Not finsihed so come back again!
+            continue;
          }
-         break;
+         // No break due to continue
+
+         // Format 6
 
          case ROT:
          {
             temp2 = ReadGen(0);
             temp  = ReadGen(1);
+ 
+#if 1
+            temp3 = OpSize.Op[1] * 8;                             // Bit size, compiler will switch to a shift all by itself ;)
 
+            if (temp2 & 0xE0)
+            {
+               temp2 |= 0xE0;
+               temp2 = ((temp2 ^ 0xFF) + 1);
+               temp2 = temp3 - temp2;
+            }
+            temp = (temp << temp2) | (temp >> (temp3 - temp2));
+
+#else
             switch (OpSize.Op[1])
             {
                case sz8:
@@ -1717,6 +1739,7 @@ void n32016_exec(uint32_t tubecycles)
                }
                break;
             }
+#endif
 
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
