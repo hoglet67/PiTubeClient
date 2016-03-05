@@ -65,3 +65,8 @@ void n32016_dumpregs(char* pMessage)
    exit(1);
 #endif
 }
+
+void HandleTrap(void)
+{
+   n32016_dumpregs("Bad NS32016 opcode");
+}

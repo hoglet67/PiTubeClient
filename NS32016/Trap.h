@@ -17,4 +17,12 @@ enum TrapTypes
 #define TrapCount 10
 extern uint32_t TrapFlags;
 #define CLEAR_TRAP() TrapFlags = 0
+
+// Use SET_TRAP when in a function
 #define SET_TRAP(in) TrapFlags |= (in)
+
+// Use GOTO_TRAP when in the main loop
+#define GOTO_TRAP(in) TrapFlags |= (in); goto DoTrap
+
+extern void HandleTrap(void);
+extern void n32016_dumpregs();

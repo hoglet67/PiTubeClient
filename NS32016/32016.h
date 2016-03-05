@@ -369,7 +369,6 @@ enum StringBits
 extern void n32016_init();
 extern void n32016_reset(uint32_t StartAddress);
 extern void n32016_exec(uint32_t tubecycles);
-extern void n32016_dumpregs();
 extern void n32016_build_matrix();
 extern void BreakPoint(uint32_t pc, uint32_t opcode);
 

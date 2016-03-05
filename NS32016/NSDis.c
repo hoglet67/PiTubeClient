@@ -5,6 +5,7 @@
 #include "32016.h"
 #include "mem32016.h"
 #include "Profile.h"
+#include "Trap.h"
 
 uint32_t OpCount = 0;
 uint8_t FunctionLookup[256];

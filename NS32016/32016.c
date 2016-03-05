@@ -916,6 +916,8 @@ void n32016_exec(uint32_t tubecycles)
          case Format2:
          {
             SET_OP_SIZE(opcode);
+            WriteSize = OpSize.Op[0];
+            WriteIndex = 0;
             getgen(opcode >> 11, 0);
          }
          break;
@@ -931,6 +933,8 @@ void n32016_exec(uint32_t tubecycles)
          case Format4:
          {
             SET_OP_SIZE(opcode);
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
             getgen(opcode >> 11, 0);
             getgen(opcode >> 6, 1);
          }
@@ -1060,7 +1064,8 @@ void n32016_exec(uint32_t tubecycles)
       if (TrapFlags)
       {
          DoTrap:
-         n32016_dumpregs("Bad NS32016 opcode");
+         HandleTrap();
+         continue;
       }
 
       ShowInstruction(startpc, opcode, Function, OpSize.Op[0], temp);
@@ -1083,7 +1088,6 @@ void n32016_exec(uint32_t tubecycles)
          case BHS:
          case BLT:
          case BGE:
-         case BN:
          {
             if (CheckCondition(Function) == 0)
             {
@@ -1095,6 +1099,12 @@ void n32016_exec(uint32_t tubecycles)
          case BR:
          {
             pc = startpc + temp;
+            continue;
+         }
+         // No break due to continue
+
+         case BN:
+         {
             continue;
          }
          // No break due to continue
@@ -1155,8 +1165,11 @@ void n32016_exec(uint32_t tubecycles)
 
 #if 0
          case RETI:
+         {
             PiTRACE("RETI ????");
-            break;
+            continue;
+         }
+         // No break due to continue
 #endif
 
          case SAVE:
@@ -1270,7 +1283,6 @@ void n32016_exec(uint32_t tubecycles)
 
             update_add_flags(temp, temp2, 0);
             temp += temp2;
-            WriteSize = OpSize.Op[0];
          }
          break;
 
@@ -1306,21 +1318,21 @@ void n32016_exec(uint32_t tubecycles)
 
                default:
                {
-                  SET_TRAP(IllegalSpecialReading);
+                  GOTO_TRAP(IllegalSpecialReading);
                }
-               break;
+               // No break due to goto
             }
-
-            WriteSize = OpSize.Op[0];
          }
          break;
 
          case Scond:
+         {
             temp = CheckCondition(opcode >> 7);
-            WriteSize = OpSize.Op[0];
+         }
          break;
 
          case ACB:
+         {
             temp2 = (opcode >> 7) & 0xF;
             NIBBLE_EXTEND(temp2);
             temp = ReadGen(0);
@@ -1328,14 +1340,13 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = getdisp();
             if (Truncate(temp, OpSize.Op[0]))
                pc = startpc + temp2;
-            WriteSize = OpSize.Op[0];
+         }
          break;
 
          case MOVQ:
          {
             temp = (opcode >> 7) & 0xF;
             NIBBLE_EXTEND(temp);
-            WriteSize = OpSize.Op[0];
          }
          break;
 
@@ -1356,9 +1367,9 @@ void n32016_exec(uint32_t tubecycles)
                case 6:
                case 7:
                {
-                  SET_TRAP(IllegalSpecialWriting);
+                  GOTO_TRAP(IllegalSpecialWriting);
                }
-               break;
+               // No break due to goto
 
                case 9:
                {
@@ -1372,8 +1383,10 @@ void n32016_exec(uint32_t tubecycles)
                }
                break;
             }
+
+            continue;
          }
-         break;
+         // No break due to continue
      
          // Format 3
 
@@ -1453,8 +1466,6 @@ void n32016_exec(uint32_t tubecycles)
 
             update_add_flags(temp, temp2, 0);
             temp += temp2;
-            WriteSize = OpSize.Op[1];
-            WriteIndex = 1;
          }
          break;
 
@@ -1472,8 +1483,6 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(0);
             temp = ReadGen(1);
             temp &= ~temp2;
-            WriteSize = OpSize.Op[1];
-            WriteIndex = 1;
          }
          break;
 
@@ -1486,16 +1495,12 @@ void n32016_exec(uint32_t tubecycles)
             update_add_flags(temp, temp2, temp3);
             temp += temp2;
             temp += temp3;
-            WriteSize = OpSize.Op[1];
-            WriteIndex = 1;
          }
          break;
 
          case MOV:
          {
             temp = ReadGen(0);
-            WriteSize = OpSize.Op[1];
-            WriteIndex = 1;
          }
          break;
 
@@ -1504,8 +1509,6 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(0);
             temp2 = ReadGen(1);
             temp |= temp2;
-            WriteSize = OpSize.Op[1];
-            WriteIndex = 1;
          }
          break;
 
@@ -1515,8 +1518,6 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(1);
             update_sub_flags(temp, temp2, 0);
             temp -= temp2;
-            WriteSize = OpSize.Op[1];
-            WriteIndex = 1;
          }
          break;
 
@@ -1528,16 +1529,12 @@ void n32016_exec(uint32_t tubecycles)
             update_sub_flags(temp, temp2, temp3);
             temp -= temp2;
             temp -= temp3;
-            WriteSize = OpSize.Op[1];
-            WriteIndex = 1;
          }
          break;
 
          case ADDR:
          {
             temp = genaddr[0];
-            WriteSize = OpSize.Op[1];
-            WriteIndex = 1;
          }
          break;
 
@@ -1546,8 +1543,6 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(0);
             temp = ReadGen(1);
             temp &= temp2;
-            WriteSize = OpSize.Op[1];
-            WriteIndex = 1;
          }
          break;
 
@@ -1565,8 +1560,6 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(0);
             temp2 = ReadGen(1);
             temp ^= temp2;
-            WriteSize = OpSize.Op[1];
-            WriteIndex = 1;
          }
          break;
 
@@ -1802,24 +1795,12 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-            // TODO, could merge this with TBIT if Format4 operand indexes were consistent (dst == index 0)
-         case IBIT:
-         {
-            temp2 = BitPrefix();
-            temp  = ReadGen(1);
-            F_FLAG = TEST(temp & temp2);
-            temp ^= temp2;
-            WriteSize = OpSize.Op[1];
-            WriteIndex = 1;
-         }
-         break;
-
          case CBIT:
          case CBITI:
-         // The CBITI instructions, in addition, activate the Interlocked
-         // Operation output pin on the CPU, which may be used in multiprocessor systems to
-         // interlock accesses to semaphore bits. This aspect is not implemented here.
          {
+            // The CBITI instructions, in addition, activate the Interlocked
+            // Operation output pin on the CPU, which may be used in multiprocessor systems to
+            // interlock accesses to semaphore bits. This aspect is not implemented here.
             temp2 = BitPrefix();
             temp = ReadGen(1);
             F_FLAG = TEST(temp & temp2);
@@ -1931,7 +1912,18 @@ void n32016_exec(uint32_t tubecycles)
             temp = ~temp;
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
+         }
+         break;
 
+         // TODO, could merge this with TBIT if Format4 operand indexes were consistent (dst == index 0)
+         case IBIT:
+         {
+            temp2 = BitPrefix();
+            temp = ReadGen(1);
+            F_FLAG = TEST(temp & temp2);
+            temp ^= temp2;
+            WriteSize = OpSize.Op[1];
+            WriteIndex = 1;
          }
          break;
 
@@ -1947,6 +1939,8 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
  
+         // FORMAT 7
+
          case MOVM:
          {
             temp = getdisp() + OpSize.Op[0];                      // disp of 0 means move 1 byte
@@ -1958,8 +1952,10 @@ void n32016_exec(uint32_t tubecycles)
                genaddr[1]++;
                temp--;
             }
+
+            continue;
          }
-         break;
+         // No break due to continue
 
          case CMPM:
          {
@@ -1980,8 +1976,10 @@ void n32016_exec(uint32_t tubecycles)
                genaddr[0] += temp4;
                genaddr[1] += temp4;
             }
+
+            continue;
          }
-         break;
+         // No break due to continue
 
          case INSS:
          {
@@ -1995,7 +1993,9 @@ void n32016_exec(uint32_t tubecycles)
             {
                temp2 &= ~(BIT((c + (temp3 >> 5)) & 31));
                if (temp & BIT(c))
+               {
                   temp2 |= BIT((c + (temp3 >> 5)) & 31);
+               }
             }
             temp = temp2;
             WriteSize = OpSize.Op[1];
@@ -2096,8 +2096,7 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(0); // src
             if (temp == 0)
             {
-               SET_TRAP(DivideByZero);
-               break;
+               GOTO_TRAP(DivideByZero);
             }
 
             uint64_t temp64 = readgenq(1); // dst
@@ -2130,8 +2129,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(1);
             if (temp == 0)
             {
-               SET_TRAP(DivideByZero);
-               break;
+               GOTO_TRAP(DivideByZero);
             }
 
             switch (OpSize.Op[0])
@@ -2159,8 +2157,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(1);
             if (temp == 0)
             {
-               SET_TRAP(DivideByZero);
-               break;
+               GOTO_TRAP(DivideByZero);
             }
 
             switch (OpSize.Op[0])
@@ -2188,9 +2185,9 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(1);
             if (temp == 0)
             {
-               SET_TRAP(DivideByZero);
-               break;
+               GOTO_TRAP(DivideByZero);
             }
+
             temp = mod_operator(temp2, temp);
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
@@ -2203,8 +2200,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(1);
             if (temp == 0)
             {
-               SET_TRAP(DivideByZero);
-               break;
+               GOTO_TRAP(DivideByZero);
             }
 
             temp = div_operator(temp2, temp);
@@ -2213,6 +2209,8 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
+         // Format 8
+ 
          case EXT:
          {
             uint32_t c;
@@ -2290,7 +2288,6 @@ void n32016_exec(uint32_t tubecycles)
 
          case CHECK:
          {
-            //temp3 = ReadGen(1, sz8);
             temp3 = ReadGen(1);
 
             // Avoid a "might be uninitialized" warning
@@ -2321,15 +2318,19 @@ void n32016_exec(uint32_t tubecycles)
 
             //PiTRACE("Reg = %u Bounds [%u - %u] Index = %u", 0, temp, temp2, temp3);
 
-            if (temp >= temp3 && temp3 >= temp2)
+            if ((temp >= temp3) && (temp3 >= temp2))
             {
                r[(opcode >> 11) & 7] = temp3 - temp2;
                F_FLAG = 0;
             }
             else
+            {
                F_FLAG = 1;
+            }
+
+            continue;
          }
-         break;
+         // No break due to continue
 
          case INDEX:
          {
@@ -2342,8 +2343,9 @@ void n32016_exec(uint32_t tubecycles)
             temp3 = ReadGen(1); // index
 
             r[(opcode >> 11) & 7] = (temp * temp2) + temp3;
+            // No break due to continue
          }
-         break;
+         // No break due to continue
 
          case FFS:
          {
@@ -2368,8 +2370,9 @@ void n32016_exec(uint32_t tubecycles)
                F_FLAG = 1;
                temp = 0;
             }
-            WriteIndex = 1;
+
             WriteSize = sz8;
+            WriteIndex = 1;
          }
          break;
 
@@ -2377,14 +2380,12 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (Function < TRAP)
             {
-               SET_TRAP(UnknownInstruction);
+               GOTO_TRAP(UnknownInstruction);
             }
-            else
-            {
-               SET_TRAP(UnknownFormat);         // Probably already set but belt and braces here!
-            }
+
+            GOTO_TRAP(UnknownFormat);         // Probably already set but belt and braces here!
          }
-         break;
+         // No break due to goto
       }
 
       if (WriteSize && (WriteSize <= sz32))
@@ -2423,7 +2424,7 @@ void n32016_exec(uint32_t tubecycles)
 
             case OpImmediate:
             {
-               SET_TRAP(IllegalWritingImmediate);
+               GOTO_TRAP(IllegalWritingImmediate);
                goto DoTrap;
             }
          }
