@@ -824,6 +824,27 @@ uint32_t CheckCondition(uint32_t Pattern)
    return bResult;
 }
 
+uint32_t BitPrefix(void)
+{
+   uint32_t temp2 = ReadGen(0);
+   if (gentype[1] == Register)
+   {
+      // operand 0 is a register
+      OpSize.Op[1] = sz32;
+      temp2 &= 31;
+   }
+   else
+   {
+      // operand0 is memory
+      // TODO: this should probably use the DIV and MOD opersator functions
+      genaddr[1] += temp2 / 8;
+      OpSize.Op[1] = sz32;
+      temp2 %= 8;
+   }
+
+   return temp2;
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteSize, WriteIndex;
@@ -1826,26 +1847,13 @@ void n32016_exec(uint32_t tubecycles)
             // interlock accesses to semaphore bits. This aspect is not implemented here.
          case CBITI:
          case SBITI:
-            temp2 = ReadGen(0);
-            if (gentype[1] == Register)
-            {
-               // operand 0 is a register
-               WriteSize = sz32;
-               temp2 &= 31;
-            }
-            else
-            {
-               // operand0 is memory
-               // TODO: this should probably use the DIV and MOD opersator functions
-               genaddr[1] += temp2 / 8;
-               WriteSize = sz32;
-               temp2 %= 8;
-            }
-            OpSize.Op[1] = WriteSize;
+            temp2 = BitPrefix();
+
             temp = ReadGen(1);
             psr &= ~F_FLAG;
             if (temp & BIT(temp2))
                psr |= F_FLAG;
+
             if (Function == IBIT)
             {
                temp ^= BIT(temp2);
@@ -1858,6 +1866,8 @@ void n32016_exec(uint32_t tubecycles)
             {
                temp &= ~(BIT(temp2));
             }
+
+            WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          break;
 
