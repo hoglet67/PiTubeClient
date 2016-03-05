@@ -10,6 +10,7 @@
 #include "NDis.h"
 #include "Profile.h"
 
+#ifdef PROFILING
 uint32_t Frequencies[InstructionCount];
 
 void ProfileInit(void)
@@ -42,3 +43,4 @@ void ProfileDump(void)
       }
    }
 }
+#endif

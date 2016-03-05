@@ -36,9 +36,9 @@ void copro_32016_init_hardware()
 static void copro_32016_reset()
 {
 #ifdef PANDORA_BASE
-   n32016_reset (PANDORA_BASE); // Start directly in the ROM
+   n32016_reset(PANDORA_BASE); // Start directly in the ROM
 #else
-   n32016_reset(0); // Start at 0 just like the original
+         n32016_reset(0); // Start at 0 just like the original
 #endif
 }
 
@@ -68,7 +68,7 @@ void copro_32016_main(unsigned int r0, unsigned int r1, unsigned int atags)
 
       gpio = RPI_GpioBase->GPLEV0;
 
-#if 0
+#if 1
       if (gpio == last_gpio)
       {
          continue;
