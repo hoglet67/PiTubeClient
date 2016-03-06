@@ -855,6 +855,29 @@ void PopRegisters(void)
    }
 }
 
+void TakeInterrupt(uint32_t IntBase)
+{
+   uint32_t temp = psr;
+   uint32_t temp2, temp3;
+
+   psr &= ~0xF00;
+   pushw(temp);
+   pushw(mod);
+   
+   while (read_x8(pc) == 0xB2)                                    // Do not stack the address of a WAIT instruction!
+   {
+      pc++;
+   }
+   
+   pushd(pc);
+   temp = read_x32(IntBase);
+   mod = temp & 0xFFFF;
+   temp3 = temp >> 16;
+   sb = read_x32(mod);
+   temp2 = read_x32(mod + 8);
+   pc = temp2 + temp3;
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteSize, WriteIndex;
@@ -865,32 +888,12 @@ void n32016_exec(uint32_t tubecycles)
    {
       // NMI is edge sensitive, so it should be cleared here
       tube_irq &= ~2;
-      temp = psr;
-      psr &= ~0xF00;
-      pushw(temp);
-      pushw(mod);
-      pushd(pc);
-      temp = read_x32(intbase + (1 * 4));
-      mod = temp & 0xFFFF;
-      temp3 = temp >> 16;
-      sb = read_x32(mod);
-      temp2 = read_x32(mod + 8);
-      pc = temp2 + temp3;
+      TakeInterrupt(intbase + (1 * 4));
    }
    else if ((tube_irq & 1) && (psr & 0x800))
    {
       // IRQ is level sensitive, so the called should maintain the state
-      temp = psr;
-      psr &= ~0xF00;
-      pushw(temp);
-      pushw(mod);
-      pushd(pc);
-      temp = read_x32(intbase);
-      mod = temp & 0xFFFF;
-      temp3 = temp >> 16;
-      sb = read_x32(mod);
-      temp2 = read_x32(mod + 8);
-      pc = temp2 + temp3;
+      TakeInterrupt(intbase);
    }
 
    while (tubecycles--)
@@ -1263,6 +1266,14 @@ void n32016_exec(uint32_t tubecycles)
 
          case NOP:
          {
+            continue;
+         }
+         // No break due to continue
+
+         case WAIT:
+         {
+            tubecycles = 0;                                    // Exit promptly as we are waiting for an interrupt
+            pc = startpc;
             continue;
          }
          // No break due to continue
