@@ -43,17 +43,6 @@ const uint16_t OpSizeLookup[4] =
    (sz32 << 8) + sz32
 };
 
-#define SIGN_EXTEND(size, reg) \
-  if ((size == sz8) && (reg & 0x80)) { \
-    reg |= 0xFFFFFF00; \
-    } else if ((size == sz16) && (reg & 0x8000)) { \
-    reg |= 0xFFFF0000; \
-  }
-
-#define NIBBLE_EXTEND(reg) \
-   if (reg & 0x08) \
-      reg |= 0xFFFFFFF0;
-
 void n32016_reset(uint32_t StartAddress)
 {
    n32016_build_matrix();

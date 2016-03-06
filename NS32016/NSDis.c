@@ -322,6 +322,19 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
          PiTRACE("%s%s ", pText, PostfixLookup(Postfix));
       }
 
+      switch (Function)
+      {
+         case ADDQ:
+         case CMPQ:
+         case MOVQ:
+         {
+            int32_t Value = (opcode >> 7) & 0xF;
+            NIBBLE_EXTEND(Value);
+            PiTRACE("%" PRId32 ", ", Value);
+         }
+         break;
+      }
+
       RegLookUp();
 
       if ((Function <= BN) || (Function == BSR))
@@ -329,6 +342,21 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
          uint32_t Address = pc + Disp;
          PiTRACE("&%06"PRIX32" ", Address);
       }
+
+#if 0
+      switch (Function)
+      {
+         case ADDQ:
+         case CMPQ:
+         case MOVQ:
+         {
+            int32_t Value = (opcode >> 7) & 0xF;
+            NIBBLE_EXTEND(Value);
+            PiTRACE(",%" PRId32, Value);
+         }
+         break;
+      }
+#endif
 
       PiTRACE("\n");
 
