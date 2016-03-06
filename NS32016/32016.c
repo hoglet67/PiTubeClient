@@ -1874,6 +1874,7 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(1);
             temp = bcd_sub(temp, temp2, OpSize.Op[0], &carry);
             C_FLAG = TEST(carry);
+            F_FLAG = 0;
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
@@ -1956,6 +1957,7 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(1);
             temp = bcd_add(temp, temp2, OpSize.Op[0], &carry);
             C_FLAG = TEST(carry);
+            F_FLAG = 0;
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }

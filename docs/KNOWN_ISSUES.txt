@@ -1,10 +1,6 @@
 Known issues
 ------------
 
-ADDP: should clear the F flag, but doesn't
-
-SUBP: should clear the F flag, but doesn't
-
 We have some general issues with instructions that have an operand
 that is "addr" OR "regaddr" access class.
 1. Correct handling of both register and memory operands
@@ -103,3 +99,8 @@ Access class addr:
 - CVTP  - bug when register used, should call ReadAddress()
 - CXPD  - bug when anything other than register uses, also TOS bug
 - MOVM  - bug when register used, should call ReadAddress()
+
+ADDP: should clear the F flag, but doesn't
+
+SUBP: should clear the F flag, but doesn't
+
