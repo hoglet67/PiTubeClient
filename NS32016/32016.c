@@ -1206,7 +1206,23 @@ void n32016_exec(uint32_t tubecycles)
 #if 0
          case RETI:
          {
-            PiTRACE("RETI ????");
+            // Also Performs either one or two "End of Interrupt" bus cycles in order to inform the appropriate Interrupt Controller(s) that this interrupt service procedure is ending.
+            pc = popd();
+            if (DirectExceptionMode = 0)
+            {
+               mod = popw();
+            }
+            else
+            {
+               popw();
+            }
+            psr = popw();
+            INC_SP(temp);
+
+            if (DirectExceptionMode = 0)
+            {
+               sb = read_x32(mod);
+            }
             continue;
          }
          // No break due to continue
