@@ -12,12 +12,12 @@
 
 #ifdef PROFILING
 
-#define NUM_OPERAND_TYPES 20
+#define NUM_OPERAND_TYPES 80
 
 uint32_t Frequencies[InstructionCount][NUM_OPERAND_TYPES][NUM_OPERAND_TYPES];
 
 
-const char OperandText[NUM_OPERAND_TYPES][NUM_OPERAND_TYPES] =
+const char operandStrings[NUM_OPERAND_TYPES][20] =
 {
    "--none--"        ,  //  0
    "--error--"       ,  //  1
@@ -35,10 +35,6 @@ const char OperandText[NUM_OPERAND_TYPES][NUM_OPERAND_TYPES] =
    "disp(SP)"        ,  // 13
    "disp(SB)"        ,  // 14
    "*+disp"          ,  // 15
-   "basemode[RN:B]"  ,  // 16
-   "basemode[RN:W]"  ,  // 17
-   "basemode[RN:D]"  ,  // 18
-   "basemode[RN:Q]"     // 19
 };
 
 void ProfileInit(void)
@@ -49,26 +45,29 @@ void ProfileInit(void)
 uint16_t processOperand(uint16_t operand)
 {
    // Mask off bits 15..8 which carry the base mode in indexed modes
-   operand &= 0xFF;
-   if (operand == 0xFF)
+   if (operand == 0xFFFF)
    {
-      return 0;
-   }
-   else if (operand >= 32)
-   {
-      return 1;
+      return 0; // --none--
    }
    else if (operand >= 0 && operand <= 7)
    {
-      return 2;
+      return 2; // RN
    }
    else if (operand >= 8 && operand <= 15)
    {
-      return 3;
+      return 3; // disp(RN)
+   }
+   else if (operand >= 16 && operand <= 27)
+   {
+      return operand - 12; // everything else
+   }
+   else if ((operand & 0xff) >= 28 && (operand & 0xff) <= 31)
+   {
+      return 16 + ((operand & 0xff) - 27) * 16 + processOperand(operand >> 11) ; // scaled indexed
    }
    else
    {
-      return operand - 12;
+      return 1; // --error--
    }
 }
 
@@ -80,6 +79,21 @@ void ProfileAdd(uint32_t Function, uint16_t Regs0, uint16_t Regs1)
       Regs1 = processOperand(Regs1);
       Frequencies[Function][Regs0][Regs1]++;
    }
+}
+
+char *operandText(uint16_t Reg)
+{
+   static char result[80];
+   static char mode[4] = "BWDQ";
+   if (Reg < 16)
+   {
+      sprintf(result, "%s", operandStrings[Reg]);
+   }
+   else
+   {
+      sprintf(result, "%s[Rn:%c]", operandStrings[Reg & 15], mode[(Reg >> 4) - 1]);
+   }
+   return result;
 }
 
 void ProfileDump(void)
@@ -111,8 +125,8 @@ void ProfileDump(void)
                {
                   printf("%02" PRIX32 ", ", Function);
                   printf("%-8s, ", InstuctionText[Function]);
-                  printf("%-16s, ", OperandText[Regs1]);
-                  printf("%-16s, ", OperandText[Regs0]);
+                  printf("%-24s, ", operandText(Regs1));
+                  printf("%-24s, ", operandText(Regs0));
                   printf("%9" PRIu32 "\n", Frequencies[Function][Regs0][Regs1]);
                }
          printf("\n");
