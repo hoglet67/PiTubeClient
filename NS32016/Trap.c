@@ -51,6 +51,7 @@ void Dump(void)
 
 void n32016_dumpregs(char* pMessage)
 {
+   TrapTRACE("%s\n", pMessage);
    Dump();
 
 #ifdef PC_SIMULATION
