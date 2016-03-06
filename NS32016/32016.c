@@ -817,23 +817,23 @@ uint32_t CheckCondition(uint32_t Pattern)
 
 uint32_t BitPrefix(void)
 {
-   uint32_t temp2 = ReadGen(0);
+   int32_t Offset = ReadGen(0);
    if (gentype[1] == Register)
    {
       // operand 0 is a register
       OpSize.Op[1] = sz32;
-      temp2 &= 31;
+      Offset &= 31;
    }
    else
    {
       // operand0 is memory
       // TODO: this should probably use the DIV and MOD opersator functions
-      genaddr[1] += temp2 / 8;
+      genaddr[1] += Offset / 8;
       OpSize.Op[1] = sz32;
-      temp2 %= 8;
+      Offset %= 8;
    }
 
-   return BIT(temp2);
+   return BIT(Offset);
 }
 
 void n32016_exec(uint32_t tubecycles)
