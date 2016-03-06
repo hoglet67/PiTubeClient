@@ -1553,7 +1553,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case ADDR:
          {
-            temp = genaddr[0];
+            temp = ReadAddress(0);
          }
          break;
 
@@ -1978,22 +1978,25 @@ void n32016_exec(uint32_t tubecycles)
 
          case CMPM:
          {
-            uint32_t temp4 = OpSize.Op[0];                                 // disp of 0 means move 1 byte/word/dword
+            uint32_t temp4    = OpSize.Op[0];                                 // disp of 0 means move 1 byte/word/dword
+            uint32_t First    = ReadAddress(0);
+            uint32_t Second   = ReadAddress(1);
+
             temp3 = (getdisp() / temp4) + 1;
 
             //PiTRACE("CMP Size = %u Count = %u\n", temp4, temp3);
             while (temp3--)
             {
-               temp  = read_n(genaddr[0], temp4);
-               temp2 = read_n(genaddr[1], temp4);
+               temp  = read_n(First, temp4);
+               temp2 = read_n(Second, temp4);
  
                if (CompareCommon(temp, temp2) == 0)
                {
                   break;
                }
 
-               genaddr[0] += temp4;
-               genaddr[1] += temp4;
+               First += temp4;
+               Second += temp4;
             }
 
             continue;
@@ -2307,6 +2310,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case CHECK:
          {
+            uint32_t ad = ReadAddress(0);
             temp3 = ReadGen(1);
 
             // Avoid a "might be uninitialized" warning
@@ -2315,22 +2319,22 @@ void n32016_exec(uint32_t tubecycles)
             {
                case sz8:
                {
-                  temp = read_x8(genaddr[0]);
-                  temp2 = read_x8(genaddr[0] + 1);
+                  temp = read_x8(ad);
+                  temp2 = read_x8(ad + 1);
                }
                break;
 
                case sz16:
                {
-                  temp = read_x16(genaddr[0]);
-                  temp2 = read_x16(genaddr[0] + 2);
+                  temp = read_x16(ad);
+                  temp2 = read_x16(ad + 2);
                }
                break;
 
                case sz32:
                {
-                  temp = read_x32(genaddr[0]);
-                  temp2 = read_x32(genaddr[0] + 4);
+                  temp = read_x32(ad);
+                  temp2 = read_x32(ad + 4);
                }
                break;
             }
