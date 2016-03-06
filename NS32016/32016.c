@@ -1310,6 +1310,9 @@ void n32016_exec(uint32_t tubecycles)
 
             switch (temp2)
             {
+               case 0x0:
+                  temp = psr & 0xff;
+               break;
                case 0x8:
                   temp = fp;
                break;
@@ -1318,6 +1321,9 @@ void n32016_exec(uint32_t tubecycles)
                break;
                case 0xA:
                   temp = sb;
+               break;
+               case 0xD:
+                  temp = psr;
                break;
                case 0xF:
                   temp = mod;
