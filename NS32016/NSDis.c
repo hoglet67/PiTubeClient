@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include "32016.h"
 #include "mem32016.h"
@@ -163,25 +162,11 @@ void RegLookUp(void)
 
 void BreakPoint(uint32_t pc, uint32_t opcode)
 {
-#if 1
+#if 0
 #ifndef TEST_SUITE
-   // Exec address of Bas32
-   if (pc == 0x000200)
+   if (pc == 0xF00276)
    {
-      printf("Entering Bas32\n");
-      ProfileInit();
-   }
-   // Exec address of Panos
-   if (pc == 0x000400)
-   {
-      printf("Entering Panos\n");
-      ProfileInit();
-   }
-   // Address of SVC &11 (OS_EXIT)
-   if (pc == 0xF007BB)
-   {
-      n32016_dumpregs("Retuning to Pandora");
-      ProfileInit();
+      n32016_dumpregs("Tube Read Loop!");
    }
 #endif
 
@@ -210,9 +195,9 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 	if (pc < MEG16)
 	{
       //PiTRACE("#%08"PRIu32" ", ++OpCount);
-      PiTRACE("PC: %06"   PRIX32 " ", pc);
-      PiTRACE("INST: %08" PRIX32 " ", opcode);
-      PiTRACE("F%01" PRIu32 ":", Function >> 4);
+      PiTRACE("&%06"   PRIX32 " ", pc);
+      PiTRACE("[%08" PRIX32 "] ", opcode);
+      PiTRACE("F%01" PRIu32 " ", Function >> 4);
 
       const char* pText = "Bad NS32016 opcode";
 
@@ -220,6 +205,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 
       if (Function < InstructionCount)
       {
+         ProfileAdd(Function);
          pText = InstuctionText[Function];
 
          if ((opcode & 0x80FF) == 0x800E)
@@ -240,34 +226,18 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 
       RegLookUp();
 
-      switch (Function)
+      if ((Function <= BN) || (Function == BSR))
       {
-         case Scond:
-         {
-            if (Regs[0] < 8)
-            {
-               uint32_t Condition = ((opcode >> 7) & 0x0F);
-
-               PiTRACE(" %s", &InstuctionText[Condition][1]);            // Offset by 1 to loose the 'B'
-            }
-         }
-         break;
-
-         case BSR:
-         {
-            uint32_t Address = pc + Disp;
-            PiTRACE(" &%06"PRIX32" ", Address);
-         }
-         break;
+         uint32_t Address = pc + Disp;
+         PiTRACE(" &%06"PRIX32" ", Address);
       }
 
       PiTRACE("\n");
 
 #ifdef TEST_SUITE
-      if (pc == 0x1CA9 || pc == 0x1CB2)
+      if (pc >= 0x1C95)
       {
          n32016_dumpregs("Test Suite Complete!\n");
-         exit(1);
       }
 #endif
 
