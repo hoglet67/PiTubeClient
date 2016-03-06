@@ -1,7 +1,6 @@
 Known issues
 ------------
 
-
 ADDP: should clear the F flag, but doesn't
 
 SUBP: should clear the F flag, but doesn't
@@ -13,18 +12,7 @@ that is "addr" OR "regaddr" access class.
 Specifics below:
 
 Access class addr:
-- ADDR  - bug when register used, should call ReadAddress()
-- CHECK - bug when register used, should call ReadAddress()
-- CMPM  - bug when register used, should call ReadAddress()
-- CVTP  - bug when register used, should call ReadAddress()
-- CXPD  - bug when anything other than register uses, also TOS bug
-- JSR   - correctly uses ReadAddress()
-- JUMP  - correctly uses ReadAddress()
-- MOVM  - bug when register used, should call ReadAddress()
-- MOVSU - not implemented
-- MOVUS - not implemented
-- RDVAL - not implemented
-- WRVAL - not implemented
+- all now fixed to use ReadAddress()
 
 Access class regaddr:
 - CBIT  - looks bug free (TOS OK, because reads and writes TOS)
@@ -37,8 +25,6 @@ Access class regaddr:
 - EXTS  - has TOS bug for base because ReadGen() used read only
 - INS   - looks very buggy, offset addes after base read!!! (also TOS bug)
 - INSS  - looks bug free (TOS OK, because reads and writes TOS)
-
-BitPrefix() doesn't correctly handle negative offset
 
 INS has the "% 8" bug when reading the offset operand.
 
@@ -107,3 +93,13 @@ Missing Traps:
 
 Fixed issues
 ------------
+
+BitPrefix() doesn't correctly handle negative offset
+
+Access class addr:
+- ADDR  - bug when register used, should call ReadAddress()
+- CHECK - bug when register used, should call ReadAddress()
+- CMPM  - bug when register used, should call ReadAddress()
+- CVTP  - bug when register used, should call ReadAddress()
+- CXPD  - bug when anything other than register uses, also TOS bug
+- MOVM  - bug when register used, should call ReadAddress()
