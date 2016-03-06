@@ -843,9 +843,10 @@ uint32_t BitPrefix(void)
 
 void PopRegisters(void)
 {
+   int c;
    int32_t temp = READ_PC_BYTE();
 
-   for (int c = 0; c < 8; c++)
+   for (c = 0; c < 8; c++)
    {
       if (temp & BIT(c))
       {
@@ -1210,9 +1211,10 @@ void n32016_exec(uint32_t tubecycles)
 
          case SAVE:
          {
+            int c;
             temp = READ_PC_BYTE();
 
-            for (int c = 0; c < 8; c++)                             // Matching tail with ENTER
+            for (c = 0; c < 8; c++)                             // Matching tail with ENTER
             {
                if (temp & BIT(c))
                {
@@ -1232,13 +1234,14 @@ void n32016_exec(uint32_t tubecycles)
 
          case ENTER:
          {
+            int c;
             temp = READ_PC_BYTE();
             temp2 = getdisp();
             pushd(fp);
             fp = GET_SP();
             DEC_SP(temp2);
 
-            for (int c = 0; c < 8; c++)                              // Matching tail with SAVE
+            for (c = 0; c < 8; c++)                              // Matching tail with SAVE
             {
                if (temp & BIT(c))
                {
