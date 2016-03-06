@@ -1,0 +1,109 @@
+Known issues
+------------
+
+
+ADDP: should clear the F flag, but doesn't
+
+SUBP: should clear the F flag, but doesn't
+
+We have some general issues with instructions that have an operand
+that is "addr" OR "regaddr" access class.
+1. Correct handling of both register and memory operands
+2. Correct handling of TOS (SP should not be modified)
+Specifics below:
+
+Access class addr:
+- ADDR  - bug when register used, should call ReadAddress()
+- CHECK - bug when register used, should call ReadAddress()
+- CMPM  - bug when register used, should call ReadAddress()
+- CVTP  - bug when register used, should call ReadAddress()
+- CXPD  - bug when anything other than register uses, also TOS bug
+- JSR   - correctly uses ReadAddress()
+- JUMP  - correctly uses ReadAddress()
+- MOVM  - bug when register used, should call ReadAddress()
+- MOVSU - not implemented
+- MOVUS - not implemented
+- RDVAL - not implemented
+- WRVAL - not implemented
+
+Access class regaddr:
+- CBIT  - looks bug free (TOS OK, because reads and writes TOS)
+- CBITI - looks bug free (TOS OK, because reads and writes TOS)
+- IBIT  - looks bug free (TOS OK, because reads and writes TOS)
+- SBIT  - looks bug free (TOS OK, because reads and writes TOS)
+- SBITI - looks bug free (TOS OK, because reads and writes TOS)
+- TBIT  - has TOS bug because because ReadGen() used read only
+- EXT   - looks very buggy, offset added to dest not base!!!
+- EXTS  - has TOS bug for base because ReadGen() used read only
+- INS   - looks very buggy, offset addes after base read!!! (also TOS bug)
+- INSS  - looks bug free (TOS OK, because reads and writes TOS)
+
+BitPrefix() doesn't correctly handle negative offset
+
+INS has the "% 8" bug when reading the offset operand.
+
+Review use of signed values for offsets in INS/INSS/EXS/EXTS.
+
+CMPM: N and L flag not set correctly for W and D sizes
+
+LPR: procreg=USP (1011) doesn't correctly update user stack pointer
+
+SPR: procreg=USP (1011) and INTBASE (1110) not implemented
+
+MEIi: Probably a bug when TOS used for destination
+
+NEGi: Probably a bug in setting the F flag when src is the most -ve number
+
+Investigate what direct-exception mode is, as it affects behaviour of RETT
+
+SETCFG: implemented but nscfg had no effect
+
+Add WARNings on undefined behaviour:
+- ASHi count operand out of range
+- LSHi count operand out of range
+- CHECKi when bounds is a register
+
+Missing Floating point instructions:
+- ABSf
+- ADDf
+- CMPf
+- DIVf
+- DOTf
+- FLOORf
+- LFSR
+- LOGBf
+- MOVf
+- MOVif
+- MOVFL
+- MOVLF
+- MULf
+- NEGf
+- POLYf
+- ROUNDfi
+- SCALBf
+- SFSR
+- SUBf
+- TRUNCfi
+
+Missing Memory Management instructions:
+- LMR
+- MOVSU
+- MOVUS
+- RDVAL
+- SMR
+- WRVAL
+
+Missing Integer instructions:
+- CINV
+- DIA
+- FLAG
+- INDEX
+- RETI
+- WAIT
+
+Missing Traps:
+- Integer Overflow Trap (OVF) and V flag
+- Illegal Operation Trap (IIL) on privileged operations in user mode
+
+Fixed issues
+------------
