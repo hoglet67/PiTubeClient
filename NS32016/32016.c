@@ -1149,14 +1149,17 @@ void n32016_exec(uint32_t tubecycles)
 
          case CXP:
          {
-            pushw(0);
-            pushw(mod);
-            pushd(pc);
             temp2 = read_x32(mod + 4) + (4 * temp);
             temp = read_x32(temp2);
+
+            pushw(0);                                          // Matching Tail with CXPD, complier do your stuff
+            pushw(mod);
+            pushd(pc);
             mod = temp & 0xFFFF;
+            temp3 = temp >> 16;
             sb = read_x32(mod);
-            pc = read_x32(mod + 8) + (temp >> 16);
+            temp2 = read_x32(mod + 8);
+            pc = temp2 + temp3;
             continue;
          }
          // No break due to continue
@@ -1419,7 +1422,8 @@ void n32016_exec(uint32_t tubecycles)
          {
             OpSize.Op[0] = sz32;
             temp = ReadGen(0);
-            pushw(0);
+
+            pushw(0);                                          // Matching Tail with CXP, complier do your stuff
             pushw(mod);
             pushd(pc);
             mod = temp & 0xFFFF;
