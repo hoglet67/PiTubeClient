@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "32016.h"
 #include "mem32016.h"
@@ -162,11 +163,25 @@ void RegLookUp(void)
 
 void BreakPoint(uint32_t pc, uint32_t opcode)
 {
-#if 0
+#if 1
 #ifndef TEST_SUITE
-   if (pc == 0xF00276)
+   // Exec address of Bas32
+   if (pc == 0x000200)
    {
-      n32016_dumpregs("Tube Read Loop!");
+      printf("Entering Bas32\n");
+      ProfileInit();
+   }
+   // Exec address of Panos
+   if (pc == 0x000400)
+   {
+      printf("Entering Panos\n");
+      ProfileInit();
+   }
+   // Address of SVC &11 (OS_EXIT)
+   if (pc == 0xF007BB)
+   {
+      n32016_dumpregs("Retuning to Pandora");
+      ProfileInit();
    }
 #endif
 
@@ -205,7 +220,6 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 
       if (Function < InstructionCount)
       {
-         ProfileAdd(Function);
          pText = InstuctionText[Function];
 
          if ((opcode & 0x80FF) == 0x800E)
@@ -250,9 +264,10 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
       PiTRACE("\n");
 
 #ifdef TEST_SUITE
-      if (pc >= 0x1C95)
+      if (pc == 0x1CA9 || pc == 0x1CB2)
       {
          n32016_dumpregs("Test Suite Complete!\n");
+         exit(1);
       }
 #endif
 

@@ -40,6 +40,7 @@ project( tube-client C ASM )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall" )
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -nostartfiles" )
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DPROFILING" )
 
 
 
@@ -61,6 +62,8 @@ add_executable( tube-client
     ../../NS32016/PandoraV2_00.h
     ../../NS32016/Trap.c
     ../../NS32016/Trap.h
+    ../../NS32016/Profile.c
+    ../../NS32016/Profile.h
 # 80186 Co Pro
     copro-80186.c
     copro-80186.h
