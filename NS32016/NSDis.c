@@ -195,8 +195,8 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 	if (pc < MEG16)
 	{
       //PiTRACE("#%08"PRIu32" ", ++OpCount);
-      PiTRACE("PC: % 06"   PRIX32 " ", pc);
-      PiTRACE("INST: % 08" PRIX32 " ", opcode);
+      PiTRACE("PC: %06"   PRIX32 " ", pc);
+      PiTRACE("INST: %08" PRIX32 " ", opcode);
       PiTRACE("F%01" PRIu32 ":", Function >> 4);
 
       const char* pText = "Bad NS32016 opcode";
