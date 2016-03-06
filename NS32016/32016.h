@@ -20,8 +20,8 @@
 #define C_FLAG PR.PSR.c_flag
 #define T_FLAG PR.PSR.t_flag
 #define L_FLAG PR.PSR.l_flag
-#define F_FLAG PR.PSR.f_v_flag
-#define V_FLAG PR.PSR.f_v_flag
+#define V_FLAG PR.PSR.v_flag
+#define F_FLAG PR.PSR.f_flag
 #define Z_FLAG PR.PSR.z_flag
 #define N_FLAG PR.PSR.n_flag
 
@@ -289,8 +289,8 @@ typedef union
       unsigned l_flag   : 1;          // 0x0004
       unsigned Bit3     : 1;          // 0x0008
 
-      unsigned Bit4     : 1;          // 0x0010
-      unsigned f_v_flag : 1;          // 0x0020
+      unsigned v_flag   : 1;          // 0x0010
+      unsigned f_flag   : 1;          // 0x0020
       unsigned z_flag   : 1;          // 0x0040
       unsigned n_flag   : 1;          // 0x0080
 
