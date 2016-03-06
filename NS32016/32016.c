@@ -350,13 +350,14 @@ static void GetGenPhase2(int gen, int c)
          uint32_t Shift = gen & 3;
          GetGenPhase2(gen >> 11, c);
 
+         int32_t Offset = ((int32_t) r[temp]) * (1 << Shift);
          if (gentype[c] != Register)
          {
-            genaddr[c] += (r[temp] << Shift);
+            genaddr[c] += Offset;
          }
          else
          {
-            genaddr[c] = *((uint32_t*) genaddr[c]) + (r[temp] << Shift);
+            genaddr[c] = *((uint32_t*) genaddr[c]) + Offset;
          }
 
          gentype[c] = Memory;                               // Force Memory
