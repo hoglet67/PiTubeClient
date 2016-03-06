@@ -2247,7 +2247,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case CVTP:
          {
-            int32_t Offset = r[(opcode >> 11) & 7] % 8;
+            int32_t Offset = r[(opcode >> 11) & 7];
             int32_t Base = genaddr[0];
 
             temp = (Base * 8) + Offset;
