@@ -282,12 +282,12 @@ uint32_t ReadGen(uint32_t c)
 
 uint32_t ReadAddress(uint32_t c)
 {
-   if (gentype[0] == Register)
+   if (gentype[c] == Register)
    {
-      return *(uint32_t *) genaddr[0];
+      return *(uint32_t *) genaddr[c];
    }
  
-   return genaddr[0];
+   return genaddr[c];
 }
 
 static void getgen(int gen, int c)
@@ -1965,13 +1965,15 @@ void n32016_exec(uint32_t tubecycles)
 
          case MOVM:
          {
+            uint32_t First    = ReadAddress(0);
+            uint32_t Second   = ReadAddress(1);
             temp = getdisp() + OpSize.Op[0];                      // disp of 0 means move 1 byte
             while (temp)
             {
-               temp2 = read_x8(genaddr[0]);
-               genaddr[0]++;
-               write_x8(genaddr[1], temp2);
-               genaddr[1]++;
+               temp2 = read_x8(First);
+               First++;
+               write_x8(Second, temp2);
+               Second++;
                temp--;
             }
 
