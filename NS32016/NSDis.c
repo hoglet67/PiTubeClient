@@ -107,25 +107,123 @@ void RegLookUp(void)
 
    for (Index = 0; Index < 2; Index++)
    {
-      if (Regs[Index] < 32)
+      if (Regs[Index] < 0xFFFF)
       {
+         if ((Index == 1) && (Regs[0] < 0xFFFF))        // Hack for now
+         {
+            PiTRACE(",");
+         }
+
          if (Regs[Index] < 8)
          {
-            if ((Index == 1) && (Regs[0] < 8))        // Hack for now
-            {
-               PiTRACE(",");
-            }
-
             PiTRACE("R%u", Regs[Index]);
          }
          else if (Regs[Index] < 16)
          {
-
+            PiTRACE("(R%u)", (Regs[Index] & 7));
          }
-         else if (Regs[Index] == 0x17)
+         else
          {
-            PiTRACE("TOS");
+            switch (Regs[Index] & 0x1F)
+            {
+               case FrameRelative:
+               {
+                  PiTRACE("FrameR");
+               }
+               break;
+               
+               case StackRelative:
+               {
+                  PiTRACE("StackR");
+               }
+               break;
+
+               case StaticRelative:
+               {
+                  PiTRACE("StaticR");
+               }
+               break;
+
+               case IllegalOperand:
+               {
+                  PiTRACE("IllegalOperand");
+               }
+               break; 
+ 
+               case Immediate:
+               {
+                  PiTRACE("Immediate");
+               }
+               break;
+
+               case Absolute:
+               {
+                  PiTRACE("Absolute");
+               }
+               break;
+
+               case External:
+               {
+                  PiTRACE("External");
+               }
+               break;
+ 
+               case TopOfStack:
+               {
+                  PiTRACE("TOS");
+               }
+               break;
+
+               case FpRelative:
+               {
+                  PiTRACE("FpRelative");
+               }
+               break;
+
+               case SpRelative:
+               {
+                  PiTRACE("SpRelative");
+               }
+               break;
+
+               case SbRelative:
+               {
+                  PiTRACE("SbRelative");
+               }
+               break;
+
+               case PcRelative:
+               {
+                  PiTRACE("PcRelative");
+               }
+               break;
+
+               case EaPlusRn:
+               {
+                  PiTRACE("EaPlusRn");
+               }
+               break;
+
+               case EaPlus2Rn:
+               {
+                  PiTRACE("EaPlus2Rn");
+               }
+               break;
+
+               case EaPlus4Rn:
+               {
+                  PiTRACE("EaPlus4Rn");
+               }
+               break;
+
+               case EaPlus8Rn:
+               {
+                  PiTRACE("EaPlus8Rn");
+               }
+               break;
+            }
          }
+
 #if 0
          else
          {
@@ -194,14 +292,14 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 {
 	if (pc < MEG16)
 	{
+      const char* pText = "Bad NS32016 opcode";
+      uint32_t Postfix = OperandSize;
+      uint32_t Format = Function >> 4;
+
       //PiTRACE("#%08"PRIu32" ", ++OpCount);
       PiTRACE("&%06"   PRIX32 " ", pc);
       PiTRACE("[%08" PRIX32 "] ", opcode);
-      PiTRACE("F%01" PRIu32 " ", Function >> 4);
-
-      const char* pText = "Bad NS32016 opcode";
-
-      uint32_t Postfix = OperandSize;
+      PiTRACE("F%01" PRIu32 " ", Format);
 
       if (Function < InstructionCount)
       {
@@ -229,7 +327,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
       if ((Function <= BN) || (Function == BSR))
       {
          uint32_t Address = pc + Disp;
-         PiTRACE(" &%06"PRIX32" ", Address);
+         PiTRACE("&%06"PRIX32" ", Address);
       }
 
       PiTRACE("\n");
