@@ -530,8 +530,10 @@ static uint32_t bcd_sub(uint32_t a, uint32_t b, int size, uint32_t *carry)
    }
 }
 
-static void update_add_flags(uint32_t a, uint32_t b, uint32_t cin)
+static uint32_t update_add_flags(uint32_t a, uint32_t b, uint32_t cin)
 {
+   uint32_t sum = a + (b + cin);
+
    if (b == 0xffffffff && cin == 1)
    {
       C_FLAG = 1;
@@ -539,7 +541,6 @@ static void update_add_flags(uint32_t a, uint32_t b, uint32_t cin)
    }
    else
    {
-      uint32_t sum = a + (b + cin);
       switch (OpSize.Op[0])
       {
          case sz8:
@@ -565,6 +566,8 @@ static void update_add_flags(uint32_t a, uint32_t b, uint32_t cin)
       }
    }
    //PiTRACE("ADD FLAGS: C=%d F=%d\n", C_FLAG, F_FLAG);
+
+   return sum;
 }
 
 static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
@@ -1298,8 +1301,7 @@ void n32016_exec(uint32_t tubecycles)
             NIBBLE_EXTEND(temp2);
             temp = ReadGen(0);
 
-            update_add_flags(temp, temp2, 0);
-            temp += temp2;
+            temp = update_add_flags(temp, temp2, 0);
          }
          break;
 
@@ -1487,8 +1489,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(0);
             temp = ReadGen(1);
 
-            update_add_flags(temp, temp2, 0);
-            temp += temp2;
+            temp = update_add_flags(temp, temp2, 0);
          }
          break;
 
@@ -1515,9 +1516,7 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(1);
 
             temp3 = C_FLAG;
-            update_add_flags(temp, temp2, temp3);
-            temp += temp2;
-            temp += temp3;
+            temp = update_add_flags(temp, temp2, temp3);
          }
          break;
 
