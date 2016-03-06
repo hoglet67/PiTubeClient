@@ -532,46 +532,54 @@ static uint32_t bcd_sub(uint32_t a, uint32_t b, int size, uint32_t *carry)
 
 static void update_add_flags(uint32_t a, uint32_t b, uint32_t cin)
 {
-   // TODO: Check the carry logic here is correct
-   // I suspect there is a corner case where b=&FFFFFFFF and cin=1
-   uint32_t sum = a + b + cin;
-
-   switch (OpSize.Op[0])
+   if (b == 0xffffffff && cin == 1)
    {
-      case sz8:
-      {
-         C_FLAG = TEST(sum & 0x100);
-         F_FLAG = TEST((a ^ sum) & (b ^ sum) & 0x80);
-      }
-      break;
-
-      case sz16:
-      {
-         C_FLAG = TEST(sum & 0x10000);
-         F_FLAG = TEST((a ^ sum) & (b ^ sum) & 0x8000);
-      }
-      break;
-
-      case sz32:
-      {
-         C_FLAG = TEST(sum < a);
-         F_FLAG = TEST((a ^ sum) & (b ^ sum) & 0x80000000);
-      }
-      break;
+      C_FLAG = 1;
+      F_FLAG = 0;
    }
+   else
+   {
+      uint32_t sum = a + (b + cin);
+      switch (OpSize.Op[0])
+      {
+         case sz8:
+            {
+               C_FLAG = TEST(sum & 0x100);
+               F_FLAG = TEST((a ^ sum) & (b ^ sum) & 0x80);
+            }
+            break;
 
+         case sz16:
+            {
+               C_FLAG = TEST(sum & 0x10000);
+               F_FLAG = TEST((a ^ sum) & (b ^ sum) & 0x8000);
+            }
+            break;
+
+         case sz32:
+            {
+               C_FLAG = TEST(sum < a);
+               F_FLAG = TEST((a ^ sum) & (b ^ sum) & 0x80000000);
+            }
+            break;
+      }
+   }
    //PiTRACE("ADD FLAGS: C=%d F=%d\n", C_FLAG, F_FLAG);
 }
 
 static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
 {
-   // TODO: Check the carry logic here is correct
-   // I suspect there is a corner case where b=&FFFFFFFF and cin=1
-   uint32_t diff = a - b - cin;
-
-   C_FLAG = TEST(diff > a);
-   F_FLAG = ((b ^ a) & (b ^ diff) & 0x80000000);
-
+   if (b == 0xffffffff && cin == 1)
+   {
+      C_FLAG = 1;
+      F_FLAG = 0;
+   }
+   else
+   {
+      uint32_t diff = a - (b + cin);
+      C_FLAG = TEST(diff > a);
+      F_FLAG = ((b ^ a) & (b ^ diff) & 0x80000000);
+   }
    //PiTRACE("SUB FLAGS: C=%d F=%d\n", C_FLAG, F_FLAG);
 }
 
