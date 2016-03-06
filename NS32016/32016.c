@@ -818,6 +818,8 @@ uint32_t CheckCondition(uint32_t Pattern)
 uint32_t BitPrefix(void)
 {
    int32_t Offset = ReadGen(0);
+   SIGN_EXTEND(OpSize.Op[0], Offset);
+
    if (gentype[1] == Register)
    {
       // operand 0 is a register
