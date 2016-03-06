@@ -1270,13 +1270,20 @@ void n32016_exec(uint32_t tubecycles)
          }
          // No break due to continue
 
-         case WAIT:
+         case WAIT:                                             // Wait for interrupt then continue execution
+         case DIA:                                              // Wait for interrupt and in theory never resume execution (stack manipulation would get round this)
          {
             tubecycles = 0;                                    // Exit promptly as we are waiting for an interrupt
             pc = startpc;
             continue;
          }
          // No break due to continue
+
+         case FLAG:
+         {
+            GOTO_TRAP(FlagInstruction);
+         }
+         // No break due to goto
 
          case SVC:
          {
@@ -1298,8 +1305,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case BPT:
          {
-            SET_TRAP(BreakPointTrap);
-            goto DoTrap;
+            GOTO_TRAP(BreakPointTrap);
          }
          // No break due to goto
 

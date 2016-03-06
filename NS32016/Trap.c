@@ -25,7 +25,8 @@ const char TrapText[TrapCount][40] =
    "Illegal DoubleIndexing",
    "Illegal SpecialReading",
    "Illegal SpecialWriting",
-   "Illegal Writing Immediate"
+   "Illegal Writing Immediate",
+   "Flag Instuction"
 };
 
 void Dump(void)
