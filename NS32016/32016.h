@@ -317,6 +317,19 @@ typedef union
 {
    struct
    {
+      uint16_t Lower;
+      uint16_t Upper;
+   };
+
+   uint16_t Whole;
+} T16In32;
+   
+
+
+typedef union
+{
+   struct
+   {
       uint32_t UPSR;
       uint32_t DCR;
       uint32_t BPC;
@@ -334,7 +347,7 @@ typedef union
       uint32_t CFG;
       PsrType  PSR;
       uint32_t INTBASE;
-      uint32_t MOD;
+      T16In32  MOD;
    };
 
    uint32_t Direct[16];
@@ -345,7 +358,7 @@ typedef union
 #define sb           PR.SB
 #define psr          PR.PSR.Whole
 #define intbase      PR.INTBASE
-#define mod          PR.MOD
+#define mod          PR.MOD.Whole
 
 extern uint32_t sp[2];
 
