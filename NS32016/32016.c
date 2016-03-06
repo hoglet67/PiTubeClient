@@ -1197,11 +1197,9 @@ void n32016_exec(uint32_t tubecycles)
 
          case SAVE:
          {
-            int c;
-
             temp = READ_PC_BYTE();
 
-            for (c = 0; c < 8; c++)
+            for (int c = 0; c < 8; c++)                             // Matching tail with ENTER
             {
                if (temp & BIT(c))
                {
@@ -1228,15 +1226,13 @@ void n32016_exec(uint32_t tubecycles)
 
          case ENTER:
          {
-            int c;
-
             temp = READ_PC_BYTE();
             temp2 = getdisp();
             pushd(fp);
             fp = GET_SP();
             DEC_SP(temp2);
 
-            for (c = 0; c < 8; c++)
+            for (int c = 0; c < 8; c++)                              // Matching tail with SAVE
             {
                if (temp & BIT(c))
                {
