@@ -152,7 +152,8 @@ void RegLookUp(void)
  
                case Immediate:
                {
-                  PiTRACE("Immediate");
+                  //PiTRACE("Immediate");
+                  PiTRACE("x'%"PRIX32, genaddr[Index]);
                }
                break;
 
@@ -331,6 +332,20 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
             int32_t Value = (opcode >> 7) & 0xF;
             NIBBLE_EXTEND(Value);
             PiTRACE("%" PRId32 ", ", Value);
+         }
+         break;
+
+         case LPR:
+         {
+            int32_t Value = (opcode >> 7) & 0xF;
+            if (Value == 9)
+            {
+               PiTRACE("SP,", Value);
+            }
+            else
+            {
+               PiTRACE("%" PRId32 ", ", Value);
+            }
          }
          break;
       }
