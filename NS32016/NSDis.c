@@ -162,7 +162,7 @@ void RegLookUp(void)
 
 void BreakPoint(uint32_t pc, uint32_t opcode)
 {
-#if 1
+#if 0
 #ifndef TEST_SUITE
    if (pc == 0xF00276)
    {
