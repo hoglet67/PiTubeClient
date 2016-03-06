@@ -821,24 +821,24 @@ uint32_t CheckCondition(uint32_t Pattern)
 uint32_t BitPrefix(void)
 {
    int32_t Offset = ReadGen(0);
+   uint32_t bit;
    SIGN_EXTEND(OpSize.Op[0], Offset);
 
    if (gentype[1] == Register)
    {
       // operand 0 is a register
       OpSize.Op[1] = sz32;
-      Offset &= 31;
+      bit = ((uint32_t) Offset) & 31;
    }
    else
    {
       // operand0 is memory
-      // TODO: this should probably use the DIV and MOD opersator functions
       genaddr[1] += Offset / 8;
-      OpSize.Op[1] = sz32;
-      Offset %= 8;
+      OpSize.Op[1] = sz8;
+      bit = ((uint32_t) Offset) & 7;
    }
 
-   return BIT(Offset);
+   return BIT(bit);
 }
 
 void PopRegisters(void)
