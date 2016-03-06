@@ -841,6 +841,19 @@ uint32_t BitPrefix(void)
    return BIT(Offset);
 }
 
+void PopRegisters(void)
+{
+   int32_t temp = READ_PC_BYTE();
+
+   for (int c = 0; c < 8; c++)
+   {
+      if (temp & BIT(c))
+      {
+         r[c ^ 7] = popd(r[c]);
+      }
+   }
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteSize, WriteIndex;
@@ -1212,14 +1225,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case RESTORE:
          {
-            int c;
-            temp = READ_PC_BYTE();
-
-            for (c = 0; c < 8; c++)
-            {
-               if (temp & BIT(c))
-                  r[c ^ 7] = popd(r[c]);
-            }
+            PopRegisters();
             continue;
          }
          // No break due to continue
@@ -1245,16 +1251,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case EXIT:
          {
-            int c;
-            temp = READ_PC_BYTE();
- 
-            for (c = 0; c < 8; c++)
-            {
-               if (temp & BIT(c))
-               {
-                  r[c ^ 7] = popd(r[c]);
-               }
-            }
+            PopRegisters();
             SET_SP(fp);
             fp = popd();
             continue;
