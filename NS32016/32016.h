@@ -252,6 +252,12 @@ enum Functions
    WRVAL,
    LMR,
    SMR,
+   TRAP_F14_0100,
+   TRAP_F14_0101,
+   TRAP_F14_0110,
+   TRAP_F14_0111,
+   TRAP_F14_1000,
+   CINV,
    
    TRAP = F_BASE(FormatCount),
    InstructionCount,

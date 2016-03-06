@@ -84,7 +84,7 @@ const char InstuctionText[InstructionCount][8] =
 
    // FORMAT 14
    "RDVAL", "WRVAL", "LMR", "SMR", "TRAP", "TRAP", "TRAP", "TRAP",
-   "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
+   "TRAP", "CINV",  "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
 
    // Illegal
    "TRAP"
