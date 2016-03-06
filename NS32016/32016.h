@@ -321,7 +321,7 @@ typedef union
       uint16_t Upper;
    };
 
-   uint16_t Whole;
+   uint32_t Whole;
 } T16In32;
    
 
