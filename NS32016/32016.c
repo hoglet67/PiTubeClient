@@ -96,129 +96,60 @@ uint32_t PopArbitary(uint32_t Size)
    return Result;
 }
 
-#ifdef BYTE_SWAP
-
-#if 1
 static uint32_t getdisp()
 { 
    // Displacements are in Little Endian and need to be sign extended
 
-   MultiReg Addr;
-   Addr.u32 = SWAP32(read_x32(pc++));
+   MultiReg Disp;
+   Disp.u32 = SWAP32(read_x32(pc++));
 
-   switch (Addr.u32 >> 29)
+   switch (Disp.u32 >> 29)                                              // Look at the top 3 bits
    {
-      case 0:                                                          // 7 Bit Posative
+      case 0:                                                           // 7 Bit Posative
       case 1:
       {
-         return Addr.u8.Value;
+         return Disp.u8;
       }
       // No break due to return
 
-      case 2:                                                         // 7 Bit Negative
+      case 2:                                                           // 7 Bit Negative
       case 3:
       {
-         return Addr.u8.Value | 0xFFFFFF80;
+         return Disp.u8 | 0xFFFFFF80;
       }
       // No break due to return
 
-      case 4:                                                          // 14 Bit Posative
+      case 4:                                                           // 14 Bit Posative
       {
          pc++;
-         return Addr.u16.Value & 0x3FFF;
+         return Disp.u16 & 0x3FFF;
       }
       // No break due to return
 
-      case 5:                                                          // 14 Bit Negative
+      case 5:                                                           // 14 Bit Negative
       {
          pc++;
-         return Addr.u16.Value | 0xFFFFC000;
+         return Disp.u16 | 0xFFFFC000;
       }
       // No break due to return
 
-      case 6:                                                         // 30 Bit Posative
+      case 6:                                                           // 30 Bit Posative
       {
          pc += 3;
-         return Addr.u32 & 0x3FFFFFFF;
+         return Disp.u32 & 0x3FFFFFFF;
       }
       // No break due to return
    
-      case 7:                                                        // 30 Bit Negative
+      case 7:                                                           // 30 Bit Negative
       {
          pc += 3;
-         return Addr.u32; 
+         return Disp.u32;
       }
       // No break due to return
    }
 
-   return 0;                                                               // Unreaable code
+   return 0;                                                            // Unreaable code
 }
-
-#else
-
-static uint32_t getdisp()
-{ 
-   uint32_t addr = read_x32(pc++);
-
-   if ((addr & 0x80) == 0)                                          // 8 Bit Operand
-   {
-      if (addr & 0x40)                                               // Negative
-      {
-         return addr | 0xFFFFFF80;
-      }
-      
-      return addr & 0xFF;
-   }
-
-   addr = SWAP32(addr);                                              // Now LSB at the top
-   
-   if ((addr & 0x40000000) == 0)                                     // 14 Bit Operand
-   {
-      pc++;
-      addr >>= 16;
-
-      if (addr & 0x2000)                                             // Negative
-      {
-         return addr | 0xFFFFC000;
-      }
-
-      return addr & 0x3FFF;
-   }
-
-   pc += 3;                                                            // 30 Bit Operand
-   if (addr & 0x20000000)                                              // Negative
-   {
-      return addr;                                                     // Top three bits already set!
-   }
-   return addr & 0x3FFFFFFF;
-}
-#endif
-#else
-static uint32_t getdisp()
-{
-   uint32_t addr = READ_PC_BYTE();
-
-   if (!(addr & 0x80))
-   {
-      return addr | ((addr & 0x40) ? 0xFFFFFF80 : 0);
-   }
-
-   if (!(addr & 0x40))
-   {
-      addr &= 0x3F;
-      addr = (addr << 8) | READ_PC_BYTE();
-
-      return addr | ((addr & 0x2000) ? 0xFFFFC000 : 0);
-   }
-
-   addr &= 0x3F;
-   addr = (addr << 24) | (READ_PC_BYTE() << 16);
-   addr = addr | (READ_PC_BYTE() << 8);
-   addr = addr | READ_PC_BYTE();
-
-   return addr | ((addr & 0x20000000) ? 0xC0000000 : 0);
-}
-#endif
 
 uint32_t Truncate(uint32_t Value, uint32_t Size)
 {
@@ -322,9 +253,9 @@ static void GetGenPhase2(int gen, int c)
 
          temp3.u32 = SWAP32(read_x32(pc));
          if (OpSize.Op[c] == sz8)
-            genaddr[c] = temp3.u8.Value;
+            genaddr[c] = temp3.u8;
          else if (OpSize.Op[c] == sz16)
-            genaddr[c] = temp3.u16.Value;
+            genaddr[c] = temp3.u16;
          else
             genaddr[c] = temp3.u32;
 

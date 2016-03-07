@@ -15,29 +15,29 @@ typedef union
    
    struct
    {
-      uint8_t DoNotUseByte1;
-      uint8_t DoNotUseByte2;
-      uint8_t DoNotUseByte3;
-      uint8_t Value;
-   } u8;
+      uint8_t DoNotUse_u8_3;
+      uint8_t DoNotUse_u8_2;
+      uint8_t DoNotUse_u8_1;
+      uint8_t u8;
+   };
 
    struct
    {
-      int8_t DoNotUseByte1;
-      int8_t DoNotUseByte2;
-      int8_t DoNotUseByte3;
-      int8_t Value;
-   } s8;
+      int8_t DoNotUse_s8_3;
+      int8_t DoNotUse_s8_2;
+      int8_t DoNotUse_s8_1;
+      int8_t s8;
+   };
 
    struct
    {
-      uint16_t DoNotUse;
-      uint16_t Value;
-   } u16;
+      uint16_t DoNotUse_u16_1;
+      uint16_t u16;
+   };
 
    struct
    {
-      int16_t DoNotUse;
-      int16_t Value;
-   } s16;
+      int16_t DoNotUse_s16_1;
+      int16_t s16;
+   };
 } MultiReg;
