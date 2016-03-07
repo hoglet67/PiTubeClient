@@ -656,24 +656,24 @@ static void handle_mei_dei_upper_write(uint64_t result)
    }
 }
 
-uint32_t CompareCommon(uint32_t temp, uint32_t temp2)
+uint32_t CompareCommon(uint32_t src1, uint32_t src2)
 {
-   L_FLAG = TEST(temp2 > temp);
+   L_FLAG = TEST(src1 > src2);
 
    if (OpSize.Op[0] == sz8)
    {
-      N_FLAG = TEST(((int8_t) temp2) > ((int8_t) temp));
+      N_FLAG = TEST(((int8_t) src1) > ((int8_t) src2));
    }
    else if (OpSize.Op[0] == sz16)
    {
-      N_FLAG = TEST(((int16_t) temp2) > ((int16_t) temp));
+      N_FLAG = TEST(((int16_t) src1) > ((int16_t) src2));
    }
    else
    {
-      N_FLAG = TEST(((int32_t) temp2) > ((int32_t) temp));
+      N_FLAG = TEST(((int32_t) src1) > ((int32_t) src2));
    }
 
-   Z_FLAG = TEST(temp == temp2);
+   Z_FLAG = TEST(src1 == src2);
 
    return Z_FLAG;
 }
@@ -1341,7 +1341,7 @@ void n32016_exec(uint32_t tubecycles)
             NIBBLE_EXTEND(temp2);
             temp = ReadGen(0);
             SIGN_EXTEND(OpSize.Op[0], temp);
-            CompareCommon(temp, temp2);
+            CompareCommon(temp2, temp);
             continue;
          }
          // No break due to continue
@@ -1528,7 +1528,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp2 = ReadGen(0);
             temp = ReadGen(1);
-            CompareCommon(temp, temp2);
+            CompareCommon(temp2, temp);
             continue;
          }
          // No break due to continue
