@@ -846,6 +846,32 @@ void WarnIfShiftInvalid(uint32_t shift, uint8_t size)
    }
 }
 
+uint32_t ReturnCommon(void)
+{
+   if (PR.PSR.u_flag)
+   {
+      return 1;
+   }
+
+   // Also Performs either one or two "End of Interrupt" bus cycles in order to inform the appropriate Interrupt Controller(s) that this interrupt service procedure is ending.
+   pc = popd();
+   uint16_t unstack = popw();
+
+   if (nscfg.de_flag == 0)
+   {
+      mod = unstack;
+   }
+
+   psr = popw();
+
+   if (nscfg.de_flag == 0)
+   {
+      sb = read_x32(mod);
+   }
+
+   return 0;
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteSize, WriteIndex;
@@ -1166,43 +1192,24 @@ void n32016_exec(uint32_t tubecycles)
 
          case RETT:
          {
-            if (PR.PSR.u_flag)
+            if (ReturnCommon())
             {
                GOTO_TRAP(PrivilegedInstruction);
             }
 
-            pc = popd();
-            mod = popw();
-            psr = popw();
             INC_SP(temp);
-            sb = read_x32(mod);
             continue;
          }
          // No break due to continue
 
          case RETI:
          {
-            if (PR.PSR.u_flag)
+            // No "End of Interrupt" bus cycles here!
+            if (ReturnCommon())
             {
                GOTO_TRAP(PrivilegedInstruction);
             }
 
-            // Also Performs either one or two "End of Interrupt" bus cycles in order to inform the appropriate Interrupt Controller(s) that this interrupt service procedure is ending.
-            pc = popd();
-            uint16_t unstack = popw();
-
-            if (nscfg.de_flag == 0)
-            {
-               mod = unstack;
-            }
-
-            psr = popw();
-            INC_SP(temp);
-
-            if (nscfg.de_flag == 0)
-            {
-               sb = read_x32(mod);
-            }
             continue;
          }
          // No break due to continue
