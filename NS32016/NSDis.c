@@ -290,7 +290,7 @@ void RegLookUp(uint32_t Start, uint32_t Offset)
                   {
 #if 1
                      Start += GetDisplacement(&Address);
-                     PiTRACE("&%" PRIX32 "[PC]", Start);
+                     PiTRACE("&06%" PRIX32 "[PC]", Start);
 #else
                      int32_t d = GetDisplacement(&Address);
                      PiTRACE("PcRelative {&%" PRId32 " %" PRId32"}", Start, d);
