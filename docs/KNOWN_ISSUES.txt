@@ -1,5 +1,6 @@
+==================================================================
 Known issues
-------------
+==================================================================
 
 We have some general issues with instructions that have an operand
 that is "addr" OR "regaddr" access class.
@@ -34,10 +35,9 @@ Investigate what direct-exception mode is, as it affects behaviour of RETT
 
 SETCFG: implemented but nscfg had no effect
 
-Add WARNings on undefined behaviour:
-- ASHi count operand out of range
-- LSHi count operand out of range
-- CHECKi when bounds is a register
+==================================================================
+Missing instructions
+==================================================================
 
 Missing Floating point instructions:
 - ABSf
@@ -81,8 +81,9 @@ Missing Traps:
 - Integer Overflow Trap (OVF) and V flag
 - Illegal Operation Trap (IIL) on privileged operations in user mode
 
+==================================================================
 Fixed issues
-------------
+==================================================================
 
 BitPrefix() doesn't correctly handle negative offset
 
@@ -126,3 +127,9 @@ In EXT, offset can be negative, and then used as a bit selector.
 EXT - looks very buggy, offset added to dest not base!!!
 
 Review use of signed values for offsets in INS/INSS/EXS/EXTS.
+
+Add PiWARNings on undefined behaviour:
+- ASHi count operand out of range
+- LSHi count operand out of range
+- ROTi count operand out of range
+- CHECKi when bounds is a register

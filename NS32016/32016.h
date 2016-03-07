@@ -421,7 +421,7 @@ extern FILE *pTraceFile;
 #define PiTRACE(...)
 #endif
 
-#define PiWARN(...)  printf(__VA_ARGS__)
+#define PiWARN(...)  { printf("pc=%08"PRIX32": ",pc); printf(__VA_ARGS__); }
 
 extern uint32_t tube_irq;
 uint8_t FunctionLookup[256];

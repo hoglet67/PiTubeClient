@@ -806,6 +806,15 @@ void TakeInterrupt(uint32_t IntBase)
    pc = temp2 + temp3;
 }
 
+void WarnIfShiftInvalid(uint32_t shift, uint8_t size)
+{
+   size *= 8;    // 8, 16, 32
+   if ((shift >= size && shift <= 0xFF - size) || (shift > 0xFF))
+   {
+      PiWARN("Invalid shift of %08"PRIX32" for size %"PRId8"\n", shift, size);
+   }
+}
+
 void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteSize, WriteIndex;
@@ -1655,6 +1664,8 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp2 = ReadGen(0);
             temp  = ReadGen(1);
+
+            WarnIfShiftInvalid(temp2,  OpSize.Op[1]);
  
 #if 1
             temp3 = OpSize.Op[1] * 8;                             // Bit size, compiler will switch to a shift all by itself ;)
@@ -1718,6 +1729,8 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(0);
             temp = ReadGen(1);
 
+            WarnIfShiftInvalid(temp2,  OpSize.Op[1]);
+
             // Test if the shift is negative (i.e. a right shift)
             if (temp2 & 0xE0)
             {
@@ -1770,6 +1783,8 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp2 = ReadGen(0);
             temp = ReadGen(1);
+
+            WarnIfShiftInvalid(temp2,  OpSize.Op[1]);
 
             if (temp2 & 0xE0)
             {
@@ -2338,6 +2353,10 @@ void n32016_exec(uint32_t tubecycles)
 
          case CHECK:
          {
+            if (gentype[0] == Register)
+            {
+               PiWARN("CHECKi with bounds in a register might give unexpected behaviour\n");
+            }
             uint32_t ad = ReadAddress(0);
             temp3 = ReadGen(1);
 
