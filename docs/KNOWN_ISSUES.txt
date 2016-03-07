@@ -20,8 +20,6 @@ Access class regaddr:
 - INS   - use of TOS as a base will PiWARN() a warning
 - INSS  - TOS OK, because reads and writes TOS
 
-LPR: procreg=USP (1011) doesn't correctly update user stack pointer
-
 MEIi: Probably a bug when TOS used for destination
 
 NEGi: Probably a bug in setting the F flag when src is the most -ve number
@@ -130,4 +128,6 @@ Add PiWARNings on undefined behaviour:
 - CHECKi when bounds is a register
 
 SPR: procreg=USP (1011) and INTBASE (1110) not implemented
+
+LPR: procreg=USP (1011) doesn't correctly update user stack pointer
 

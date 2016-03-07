@@ -1377,7 +1377,13 @@ void n32016_exec(uint32_t tubecycles)
 
                case 9:
                {
-                  SET_SP(temp);
+                  SET_SP(temp);   // Sets the currently selected stack pointer
+               }
+               break;
+
+               case 11:
+               {
+                  sp[1] = temp;   // Sets the user stack pointer
                }
                break;
 
