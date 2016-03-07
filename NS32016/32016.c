@@ -324,7 +324,7 @@ static void GetGenPhase2(int gen, int c)
 
          case External:
             temp = read_x32(mod + 4);
-            temp += getdisp() << 2;
+            temp += ((int32_t) getdisp()) * 4;
             temp2 = read_x32(temp);
             genaddr[c] = temp2 + getdisp();
             break;

@@ -1,10 +1,6 @@
 Known issues
 ------------
 
-External Addressing mode doesn't correcty handle negative
-displacements (it uses getdisp() << 2). Not clear that negative
-displacement actuualy make sense here.
-
 In a couple of places, popd() is wrongly called with params.
 
 CXP doesn't correcty handle negative displacements (it uses 4 * temp,
@@ -122,3 +118,7 @@ CMPS, CMPM passed the arguments to CompareCommon the wrong way around,
 so the resultant L and N flags will be incorrect. Code would be more
 readable if params were named and re-ordered CompareCommon(src1,
 src2), as this the matches the terminology in the datasheet.
+
+External Addressing mode doesn't correcty handle negative
+displacements (it uses getdisp() << 2). Not clear that negative
+displacement actuualy make sense here.
