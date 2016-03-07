@@ -2203,26 +2203,53 @@ void n32016_exec(uint32_t tubecycles)
  
          case EXT:
          {
-            uint32_t c;
-         
-            int32_t Offset = r[(opcode >> 11) & 7];                              // Offset
-            temp2          = getdisp();                                          // Length
+            int c;
+            int32_t  Offset = r[(opcode >> 11) & 7];
+            uint32_t Length = getdisp();
+            uint32_t StartBit;
+
+            if (Length < 1 || Length > 32)
+            {
+               printf("EXT with length %08"PRIx32" is undefined\n", Length);
+               continue; // with next instruction
+            }
+
+            if (gentype[0] == TOS)
+            {
+               // base is TOS
+               //
+               // This case is complicated because:
+               //
+               // 1. We need to avoid modifying the stack pointer.
+               //
+               // 2. We potentially need to take account of an offset.
+               //
+               printf("EXT with base==TOS is not yet implemented; offset = %"PRId32"\n", Offset);
+               continue; // with next instruction
+            }
+            else if (gentype[0] == Register)
+            {
+               // base is a register
+               StartBit = ((uint32_t) Offset) & 31;
+            }
+            else
+            {
+               // base is memory
+               genaddr[0] += Offset / 8;
+               StartBit = ((uint32_t) Offset) & 7;
+            }
+
             OpSize.Op[0] = sz32;
-            temp3          = ReadGen(0);                                         // Base
-            temp           = 0;                                                  // Result starts at zero
+            uint32_t Source = ReadGen(0);
 
-            if (gentype[1] != Register)                                            // If memory loaction
+            temp = 0;
+            for (c = 0; c < Length && c + StartBit < 32; c++)
             {
-               genaddr[WriteIndex] += Offset / 8;                                // Cast to signed as negative is allowed
-               Offset %= 8;                                                      // Offset within te first byte
-            }
-
-            for (c = 0; c < temp2; c++)
-            {
-               if (temp3 & BIT((c + Offset) & 31))
+               if (Source & BIT(c + StartBit))
+               {
                   temp |= BIT(c);
+               }
             }
-
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
@@ -2282,12 +2309,8 @@ void n32016_exec(uint32_t tubecycles)
             }
 
             temp = ReadGen(1);
-            for (c = 0; c < Length; c++)
+            for (c = 0; c < Length && c + StartBit < 32; c++)
             {
-               if ((c + StartBit) > 31)
-               {
-                  break;
-               }
                if (Source & BIT(c))
                {
                   temp |= BIT(c + StartBit);

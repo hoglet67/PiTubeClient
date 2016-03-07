@@ -1,8 +1,6 @@
 Known issues
 ------------
 
-In EXT, offset can be negative, and then used as a bit selector.
-
 We have some general issues with instructions that have an operand
 that is "addr" OR "regaddr" access class.
 1. Correct handling of both register and memory operands
@@ -19,7 +17,7 @@ Access class regaddr:
 - SBIT  - looks bug free (TOS OK, because reads and writes TOS)
 - SBITI - looks bug free (TOS OK, because reads and writes TOS)
 - TBIT  - has TOS bug because because ReadGen() used read only
-- EXT   - looks very buggy, offset added to dest not base!!!
+- EXT   - use of TOS as a base will printf() a warning
 - EXTS  - has TOS bug for base because ReadGen() used read only
 - INS   - use of TOS as a base will printf() a warning
 - INSS  - looks bug free (TOS OK, because reads and writes TOS)
@@ -125,4 +123,7 @@ INS has the "% 8" bug when reading the offset operand.
 
 INS - looks very buggy, offset addes after base read!!!
 
+In EXT, offset can be negative, and then used as a bit selector.
+
+EXT - looks very buggy, offset added to dest not base!!!
 
