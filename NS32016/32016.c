@@ -778,7 +778,7 @@ void PopRegisters(void)
    {
       if (temp & BIT(c))
       {
-         r[c ^ 7] = popd(r[c]);
+         r[c ^ 7] = popd();
       }
    }
 }
