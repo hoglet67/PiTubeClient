@@ -2242,35 +2242,61 @@ void n32016_exec(uint32_t tubecycles)
          case INS:
          {
             int c;
-            int32_t Offset = r[(opcode >> 11) & 7] % 8;
-            int32_t Length = getdisp();
-            int32_t Source = ReadGen(0);
-            int32_t Base = ReadGen(1);
+            int32_t  Offset = r[(opcode >> 11) & 7];
+            uint32_t Length = getdisp();
+            uint32_t Source = ReadGen(0);
+            uint32_t StartBit;
 
-            if (gentype[1] != Register)                                         // If memory loaction
+            if (Length < 1 || Length > 32)
             {
-               genaddr[WriteIndex] += Offset / 8;                               // Cast to signed as negative is allowed
-               Offset %= 8;                                                     // Offset within te first byte
+               printf("INS with length %08"PRIx32" is undefined\n", Length);
+               continue; // with next instruction
             }
 
+            if (gentype[1] == TOS)
+            {
+               // base is TOS
+               //
+               // This case is complicated because:
+               //
+               // 1. We need to avoid modifying the stack pointer,
+               // which might not be an issue as we read then write.
+               //
+               // 2. We potentially need to take account of an offset. This
+               // is harder as our current TOS read/write doesn't allow
+               // for an offset. It's also not clear what this means.
+               //
+               printf("INS with base==TOS is not yet implemented; offset = %"PRId32"\n", Offset);
+               continue; // with next instruction
+            }
+            else if (gentype[1] == Register)
+            {
+               // base is a register
+               StartBit = ((uint32_t) Offset) & 31;
+            }
+            else
+            {
+               // base is memory
+               genaddr[1] += Offset / 8;
+               StartBit = ((uint32_t) Offset) & 7;
+            }
+
+            temp = ReadGen(1);
             for (c = 0; c < Length; c++)
             {
-               if ((c + Offset) > 31)
+               if ((c + StartBit) > 31)
                {
                   break;
                }
-
                if (Source & BIT(c))
                {
-                  Base |= BIT(c + Offset);
+                  temp |= BIT(c + StartBit);
                }
                else
                {
-                  Base &= ~(BIT(c + Offset));
+                  temp &= ~(BIT(c + StartBit));
                }
             }
-
-            temp = Base;
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
