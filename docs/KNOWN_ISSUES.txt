@@ -45,8 +45,6 @@ INS has the "% 8" bug when reading the offset operand.
 
 Review use of signed values for offsets in INS/INSS/EXS/EXTS.
 
-CMPM: N and L flag not set correctly for W and D sizes
-
 LPR: procreg=USP (1011) doesn't correctly update user stack pointer
 
 SPR: procreg=USP (1011) and INTBASE (1110) not implemented
@@ -122,4 +120,6 @@ Access class addr:
 ADDP: should clear the F flag, but doesn't
 
 SUBP: should clear the F flag, but doesn't
+
+CMPM: N and L flag not set correctly for W and D sizes
 
