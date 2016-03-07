@@ -3,10 +3,6 @@ Known issues
 
 In a couple of places, popd() is wrongly called with params.
 
-CXP doesn't correcty handle negative displacements (it uses 4 * temp,
-whete temp is a uint32_t). Not clear that negative displacement
-actuualy make sense here.
-
 In EXT, offset can be negative, and then used as a bit selector.
 
 In INS, offset can be negative, and then used as a bit selector.
@@ -122,3 +118,8 @@ src2), as this the matches the terminology in the datasheet.
 External Addressing mode doesn't correcty handle negative
 displacements (it uses getdisp() << 2). Not clear that negative
 displacement actuualy make sense here.
+
+CXP doesn't correcty handle negative displacements (it uses 4 * temp,
+where temp is a uint32_t). Not clear that negative displacement
+actuualy make sense here.
+

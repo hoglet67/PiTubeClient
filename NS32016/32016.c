@@ -1098,7 +1098,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case CXP:
          {
-            temp2 = read_x32(mod + 4) + (4 * temp);
+            temp2 = read_x32(mod + 4) + ((int32_t) temp) * 4;
 
             temp = read_x32(temp2);   // Matching Tail with CXPD, complier do your stuff
             pushw(0);
