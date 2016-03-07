@@ -421,6 +421,8 @@ extern FILE *pTraceFile;
 #define PiTRACE(...)
 #endif
 
+#define PiWARN(...)  printf(__VA_ARGS__)
+
 extern uint32_t tube_irq;
 uint8_t FunctionLookup[256];
 extern uint32_t genaddr[2];

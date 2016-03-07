@@ -1533,6 +1533,11 @@ void n32016_exec(uint32_t tubecycles)
          case TBIT:
          {
             temp2 = BitPrefix();
+            if (gentype[1] == TOS)
+            {
+               PiWARN("TBIT with base==TOS is not yet implemented\n");
+               continue; // with next instruction
+            }
             temp = ReadGen(1);
             F_FLAG = TEST(temp & temp2);
             continue;
@@ -1998,6 +2003,12 @@ void n32016_exec(uint32_t tubecycles)
             uint32_t c;
             uint32_t temp4 = 1;
 
+            if (gentype[0] == TOS)
+            {
+               PiWARN("EXTS with base==TOS is not yet implemented\n");
+               continue; // with next instruction
+            }
+
             // Read the immediate offset (3 bits) / length - 1 (5 bits) from the instruction
             temp3 = READ_PC_BYTE();
             temp = ReadGen(0);
@@ -2210,7 +2221,7 @@ void n32016_exec(uint32_t tubecycles)
 
             if (Length < 1 || Length > 32)
             {
-               printf("EXT with length %08"PRIx32" is undefined\n", Length);
+               PiWARN("EXT with length %08"PRIx32" is undefined\n", Length);
                continue; // with next instruction
             }
 
@@ -2224,7 +2235,7 @@ void n32016_exec(uint32_t tubecycles)
                //
                // 2. We potentially need to take account of an offset.
                //
-               printf("EXT with base==TOS is not yet implemented; offset = %"PRId32"\n", Offset);
+               PiWARN("EXT with base==TOS is not yet implemented; offset = %"PRId32"\n", Offset);
                continue; // with next instruction
             }
             else if (gentype[0] == Register)
@@ -2276,7 +2287,7 @@ void n32016_exec(uint32_t tubecycles)
 
             if (Length < 1 || Length > 32)
             {
-               printf("INS with length %08"PRIx32" is undefined\n", Length);
+               PiWARN("INS with length %08"PRIx32" is undefined\n", Length);
                continue; // with next instruction
             }
 
@@ -2293,7 +2304,7 @@ void n32016_exec(uint32_t tubecycles)
                // is harder as our current TOS read/write doesn't allow
                // for an offset. It's also not clear what this means.
                //
-               printf("INS with base==TOS is not yet implemented; offset = %"PRId32"\n", Offset);
+               PiWARN("INS with base==TOS is not yet implemented; offset = %"PRId32"\n", Offset);
                continue; // with next instruction
             }
             else if (gentype[1] == Register)

@@ -16,13 +16,11 @@ Access class regaddr:
 - IBIT  - looks bug free (TOS OK, because reads and writes TOS)
 - SBIT  - looks bug free (TOS OK, because reads and writes TOS)
 - SBITI - looks bug free (TOS OK, because reads and writes TOS)
-- TBIT  - has TOS bug because because ReadGen() used read only
-- EXT   - use of TOS as a base will printf() a warning
-- EXTS  - has TOS bug for base because ReadGen() used read only
-- INS   - use of TOS as a base will printf() a warning
+- TBIT  - use of TOS as a base will PiWARN() a warning
+- EXT   - use of TOS as a base will PiWARN() a warning
+- EXTS  - use of TOS as a base will PiWARN() a warning
+- INS   - use of TOS as a base will PiWARN() a warning
 - INSS  - looks bug free (TOS OK, because reads and writes TOS)
-
-Review use of signed values for offsets in INS/INSS/EXS/EXTS.
 
 LPR: procreg=USP (1011) doesn't correctly update user stack pointer
 
@@ -127,3 +125,4 @@ In EXT, offset can be negative, and then used as a bit selector.
 
 EXT - looks very buggy, offset added to dest not base!!!
 
+Review use of signed values for offsets in INS/INSS/EXS/EXTS.
