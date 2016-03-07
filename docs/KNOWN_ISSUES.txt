@@ -20,8 +20,6 @@ Access class regaddr:
 - INS   - use of TOS as a base will PiWARN() a warning
 - INSS  - TOS OK, because reads and writes TOS
 
-NEGi: Probably a bug in setting the F flag when src is the most -ve number
-
 Investigate what direct-exception mode is, as it affects behaviour of RETT
 
 SETCFG: implemented but nscfg had no effect
@@ -133,4 +131,11 @@ MEIi: Probably a bug when TOS used for destination. Actually, there
 was no bug. The reqired behaviour is not to change TOS, and we achieve
 this by popping a 32 bit value, then pushing the 32 bit lower half of
 the result.
+
+NEGi: Probably a bug in setting the F flag when src is the most -ve
+number. Actually this turned out to be a more general problem with the
+F flag being set wrongly in SubCommon().
+
+
+
 

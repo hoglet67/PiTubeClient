@@ -466,6 +466,11 @@ static uint32_t AddCommon(uint32_t a, uint32_t b, uint32_t cin)
    }
    else
    {
+      // Overflow can only happen in the following cases:
+      //   A is positive, B is positive, sum is negative
+      //   A is negative, B is negative, sum is positive
+      // So the test on the sign bits is (A ^ sum) & (B ^ sum)
+      // Note: this test implies sign A == sign B
       switch (OpSize.Op[0])
       {
          case sz8:
@@ -506,8 +511,34 @@ static uint32_t SubCommon(uint32_t a, uint32_t b, uint32_t cin)
    }
    else
    {
-      C_FLAG = TEST(diff > a);
-      F_FLAG = ((b ^ a) & (b ^ diff) & 0x80000000);
+      // Overflow can only happen in the following cases:
+      //   A is positive, B is negative, diff is negative
+      //   A is negative, B is positive, diff is positive
+      // So the test on the sign bits is (A ^ B) & (A ^ diff)
+      // Note: this test implies sign diff == sign B
+      switch (OpSize.Op[0])
+      {
+         case sz8:
+            {
+               C_FLAG = TEST(diff & 0x100);
+               F_FLAG = TEST((a ^ b) & (a ^ diff) & 0x80);
+            }
+            break;
+
+         case sz16:
+            {
+               C_FLAG = TEST(diff & 0x10000);
+               F_FLAG = TEST((a ^ b) & (a ^ diff) & 0x8000);
+            }
+            break;
+
+         case sz32:
+            {
+               C_FLAG = TEST(diff > a);
+               F_FLAG = TEST((a ^ b) & (a ^ diff) & 0x80000000);
+            }
+            break;
+      }
    }
    //PiTRACE("SUB FLAGS: C=%d F=%d\n", C_FLAG, F_FLAG);
 
