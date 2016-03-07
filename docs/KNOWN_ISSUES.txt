@@ -11,11 +11,6 @@ CXP doesn't correcty handle negative displacements (it uses 4 * temp,
 whete temp is a uint32_t). Not clear that negative displacement
 actuualy make sense here.
 
-CMPS, CMPM passed the arguments to CompareCommon the wrong way around,
-so the resultant L and N flags will be incorrect. Code would be more
-readable if params were named and re-ordered CompareCommon(src1,
-src2), as this the matches the terminology in the datasheet.
-
 In EXT, offset can be negative, and then used as a bit selector.
 
 In INS, offset can be negative, and then used as a bit selector.
@@ -44,8 +39,6 @@ Access class regaddr:
 INS has the "% 8" bug when reading the offset operand.
 
 Review use of signed values for offsets in INS/INSS/EXS/EXTS.
-
-CMPM: N and L flag not set correctly for W and D sizes
 
 LPR: procreg=USP (1011) doesn't correctly update user stack pointer
 
@@ -123,3 +116,9 @@ ADDP: should clear the F flag, but doesn't
 
 SUBP: should clear the F flag, but doesn't
 
+CMPM: N and L flag not set correctly for W and D sizes
+
+CMPS, CMPM passed the arguments to CompareCommon the wrong way around,
+so the resultant L and N flags will be incorrect. Code would be more
+readable if params were named and re-ordered CompareCommon(src1,
+src2), as this the matches the terminology in the datasheet.

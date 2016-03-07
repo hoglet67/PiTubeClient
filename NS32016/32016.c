@@ -455,7 +455,7 @@ static uint32_t bcd_sub(uint32_t a, uint32_t b, int size, uint32_t *carry)
    }
 }
 
-static uint32_t update_add_flags(uint32_t a, uint32_t b, uint32_t cin)
+static uint32_t AddCommon(uint32_t a, uint32_t b, uint32_t cin)
 {
    uint32_t sum = a + (b + cin);
 
@@ -495,8 +495,10 @@ static uint32_t update_add_flags(uint32_t a, uint32_t b, uint32_t cin)
    return sum;
 }
 
-static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
+static uint32_t SubCommon(uint32_t a, uint32_t b, uint32_t cin)
 {
+   uint32_t diff = a - (b + cin);
+
    if (b == 0xffffffff && cin == 1)
    {
       C_FLAG = 1;
@@ -504,11 +506,12 @@ static void update_sub_flags(uint32_t a, uint32_t b, uint32_t cin)
    }
    else
    {
-      uint32_t diff = a - (b + cin);
       C_FLAG = TEST(diff > a);
       F_FLAG = ((b ^ a) & (b ^ diff) & 0x80000000);
    }
    //PiTRACE("SUB FLAGS: C=%d F=%d\n", C_FLAG, F_FLAG);
+
+   return diff;
 }
 
 // The difference between DIV and QUO occurs when the result (the quotient) is negative
@@ -587,24 +590,24 @@ static void handle_mei_dei_upper_write(uint64_t result)
    }
 }
 
-uint32_t CompareCommon(uint32_t temp, uint32_t temp2)
+uint32_t CompareCommon(uint32_t src1, uint32_t src2)
 {
-   L_FLAG = TEST(temp2 > temp);
+   L_FLAG = TEST(src1 > src2);
 
    if (OpSize.Op[0] == sz8)
    {
-      N_FLAG = TEST(((int8_t) temp2) > ((int8_t) temp));
+      N_FLAG = TEST(((int8_t) src1) > ((int8_t) src2));
    }
    else if (OpSize.Op[0] == sz16)
    {
-      N_FLAG = TEST(((int16_t) temp2) > ((int16_t) temp));
+      N_FLAG = TEST(((int16_t) src1) > ((int16_t) src2));
    }
    else
    {
-      N_FLAG = TEST(((int32_t) temp2) > ((int32_t) temp));
+      N_FLAG = TEST(((int32_t) src1) > ((int32_t) src2));
    }
 
-   Z_FLAG = TEST(temp == temp2);
+   Z_FLAG = TEST(src1 == src2);
 
    return Z_FLAG;
 }
@@ -1262,7 +1265,7 @@ void n32016_exec(uint32_t tubecycles)
             NIBBLE_EXTEND(temp2);
             temp = ReadGen(0);
 
-            temp = update_add_flags(temp, temp2, 0);
+            temp = AddCommon(temp, temp2, 0);
          }
          break;
 
@@ -1272,7 +1275,7 @@ void n32016_exec(uint32_t tubecycles)
             NIBBLE_EXTEND(temp2);
             temp = ReadGen(0);
             SIGN_EXTEND(OpSize.Op[0], temp);
-            CompareCommon(temp, temp2);
+            CompareCommon(temp2, temp);
             continue;
          }
          // No break due to continue
@@ -1451,7 +1454,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(0);
             temp = ReadGen(1);
 
-            temp = update_add_flags(temp, temp2, 0);
+            temp = AddCommon(temp, temp2, 0);
          }
          break;
 
@@ -1459,7 +1462,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp2 = ReadGen(0);
             temp = ReadGen(1);
-            CompareCommon(temp, temp2);
+            CompareCommon(temp2, temp);
             continue;
          }
          // No break due to continue
@@ -1478,7 +1481,7 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(1);
 
             temp3 = C_FLAG;
-            temp = update_add_flags(temp, temp2, temp3);
+            temp = AddCommon(temp, temp2, temp3);
          }
          break;
 
@@ -1500,8 +1503,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp2 = ReadGen(0);
             temp = ReadGen(1);
-            update_sub_flags(temp, temp2, 0);
-            temp -= temp2;
+            temp = SubCommon(temp, temp2, 0);
          }
          break;
 
@@ -1510,9 +1512,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(0);
             temp = ReadGen(1);
             temp3 = C_FLAG;
-            update_sub_flags(temp, temp2, temp3);
-            temp -= temp2;
-            temp -= temp3;
+            temp = SubCommon(temp, temp2, temp3);
          }
          break;
 
@@ -1813,8 +1813,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = 0;
             temp2 = ReadGen(0);
-            update_sub_flags(temp, temp2, 0);
-            temp -= temp2;
+            temp = SubCommon(temp, temp2, 0);
             WriteSize = OpSize.Op[1];
             WriteIndex = 1;
          }
