@@ -3,25 +3,22 @@ Known issues
 ==================================================================
 
 We have some general issues with instructions that have an operand
-that is "addr" OR "regaddr" access class.
-1. Correct handling of both register and memory operands
-2. Correct handling of TOS (SP should not be modified)
-Specifics below:
+that is "regaddr" access class when the TOS addressing mode is used.
 
-Access class addr:
-- all now fixed to use ReadAddress()
+Specifically, the instuction should leave the stack pointer
+unchanged. We currently only do this in some cases, see below:
 
 Access class regaddr:
-- CBIT  - looks bug free (TOS OK, because reads and writes TOS)
-- CBITI - looks bug free (TOS OK, because reads and writes TOS)
-- IBIT  - looks bug free (TOS OK, because reads and writes TOS)
-- SBIT  - looks bug free (TOS OK, because reads and writes TOS)
-- SBITI - looks bug free (TOS OK, because reads and writes TOS)
+- CBIT  - TOS OK, because reads and writes TOS
+- CBITI - TOS OK, because reads and writes TOS
+- IBIT  - TOS OK, because reads and writes TOS
+- SBIT  - TOS OK, because reads and writes TOS
+- SBITI - TOS OK, because reads and writes TOS
 - TBIT  - use of TOS as a base will PiWARN() a warning
 - EXT   - use of TOS as a base will PiWARN() a warning
 - EXTS  - use of TOS as a base will PiWARN() a warning
 - INS   - use of TOS as a base will PiWARN() a warning
-- INSS  - looks bug free (TOS OK, because reads and writes TOS)
+- INSS  - TOS OK, because reads and writes TOS
 
 LPR: procreg=USP (1011) doesn't correctly update user stack pointer
 
