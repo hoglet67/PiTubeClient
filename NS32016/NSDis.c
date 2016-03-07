@@ -306,103 +306,109 @@ void BreakPoint(uint32_t pc, uint32_t opcode)
 #ifdef SHOW_INSTRUCTIONS
 void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize, uint32_t Disp)
 {
+   static uint32_t old_pc = 0xFFFFFFFF;
+
 	if (pc < MEG16)
 	{
-      const char* pText = "Bad NS32016 opcode";
-      uint32_t Postfix = OperandSize;
-      uint32_t Format = Function >> 4;
-
-      //PiTRACE("#%08"PRIu32" ", ++OpCount);
-      PiTRACE("&%06"   PRIX32 " ", pc);
-      PiTRACE("[%08" PRIX32 "] ", opcode);
-      PiTRACE("F%01" PRIu32 " ", Format);
-
-      if (Function < InstructionCount)
+      if (pc != old_pc)
       {
-         pText = InstuctionText[Function];
+         old_pc = pc;
+         const char* pText = "Bad NS32016 opcode";
+         uint32_t Postfix = OperandSize;
+         uint32_t Format = Function >> 4;
 
-         if ((opcode & 0x80FF) == 0x800E)
+         //PiTRACE("#%08"PRIu32" ", ++OpCount);
+         PiTRACE("&%06"   PRIX32 " ", pc);
+         PiTRACE("[%08" PRIX32 "] ", opcode);
+         PiTRACE("F%01" PRIu32 " ", Format);
+
+         if (Function < InstructionCount)
          {
-            Postfix = Translating;
-         }
-      }
+            pText = InstuctionText[Function];
 
-      if (Function == Scond)
-      {
-         uint32_t Condition = ((opcode >> 7) & 0x0F);
-         PiTRACE("S%s%s ", &InstuctionText[Condition][1], PostfixLookup(Postfix));            // Offset by 1 to loose the 'B'
-      }
-      else
-      {
-         PiTRACE("%s%s ", pText, PostfixLookup(Postfix));
-      }
-
-      switch (Function)
-      {
-         case ADDQ:
-         case CMPQ:
-         case MOVQ:
-         {
-            int32_t Value = (opcode >> 7) & 0xF;
-            NIBBLE_EXTEND(Value);
-            PiTRACE("%" PRId32 ", ", Value);
-         }
-         break;
-
-         case LPR:
-         {
-            int32_t Value = (opcode >> 7) & 0xF;
-            if (Value == 9)
+            if ((opcode & 0x80FF) == 0x800E)
             {
-               PiTRACE("SP,", Value);
+               Postfix = Translating;
             }
-            else
+         }
+
+         if (Function == Scond)
+         {
+            uint32_t Condition = ((opcode >> 7) & 0x0F);
+            PiTRACE("S%s%s ", &InstuctionText[Condition][1], PostfixLookup(Postfix));            // Offset by 1 to loose the 'B'
+         }
+         else
+         {
+            PiTRACE("%s%s ", pText, PostfixLookup(Postfix));
+         }
+
+         switch (Function)
+         {
+            case ADDQ:
+            case CMPQ:
+            case MOVQ:
             {
+               int32_t Value = (opcode >> 7) & 0xF;
+               NIBBLE_EXTEND(Value);
                PiTRACE("%" PRId32 ", ", Value);
             }
+            break;
+
+            case LPR:
+            {
+               int32_t Value = (opcode >> 7) & 0xF;
+               if (Value == 9)
+               {
+                  PiTRACE("SP,", Value);
+               }
+               else
+               {
+                  PiTRACE("%" PRId32 ", ", Value);
+               }
+            }
+            break;
          }
-         break;
-      }
 
-      RegLookUp();
+         RegLookUp();
 
-      if ((Function <= BN) || (Function == BSR))
-      {
-         uint32_t Address = pc + Disp;
-         PiTRACE("&%06"PRIX32" ", Address);
-      }
-
-#if 0
-      switch (Function)
-      {
-         case ADDQ:
-         case CMPQ:
-         case MOVQ:
+         if ((Function <= BN) || (Function == BSR))
          {
-            int32_t Value = (opcode >> 7) & 0xF;
-            NIBBLE_EXTEND(Value);
-            PiTRACE(",%" PRId32, Value);
+            uint32_t Address = pc + Disp;
+            PiTRACE("&%06"PRIX32" ", Address);
          }
-         break;
-      }
-#endif
 
-      PiTRACE("\n");
+   #if 0
+         switch (Function)
+         {
+            case ADDQ:
+            case CMPQ:
+            case MOVQ:
+            {
+               int32_t Value = (opcode >> 7) & 0xF;
+               NIBBLE_EXTEND(Value);
+               PiTRACE(",%" PRId32, Value);
+            }
+            break;
+         }
+   #endif
 
-#ifdef TEST_SUITE
-      if (pc == 0x1CA9 || pc == 0x1CB2)
-      {
-         n32016_dumpregs("Test Suite Complete!\n");
-         exit(1);
-      }
-#endif
+         PiTRACE("\n");
 
-#ifndef TEST_SUITE
-      if (OpCount >= 10000)
-      {
-         n32016_dumpregs("Lots of trace data here!");
+   #ifdef TEST_SUITE
+         if (pc == 0x1CA9 || pc == 0x1CB2)
+         {
+            n32016_dumpregs("Test Suite Complete!\n");
+            exit(1);
+         }
+   #endif
+
+   #ifndef TEST_SUITE
+         if (OpCount >= 10000)
+         {
+            n32016_dumpregs("Lots of trace data here!");
+         }
+   #endif
       }
-#endif
 
 		return;
 	}
