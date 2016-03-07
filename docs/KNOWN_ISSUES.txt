@@ -22,8 +22,6 @@ Access class regaddr:
 
 LPR: procreg=USP (1011) doesn't correctly update user stack pointer
 
-SPR: procreg=USP (1011) and INTBASE (1110) not implemented
-
 MEIi: Probably a bug when TOS used for destination
 
 NEGi: Probably a bug in setting the F flag when src is the most -ve number
@@ -130,3 +128,6 @@ Add PiWARNings on undefined behaviour:
 - LSHi count operand out of range
 - ROTi count operand out of range
 - CHECKi when bounds is a register
+
+SPR: procreg=USP (1011) and INTBASE (1110) not implemented
+

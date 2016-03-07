@@ -1302,13 +1302,19 @@ void n32016_exec(uint32_t tubecycles)
                   temp = fp;
                break;
                case 0x9:
-                  temp = GET_SP();
+                  temp = GET_SP();    // returned the currently selected stack pointer
                break;
                case 0xA:
                   temp = sb;
                break;
+               case 0xB:
+                  temp = sp[1];       // returns the user stack pointer
+               break;
                case 0xD:
                   temp = psr;
+               break;
+               case 0xE:
+                  temp = intbase;
                break;
                case 0xF:
                   temp = mod;
