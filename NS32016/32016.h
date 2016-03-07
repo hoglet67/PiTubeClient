@@ -319,6 +319,40 @@ typedef union
    uint32_t Whole;
 } PsrType;
 
+#define PrivilegedPSR(in) (BIT(in) & (BIT(0xE) | BIT(0xC) | BIT(0xC) | BIT(0xB) | BIT(0x4) | BIT(0x3) | BIT(0x2) | BIT(0x1)))
+
+typedef union
+{
+   struct
+   {
+      unsigned i_flag  : 1;         // 0x0001
+      unsigned f_flag  : 1;         // 0x0002
+      unsigned m_flag  : 1;         // 0x0004
+      unsigned c_flag  : 1;         // 0x0008
+
+      unsigned not_used : 4;        // 0x00X0
+
+      unsigned de_flag  : 1;        // 0x0100
+      unsigned dc_flag  : 1;        // 0x0200
+      unsigned ldc_flag : 1;        // 0x0400
+      unsigned ic_flag  : 1;        // 0x0800
+
+      unsigned lic_flag : 1;        // 0x2000
+      unsigned pf_flag  : 1;        // 0x0400
+      unsigned NU       : 18;
+   };
+
+   struct
+   {
+      uint8_t lsb;
+      uint8_t msb;
+      uint8_t byte3;
+      uint8_t byte4;
+   };
+
+   uint32_t Whole;
+} CfgType;
+
 typedef union
 {
    struct
@@ -330,8 +364,6 @@ typedef union
    uint32_t Whole;
 } T16In32;
    
-
-
 typedef union
 {
    struct

@@ -13,9 +13,11 @@ enum TrapTypes
    IllegalSpecialWriting = BIT(9),
    IllegalWritingImmediate = BIT(10),
    FlagInstruction = BIT(11),
+   PrivilegedInstruction = BIT(12),
+
 };
 
-#define TrapCount 11
+#define TrapCount 12
 extern uint32_t TrapFlags;
 #define CLEAR_TRAP() TrapFlags = 0
 

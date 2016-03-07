@@ -23,7 +23,7 @@ uint32_t r[8];
 uint32_t pc;
 uint32_t sp[2];
 
-uint32_t nscfg;
+CfgType nscfg;
 uint32_t Trace = 0;
 uint32_t tube_irq = 0;
 
@@ -1166,6 +1166,11 @@ void n32016_exec(uint32_t tubecycles)
 
          case RETT:
          {
+            if (PR.PSR.u_flag)
+            {
+               GOTO_TRAP(PrivilegedInstruction);
+            }
+
             pc = popd();
             mod = popw();
             psr = popw();
@@ -1175,30 +1180,32 @@ void n32016_exec(uint32_t tubecycles)
          }
          // No break due to continue
 
-#if 0
          case RETI:
          {
+            if (PR.PSR.u_flag)
+            {
+               GOTO_TRAP(PrivilegedInstruction);
+            }
+
             // Also Performs either one or two "End of Interrupt" bus cycles in order to inform the appropriate Interrupt Controller(s) that this interrupt service procedure is ending.
             pc = popd();
-            if (DirectExceptionMode = 0)
+            uint16_t unstack = popw();
+
+            if (nscfg.de_flag == 0)
             {
-               mod = popw();
+               mod = unstack;
             }
-            else
-            {
-               popw();
-            }
+
             psr = popw();
             INC_SP(temp);
 
-            if (DirectExceptionMode = 0)
+            if (nscfg.de_flag == 0)
             {
                sb = read_x32(mod);
             }
             continue;
          }
          // No break due to continue
-#endif
 
          case SAVE:
          {
@@ -1322,6 +1329,14 @@ void n32016_exec(uint32_t tubecycles)
 
          case SPR:
          {
+            if (PR.PSR.u_flag)
+            {
+               if (PrivilegedPSR(temp2))
+               {
+                  GOTO_TRAP(PrivilegedInstruction);
+               }
+            }
+
             temp2 = (opcode >> 7) & 0xF;
 
             switch (temp2)
@@ -1387,6 +1402,14 @@ void n32016_exec(uint32_t tubecycles)
 
          case LPR:
          {
+            if (PR.PSR.u_flag)
+            {
+               if (PrivilegedPSR(temp2))
+               {
+                  GOTO_TRAP(PrivilegedInstruction);
+               }
+            }
+
             temp  = ReadGen(0);
             temp2 = (opcode >> 7) & 0xF;
 
@@ -1450,6 +1473,14 @@ void n32016_exec(uint32_t tubecycles)
 
          case BICPSR:
          {
+            if (PR.PSR.u_flag)
+            {
+               if (OpSize.Op[0] > sz8)
+               {
+                  GOTO_TRAP(PrivilegedInstruction);
+               }
+            }
+ 
             temp = ReadGen(0);
             psr &= ~temp;
             continue;
@@ -1466,6 +1497,14 @@ void n32016_exec(uint32_t tubecycles)
 
          case BISPSR:
          {
+            if (PR.PSR.u_flag)
+            {
+               if (OpSize.Op[0] > sz8)
+               {
+                  GOTO_TRAP(PrivilegedInstruction);
+               }
+            }
+            
             temp = ReadGen(0);
             psr |= temp;
             continue;
@@ -1669,7 +1708,12 @@ void n32016_exec(uint32_t tubecycles)
 
          case SETCFG:
          {
-            nscfg = opcode;                                             // Store the whole opcode as this includes the options
+            if (PR.PSR.u_flag)
+            {
+               GOTO_TRAP(PrivilegedInstruction);
+            }
+
+            nscfg.Whole = (opcode >> 8) & 0xFFFF;                      // Only 16 bits of the 32 are ever set!
             continue;
          }
          // No break due to continue
