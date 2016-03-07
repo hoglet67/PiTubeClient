@@ -20,8 +20,6 @@ Access class regaddr:
 - INS   - use of TOS as a base will PiWARN() a warning
 - INSS  - TOS OK, because reads and writes TOS
 
-MEIi: Probably a bug when TOS used for destination
-
 NEGi: Probably a bug in setting the F flag when src is the most -ve number
 
 Investigate what direct-exception mode is, as it affects behaviour of RETT
@@ -130,4 +128,9 @@ Add PiWARNings on undefined behaviour:
 SPR: procreg=USP (1011) and INTBASE (1110) not implemented
 
 LPR: procreg=USP (1011) doesn't correctly update user stack pointer
+
+MEIi: Probably a bug when TOS used for destination. Actually, there
+was no bug. The reqired behaviour is not to change TOS, and we achieve
+this by popping a 32 bit value, then pushing the 32 bit lower half of
+the result.
 
