@@ -2505,7 +2505,7 @@ void n32016_exec(uint32_t tubecycles)
             temp3 = ReadGen(1); // index
 
             r[(opcode >> 11) & 7] = (temp * temp2) + temp3;
-            // No break due to continue
+            continue;
          }
          // No break due to continue
 
