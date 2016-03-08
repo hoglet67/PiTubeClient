@@ -382,7 +382,7 @@ typedef union
       uint32_t SP;
       uint32_t SB;
       uint32_t USP;
-      uint32_t CFG;
+      CfgType  CFG;
       PsrType  PSR;
       uint32_t INTBASE;
       T16In32  MOD;
@@ -397,6 +397,7 @@ typedef union
 #define psr          PR.PSR.Whole
 #define intbase      PR.INTBASE
 #define mod          PR.MOD.Whole
+#define nscfg        PR.CFG
 
 extern uint32_t sp[2];
 

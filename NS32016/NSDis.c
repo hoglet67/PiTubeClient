@@ -445,7 +445,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                   int32_t Value = (opcode >> 7) & 0xF;
                   if (Value == 9)
                   {
-                     PiTRACE("SP,", Value);
+                     PiTRACE("SP,");
                   }
                   else
                   {

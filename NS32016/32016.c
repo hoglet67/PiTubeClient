@@ -23,7 +23,6 @@ uint32_t r[8];
 uint32_t pc;
 uint32_t sp[2];
 
-CfgType nscfg;
 uint32_t Trace = 0;
 uint32_t tube_irq = 0;
 
@@ -1720,7 +1719,7 @@ void n32016_exec(uint32_t tubecycles)
                GOTO_TRAP(PrivilegedInstruction);
             }
 
-            nscfg.Whole = (opcode >> 8) & 0xFFFF;                      // Only 16 bits of the 32 are ever set!
+            nscfg.lsb = (opcode >> 8);                                  // Only sets the bottom 8 bits of which the lower 4 are used!
             continue;
          }
          // No break due to continue
