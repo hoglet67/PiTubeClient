@@ -282,9 +282,11 @@ enum DataSize
 
 typedef union
 {
-   uint8_t Op[2];
-   uint16_t Whole;
+   uint8_t Op[4];
+   uint32_t Whole;
 } OperandSizeType;
+
+#define WriteSize OpSize.Op[2]
 
 typedef union
 {
@@ -409,7 +411,7 @@ extern uint32_t sp[2];
 #define DEC_SP(in)   STACK_P -= (in);    PrintSP("Dec SP:");
 #define GET_SP()     STACK_P
 
-extern const uint16_t OpSizeLookup[4];
+extern const uint32_t OpSizeLookup[4];
 #define SET_OP_SIZE(in) OpSize.Whole = OpSizeLookup[(in) & 0x03]
 
 enum StringBits

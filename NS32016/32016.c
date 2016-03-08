@@ -34,12 +34,12 @@ uint32_t genaddr[2];
 int gentype[2];
 OperandSizeType OpSize;
 
-const uint16_t OpSizeLookup[4] =
+const uint32_t OpSizeLookup[4] =
 {
-   (sz8 << 8)  + sz8,
-   (sz16 << 8) + sz16,
-   0xFFFF,                                                     // Illegal
-   (sz32 << 8) + sz32
+   (sz8  << 24) | (sz8  << 16) | (sz8  << 8) | sz8,
+   (sz16 << 24) | (sz16 << 16) | (sz16 << 8) | sz16,
+   0xFFFFFFFF,                                                     // Illegal
+   (sz32 << 24) | (sz32 << 16) | (sz32 << 8) | sz32,
 };
 
 void n32016_reset(uint32_t StartAddress)
@@ -871,7 +871,7 @@ uint32_t ReturnCommon(void)
 
 void n32016_exec(uint32_t tubecycles)
 {
-   uint32_t opcode, WriteSize, WriteIndex;
+   uint32_t opcode, WriteIndex;
    uint32_t temp = 0, temp2, temp3;
    uint32_t Function;
 
@@ -937,7 +937,6 @@ void n32016_exec(uint32_t tubecycles)
          case Format2:
          {
             SET_OP_SIZE(opcode);
-            WriteSize = OpSize.Op[0];
             WriteIndex = 0;
             getgen(opcode >> 11, 0);
          }
@@ -954,7 +953,6 @@ void n32016_exec(uint32_t tubecycles)
          case Format4:
          {
             SET_OP_SIZE(opcode);
-            WriteSize = OpSize.Op[1];
             getgen(opcode >> 11, 0);
             getgen(opcode >> 6, 1);
          }
@@ -979,7 +977,6 @@ void n32016_exec(uint32_t tubecycles)
          {
             Function += ((opcode >> 10) & 0x0F);
             SET_OP_SIZE(opcode >> 8);
-            WriteSize = OpSize.Op[1];
 
             // Ordering important here, as getgen uses Operand Size
             switch (Function)
@@ -1002,7 +999,6 @@ void n32016_exec(uint32_t tubecycles)
          {
             Function += ((opcode >> 10) & 0x0F);
             SET_OP_SIZE(opcode >> 8);
-            WriteSize = OpSize.Op[1];
 
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
@@ -1052,8 +1048,6 @@ void n32016_exec(uint32_t tubecycles)
             {
                SET_OP_SIZE(3);               // 32 Bit
             }
-
-            WriteSize = OpSize.Op[1];
 
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
@@ -1809,8 +1803,6 @@ void n32016_exec(uint32_t tubecycles)
                break;
             }
 #endif
-
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -1864,7 +1856,6 @@ void n32016_exec(uint32_t tubecycles)
             }
             else
                temp <<= temp2;
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -1883,7 +1874,6 @@ void n32016_exec(uint32_t tubecycles)
             else
                temp <<= temp2;
 
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -1897,7 +1887,6 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(1);
             F_FLAG = TEST(temp & temp2);
             temp &= ~(temp2);
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -1911,7 +1900,6 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(1);
             F_FLAG = TEST(temp & temp2);
             temp |= temp2;
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -1920,7 +1908,6 @@ void n32016_exec(uint32_t tubecycles)
             temp = 0;
             temp2 = ReadGen(0);
             temp = SubCommon(temp, temp2, 0);
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -1928,7 +1915,6 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0);
             temp ^= 1;
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -1940,7 +1926,6 @@ void n32016_exec(uint32_t tubecycles)
             temp = bcd_sub(temp, temp2, OpSize.Op[0], &carry);
             C_FLAG = TEST(carry);
             F_FLAG = 0;
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -1988,7 +1973,6 @@ void n32016_exec(uint32_t tubecycles)
                }
                break;
             }
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -1996,7 +1980,6 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp = ReadGen(0);
             temp = ~temp;
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2007,7 +1990,6 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(1);
             F_FLAG = TEST(temp & temp2);
             temp ^= temp2;
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2019,7 +2001,6 @@ void n32016_exec(uint32_t tubecycles)
             temp = bcd_add(temp, temp2, OpSize.Op[0], &carry);
             C_FLAG = TEST(carry);
             F_FLAG = 0;
-            WriteSize = OpSize.Op[1];
          }
          break;
  
@@ -2087,7 +2068,6 @@ void n32016_exec(uint32_t tubecycles)
                }
             }
             temp = temp2;
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2119,7 +2099,6 @@ void n32016_exec(uint32_t tubecycles)
                temp4 <<= 1;
             }
             temp = temp2;
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2164,7 +2143,6 @@ void n32016_exec(uint32_t tubecycles)
             handle_mei_dei_upper_write(temp64);
             // Allow fallthrough write logic to write the lower half of dst
             temp = (uint32_t) temp64;
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2173,7 +2151,6 @@ void n32016_exec(uint32_t tubecycles)
             temp = ReadGen(0);
             temp2 = ReadGen(1);
             temp *= temp2;
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2205,7 +2182,6 @@ void n32016_exec(uint32_t tubecycles)
             handle_mei_dei_upper_write(temp64);
             // Allow fallthrough write logic to write the lower half of dst
             temp = (uint32_t) temp64;
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2232,7 +2208,6 @@ void n32016_exec(uint32_t tubecycles)
                   temp = (int32_t) temp2 / (int32_t) temp;
                break;
             }
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2259,7 +2234,6 @@ void n32016_exec(uint32_t tubecycles)
                   temp = (int32_t) temp2 % (int32_t) temp;
                break;
             }
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2273,7 +2247,6 @@ void n32016_exec(uint32_t tubecycles)
             }
 
             temp = mod_operator(temp2, temp);
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2287,7 +2260,6 @@ void n32016_exec(uint32_t tubecycles)
             }
 
             temp = div_operator(temp2, temp);
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2342,7 +2314,6 @@ void n32016_exec(uint32_t tubecycles)
                   temp |= BIT(c);
                }
             }
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2410,7 +2381,6 @@ void n32016_exec(uint32_t tubecycles)
                   temp &= ~(BIT(c + StartBit));
                }
             }
-            WriteSize = OpSize.Op[1];
          }
          break;
 
