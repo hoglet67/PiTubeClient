@@ -34,6 +34,35 @@ const char* PostfixLookup(uint8_t Postfix)
    return "";
 }
 
+void AddStringFlags(uint32_t opcode)
+{
+   if (opcode & (BIT(Backwards) | BIT(UntilMatch) | BIT(WhileMatch)))
+   {
+      PiTRACE("[");
+      if (opcode & BIT(Backwards))
+      {
+         PiTRACE("B");
+      }
+
+      uint32_t Options = (opcode >> 17) & 3;
+
+
+      if (Options == 1) // While match
+      {
+         PiTRACE("W");
+      }
+      else if (Options == 3)
+      {
+         PiTRACE("U");
+      }
+
+
+
+      PiTRACE("]");
+   }
+}
+
+
 const char InstuctionText[InstructionCount][8] =
 {
    // FORMAT 0
@@ -510,6 +539,14 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                {
                   int32_t d = GetDisplacement(&Address);
                   PiTRACE(" x'%" PRIX32 "", d);
+               }
+               break;
+
+               case MOVS:
+               case CMPS:
+               case SKPS:
+               {
+                 AddStringFlags(opcode);
                }
                break;
 

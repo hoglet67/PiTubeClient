@@ -658,8 +658,7 @@ uint32_t StringMatching(uint32_t opcode, uint32_t Value)
             return 1;
          }
       }
-
-      if (Options == 3) // Until Match
+      else if (Options == 3) // Until Match
       {
          if (Value == Compare)
          {
