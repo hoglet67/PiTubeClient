@@ -228,3 +228,27 @@ void write_Arbitary(uint32_t addr, void* pData, uint32_t Size)
    }
 }
 
+uint32_t LoadBinary(const char *pFileName, uint32_t Location)
+{
+   FILE* pFile = fopen(pFileName, "rb");
+   uint32_t End = 0;
+
+   if (pFile)
+   {
+      long FileSize;
+
+      fseek(pFile, 0, SEEK_END);
+      FileSize = ftell(pFile);
+      rewind(pFile);
+
+      if ((Location + FileSize) < MEG16)
+      { 
+         End = fread(ns32016ram + Location, sizeof(uint8_t), FileSize, pFile) + Location;
+      }
+
+      fclose(pFile);
+   }
+
+   return End;
+}
+

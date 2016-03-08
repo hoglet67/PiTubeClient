@@ -8,7 +8,7 @@
 #include "Profile.h"
 
 #ifdef TRACE_TO_FILE
-FILE *pTraceFile = NULL;
+FILE* pTraceFile = NULL;
 #endif
 
 void tubeWrite(unsigned char Address, unsigned char Data)
@@ -58,10 +58,20 @@ int main(int argc, char* argv[])
    n32016_reset(0);
 #endif
 
+#if 0
+   uint32_t Start = 0x400;
+   uint32_t End = LoadBinary("C:/Panos.bin", Start);
+   if (End)
+   {
+      Disassemble(Start, End);
+   }
+#else
+
 	while (1)
 	{
 		n32016_exec(1);
 	}
+#endif
 
 	return 0;
 }

@@ -13,7 +13,7 @@ uint32_t OpCount = 0;
 uint8_t FunctionLookup[256];
 
 const uint8_t FormatSizes[FormatCount + 1] =
-{ 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0 };
+{ 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1 };
 
 const char* PostfixLookup(uint8_t Postfix)
 {
@@ -417,7 +417,7 @@ void ShowRegs(uint8_t Pattern)
 }
 
 #ifdef SHOW_INSTRUCTIONS
-void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize, uint32_t Disp)
+void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize)
 {
    static uint32_t old_pc = 0xFFFFFFFF;
 
@@ -486,8 +486,8 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 
             if ((Function <= BN) || (Function == BSR))
             {
-               uint32_t Address = pc + Disp;
-               PiTRACE("&%06"PRIX32" ", Address);
+               int32_t d = GetDisplacement(&Address);
+               PiTRACE("&%06"PRIX32" ", pc + d);
             }
 
             switch (Function)
@@ -645,4 +645,325 @@ void n32016_build_matrix()
    {
       FunctionLookup[Index] = GetFunction(Index);
    }
+}
+
+static void getgen(int gen, int c)
+{
+   gen &= 0x1F;
+   Regs[c] = gen;
+
+   if (gen >= EaPlusRn)
+   {
+      Regs[c] |= READ_PC_BYTE() << 8;
+
+      if ((Regs[c] & 0xF800) == (Immediate << 11))
+      {
+         SET_TRAP(IllegalImmediate);
+      }
+
+      if ((Regs[c] & 0xF800) >= (EaPlusRn << 11))
+      {
+         SET_TRAP(IllegalDoubleIndexing);
+      }
+   }
+}
+
+#if 0
+static void GetGenPhase2(int gen, int c)
+{
+   if (gen < 0xFFFF)                                              // Does this Operand exist ?
+   {
+      if (gen <= R7)
+      {
+         genaddr[c] = (uint32_t) &r[gen];
+         gentype[c] = Register;
+         return;
+      }
+
+      if (gen == Immediate)
+      {
+         // Why can't they just decided on an endian and then stick to it?
+         MultiReg temp3;
+
+         temp3.u32 = SWAP32(read_x32(pc));
+         if (OpSize.Op[c] == sz8)
+            genaddr[c] = temp3.u8;
+         else if (OpSize.Op[c] == sz16)
+            genaddr[c] = temp3.u16;
+         else
+            genaddr[c] = temp3.u32;
+
+         pc += OpSize.Op[c];
+         gentype[c] = OpImmediate;
+         return;
+      }
+
+      gentype[c] = Memory;
+
+      if (gen <= R7_Offset)
+      {
+         genaddr[c] = r[gen & 7] + getdisp();
+         return;
+      }
+
+      uint32_t temp, temp2;
+
+      if (gen >= EaPlusRn)
+      {
+         temp = (gen >> 8) & 7;
+
+         uint32_t Shift = gen & 3;
+         GetGenPhase2(gen >> 11, c);
+
+         int32_t Offset = ((int32_t) r[temp]) * (1 << Shift);
+         if (gentype[c] != Register)
+         {
+            genaddr[c] += Offset;
+         }
+         else
+         {
+            genaddr[c] = *((uint32_t*) genaddr[c]) + Offset;
+         }
+
+         gentype[c] = Memory;                               // Force Memory
+         return;
+      }
+
+      switch (gen)
+      {
+         case FrameRelative:
+            temp = getdisp();
+            temp2 = getdisp();
+            genaddr[c] = read_x32(fp + temp);
+            genaddr[c] += temp2;
+            break;
+
+         case StackRelative:
+            temp = getdisp();
+            temp2 = getdisp();
+            genaddr[c] = read_x32(GET_SP() + temp);
+            genaddr[c] += temp2;
+            break;
+
+         case StaticRelative:
+            temp = getdisp();
+            temp2 = getdisp();
+            genaddr[c] = read_x32(sb + temp);
+            genaddr[c] += temp2;
+            break;
+
+         case Absolute:
+            genaddr[c] = getdisp();
+            break;
+
+         case External:
+            temp = read_x32(mod + 4);
+            temp += ((int32_t) getdisp()) * 4;
+            temp2 = read_x32(temp);
+            genaddr[c] = temp2 + getdisp();
+            break;
+
+         case TopOfStack:
+            genaddr[c] = GET_SP();
+            gentype[c] = TOS;
+            break;
+
+         case FpRelative:
+            genaddr[c] = getdisp() + fp;
+            break;
+
+         case SpRelative:
+            genaddr[c] = getdisp() + GET_SP();
+            break;
+
+         case SbRelative:
+            genaddr[c] = getdisp() + sb;
+            break;
+
+         case PcRelative:
+            genaddr[c] = getdisp() + startpc;
+            break;
+
+         default:
+            n32016_dumpregs("Bad NS32016 gen mode");
+            break;
+      }
+   }
+}
+#endif
+
+uint32_t Decode(uint32_t startpc)
+{
+   uint32_t pc = startpc;
+   uint32_t opcode = read_x32(pc);
+   uint32_t Function = FunctionLookup[opcode & 0xFF];
+   uint32_t Format = Function >> 4;
+   OperandSizeType OpSize;
+
+   Regs[0] =
+   Regs[1] = 0xFFFF;
+
+   if (Format < (FormatCount + 1))
+   {
+      pc += FormatSizes[Format];                                        // Add the basic number of bytes for a particular instruction
+   }
+
+   switch (Format)
+   {
+      case Format2:
+      {
+         SET_OP_SIZE(opcode);
+         getgen(opcode >> 11, 0);
+      }
+      break;
+
+      case Format3:
+      {
+         Function += ((opcode >> 7) & 0x0F);
+         SET_OP_SIZE(opcode);
+         getgen(opcode >> 11, 0);
+      }
+      break;
+
+      case Format4:
+      {
+         SET_OP_SIZE(opcode);
+         getgen(opcode >> 11, 0);
+         getgen(opcode >> 6, 1);
+      }
+      break;
+
+      case Format5:
+      {
+         Function += ((opcode >> 10) & 0x0F);
+         SET_OP_SIZE(opcode >> 8);
+         if (opcode & BIT(Translation))
+         {
+            SET_OP_SIZE(0);         // 8 Bit
+         }
+      }
+      break;
+
+      case Format6:
+      {
+         Function += ((opcode >> 10) & 0x0F);
+         SET_OP_SIZE(opcode >> 8);
+
+         // Ordering important here, as getgen uses Operand Size
+         switch (Function)
+         {
+            case ROT:
+            case ASH:
+            case LSH:
+            {
+               OpSize.Op[0] = sz8;
+            }
+            break;
+         }
+
+         getgen(opcode >> 19, 0);
+         getgen(opcode >> 14, 1);
+      }
+      break;
+
+      case Format7:
+      {
+         Function += ((opcode >> 10) & 0x0F);
+         SET_OP_SIZE(opcode >> 8);
+         getgen(opcode >> 19, 0);
+         getgen(opcode >> 14, 1);
+      }
+      break;
+
+      case Format8:
+      {
+         if (opcode & 0x400)
+         {
+            if (opcode & 0x80)
+            {
+               switch (opcode & 0x3CC0)
+               {
+                  case 0x0C80:
+                  {
+                     Function = MOVUS;
+                  }
+                  break;
+
+                  case 0x1C80:
+                  {
+                     Function = MOVSU;
+                  }
+                  break;
+
+                  default:
+                  {
+                     Function = TRAP;
+                  }
+                  break;
+               }
+            }
+            else
+            {
+               Function = (opcode & 0x40) ? FFS : INDEX;
+            }
+         }
+         else
+         {
+            Function += ((opcode >> 6) & 3);
+         }
+
+         SET_OP_SIZE(opcode >> 8);
+
+         if (Function == CVTP)
+         {
+            SET_OP_SIZE(3);               // 32 Bit
+         }
+
+         getgen(opcode >> 19, 0);
+         getgen(opcode >> 14, 1);
+      }
+      break;
+
+      case Format9:
+      {
+         Function += ((opcode >> 11) & 0x07);
+      }
+      break;
+
+      case Format11:
+      {
+         Function += ((opcode >> 10) & 0x0F);
+      }
+      break;
+
+      case Format14:
+      {
+         Function += ((opcode >> 10) & 0x0F);
+      }
+      break;
+
+      default:
+      {
+         SET_TRAP(UnknownFormat);
+      }
+      break;
+   }
+
+   ShowInstruction(startpc, opcode, Function, OpSize.Op[0]);
+
+   return pc;
+}
+
+
+void Disassemble(uint32_t Location, uint32_t End)
+{
+   do
+   {
+      Location = Decode(Location);
+   }
+   while (Location < End);
+
+#ifdef WIN32
+   system("pause");
+#endif
 }

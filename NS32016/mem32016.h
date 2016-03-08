@@ -12,6 +12,7 @@
 #define NS_FAST_RAM
 
 void init_ram(void);
+uint32_t LoadBinary(const char *pFileName, uint32_t Location);
 
 extern uint8_t		read_x8(uint32_t addr);
 extern uint16_t	read_x16(uint32_t addr);

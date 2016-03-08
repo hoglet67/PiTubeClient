@@ -408,6 +408,7 @@ extern uint32_t sp[2];
 #define DEC_SP(in)   STACK_P -= (in);    PrintSP("Dec SP:");
 #define GET_SP()     STACK_P
 
+extern const uint16_t OpSizeLookup[4];
 #define SET_OP_SIZE(in) OpSize.Whole = OpSizeLookup[(in) & 0x03]
 
 enum StringBits
@@ -429,8 +430,9 @@ extern uint32_t r[8];
 extern uint32_t pc;
 extern uint16_t Regs[2];
 
+extern void Disassemble(uint32_t Location, uint32_t End);
 #ifdef SHOW_INSTRUCTIONS
-extern void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize, uint32_t Disp);
+extern void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize);
 #else
 #define ShowInstruction(...)
 #endif
