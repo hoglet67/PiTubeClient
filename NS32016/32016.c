@@ -964,7 +964,11 @@ void n32016_exec(uint32_t tubecycles)
          {
             Function += ((opcode >> 10) & 0x0F);
             SET_OP_SIZE(opcode >> 8);
-            if (opcode & BIT(Translation))
+            if (Function == SETCFG)
+            {
+               OpSize.Whole = 0;
+            }
+            else if (opcode & BIT(Translation))
             {
                SET_OP_SIZE(0);         // 8 Bit
             }
