@@ -395,6 +395,7 @@ typedef union
 #define fp           PR.FP
 #define sb           PR.SB
 #define psr          PR.PSR.Whole
+#define psr_lsb      PR.PSR.lsb
 #define intbase      PR.INTBASE
 #define mod          PR.MOD.Whole
 #define nscfg        PR.CFG
