@@ -432,6 +432,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
             {
                case ADDQ:
                case CMPQ:
+               case ACB:
                case MOVQ:
                {
                   int32_t Value = (opcode >> 7) & 0xF;
