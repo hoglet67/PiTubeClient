@@ -155,7 +155,7 @@ int32_t GetDisplacement(uint32_t* pPC)
    return Value;
 }
 
-void RegLookUp(uint32_t Start, uint32_t Offset)
+uint32_t RegLookUp(uint32_t Start, uint32_t Offset)
 {
    uint32_t Address = Start + Offset;
 
@@ -346,6 +346,8 @@ void RegLookUp(uint32_t Start, uint32_t Offset)
          }
       }
    }
+
+   return Address;
 }
 
 void BreakPoint(uint32_t pc, uint32_t opcode)
@@ -390,12 +392,36 @@ void BreakPoint(uint32_t pc, uint32_t opcode)
 #endif
 }
 
+void ShowRegs(uint8_t Pattern)
+{
+   uint32_t Count;
+   uint32_t First = 1;
+
+   PiTRACE("[");
+
+   for (Count = 0; Count < 8; Count++)
+   {
+      if (Pattern & BIT(Count))
+      {
+         if (First == 0)
+         {
+            PiTRACE(",");
+         }
+
+         PiTRACE("R%" PRIu8 " ", pc);
+         First = 0;
+      }
+   }
+
+   PiTRACE("]");
+}
+
 #ifdef SHOW_INSTRUCTIONS
 void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize, uint32_t Disp)
 {
    static uint32_t old_pc = 0xFFFFFFFF;
 
-   if (pc < MEG16)
+   if (pc < (IO_BASE - 64))                     // The code will not work near the IO Space as it will have side effects
    {
       if (pc != old_pc)
       {
@@ -456,7 +482,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                break;
             }
 
-            RegLookUp(pc, FormatSizes[Format]);
+            uint32_t Address = RegLookUp(pc, FormatSizes[Format]);
 
             if ((Function <= BN) || (Function == BSR))
             {
@@ -464,9 +490,30 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                PiTRACE("&%06"PRIX32" ", Address);
             }
 
-#if 0
             switch (Function)
             {
+               case SAVE:
+               {
+                  ShowRegs(read_x8(Address++));    //Access directly we do not want tube reads!
+               }
+               break;
+
+              case ENTER:
+               {
+                  ShowRegs(read_x8(Address++));    //Access directly we do not want tube reads!
+               }
+               // Fall Through
+
+               case RET:               
+               case CXP:
+               case RXP:
+               {
+                  int32_t d = GetDisplacement(&Address);
+                  PiTRACE(" x'%" PRIX32 "", d);
+               }
+               break;
+
+#if 0
                case ADDQ:
                case CMPQ:
                case MOVQ:
@@ -476,8 +523,9 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                   PiTRACE(",%" PRId32, Value);
                }
                break;
-            }
 #endif
+            }
+
 
             PiTRACE("\n");
 
