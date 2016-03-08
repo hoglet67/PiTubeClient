@@ -1334,6 +1334,8 @@ void n32016_exec(uint32_t tubecycles)
 
          case SPR:
          {
+            temp2 = (opcode >> 7) & 0xF;
+
             if (PR.PSR.u_flag)
             {
                if (PrivilegedPSR(temp2))
@@ -1341,8 +1343,6 @@ void n32016_exec(uint32_t tubecycles)
                   GOTO_TRAP(PrivilegedInstruction);
                }
             }
-
-            temp2 = (opcode >> 7) & 0xF;
 
             switch (temp2)
             {
@@ -1407,6 +1407,9 @@ void n32016_exec(uint32_t tubecycles)
 
          case LPR:
          {
+            temp  = ReadGen(0);
+            temp2 = (opcode >> 7) & 0xF;
+
             if (PR.PSR.u_flag)
             {
                if (PrivilegedPSR(temp2))
@@ -1414,9 +1417,6 @@ void n32016_exec(uint32_t tubecycles)
                   GOTO_TRAP(PrivilegedInstruction);
                }
             }
-
-            temp  = ReadGen(0);
-            temp2 = (opcode >> 7) & 0xF;
 
             switch (temp2)
             {
