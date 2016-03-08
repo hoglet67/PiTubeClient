@@ -852,7 +852,6 @@ uint32_t ReturnCommon(void)
       return 1;
    }
 
-   // Also Performs either one or two "End of Interrupt" bus cycles in order to inform the appropriate Interrupt Controller(s) that this interrupt service procedure is ending.
    pc = popd();
    uint16_t unstack = popw();
 
