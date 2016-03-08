@@ -1713,7 +1713,7 @@ void n32016_exec(uint32_t tubecycles)
                GOTO_TRAP(PrivilegedInstruction);
             }
 
-            nscfg.lsb = (opcode >> 8);                                  // Only sets the bottom 8 bits of which the lower 4 are used!
+            nscfg.lsb = (opcode >> 15);                                  // Only sets the bottom 8 bits of which the lower 4 are used!
             continue;
          }
          // No break due to continue

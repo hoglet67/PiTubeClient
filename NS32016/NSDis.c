@@ -45,8 +45,6 @@ void AddStringFlags(uint32_t opcode)
       }
 
       uint32_t Options = (opcode >> 17) & 3;
-
-
       if (Options == 1) // While match
       {
          PiTRACE("W");
@@ -56,12 +54,20 @@ void AddStringFlags(uint32_t opcode)
          PiTRACE("U");
       }
 
-
-
       PiTRACE("]");
    }
 }
 
+
+void AddCfgFLags(uint32_t opcode)
+{
+   PiTRACE("[");
+   if (opcode & BIT(15))   PiTRACE("I");
+   if (opcode & BIT(16))   PiTRACE("F");
+   if (opcode & BIT(17))   PiTRACE("M");
+   if (opcode & BIT(18))   PiTRACE("C");
+   PiTRACE("]");
+}
 
 const char InstuctionText[InstructionCount][8] =
 {
@@ -564,6 +570,12 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                case SKPS:
                {
                  AddStringFlags(opcode);
+               }
+               break;
+
+               case SETCFG:
+               {
+                  AddCfgFLags(opcode);
                }
                break;
 
