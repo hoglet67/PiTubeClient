@@ -847,9 +847,9 @@ void WarnIfShiftInvalid(uint32_t shift, uint8_t size)
 
 uint32_t ReturnCommon(void)
 {
-   if (PR.PSR.u_flag)
+   if (U_FLAG)
    {
-      return 1;
+      return 1;                  // Trap
    }
 
    pc = popd();
@@ -867,7 +867,7 @@ uint32_t ReturnCommon(void)
       sb = read_x32(mod);
    }
 
-   return 0;
+   return 0;                     // OK
 }
 
 void n32016_exec(uint32_t tubecycles)
@@ -1336,7 +1336,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             temp2 = (opcode >> 7) & 0xF;
 
-            if (PR.PSR.u_flag)
+            if (U_FLAG)
             {
                if (PrivilegedPSR(temp2))
                {
@@ -1410,7 +1410,7 @@ void n32016_exec(uint32_t tubecycles)
             temp  = ReadGen(0);
             temp2 = (opcode >> 7) & 0xF;
 
-            if (PR.PSR.u_flag)
+            if (U_FLAG)
             {
                if (PrivilegedPSR(temp2))
                {
@@ -1478,7 +1478,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case BICPSR:
          {
-            if (PR.PSR.u_flag)
+            if (U_FLAG)
             {
                if (OpSize.Op[0] > sz8)
                {
@@ -1502,7 +1502,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case BISPSR:
          {
-            if (PR.PSR.u_flag)
+            if (U_FLAG)
             {
                if (OpSize.Op[0] > sz8)
                {
@@ -1713,7 +1713,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case SETCFG:
          {
-            if (PR.PSR.u_flag)
+            if (U_FLAG)
             {
                GOTO_TRAP(PrivilegedInstruction);
             }
