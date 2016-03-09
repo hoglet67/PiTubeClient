@@ -585,6 +585,41 @@ static uint32_t mod_operator(uint32_t a, uint32_t b)
    return a - div_operator(a, b) * b;
 }
 
+
+// OffsetDiv8 needs to work as follows
+//
+//  9 =>  1
+//  8 =>  1
+//  7 =>  0
+//  6 =>  0
+//  5 =>  0
+//  4 =>  0
+//  3 =>  0
+//  2 =>  0
+//  1 =>  0
+//  0 =>  0
+// -1 => -1
+// -2 => -1
+// -3 => -1
+// -4 => -1
+// -5 => -1
+// -6 => -1
+// -7 => -1
+// -8 => -1
+// -9 => -2
+
+static int32_t OffsetDiv8(int32_t Offset)
+{
+   if (Offset >= 0)
+   {
+      return Offset / 8;
+   }
+   else
+   {
+      return (Offset - 7) / 8;
+   }
+}
+
 // Handle the writing to the upper half of mei/dei destination
 static void handle_mei_dei_upper_write(uint64_t result)
 {
@@ -790,7 +825,7 @@ uint32_t BitPrefix(void)
    else
    {
       // operand0 is memory
-      genaddr[1] += Offset / 8;
+      genaddr[1] += OffsetDiv8(Offset);
       OpSize.Op[1] = sz8;
       bit = ((uint32_t) Offset) & 7;
    }
@@ -1989,7 +2024,6 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         // TODO, could merge this with TBIT if Format4 operand indexes were consistent (dst == index 0)
          case IBIT:
          {
             temp2 = BitPrefix();
@@ -2309,7 +2343,7 @@ void n32016_exec(uint32_t tubecycles)
             else
             {
                // base is memory
-               genaddr[0] += Offset / 8;
+               genaddr[0] += OffsetDiv8(Offset);
                StartBit = ((uint32_t) Offset) & 7;
             }
 
@@ -2375,7 +2409,7 @@ void n32016_exec(uint32_t tubecycles)
             else
             {
                // base is memory
-               genaddr[1] += Offset / 8;
+               genaddr[1] += OffsetDiv8(Offset);
                StartBit = ((uint32_t) Offset) & 7;
             }
 
