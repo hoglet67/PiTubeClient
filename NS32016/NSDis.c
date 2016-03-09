@@ -761,6 +761,13 @@ uint32_t Decode(uint32_t startpc)
 
    switch (Format)
    {
+      case Format0:
+      case Format1:
+      {
+         // Nothing here
+      }
+      break;
+
       case Format2:
       {
          SET_OP_SIZE(opcode);
@@ -911,14 +918,14 @@ void DisassembleUsingITrace(uint32_t Location, uint32_t End)
    uint32_t Index;
 
    PiTRACE("DisassembleUsingITrace(%06" PRIX32 ", %06" PRIX32 ")\n", Location, End);
-
-
    for (Index = Location; Index < End; Index++)
    {
       if (IP[Index])
       {
          PiTRACE("#%06" PRId32 ": ", IP[Index]);
          Decode(Index);
+         ShowTraps();
+         CLEAR_TRAP();
       }
    }
 }
@@ -929,6 +936,8 @@ void Disassemble(uint32_t Location, uint32_t End)
    do
    {
       Location = Decode(Location);
+      ShowTraps();
+      CLEAR_TRAP();
    }
    while (Location < End);
 

@@ -52,6 +52,10 @@ int main(int argc, char* argv[])
    ProfileInit();
    init_ram();
 
+#ifdef INSTRUCTION_PROFILING
+   memset(IP, 0, sizeof(IP));
+#endif
+
 #ifdef PANDORA_BASE
    n32016_reset(PANDORA_BASE);
 #else
