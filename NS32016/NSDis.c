@@ -194,26 +194,144 @@ int32_t GetDisplacement(uint32_t* pPC)
    return Value;
 }
 
-uint32_t RegLookUp(uint32_t Start, uint32_t Offset)
+void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern)
 {
-   uint32_t Address = Start + Offset;
+   if (Pattern < 8)
+   {
+      PiTRACE("R%0" PRId32, Pattern);
+   }
+   else if (Pattern < 16)
+   {
+      int32_t d = GetDisplacement(pPC);
+      PiTRACE("%0" PRId32 "(R%u)", d, (Pattern & 7));
+   }
+   else
+   {
+      switch (Pattern & 0x1F)
+      {
+         case FrameRelative:
+         {
+            int32_t d1 = GetDisplacement(pPC);
+            int32_t d2 = GetDisplacement(pPC);
+            PiTRACE("%" PRId32 "(%" PRId32 "(FP))", d2, d1);
+         }
+         break;
 
+         case StackRelative:
+         {
+            int32_t d1 = GetDisplacement(pPC);
+            int32_t d2 = GetDisplacement(pPC);
+            PiTRACE("%" PRId32 "(%" PRId32 "(SP))", d2, d1);
+         }
+         break;
+
+         case StaticRelative:
+         {
+            int32_t d1 = GetDisplacement(pPC);
+            int32_t d2 = GetDisplacement(pPC);
+            PiTRACE("%" PRId32 "(%" PRId32 "(SB))", d2 , d1);
+         }
+         break;
+
+         case IllegalOperand:
+         {
+            PiTRACE("(reserved)");
+         }
+         break;
+
+         case Immediate:
+         {
+            int32_t Value = GetDisplacement(pPC);
+            PiTRACE("x'%"PRIX32, Value);
+         }
+         break;
+
+         case Absolute:
+         {
+            int32_t d = GetDisplacement(pPC);
+            PiTRACE("@%" PRId32, d);
+         }
+         break;
+
+         case External:
+         {
+            int32_t d1 = GetDisplacement(pPC);
+            int32_t d2 = GetDisplacement(pPC);
+            PiTRACE("EXT(x'%" PRIX32 ")+x'%" PRIX32);
+         }
+         break;
+
+         case TopOfStack:
+         {
+            PiTRACE("TOS");
+         }
+         break;
+
+         case FpRelative:
+         {
+            int32_t d = GetDisplacement(pPC);
+            PiTRACE("%" PRId32 "(FP)", d);
+         }
+         break;
+
+         case SpRelative:
+         {
+            int32_t d = GetDisplacement(pPC);
+            PiTRACE("%" PRId32 "(SP)", d);
+         }
+         break;
+
+         case SbRelative:
+         {
+            int32_t d = GetDisplacement(pPC);
+            PiTRACE("%" PRId32 "(SB)", d);
+         }
+         break;
+
+         case PcRelative:
+         {
+            int32_t d = GetDisplacement(pPC);
+#if 1
+            PiTRACE("* + %" PRId32, d);
+            
+#else            
+            PiTRACE("&06%" PRIX32 "[PC]", Start + d);
+#endif
+         }
+         break;
+
+         case EaPlusRn:
+         case EaPlus2Rn:
+         case EaPlus4Rn:
+         case EaPlus8Rn:
+         {
+            const char SizeLookup[] = "BWDQ";
+            GetOperandText(Start, pPC, Pattern >> 11);   // Recurse
+            PiTRACE("[R%" PRId16 ":%c]", ((Pattern >> 8) & 3), SizeLookup[Pattern & 3]);
+         }
+         break;
+      }
+   }
+}
+
+void RegLookUp(uint32_t Start, uint32_t* pPC)
+{
    if (Regs[0] < 0xFFFF)
    {
       if (Regs[0] >= EaPlusRn)
       {
-         Address++; // Extra address for EaPlusRn on first operand
+         (*pPC)++; // Extra address for EaPlusRn on first operand
       }
 
       if (Regs[1] < 0xFFFF)
       {
          if (Regs[1] >= EaPlusRn)
          {
-            Address++; // Extra address for EaPlusRn on second operand
+            (*pPC)++; // Extra address for EaPlusRn on second operand
          }
       }
 
-      // printf("RegLookUp(%06" PRIX32 ", %06" PRIX32 ")\n", pc, Address);
+      // printf("RegLookUp(%06" PRIX32 ", %06" PRIX32 ")\n", pc, (*pPC));
       uint32_t Index;
       for (Index = 0; Index < 2; Index++)
       {
@@ -224,169 +342,10 @@ uint32_t RegLookUp(uint32_t Start, uint32_t Offset)
                PiTRACE(",");
             }
 
-            if (Regs[Index] < 8)
-            {
-               PiTRACE("R%u", Regs[Index]);
-            }
-            else if (Regs[Index] < 16)
-            {
-               int32_t d = GetDisplacement(&Address);
-               PiTRACE("%0" PRId32 "(R%u)", d, (Regs[Index] & 7));
-            }
-            else
-            {
-               switch (Regs[Index] & 0x1F)
-               {
-                  case FrameRelative:
-                  {
-                     int32_t d1 = GetDisplacement(&Address);
-                     int32_t d2 = GetDisplacement(&Address);
-                     PiTRACE("FrameR {%" PRId32 "}{%" PRId32 "}", d1, d2);
-                  }
-                  break;
-
-                  case StackRelative:
-                  {
-                     int32_t d1 = GetDisplacement(&Address);
-                     int32_t d2 = GetDisplacement(&Address);
-                     PiTRACE("StackR {%" PRId32 "}{%" PRId32 "}", d1, d2);
-                  }
-                  break;
-
-                  case StaticRelative:
-                  {
-                     int32_t d1 = GetDisplacement(&Address);
-                     int32_t d2 = GetDisplacement(&Address);
-                     PiTRACE("StaticR {%" PRId32 "}{%" PRId32 "}", d1, d2);
-                  }
-                  break;
-
-                  case IllegalOperand:
-                  {
-                     PiTRACE("IllegalOperand");
-                  }
-                  break;
-
-                  case Immediate:
-                  {
-                     //PiTRACE("Immediate");
-                     PiTRACE("x'%"PRIX32, genaddr[Index]);
-                  }
-                  break;
-
-                  case Absolute:
-                  {
-                     int32_t d = GetDisplacement(&Address);
-                     PiTRACE("Absolute {%" PRId32 "}", d);
-                  }
-                  break;
-
-                  case External:
-                  {
-                     PiTRACE("External");
-                  }
-                  break;
-
-                  case TopOfStack:
-                  {
-                     PiTRACE("TOS");
-                  }
-                  break;
-
-                  case FpRelative:
-                  {
-                     int32_t d = GetDisplacement(&Address);
-                     PiTRACE("FpRelative {%" PRId32 "}", d);
-                  }
-                  break;
-
-                  case SpRelative:
-                  {
-                     int32_t d = GetDisplacement(&Address);
-                     PiTRACE("%" PRId32 "(SP)", d);
-                  }
-                  break;
-
-                  case SbRelative:
-                  {
-                     int32_t d = GetDisplacement(&Address);
-                     PiTRACE("SbRelative {%" PRId32 "}", d);
-                  }
-                  break;
-
-                  case PcRelative:
-                  {
-#if 1
-                     Start += GetDisplacement(&Address);
-                     PiTRACE("&06%" PRIX32 "[PC]", Start);
-#else
-                     int32_t d = GetDisplacement(&Address);
-                     PiTRACE("PcRelative {&%" PRId32 " %" PRId32"}", Start, d);
-#endif
-                  }
-                  break;
-
-                  case EaPlusRn:
-                  {
-                     PiTRACE("EaPlusRn");
-                  }
-                  break;
-
-                  case EaPlus2Rn:
-                  {
-                     PiTRACE("EaPlus2Rn");
-                  }
-                  break;
-
-                  case EaPlus4Rn:
-                  {
-                     PiTRACE("EaPlus4Rn");
-                  }
-                  break;
-
-                  case EaPlus8Rn:
-                  {
-                     PiTRACE("EaPlus8Rn");
-                  }
-                  break;
-               }
-            }
-
-#if 0
-            else
-            {
-               if (gentype[Index] == Memory)
-               {
-                  uint32_t Address = genaddr[Index];
-                  PiTRACE(" &%06"PRIX32"=", Address);
-                  switch (OpSize.Op[0])
-                  {
-                     case sz8:
-                     {
-                        PiTRACE("%02"PRIX8, read_x8(Address));
-                     }
-                     break;
-
-                     case sz16:
-                     {
-                        PiTRACE("%04"PRIX16, read_x16(Address));
-                     }
-                     break;
-
-                     case sz32:
-                     {
-                        PiTRACE("%08"PRIX32, read_x32(Address));
-                     }
-                     break;
-                  }
-               }
-            }
-#endif
+            GetOperandText(Start, pPC, Regs[Index]);
          }
       }
    }
-
-   return Address;
 }
 
 void BreakPoint(uint32_t pc, uint32_t opcode)
@@ -431,7 +390,7 @@ void BreakPoint(uint32_t pc, uint32_t opcode)
 #endif
 }
 
-void ShowRegs(uint8_t Pattern)
+void ShowRegs(uint8_t Pattern, uint8_t Reverse)
 {
    uint32_t Count;
    uint32_t First = 1;
@@ -447,7 +406,14 @@ void ShowRegs(uint8_t Pattern)
             PiTRACE(",");
          }
 
-         PiTRACE("R%" PRIu32 " ", Count);
+         if (Reverse)
+         {
+            PiTRACE("R%" PRIu32, Count ^ 7);
+         }
+         else
+         {
+            PiTRACE("R%" PRIu32, Count);
+         }
          First = 0;
       }
    }
@@ -538,7 +504,8 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                break;
             }
 
-            uint32_t Address = RegLookUp(pc, FormatSizes[Format]);
+            uint32_t Address = pc + FormatSizes[Format];
+            RegLookUp(pc, &Address);
 
             if ((Function <= BN) || (Function == BSR))
             {
@@ -550,15 +517,29 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
             {
                case SAVE:
                {
-                  ShowRegs(read_x8(Address++));    //Access directly we do not want tube reads!
+                  ShowRegs(read_x8(Address++), 0);    //Access directly we do not want tube reads!
                }
                break;
 
-              case ENTER:
+               case RESTORE:
                {
-                  ShowRegs(read_x8(Address++));    //Access directly we do not want tube reads!
+                  ShowRegs(read_x8(Address++), 1);    //Access directly we do not want tube reads!
                }
-               // Fall Through
+               break;
+
+               case EXIT:
+               {
+                  ShowRegs(read_x8(Address++), 1);    //Access directly we do not want tube reads!
+               }
+               break;
+  
+               case ENTER:
+               {
+                  ShowRegs(read_x8(Address++), 0);    //Access directly we do not want tube reads!
+                  int32_t d = GetDisplacement(&Address);
+                  PiTRACE(" x'%" PRIX32 "", d);
+               }
+               break;
 
                case RET:               
                case CXP:
