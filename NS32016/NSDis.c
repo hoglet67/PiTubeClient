@@ -97,7 +97,7 @@ const char InstuctionText[InstructionCount][8] =
    "ROT", "ASH", "CBIT", "CBITI", "TRAP", "LSH", "SBIT", "SBITI", "NEG", "NOT", "TRAP", "SUBP", "ABS", "COM", "IBIT", "ADDP",
 
    // FORMAT 7
-   "MOVM", "CMPM", "INSS", "EXTS", "MOVXBW", "MOVZBW", "MOVZiD", "MOVXiD", "MUL", "MEI", "Trap", "DEI", "QUO", "REM", "MOD", "DIV", "TRAP"
+   "MOVM", "CMPM", "INSS", "EXTS", "MOVXBW", "MOVZBW", "MOVZ", "MOVX", "MUL", "MEI", "Trap", "DEI", "QUO", "REM", "MOD", "DIV", "TRAP"
 
    // FORMAT 8
    "EXT", "CVTP", "INS", "CHECK", "INDEX", "FFS", "MOVUS", "MOVSU", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
@@ -449,6 +449,11 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                Postfix = Translating;
             }
 
+            if ((Function == MOVXBW) || (Function == MOVZBW))
+            {
+               Postfix = 0;
+            }
+
             if (Function == Scond)
             {
                uint32_t Condition = ((opcode >> 7) & 0x0F);
@@ -461,6 +466,13 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 
             switch (Function)
             {
+               case MOVZiD:
+               case MOVXiD:
+               {
+                  PiTRACE("D");
+               }
+               break;
+               
                case ADDQ:
                case CMPQ:
                case ACB:
