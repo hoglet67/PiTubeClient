@@ -12,6 +12,10 @@
 uint32_t OpCount = 0;
 uint8_t FunctionLookup[256];
 
+#ifdef INSTRUCTION_PROFILING
+uint32_t IP[MEG16];
+#endif
+
 const uint8_t FormatSizes[FormatCount + 1] =
 { 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1 };
 
@@ -598,6 +602,11 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
 #ifdef TEST_SUITE
             if (pc == 0x1CA9 || pc == 0x1CB2)
             {
+
+#ifdef INSTRUCTION_PROFILING
+               DisassembleUsingITrace(0, 0x10000);
+#endif
+
                n32016_dumpregs("Test Suite Complete!\n");
                exit(1);
             }
@@ -733,130 +742,6 @@ static void getgen(int gen, int c)
       }
    }
 }
-
-#if 0
-static void GetGenPhase2(int gen, int c)
-{
-   if (gen < 0xFFFF)                                              // Does this Operand exist ?
-   {
-      if (gen <= R7)
-      {
-         genaddr[c] = (uint32_t) &r[gen];
-         gentype[c] = Register;
-         return;
-      }
-
-      if (gen == Immediate)
-      {
-         // Why can't they just decided on an endian and then stick to it?
-         MultiReg temp3;
-
-         temp3.u32 = SWAP32(read_x32(pc));
-         if (OpSize.Op[c] == sz8)
-            genaddr[c] = temp3.u8;
-         else if (OpSize.Op[c] == sz16)
-            genaddr[c] = temp3.u16;
-         else
-            genaddr[c] = temp3.u32;
-
-         pc += OpSize.Op[c];
-         gentype[c] = OpImmediate;
-         return;
-      }
-
-      gentype[c] = Memory;
-
-      if (gen <= R7_Offset)
-      {
-         genaddr[c] = r[gen & 7] + getdisp();
-         return;
-      }
-
-      uint32_t temp, temp2;
-
-      if (gen >= EaPlusRn)
-      {
-         temp = (gen >> 8) & 7;
-
-         uint32_t Shift = gen & 3;
-         GetGenPhase2(gen >> 11, c);
-
-         int32_t Offset = ((int32_t) r[temp]) * (1 << Shift);
-         if (gentype[c] != Register)
-         {
-            genaddr[c] += Offset;
-         }
-         else
-         {
-            genaddr[c] = *((uint32_t*) genaddr[c]) + Offset;
-         }
-
-         gentype[c] = Memory;                               // Force Memory
-         return;
-      }
-
-      switch (gen)
-      {
-         case FrameRelative:
-            temp = getdisp();
-            temp2 = getdisp();
-            genaddr[c] = read_x32(fp + temp);
-            genaddr[c] += temp2;
-            break;
-
-         case StackRelative:
-            temp = getdisp();
-            temp2 = getdisp();
-            genaddr[c] = read_x32(GET_SP() + temp);
-            genaddr[c] += temp2;
-            break;
-
-         case StaticRelative:
-            temp = getdisp();
-            temp2 = getdisp();
-            genaddr[c] = read_x32(sb + temp);
-            genaddr[c] += temp2;
-            break;
-
-         case Absolute:
-            genaddr[c] = getdisp();
-            break;
-
-         case External:
-            temp = read_x32(mod + 4);
-            temp += ((int32_t) getdisp()) * 4;
-            temp2 = read_x32(temp);
-            genaddr[c] = temp2 + getdisp();
-            break;
-
-         case TopOfStack:
-            genaddr[c] = GET_SP();
-            gentype[c] = TOS;
-            break;
-
-         case FpRelative:
-            genaddr[c] = getdisp() + fp;
-            break;
-
-         case SpRelative:
-            genaddr[c] = getdisp() + GET_SP();
-            break;
-
-         case SbRelative:
-            genaddr[c] = getdisp() + sb;
-            break;
-
-         case PcRelative:
-            genaddr[c] = getdisp() + startpc;
-            break;
-
-         default:
-            n32016_dumpregs("Bad NS32016 gen mode");
-            break;
-      }
-   }
-}
-#endif
 
 uint32_t Decode(uint32_t startpc)
 {
@@ -1020,6 +905,24 @@ uint32_t Decode(uint32_t startpc)
    return pc;
 }
 
+#ifdef INSTRUCTION_PROFILING
+void DisassembleUsingITrace(uint32_t Location, uint32_t End)
+{
+   uint32_t Index;
+
+   PiTRACE("DisassembleUsingITrace(%06" PRIX32 ", %06" PRIX32 ")\n", Location, End);
+
+
+   for (Index = Location; Index < End; Index++)
+   {
+      if (IP[Index])
+      {
+         PiTRACE("#%06" PRId32 ": ", IP[Index]);
+         Decode(Index);
+      }
+   }
+}
+#endif
 
 void Disassemble(uint32_t Location, uint32_t End)
 {

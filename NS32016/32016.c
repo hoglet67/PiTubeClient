@@ -1092,6 +1092,10 @@ void n32016_exec(uint32_t tubecycles)
 
       ShowInstruction(startpc, opcode, Function, OpSize.Op[0]);
 
+#ifdef INSTRUCTION_PROFILING
+      IP[startpc]++;
+#endif
+
 #ifdef PROFILING
       ProfileAdd(Function, Regs[0], Regs[1]);
 #endif

@@ -434,6 +434,13 @@ extern uint32_t pc;
 extern uint16_t Regs[2];
 
 extern void Disassemble(uint32_t Location, uint32_t End);
+
+#ifdef INSTRUCTION_PROFILING
+extern void DisassembleUsingITrace(uint32_t Location, uint32_t End);
+extern uint32_t IP[MEG16];
+#endif
+
+
 #ifdef SHOW_INSTRUCTIONS
 extern void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize);
 #else
