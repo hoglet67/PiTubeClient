@@ -2064,6 +2064,9 @@ void n32016_exec(uint32_t tubecycles)
             // Read the immediate offset (3 bits) / length - 1 (5 bits) from the instruction
             temp3 = READ_PC_BYTE();
             temp = ReadGen(0); // src operand
+
+            // The field can be upto 32 bits, and is independent of the opcode i bits
+            OpSize.Op[1] = sz32;
             temp2 = ReadGen(1); // base operand
             for (c = 0; c <= (temp3 & 0x1F); c++)
             {
@@ -2074,6 +2077,7 @@ void n32016_exec(uint32_t tubecycles)
                }
             }
             temp = temp2;
+            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2375,6 +2379,8 @@ void n32016_exec(uint32_t tubecycles)
                StartBit = ((uint32_t) Offset) & 7;
             }
 
+            // The field can be upto 32 bits, and is independent of the opcode i bits
+            OpSize.Op[1] = sz32;
             temp = ReadGen(1);
             for (c = 0; c < Length && c + StartBit < 32; c++)
             {
@@ -2387,6 +2393,7 @@ void n32016_exec(uint32_t tubecycles)
                   temp &= ~(BIT(c + StartBit));
                }
             }
+            WriteSize = OpSize.Op[1];
          }
          break;
 
