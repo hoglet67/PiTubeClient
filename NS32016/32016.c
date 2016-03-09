@@ -794,6 +794,8 @@ uint32_t BitPrefix(void)
       OpSize.Op[1] = sz8;
       bit = ((uint32_t) Offset) & 7;
    }
+   
+   WriteSize = OpSize.Op[1];
 
    return BIT(bit);
 }
