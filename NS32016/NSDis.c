@@ -722,14 +722,15 @@ void n32016_build_matrix()
    }
 }
 
-static void getgen(int gen, int c)
+static void getgen(int gen, int c, uint32_t* addr)
 {
    gen &= 0x1F;
    Regs[c] = gen;
 
    if (gen >= EaPlusRn)
    {
-      Regs[c] |= READ_PC_BYTE() << 8;
+      Regs[c] |= read_x8(pc++)  << 8;
+      (*addr)++;
 
       if ((Regs[c] & 0xF800) == (Immediate << 11))
       {
@@ -759,6 +760,8 @@ uint32_t Decode(uint32_t startpc)
       pc += FormatSizes[Format];                                        // Add the basic number of bytes for a particular instruction
    }
 
+   uint32_t bodge = pc;
+
    switch (Format)
    {
       case Format0:
@@ -771,7 +774,7 @@ uint32_t Decode(uint32_t startpc)
       case Format2:
       {
          SET_OP_SIZE(opcode);
-         getgen(opcode >> 11, 0);
+         getgen(opcode >> 11, 0, &bodge);
       }
       break;
 
@@ -779,15 +782,15 @@ uint32_t Decode(uint32_t startpc)
       {
          Function += ((opcode >> 7) & 0x0F);
          SET_OP_SIZE(opcode);
-         getgen(opcode >> 11, 0);
+         getgen(opcode >> 11, 0, &bodge);
       }
       break;
 
       case Format4:
       {
          SET_OP_SIZE(opcode);
-         getgen(opcode >> 11, 0);
-         getgen(opcode >> 6, 1);
+         getgen(opcode >> 11, 0, &bodge);
+         getgen(opcode >> 6, 1, &bodge);
       }
       break;
 
@@ -819,8 +822,8 @@ uint32_t Decode(uint32_t startpc)
             break;
          }
 
-         getgen(opcode >> 19, 0);
-         getgen(opcode >> 14, 1);
+         getgen(opcode >> 19, 0, &bodge);
+         getgen(opcode >> 14, 1, &bodge);
       }
       break;
 
@@ -828,8 +831,8 @@ uint32_t Decode(uint32_t startpc)
       {
          Function += ((opcode >> 10) & 0x0F);
          SET_OP_SIZE(opcode >> 8);
-         getgen(opcode >> 19, 0);
-         getgen(opcode >> 14, 1);
+         getgen(opcode >> 19, 0, &bodge);
+         getgen(opcode >> 14, 1, &bodge);
       }
       break;
 
@@ -877,8 +880,8 @@ uint32_t Decode(uint32_t startpc)
             SET_OP_SIZE(3);               // 32 Bit
          }
 
-         getgen(opcode >> 19, 0);
-         getgen(opcode >> 14, 1);
+         getgen(opcode >> 19, 0, &bodge);
+         getgen(opcode >> 14, 1, &bodge);
       }
       break;
 
