@@ -447,7 +447,7 @@ void ShowRegs(uint8_t Pattern)
             PiTRACE(",");
          }
 
-         PiTRACE("R%" PRIu8 " ", pc);
+         PiTRACE("R%" PRIu32 " ", Count);
          First = 0;
       }
    }
