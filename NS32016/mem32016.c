@@ -228,6 +228,7 @@ void write_Arbitary(uint32_t addr, void* pData, uint32_t Size)
    }
 }
 
+#if 0
 uint32_t LoadBinary(const char *pFileName, uint32_t Location)
 {
    FILE* pFile = fopen(pFileName, "rb");
@@ -251,4 +252,4 @@ uint32_t LoadBinary(const char *pFileName, uint32_t Location)
 
    return End;
 }
-
+#endif
