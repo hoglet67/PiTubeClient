@@ -2146,7 +2146,7 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         case MOVXBW:
+         case MOVXiW:
          {
             OpSize.Op[0] = sz8;
             temp = ReadGen(0);
@@ -2155,7 +2155,7 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         case MOVZBW:
+         case MOVZiW:
          {
             OpSize.Op[0] = sz8;
             temp = ReadGen(0);
