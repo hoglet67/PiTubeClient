@@ -273,7 +273,7 @@ void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern, uint32_t c)
          case Absolute:
          {
             int32_t d = GetDisplacement(pPC);
-            PiTRACE("@%" PRId32, d);
+            PiTRACE("@%" PRIX32, d);
          }
          break;
 
@@ -382,15 +382,15 @@ void BreakPoint(uint32_t pc, uint32_t opcode)
 #endif
 
    // Useful way to be able to get a breakpoint on a particular instruction
-   //if (startpc == 0)
+   //if (pc == 0)
 #if 0     
-   if (startpc == 0xF001E9)
+   if (pc == 0xF001E9)
    {
       printf("Here!\n");
       //n32016_dumpregs("Oops how did I get here!");
    }
 
-   if ((opcode == 0) && (startpc < 20))
+   if ((opcode == 0) && (pc < 20))
    {
       n32016_dumpregs("Oops how did I get here!");
       //Trace = 1;
