@@ -273,7 +273,7 @@ void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern, uint32_t c)
          case Absolute:
          {
             int32_t d = GetDisplacement(pPC);
-            PiTRACE("@%" PRIX32, d);
+            PiTRACE("@x'%" PRIX32, d);
          }
          break;
 
