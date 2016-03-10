@@ -576,17 +576,13 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                }
                break;
 
-#if 0
-               case ADDQ:
-               case CMPQ:
-               case MOVQ:
+               case INSS:
+               case EXTS:
                {
-                  int32_t Value = (opcode >> 7) & 0xF;
-                  NIBBLE_EXTEND(Value);
-                  PiTRACE(",%" PRId32, Value);
+                  uint8_t Value = read_x8(Address++);
+                  PiTRACE(",%" PRIu32 ",%" PRIu32,  Value >> 5, ((Value & 0x1F) + 1));
                }
                break;
-#endif
             }
 
 
