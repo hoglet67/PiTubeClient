@@ -19,23 +19,15 @@ uint32_t IP[MEG16];
 const uint8_t FormatSizes[FormatCount + 1] =
 { 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1 };
 
-const char* PostfixLookup(uint8_t Postfix)
+void PostfixLookup(uint8_t Postfix)
 {
-   switch (Postfix)
-   {
-      case sz8:
-         return "B";
-      case sz16:
-         return "W";
-      case Translating:
-         return "T";
-      case sz32:
-         return "D";
-      default:
-         break;
-   }
+   char PostFixLk[] = "BW?D";
 
-   return "";
+   if (Postfix)
+   {
+      Postfix--;
+      PiTRACE("%c", PostFixLk[Postfix & 3]);
+   }
 }
 
 void AddStringFlags(uint32_t opcode)
@@ -97,7 +89,7 @@ const char InstuctionText[InstructionCount][8] =
    "ROT", "ASH", "CBIT", "CBITI", "TRAP", "LSH", "SBIT", "SBITI", "NEG", "NOT", "TRAP", "SUBP", "ABS", "COM", "IBIT", "ADDP",
 
    // FORMAT 7
-   "MOVM", "CMPM", "INSS", "EXTS", "MOVXBW", "MOVZBW", "MOVZ", "MOVX", "MUL", "MEI", "Trap", "DEI", "QUO", "REM", "MOD", "DIV", "TRAP"
+   "MOVM", "CMPM", "INSS", "EXTS", "MOVX", "MOVZ", "MOVZ", "MOVX", "MUL", "MEI", "Trap", "DEI", "QUO", "REM", "MOD", "DIV", "TRAP"
 
    // FORMAT 8
    "EXT", "CVTP", "INS", "CHECK", "INDEX", "FFS", "MOVUS", "MOVSU", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
@@ -257,7 +249,7 @@ void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern)
          {
             int32_t d1 = GetDisplacement(pPC);
             int32_t d2 = GetDisplacement(pPC);
-            PiTRACE("EXT(x'%" PRIX32 ")+x'%" PRIX32);
+            PiTRACE("EXT(x'%" PRIX32 ")+x'%" PRIX32, d1, d2);
          }
          break;
 
@@ -449,30 +441,38 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                Postfix = Translating;
             }
 
-            if ((Function == MOVXBW) || (Function == MOVZBW))
-            {
-               Postfix = 0;
-            }
-
             if (Function == Scond)
             {
                uint32_t Condition = ((opcode >> 7) & 0x0F);
-               PiTRACE("S%s%s ", &InstuctionText[Condition][1], PostfixLookup(Postfix)); // Offset by 1 to loose the 'B'
+               PiTRACE("S%s", &InstuctionText[Condition][1]);                 // Offset by 1 to loose the 'B'
             }
             else
             {
-               PiTRACE("%s%s ", pText, PostfixLookup(Postfix));
+               PiTRACE("%s", pText);
             }
 
+            PostfixLookup(Postfix);
             switch (Function)
             {
+               case MOVXiW:
+               case MOVZiW:
+               {
+                  PiTRACE("W");
+               }
+               break;
+
                case MOVZiD:
                case MOVXiD:
                {
                   PiTRACE("D");
                }
                break;
-               
+            }
+
+            PiTRACE(" ");
+
+            switch (Function)
+            {
                case ADDQ:
                case CMPQ:
                case ACB:
