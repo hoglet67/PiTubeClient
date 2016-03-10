@@ -13,6 +13,26 @@ uint32_t OpCount = 0;
 uint8_t FunctionLookup[256];
 OperandSizeType FredSize;
 
+const char LPRLookUp[16][20] = 
+{
+   "UPSR",
+   "DCR",
+   "BPC",
+   "DSR",
+   "CAR",
+   "{0101}",
+   "{0110}",
+   "{0111}",
+   "FP",
+   "SP",
+   "SB",
+   "USP",
+   "CFG",
+   "PSR",
+   "INTBASE",
+   "MOD"
+};
+
 #ifdef INSTRUCTION_PROFILING
 uint32_t IP[MEG16];
 #endif
@@ -482,32 +502,13 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
                break;
 
                case LPR:
+               case SPR:
                {
                   int32_t Value = (opcode >> 7) & 0xF;
-                  switch (Value)
+                  PiTRACE("%s", LPRLookUp[Value]);
+                  if (Function == LPR)
                   {
-                     case 0:
-                     {
-                        PiTRACE("PSR,");
-                     }
-                     break;
-                     
-                     case 9:
-                     {
-                        PiTRACE("SP,");
-                     }
-                     break;
-
-                     case 11:
-                     {
-                        PiTRACE("USP,");
-                     }
-                     break;
-
-                     default:
-                     {
-                        PiTRACE("!%" PRId32 "!,", Value);
-                     }
+                     PiTRACE(",");
                   }
                }
                break;
