@@ -923,6 +923,8 @@ void Decode(uint32_t* pPC)
 }
 
 #ifdef INSTRUCTION_PROFILING
+#define BYTE_COUNT 10
+
 void DisassembleUsingITrace(uint32_t Location, uint32_t End)
 {
    uint32_t Index;
@@ -936,15 +938,19 @@ void DisassembleUsingITrace(uint32_t Location, uint32_t End)
          if (Address < Index)
          {
             uint32_t Temp;
-            PiTRACE(".byte ");
-            for (Temp = Address; Temp < Index; Temp++)
+            uint32_t Break = 0;
+
+            for (Temp = Address; Temp < Index; Temp++, Break++)
             {
-               PiTRACE("%u", read_x8(Temp));
-               if (Temp < (Index - 1))
+               if ((Break % BYTE_COUNT) == 0)
                {
-                  PiTRACE(",");
+                  PiTRACE("\n.byte %u", read_x8(Temp));
+                  continue;
                }
+
+               PiTRACE(",%u", read_x8(Temp));
             }
+
             PiTRACE("\n");
          }
 
