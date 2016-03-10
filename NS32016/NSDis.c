@@ -446,8 +446,15 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
          const char* pText = "Bad NS32016 opcode";
          uint32_t Postfix = OperandSize;
          uint32_t Format = Function >> 4;
-
-         //PiTRACE("#%08"PRIu32" ", ++OpCount);
+         
+#if 0
+         if (OpCount > 5000)
+         {
+            exit(1);
+         }
+         PiTRACE("#%08"PRIu32" ", ++OpCount);
+#endif
+        
          PiTRACE("&%06" PRIX32 " ", StartPc);
          PiTRACE("[%08" PRIX32 "] ", opcode);
          PiTRACE("F%01" PRIu32 " ", Format);
