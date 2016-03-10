@@ -20,7 +20,7 @@ int nsoutput = 0;
 
 ProcessorRegisters PR;
 uint32_t r[8];
-uint32_t pc;
+static uint32_t pc;
 uint32_t sp[2];
 
 uint32_t Trace = 0;
@@ -33,6 +33,14 @@ uint16_t Regs[2];
 uint32_t genaddr[2];
 int gentype[2];
 OperandSizeType OpSize;
+
+void n32016_ShowRegs(void)
+{
+   TrapTRACE("R0=%08"PRIX32" R1=%08"PRIX32" R2=%08"PRIX32" R3=%08"PRIX32"\n", r[0], r[1], r[2], r[3]);
+   TrapTRACE("R4=%08"PRIX32" R5=%08"PRIX32" R6=%08"PRIX32" R7=%08"PRIX32"\n", r[4], r[5], r[6], r[7]);
+   TrapTRACE("PC=%08"PRIX32" SB=%08"PRIX32" SP=%08"PRIX32" TRAP=%08"PRIX32"\n", pc, sb, GET_SP(), TrapFlags);
+   TrapTRACE("FP=%08"PRIX32" INTBASE=%08"PRIX32" PSR=%04"PRIX32" MOD=%04"PRIX32"\n", fp, intbase, psr, mod);
+}
 
 const uint32_t OpSizeLookup[4] =
 {
@@ -1116,9 +1124,11 @@ void n32016_exec(uint32_t tubecycles)
          break;
       }
 
+      uint32_t Temp = pc;
+      ShowInstruction(startpc, &Temp, opcode, Function, OpSize.Op[0]);
+
       GetGenPhase2(Regs[0], 0);
       GetGenPhase2(Regs[1], 1);
-
 
       if (TrapFlags)
       {
@@ -1126,8 +1136,6 @@ void n32016_exec(uint32_t tubecycles)
          HandleTrap();
          continue;
       }
-
-      ShowInstruction(startpc, opcode, Function, OpSize.Op[0]);
 
 #ifdef INSTRUCTION_PROFILING
       IP[startpc]++;

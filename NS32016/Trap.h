@@ -1,3 +1,4 @@
+#define TrapTRACE printf
 
 enum TrapTypes
 {

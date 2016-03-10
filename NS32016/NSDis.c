@@ -11,6 +11,7 @@
 
 uint32_t OpCount = 0;
 uint8_t FunctionLookup[256];
+OperandSizeType FredSize;
 
 #ifdef INSTRUCTION_PROFILING
 uint32_t IP[MEG16];
@@ -21,7 +22,7 @@ const uint8_t FormatSizes[FormatCount + 1] =
 
 void PostfixLookup(uint8_t Postfix)
 {
-   char PostFixLk[] = "BW?D";
+   char PostFixLk[] = "BWTD";
 
    if (Postfix)
    {
@@ -186,7 +187,7 @@ int32_t GetDisplacement(uint32_t* pPC)
    return Value;
 }
 
-void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern)
+void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern, uint32_t c)
 {
    if (Pattern < 8)
    {
@@ -233,7 +234,18 @@ void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern)
 
          case Immediate:
          {
-            int32_t Value = GetDisplacement(pPC);
+            int32_t Value;
+            MultiReg temp3;
+
+            temp3.u32 = SWAP32(read_x32(*pPC));
+            if (FredSize.Op[c] == sz8)
+               Value = temp3.u8;
+            else if (FredSize.Op[c] == sz16)
+               Value = temp3.u16;
+            else
+               Value = temp3.u32;
+
+            (*pPC) += FredSize.Op[c];
             PiTRACE("x'%"PRIX32, Value);
          }
          break;
@@ -298,7 +310,7 @@ void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern)
          case EaPlus8Rn:
          {
             const char SizeLookup[] = "BWDQ";
-            GetOperandText(Start, pPC, Pattern >> 11);   // Recurse
+            GetOperandText(Start, pPC, Pattern >> 11, c);   // Recurse
             PiTRACE("[R%" PRId16 ":%c]", ((Pattern >> 8) & 3), SizeLookup[Pattern & 3]);
          }
          break;
@@ -308,34 +320,19 @@ void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern)
 
 void RegLookUp(uint32_t Start, uint32_t* pPC)
 {
-   if (Regs[0] < 0xFFFF)
+   // printf("RegLookUp(%06" PRIX32 ", %06" PRIX32 ")\n", pc, (*pPC));
+   uint32_t Index;
+
+   for (Index = 0; Index < 2; Index++)
    {
-      if (Regs[0] >= EaPlusRn)
+      if (Regs[Index] < 0xFFFF)
       {
-         (*pPC)++; // Extra address for EaPlusRn on first operand
-      }
-
-      if (Regs[1] < 0xFFFF)
-      {
-         if (Regs[1] >= EaPlusRn)
+         if (Index == 1)
          {
-            (*pPC)++; // Extra address for EaPlusRn on second operand
+            PiTRACE(",");
          }
-      }
 
-      // printf("RegLookUp(%06" PRIX32 ", %06" PRIX32 ")\n", pc, (*pPC));
-      uint32_t Index;
-      for (Index = 0; Index < 2; Index++)
-      {
-         if (Regs[Index] < 0xFFFF)
-         {
-            if (Index == 1)
-            {
-               PiTRACE(",");
-            }
-
-            GetOperandText(Start, pPC, Regs[Index]);
-         }
+         GetOperandText(Start, pPC, Regs[Index], Index);
       }
    }
 }
@@ -414,21 +411,21 @@ void ShowRegs(uint8_t Pattern, uint8_t Reverse)
 }
 
 #ifdef SHOW_INSTRUCTIONS
-void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize)
+void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t Function, uint32_t OperandSize)
 {
    static uint32_t old_pc = 0xFFFFFFFF;
 
-   if (pc < (IO_BASE - 64))                     // The code will not work near the IO Space as it will have side effects
+   if (StartPc < (IO_BASE - 64))                     // The code will not work near the IO Space as it will have side effects
    {
-      if (pc != old_pc)
+      if (StartPc != old_pc)
       {
-         old_pc = pc;
+         old_pc = StartPc;
          const char* pText = "Bad NS32016 opcode";
          uint32_t Postfix = OperandSize;
          uint32_t Format = Function >> 4;
 
          //PiTRACE("#%08"PRIu32" ", ++OpCount);
-         PiTRACE("&%06" PRIX32 " ", pc);
+         PiTRACE("&%06" PRIX32 " ", StartPc);
          PiTRACE("[%08" PRIX32 "] ", opcode);
          PiTRACE("F%01" PRIu32 " ", Format);
 
@@ -516,39 +513,38 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                break;
             }
 
-            uint32_t Address = pc + FormatSizes[Format];
-            RegLookUp(pc, &Address);
+            RegLookUp(StartPc, pPC);
 
             if ((Function <= BN) || (Function == BSR))
             {
-               int32_t d = GetDisplacement(&Address);
-               PiTRACE("&%06"PRIX32" ", pc + d);
+               int32_t d = GetDisplacement(pPC);
+               PiTRACE("&%06"PRIX32" ", StartPc + d);
             }
 
             switch (Function)
             {
                case SAVE:
                {
-                  ShowRegs(read_x8(Address++), 0);    //Access directly we do not want tube reads!
+                  ShowRegs(read_x8((*pPC)++), 0);    //Access directly we do not want tube reads!
                }
                break;
 
                case RESTORE:
                {
-                  ShowRegs(read_x8(Address++), 1);    //Access directly we do not want tube reads!
+                  ShowRegs(read_x8((*pPC)++), 1);    //Access directly we do not want tube reads!
                }
                break;
 
                case EXIT:
                {
-                  ShowRegs(read_x8(Address++), 1);    //Access directly we do not want tube reads!
+                  ShowRegs(read_x8((*pPC)++), 1);    //Access directly we do not want tube reads!
                }
                break;
   
                case ENTER:
                {
-                  ShowRegs(read_x8(Address++), 0);    //Access directly we do not want tube reads!
-                  int32_t d = GetDisplacement(&Address);
+                  ShowRegs(read_x8((*pPC)++), 0);    //Access directly we do not want tube reads!
+                  int32_t d = GetDisplacement(pPC);
                   PiTRACE(" x'%" PRIX32 "", d);
                }
                break;
@@ -557,8 +553,31 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                case CXP:
                case RXP:
                {
-                  int32_t d = GetDisplacement(&Address);
+                  int32_t d = GetDisplacement(pPC);
                   PiTRACE(" x'%" PRIX32 "", d);
+               }
+               break;
+
+               case ACB:
+               {
+                  int32_t d = GetDisplacement(pPC); 
+                  PiTRACE("PC x+'%" PRId32 "", d);
+               }
+               break;
+
+               case MOVM:
+               case CMPM:
+               {
+                  int32_t d = GetDisplacement(pPC);
+                  PiTRACE(",%" PRId32, (d / OperandSize) + 1);
+               }
+               break;
+
+               case EXT:
+               case INS:
+               {
+                  int32_t d = GetDisplacement(pPC);
+                  PiTRACE(",%" PRId32, d);
                }
                break;
 
@@ -579,7 +598,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
                case INSS:
                case EXTS:
                {
-                  uint8_t Value = read_x8(Address++);
+                  uint8_t Value = read_x8((*pPC)++);
                   PiTRACE(",%" PRIu32 ",%" PRIu32,  Value >> 5, ((Value & 0x1F) + 1));
                }
                break;
@@ -589,7 +608,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
             PiTRACE("\n");
 
 #ifdef TEST_SUITE
-            if (pc == 0x1CA9 || pc == 0x1CB2)
+            if ((*pPC == 0x1CA9) || (*pPC == 0x1CB2))
             {
 
 #ifdef INSTRUCTION_PROFILING
@@ -613,7 +632,7 @@ void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t O
       return;
    }
 
-   PiTRACE("PC is :%08"PRIX32" ?????\n", pc);
+   //PiTRACE("PC is :%08"PRIX32" ?????\n", *pPC);
 }
 #endif
 
@@ -711,15 +730,15 @@ void n32016_build_matrix()
    }
 }
 
-static void getgen(int gen, int c, uint32_t* addr)
+static void getgen(int gen, int c, uint32_t* pPC)
 {
    gen &= 0x1F;
    Regs[c] = gen;
 
    if (gen >= EaPlusRn)
    {
-      Regs[c] |= read_x8(pc++)  << 8;
-      (*addr)++;
+      Regs[c] |= read_x8((*pPC)++) << 8;
+      (*pPC)++;
 
       if ((Regs[c] & 0xF800) == (Immediate << 11))
       {
@@ -733,24 +752,24 @@ static void getgen(int gen, int c, uint32_t* addr)
    }
 }
 
-uint32_t Decode(uint32_t startpc)
+#define SET_FRED_SIZE(in) FredSize.Whole = OpSizeLookup[(in) & 0x03]
+
+void Decode(uint32_t* pPC)
 {
-   uint32_t pc = startpc;
-   uint32_t opcode = read_x32(pc);
+   uint32_t StartPc = *pPC;
+   uint32_t opcode = read_x32(*pPC);
    uint32_t Function = FunctionLookup[opcode & 0xFF];
    uint32_t Format = Function >> 4;
-   OperandSizeType OpSize;
 
    Regs[0] =
    Regs[1] = 0xFFFF;
 
    if (Format < (FormatCount + 1))
    {
-      pc += FormatSizes[Format];                                        // Add the basic number of bytes for a particular instruction
+      *pPC += FormatSizes[Format];                                        // Add the basic number of bytes for a particular instruction
    }
 
-   uint32_t bodge = pc;
-
+   FredSize.Whole = 0;
    switch (Format)
    {
       case Format0:
@@ -762,34 +781,34 @@ uint32_t Decode(uint32_t startpc)
 
       case Format2:
       {
-         SET_OP_SIZE(opcode);
-         getgen(opcode >> 11, 0, &bodge);
+         SET_FRED_SIZE(opcode);
+         getgen(opcode >> 11, 0, pPC);
       }
       break;
 
       case Format3:
       {
          Function += ((opcode >> 7) & 0x0F);
-         SET_OP_SIZE(opcode);
-         getgen(opcode >> 11, 0, &bodge);
+         SET_FRED_SIZE(opcode);
+         getgen(opcode >> 11, 0, pPC);
       }
       break;
 
       case Format4:
       {
-         SET_OP_SIZE(opcode);
-         getgen(opcode >> 11, 0, &bodge);
-         getgen(opcode >> 6, 1, &bodge);
+         SET_FRED_SIZE(opcode);
+         getgen(opcode >> 11, 0, pPC);
+         getgen(opcode >> 6, 1, pPC);
       }
       break;
 
       case Format5:
       {
          Function += ((opcode >> 10) & 0x0F);
-         SET_OP_SIZE(opcode >> 8);
+         SET_FRED_SIZE(opcode >> 8);
          if (opcode & BIT(Translation))
          {
-            SET_OP_SIZE(0);         // 8 Bit
+            SET_FRED_SIZE(0);         // 8 Bit
          }
       }
       break;
@@ -797,7 +816,7 @@ uint32_t Decode(uint32_t startpc)
       case Format6:
       {
          Function += ((opcode >> 10) & 0x0F);
-         SET_OP_SIZE(opcode >> 8);
+         SET_FRED_SIZE(opcode >> 8);
 
          // Ordering important here, as getgen uses Operand Size
          switch (Function)
@@ -806,22 +825,22 @@ uint32_t Decode(uint32_t startpc)
             case ASH:
             case LSH:
             {
-               OpSize.Op[0] = sz8;
+               FredSize.Op[0] = sz8;
             }
             break;
          }
 
-         getgen(opcode >> 19, 0, &bodge);
-         getgen(opcode >> 14, 1, &bodge);
+         getgen(opcode >> 19, 0, pPC);
+         getgen(opcode >> 14, 1, pPC);
       }
       break;
 
       case Format7:
       {
          Function += ((opcode >> 10) & 0x0F);
-         SET_OP_SIZE(opcode >> 8);
-         getgen(opcode >> 19, 0, &bodge);
-         getgen(opcode >> 14, 1, &bodge);
+         SET_FRED_SIZE(opcode >> 8);
+         getgen(opcode >> 19, 0, pPC);
+         getgen(opcode >> 14, 1, pPC);
       }
       break;
 
@@ -862,15 +881,15 @@ uint32_t Decode(uint32_t startpc)
             Function += ((opcode >> 6) & 3);
          }
 
-         SET_OP_SIZE(opcode >> 8);
+         SET_FRED_SIZE(opcode >> 8);
 
          if (Function == CVTP)
          {
-            SET_OP_SIZE(3);               // 32 Bit
+            SET_FRED_SIZE(3);               // 32 Bit
          }
 
-         getgen(opcode >> 19, 0, &bodge);
-         getgen(opcode >> 14, 1, &bodge);
+         getgen(opcode >> 19, 0, pPC);
+         getgen(opcode >> 14, 1, pPC);
       }
       break;
 
@@ -899,23 +918,38 @@ uint32_t Decode(uint32_t startpc)
       break;
    }
 
-   ShowInstruction(startpc, opcode, Function, OpSize.Op[0]);
-
-   return pc;
+   ShowInstruction(StartPc, pPC, opcode, Function, FredSize.Op[0]);
 }
 
 #ifdef INSTRUCTION_PROFILING
 void DisassembleUsingITrace(uint32_t Location, uint32_t End)
 {
    uint32_t Index;
+   uint32_t Address = Location;
 
    PiTRACE("DisassembleUsingITrace(%06" PRIX32 ", %06" PRIX32 ")\n", Location, End);
    for (Index = Location; Index < End; Index++)
    {
       if (IP[Index])
       {
+         if (Address < Index)
+         {
+            uint32_t Temp;
+            PiTRACE(".byte ");
+            for (Temp = Address; Temp < Index; Temp++)
+            {
+               PiTRACE("%u", read_x8(Temp));
+               if (Temp < (Index - 1))
+               {
+                  PiTRACE(",");
+               }
+            }
+            PiTRACE("\n");
+         }
+
          PiTRACE("#%06" PRId32 ": ", IP[Index]);
-         Decode(Index);
+         Address = Index;
+         Decode(&Address);
          ShowTraps();
          CLEAR_TRAP();
       }
@@ -927,7 +961,7 @@ void Disassemble(uint32_t Location, uint32_t End)
 {
    do
    {
-      Location = Decode(Location);
+      Decode(&Location);
       ShowTraps();
       CLEAR_TRAP();
    }

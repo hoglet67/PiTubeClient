@@ -423,6 +423,7 @@ enum StringBits
 };
 
 extern void n32016_init();
+extern void n32016_ShowRegs(void);
 extern void n32016_reset(uint32_t StartAddress);
 extern void n32016_exec(uint32_t tubecycles);
 extern void n32016_build_matrix();
@@ -430,7 +431,6 @@ extern void BreakPoint(uint32_t pc, uint32_t opcode);
 
 extern ProcessorRegisters PR;
 extern uint32_t r[8];
-extern uint32_t pc;
 extern uint16_t Regs[2];
 
 extern void Disassemble(uint32_t Location, uint32_t End);
@@ -442,7 +442,7 @@ extern uint32_t IP[MEG16];
 
 
 #ifdef SHOW_INSTRUCTIONS
-extern void ShowInstruction(uint32_t pc, uint32_t opcode, uint32_t Function, uint32_t OperandSize);
+extern void ShowInstruction(uint32_t pc, uint32_t* pPC, uint32_t opcode, uint32_t Function, uint32_t OperandSize);
 #else
 #define ShowInstruction(...)
 #endif
