@@ -9,6 +9,9 @@
 #include "Trap.h"
 #include "defs.h"
 
+#define HEX24 "x'%06" PRIX32
+#define HEX32 "x'%" PRIX32
+
 uint32_t OpCount = 0;
 uint8_t FunctionLookup[256];
 OperandSizeType FredSize;
@@ -266,14 +269,14 @@ void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern, uint32_t c)
                Value = temp3.u32;
 
             (*pPC) += FredSize.Op[c];
-            PiTRACE("x'%"PRIX32, Value);
+            PiTRACE(HEX32, Value);
          }
          break;
 
          case Absolute:
          {
             int32_t d = GetDisplacement(pPC);
-            PiTRACE("@x'%" PRIX32, d);
+            PiTRACE("@" HEX32, d);
          }
          break;
 
@@ -281,7 +284,7 @@ void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern, uint32_t c)
          {
             int32_t d1 = GetDisplacement(pPC);
             int32_t d2 = GetDisplacement(pPC);
-            PiTRACE("EXT(x'%" PRIX32 ")+x'%" PRIX32, d1, d2);
+            PiTRACE("EXT(" HEX32 ")+" HEX32, d1, d2);
          }
          break;
 
@@ -546,7 +549,7 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
                {
                   ShowRegs(read_x8((*pPC)++), 0);    //Access directly we do not want tube reads!
                   int32_t d = GetDisplacement(pPC);
-                  PiTRACE(" x'%" PRIX32 "", d);
+                  PiTRACE(" " HEX32 "", d);
                }
                break;
 
@@ -555,7 +558,7 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
                case RXP:
                {
                   int32_t d = GetDisplacement(pPC);
-                  PiTRACE(" x'%" PRIX32 "", d);
+                  PiTRACE(" " HEX32 "", d);
                }
                break;
 
