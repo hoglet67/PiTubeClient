@@ -432,6 +432,7 @@ extern void BreakPoint(uint32_t pc, uint32_t opcode);
 extern ProcessorRegisters PR;
 extern uint32_t r[8];
 extern uint16_t Regs[2];
+extern OperandSizeType FredSize;
 
 extern void Disassemble(uint32_t Location, uint32_t End);
 

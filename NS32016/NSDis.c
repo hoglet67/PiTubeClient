@@ -488,9 +488,10 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
       {
          old_pc = StartPc;
          
-#if 0
+#ifdef WIN32
          if (OpCount > 25000)
          {
+            PiTRACE("25000 Traces done!\n");
             exit(1);
          }
          PiTRACE("#%08"PRIu32" ", ++OpCount);

@@ -1116,6 +1116,7 @@ void n32016_exec(uint32_t tubecycles)
          break;
       }
 
+      FredSize = OpSize;                     // Temporary hack :(
       uint32_t Temp = pc;
       ShowInstruction(startpc, &Temp, opcode, Function, OpSize.Op[0]);
 
