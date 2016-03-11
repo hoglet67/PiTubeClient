@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
-// 0 = PC change
-// 1 = Write
-#define TYPE_BIT (1 << 29)
 
 int process(char *old_filename, char  *new_filename)
 {
@@ -12,7 +10,9 @@ int process(char *old_filename, char  *new_filename)
    int  a;
    int last;
    int count = 0;
-   int address = -1;
+   uint64_t shiftreg = 0;
+   uint32_t addr;
+   uint32_t data;
    int be;
 
    ptr_old = fopen(old_filename, "rb");
@@ -43,46 +43,42 @@ int process(char *old_filename, char  *new_filename)
       if (last >= 0 && !(last & 0x80) && (a & 0x80))
       {
          // printf("%02x\n", a);
-         // If bit 6 is 1, this is the start of a new character
+         // If bit 6 is 1, this is the end of a sequence
+         shiftreg = (shiftreg << 6) | (a & 0x3F);
          if (a & 0x40)
          {
-            //printf("%08x\n", address);
-            if (address != -1)
+            if (a & 0x20)
             {
-               if (address & TYPE_BIT)
+               // A write has occurred
+               // Bits 27..24 are the BE values
+               // Bits 23..0 are the address
+               be = shiftreg & 15;
+               data = (shiftreg >> 6) & 0xFFFFFFFF;
+               addr = (shiftreg >> 38) & 0xFFFFFC;
+               if (be & 1)
                {
-                  // A write has occurred
-                  // Bits 27..24 are the BE values
-                  // Bits 23..0 are the address
-                  be = (address >> 24) & 15;
-                  if (be & 1)
-                  {
-                     fprintf(ptr_new, "WR &%06X\n", address & 0xFFFFFC);
-                  }
-                  if (be & 2)
-                  {
-                     fprintf(ptr_new, "WR &%06X\n", (address & 0xFFFFFC) + 1);
-                  }
-                  if (be & 4)
-                  {
-                     fprintf(ptr_new, "WR &%06X\n", (address & 0xFFFFFC) + 2);
-                  }
-                  if (be & 8)
-                  {
-                     fprintf(ptr_new, "WR &%06X\n", (address & 0xFFFFFC) + 3);
-                  }
+                  fprintf(ptr_new, "WR &%06X &%02X\n", addr, data & 0xFF);
                }
-               else
+               if (be & 2)
                {
-                  // PC has changed
-                  fprintf(ptr_new, "PC &%06X\n", address);
+                  fprintf(ptr_new, "WR &%06X &%02X\n", addr + 1, (data >> 8) & 0xFF);
+               }
+               if (be & 4)
+               {
+                  fprintf(ptr_new, "WR &%06X &%02X\n", addr + 2, (data >> 16) & 0xFF);
+               }
+               if (be & 8)
+               {
+                  fprintf(ptr_new, "WR &%06X &%02X\n", addr + 3, (data >> 24) & 0xFF);
                }
             }
-            address = a & 0x3F;
-         }
-         else
-         {
-            address = (address << 6) | (a & 0x3F);
+            else
+            {
+               // PC has changed
+               addr = (shiftreg >> 6) & 0xFFFFFF;
+               fprintf(ptr_new, "PC &%06X\n", addr);
+            }
+            shiftreg = 0;
          }
       }
       last = a;
