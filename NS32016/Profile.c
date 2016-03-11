@@ -24,7 +24,7 @@ const char operandStrings[NUM_OPERAND_TYPES][20] =
    "RN"              ,  //  2
    "disp(RN)"        ,  //  3
    "disp2(disp1(FP))",  //  4
-   "disp2(disp1(SB))",  //  5
+   "disp2(disp1(SP))",  //  5
    "disp2(disp1(SB))",  //  6
    "--illegal--"     ,  //  7
    "value"           ,  //  8
