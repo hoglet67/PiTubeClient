@@ -965,17 +965,9 @@ void n32016_exec(uint32_t tubecycles)
       switch (Format)
       {
          case Format0:
-         {
-            temp = getdisp();
-         }
-         break;
-
          case Format1:
          {
-            if (Function <= RETT)
-            {
-               temp = getdisp();
-            }
+            // Nothing here!
          }
          break;
 
@@ -1129,6 +1121,11 @@ void n32016_exec(uint32_t tubecycles)
 
       GetGenPhase2(Regs[0], 0);
       GetGenPhase2(Regs[1], 1);
+
+      if (Function <= RETT)
+      {
+         temp = getdisp();
+      }
 
       if (TrapFlags)
       {
