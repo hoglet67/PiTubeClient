@@ -139,17 +139,6 @@ const char InstuctionText[InstructionCount][8] =
    // Illegal
    "TRAP" };
 
-const char* InstuctionLookup(uint8_t Function)
-{
-   if (Function < InstructionCount)
-   {
-
-      return InstuctionText[Function];
-   }
-
-   return "Bad NS32016 opcode";
-}
-
 int32_t GetDisplacement(uint32_t* pPC)
 {
    // Displacements are in Little Endian and need to be sign extended
@@ -433,6 +422,61 @@ void ShowRegs(uint8_t Pattern, uint8_t Reverse)
    PiTRACE("]");
 }
 
+const char PostFixLk[] = "BWTD";
+const char EightSpaces[] = "        ";
+
+void AddInstructionText(uint32_t Function, uint32_t opcode, uint32_t OperandSize)
+{
+   if (Function < InstructionCount)
+   {
+      char Str[80];
+
+      if (Function == Scond)
+      {
+         uint32_t Condition = ((opcode >> 7) & 0x0F);
+         sprintf(Str, "S%s", &InstuctionText[Condition][1]);             // Offset by 1 to lose the 'B'
+      }
+      else
+      {
+         sprintf(Str, "%s", InstuctionText[Function]);
+      }
+
+      if ((opcode & 0x80FF) == 0x800E)
+      {
+         OperandSize = Translating;
+      }
+
+      if (OperandSize)
+      {
+         OperandSize--;
+         sprintf(Str + strlen(Str), "%c", PostFixLk[OperandSize & 3]);                 // Offset by 1 to loose the 'B'
+      }
+
+      switch (Function)
+      {
+         case MOVXiW:
+         case MOVZiW:
+         {
+            sprintf(Str + strlen(Str), "W");
+         }
+         break;
+
+         case MOVZiD:
+         case MOVXiD:
+         {
+            sprintf(Str + strlen(Str), "D");
+         }
+         break;
+      }
+
+      size_t Len = strlen(Str);
+      if (Len < (sizeof(EightSpaces) - 1))
+      {
+         PiTRACE("%s%s", Str, &EightSpaces[Len]);
+      }
+   }
+}
+
 #ifdef SHOW_INSTRUCTIONS
 void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t Function, uint32_t OperandSize)
 {
@@ -443,12 +487,9 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
       if (StartPc != old_pc)
       {
          old_pc = StartPc;
-         const char* pText = "Bad NS32016 opcode";
-         uint32_t Postfix = OperandSize;
-         uint32_t Format = Function >> 4;
          
-#if 0
-         if (OpCount > 5000)
+#if 1
+         if (OpCount > 25000)
          {
             exit(1);
          }
@@ -457,46 +498,11 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
         
          PiTRACE("&%06" PRIX32 " ", StartPc);
          PiTRACE("[%08" PRIX32 "] ", opcode);
-         PiTRACE("F%01" PRIu32 " ", Format);
+         PiTRACE("F%01" PRIu32 " ", Function >> 4);
 
          if (Function < InstructionCount)
          {
-            pText = InstuctionText[Function];
-
-            if ((opcode & 0x80FF) == 0x800E)
-            {
-               Postfix = Translating;
-            }
-
-            if (Function == Scond)
-            {
-               uint32_t Condition = ((opcode >> 7) & 0x0F);
-               PiTRACE("S%s", &InstuctionText[Condition][1]);                 // Offset by 1 to loose the 'B'
-            }
-            else
-            {
-               PiTRACE("%s", pText);
-            }
-
-            PostfixLookup(Postfix);
-            switch (Function)
-            {
-               case MOVXiW:
-               case MOVZiW:
-               {
-                  PiTRACE("W");
-               }
-               break;
-
-               case MOVZiD:
-               case MOVXiD:
-               {
-                  PiTRACE("D");
-               }
-               break;
-            }
-
-            PiTRACE(" ");
+            AddInstructionText(Function, opcode, OperandSize);
 
             switch (Function)
             {
