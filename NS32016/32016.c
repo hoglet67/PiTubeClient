@@ -2058,7 +2058,8 @@ void n32016_exec(uint32_t tubecycles)
          {
             uint32_t First    = ReadAddress(0);
             uint32_t Second   = ReadAddress(1);
-            temp = getdisp() + OpSize.Op[0];                      // disp of 0 means move 1 byte
+            //temp = getdisp() + OpSize.Op[0];                      // disp of 0 means move 1 byte
+            temp = (getdisp() & ~(OpSize.Op[0] - 1))  + OpSize.Op[0];
             while (temp)
             {
                temp2 = read_x8(First);
