@@ -488,7 +488,7 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
       {
          old_pc = StartPc;
          
-#if 1
+#if 0
          if (OpCount > 25000)
          {
             exit(1);
