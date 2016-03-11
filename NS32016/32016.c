@@ -16,7 +16,7 @@
 #include "Profile.h"
 #endif
 
-#define CXP_UNUSED_WORD 0x0000
+#define CXP_UNUSED_WORD 0xAAAA
 
 int nsoutput = 0;
 
