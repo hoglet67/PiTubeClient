@@ -476,6 +476,28 @@ void AddInstructionText(uint32_t Function, uint32_t opcode, uint32_t OperandSize
       }
    }
 }
+void AddASCII(opcode, Format)
+{
+   if (Format < sizeof(FormatSizes))
+   {
+      uint32_t Len = FormatSizes[Format];
+      uint32_t Count;
+
+      for (Count = 0; Count < 4; Count++)
+      {
+         if (Count < Len)
+         { 
+            uint8_t Data = opcode & 0xFF;
+            PiTRACE("%c", (Data < 0x20) ? '.' : Data);
+            opcode >>= 8;
+         }
+         else
+         {
+            PiTRACE(" ");
+         }
+      }
+   }
+}
 
 #ifdef SHOW_INSTRUCTIONS
 void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t Function, uint32_t OperandSize)
@@ -494,12 +516,15 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
             PiTRACE("25000 Traces done!\n");
             exit(1);
          }
-         PiTRACE("#%08"PRIu32" ", ++OpCount);
+         OpCount++;
+         //PiTRACE("#%08"PRIu32" ", OpCount);
 #endif
         
          PiTRACE("&%06" PRIX32 " ", StartPc);
          PiTRACE("[%08" PRIX32 "] ", opcode);
-         PiTRACE("F%01" PRIu32 " ", Function >> 4);
+         uint32_t Format = Function >> 4;
+         PiTRACE("F%01" PRIu32 " ", Format);
+         //AddASCII(opcode, Format);
 
          if (Function < InstructionCount)
          {
