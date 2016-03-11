@@ -2153,6 +2153,11 @@ void n32016_exec(uint32_t tubecycles)
 
          case MOVXiW:
          {
+            if (OpSize.Op[0] != sz8)
+            {
+               PiWARN("MOVXiW forcing first Operand Size\n");
+            }
+
             OpSize.Op[0] = sz8;
             temp = ReadGen(0);
             SIGN_EXTEND(sz8, temp); // Editor need the useless semicolon
@@ -2162,6 +2167,11 @@ void n32016_exec(uint32_t tubecycles)
 
          case MOVZiW:
          {
+            if (OpSize.Op[0] != sz8)
+            {
+               PiWARN("MOVZiW forcing first Operand Size\n");
+            }
+
             OpSize.Op[0] = sz8;
             temp = ReadGen(0);
             WriteSize = sz16;
