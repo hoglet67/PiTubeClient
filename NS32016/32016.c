@@ -2480,10 +2480,6 @@ void n32016_exec(uint32_t tubecycles)
 
          case CHECK:
          {
-            if (gentype[0] == Register)
-            {
-               PiWARN("CHECKi with bounds in a register might give unexpected behaviour\n");
-            }
             uint32_t ad = ReadAddress(0);
             temp3 = ReadGen(1);
 
