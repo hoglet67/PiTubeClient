@@ -1124,6 +1124,8 @@ void n32016_exec(uint32_t tubecycles)
             Function += ((opcode >> 10) & 0x0F);
             reg_type  = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
             SET_FOP_SIZE((opcode >> 8) & 1);                 
+            getgen(opcode >> 19, 0);
+            getgen(opcode >> 14, 1);
          }
          break;
 
