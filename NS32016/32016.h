@@ -51,6 +51,13 @@ enum Formats
 	FormatBad = 0xFF
 };
 
+enum RegType
+{
+   Integer,
+   SinglePrecision,
+   DoublePrecision
+};
+
 enum OpTypes
 {
    Memory,
@@ -278,6 +285,7 @@ enum DataSize
 	sz16 = 2,
    Translating = 3,
 	sz32 = 4,
+	sz64 = 8,
 };
 
 typedef union
@@ -365,7 +373,31 @@ typedef union
 
    uint32_t Whole;
 } T16In32;
-   
+
+// Floating point registers
+//  0 F0:L F0:F
+//  1 F0:L F1:F
+//  2 F1:L
+//  3 F1:L
+//  4 F2:L F2:F
+//  5 F2:L F3:F
+//  6 F3:L
+//  7 F3:L
+//  8 F4:L F4:F
+//  9 F4:L F5:F
+// 10 F5:L 
+// 11 F5:L
+// 12 F6:L F6:F
+// 13 F6:L F7:F
+// 14 F7:L
+// 15 F7:L
+
+typedef union
+{
+   float  FPF[16];
+   double FPD[ 8];
+} FloatingPointRegisters;
+  
 typedef union
 {
    struct
@@ -393,7 +425,6 @@ typedef union
    uint32_t Direct[16];
 } ProcessorRegisters;
 
-
 #define fp           PR.FP
 #define sb           PR.SB
 #define psr          PR.PSR.Whole
@@ -411,8 +442,9 @@ extern uint32_t sp[2];
 #define DEC_SP(in)   STACK_P -= (in);    PrintSP("Dec SP:");
 #define GET_SP()     STACK_P
 
-extern const uint32_t OpSizeLookup[4];
+extern const uint32_t OpSizeLookup[6];
 #define SET_OP_SIZE(in) OpSize.Whole = OpSizeLookup[(in) & 0x03]
+#define SET_FOP_SIZE(in) OpSize.Whole = OpSizeLookup[0x04 | ((in) & 0x01)]
 
 enum StringBits
 {
