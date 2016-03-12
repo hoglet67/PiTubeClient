@@ -399,7 +399,19 @@ typedef union
    uint32_t x32;
    uint64_t x64;
 } FloatingPointRegisters;
+
+typedef union
+{
+   double      f64;
+   uint64_t    x64;
+} Temp64Type;
   
+typedef union
+{
+   float       f32;
+   uint32_t    x32;
+} Temp32Type;
+
 typedef union
 {
    struct

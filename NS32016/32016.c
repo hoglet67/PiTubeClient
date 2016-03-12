@@ -945,7 +945,7 @@ void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteIndex;
    uint32_t temp = 0, temp2, temp3;
-   uint64_t temp64 = 0;
+   Temp64Type temp64;
    uint32_t Function;
    int reg_type;
 
@@ -1124,7 +1124,16 @@ void n32016_exec(uint32_t tubecycles)
          case Format9:
          {
             Function += ((opcode >> 11) & 0x07);
-            SET_OP_SIZE(opcode >> 8);
+            if (Function == MOVif)
+            {
+               reg_type = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
+               SET_FOP_SIZE((opcode >> 8) & 1);
+            }
+            else
+            {
+               SET_OP_SIZE(opcode >> 8);
+            }
+
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
          }
@@ -2234,12 +2243,12 @@ void n32016_exec(uint32_t tubecycles)
          case MEI:
          {
             temp = ReadGen(0); // src
-            temp64 = ReadGen(1); // dst
-            temp64 *= temp;
+            temp64.x64 = ReadGen(1); // dst
+            temp64.x64 *= temp;
             // Handle the writing to the upper half of dst locally here
-            handle_mei_dei_upper_write(temp64);
+            handle_mei_dei_upper_write(temp64.x64);
             // Allow fallthrough write logic to write the lower half of dst
-            temp = (uint32_t) temp64;
+            temp = (uint32_t) temp64.x64;
          }
          break;
 
@@ -2260,25 +2269,25 @@ void n32016_exec(uint32_t tubecycles)
                GOTO_TRAP(DivideByZero);
             }
 
-            temp64 = readgenq(1); // dst
+            temp64.x64 = readgenq(1); // dst
             switch (OpSize.Op[0])
             {
                case sz8:
-                  temp64 = ((temp64 >> 24) & 0xFF00) | (temp64 & 0xFF);
+                  temp64.x64 = ((temp64.x64 >> 24) & 0xFF00) | (temp64.x64 & 0xFF);
                   break;
 
                case sz16:
-                  temp64 = ((temp64 >> 16) & 0xFFFF0000) | (temp64 & 0xFFFF);
+                  temp64.x64 = ((temp64.x64 >> 16) & 0xFFFF0000) | (temp64.x64 & 0xFFFF);
                   break;
             }
             // PiTRACE("temp = %08x\n", temp);
-            // PiTRACE("temp64 = %016" PRIu64 "\n", temp64);
-            temp64 = ((temp64 / temp) << size) | (temp64 % temp);
-            //PiTRACE("result = %016" PRIu64 "\n", temp64);
+            // PiTRACE("temp64.x64 = %016" PRIu64 "\n", temp64.x64);
+            temp64.x64 = ((temp64.x64 / temp) << size) | (temp64.x64 % temp);
+            //PiTRACE("result = %016" PRIu64 "\n", temp64.x64);
             // Handle the writing to the upper half of dst locally here
-            handle_mei_dei_upper_write(temp64);
+            handle_mei_dei_upper_write(temp64.x64);
             // Allow fallthrough write logic to write the lower half of dst
-            temp = (uint32_t) temp64;
+            temp = (uint32_t) temp64.x64;
          }
          break;
 
@@ -2364,7 +2373,7 @@ void n32016_exec(uint32_t tubecycles)
  
          case EXT:
          {
-            int c;
+            uint32_t c;
             int32_t  Offset = r[(opcode >> 11) & 7];
             uint32_t Length = getdisp();
             uint32_t StartBit;
@@ -2404,7 +2413,7 @@ void n32016_exec(uint32_t tubecycles)
             uint32_t Source = ReadGen(0);
 
             temp = 0;
-            for (c = 0; c < Length && c + StartBit < 32; c++)
+            for (c = 0; (c < Length) && (c + StartBit < 32); c++)
             {
                if (Source & BIT(c + StartBit))
                {
@@ -2426,7 +2435,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case INS:
          {
-            int c;
+            uint32_t c;
             int32_t  Offset = r[(opcode >> 11) & 7];
             uint32_t Length = getdisp();
             uint32_t Source = ReadGen(0);
@@ -2469,7 +2478,7 @@ void n32016_exec(uint32_t tubecycles)
             // The field can be upto 32 bits, and is independent of the opcode i bits
             OpSize.Op[1] = sz32;
             temp = ReadGen(1);
-            for (c = 0; c < Length && c + StartBit < 32; c++)
+            for (c = 0; (c < Length) && (c + StartBit < 32); c++)
             {
                if (Source & BIT(c))
                {
@@ -2575,6 +2584,21 @@ void n32016_exec(uint32_t tubecycles)
          break;
 
          // Format 9
+         case MOVif:
+         {
+            if (reg_type == DoublePrecision)
+            {
+               temp64.f64 = (double) readgenq(0);
+            }
+            else
+            {
+               Temp32Type q;
+               q.f32 = (float) ReadGen(0);
+               temp = q.x32;
+            }
+         }
+         break;
+
          case LFSR:
          {
             FSR = ReadGen(0);
@@ -2599,8 +2623,9 @@ void n32016_exec(uint32_t tubecycles)
             {
                FR.FPF[Regs[1]] += FR.FPF[Regs[0]];
             }
+            continue;
          }
-         break;
+         // No break due to continue
 
          case MOVf:
          {
@@ -2609,9 +2634,10 @@ void n32016_exec(uint32_t tubecycles)
                PiWARN("MOVf with TOS is not yet implemented\n");
                continue; // with next instruction
             }
+
             if (reg_type == DoublePrecision)
             {
-               temp64 = readgenq(0);
+               temp64.x64 = readgenq(0);
             }
             else
             {
@@ -2620,6 +2646,98 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
+         case CMPf:
+         {
+            L_FLAG = 0;
+
+            if (reg_type == DoublePrecision)
+            {
+               Z_FLAG = TEST(FR.FPD[Regs[1]] == FR.FPD[Regs[0]]);
+               N_FLAG = TEST(FR.FPD[Regs[1]] > FR.FPD[Regs[0]]);
+            }
+            else
+            {
+               Z_FLAG = TEST(FR.FPF[Regs[1]] == FR.FPF[Regs[0]]);
+               N_FLAG = TEST(FR.FPF[Regs[1]] > FR.FPF[Regs[0]]);
+            }
+
+            continue;
+         }
+         // No break due to continue
+ 
+         case SUBf:
+         {
+            if (reg_type == DoublePrecision)
+            {
+               FR.FPD[Regs[1]] -= FR.FPD[Regs[0]];
+            }
+            else
+            {
+               FR.FPF[Regs[1]] -= FR.FPF[Regs[0]];
+            }
+
+            continue;
+         }
+         // No break due to continue
+
+         case NEGf:
+         {
+            if (reg_type == DoublePrecision)
+            {
+               FR.FPD[Regs[1]] = -FR.FPD[Regs[0]];
+            }
+            else
+            {
+               FR.FPF[Regs[1]] = -FR.FPF[Regs[0]];
+            }
+
+            continue;
+         }
+         // No break due to continue    
+
+         case DIVf:
+         {
+            if (reg_type == DoublePrecision)
+            {
+               FR.FPD[Regs[1]] /= FR.FPD[Regs[0]];
+            }
+            else
+            {
+               FR.FPF[Regs[1]] /= FR.FPF[Regs[0]];
+            }
+
+            continue;
+         }
+         // No break due to continue   
+
+         case MULf:
+         {
+            if (reg_type == DoublePrecision)
+            {
+               FR.FPD[Regs[1]] *= FR.FPD[Regs[0]];
+            }
+            else
+            {
+               FR.FPF[Regs[1]] *= FR.FPF[Regs[0]];
+            }
+         }
+         // No break due to continue
+
+         case ABSf:
+         {
+            if (reg_type == DoublePrecision)
+            {
+               FR.FPD[Regs[1]] = fabs(FR.FPD[Regs[0]]);
+            }
+            else
+            {
+               FR.FPF[Regs[1]] = fabs(FR.FPF[Regs[0]]);
+            }
+
+            continue;
+         }
+         // No break due to continue
+  
          default:
          {
             if (Function < TRAP)
@@ -2643,7 +2761,7 @@ void n32016_exec(uint32_t tubecycles)
                   case sz8:   write_x8( genaddr[WriteIndex], temp);  break;
                   case sz16:  write_x16(genaddr[WriteIndex], temp);  break;
                   case sz32:  write_x32(genaddr[WriteIndex], temp);  break;
-                  case sz64:  write_x64(genaddr[WriteIndex], temp64);  break;
+                  case sz64:  write_x64(genaddr[WriteIndex], temp64.x64);  break;
                }
             }
             break;
@@ -2655,7 +2773,7 @@ void n32016_exec(uint32_t tubecycles)
                   case sz8:   *((uint8_t*)   genaddr[WriteIndex]) = temp;  break;
                   case sz16:  *((uint16_t*)  genaddr[WriteIndex]) = temp;  break;
                   case sz32:  *((uint32_t*)  genaddr[WriteIndex]) = temp;  break;
-                  case sz64:  *((uint64_t*)  genaddr[WriteIndex]) = temp64;  break;
+                  case sz64:  *((uint64_t*)  genaddr[WriteIndex]) = temp64.x64;  break;
                }
 
                ShowRegisterWrite(WriteIndex, Truncate(temp, WriteSize));

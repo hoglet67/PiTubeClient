@@ -119,7 +119,7 @@ const char InstuctionText[InstructionCount][8] =
    "EXT", "CVTP", "INS", "CHECK", "INDEX", "FFS", "MOVUS", "MOVSU", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
 
    // FORMAT 9
-   "MOVif", "LFSR", "MOVLF", "MOVFL", "ROUND", "TRUNC", "SFSR", "FLOOR", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
+   "MOV", "LFSR", "MOVLF", "MOVFL", "ROUND", "TRUNC", "SFSR", "FLOOR", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
 
    // FORMAT 10
    "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
@@ -423,6 +423,7 @@ void ShowRegs(uint8_t Pattern, uint8_t Reverse)
 }
 
 const char PostFixLk[] = "BWTD";
+const char PostFltLk[] = "123F5678";
 const char EightSpaces[] = "        ";
 
 void AddInstructionText(uint32_t Function, uint32_t opcode, uint32_t OperandSize)
@@ -449,7 +450,16 @@ void AddInstructionText(uint32_t Function, uint32_t opcode, uint32_t OperandSize
       if (OperandSize)
       {
          OperandSize--;
-         sprintf(Str + strlen(Str), "%c", PostFixLk[OperandSize & 3]);                 // Offset by 1 to loose the 'B'
+         uint32_t Format = Function >> 4;
+
+         if (Format >= 9)
+         {
+            sprintf(Str + strlen(Str), "%c", PostFltLk[OperandSize & 3]);                 // Offset by 1 to loose the 'B'
+         }
+         else
+         {
+            sprintf(Str + strlen(Str), "%c", PostFixLk[OperandSize & 3]);                 // Offset by 1 to loose the 'B'
+         }
       }
 
       switch (Function)

@@ -14,7 +14,13 @@
 #include "mem32016.h"
 
 #ifdef TEST_SUITE
+#if TEST_SUITE == 0
 #include "test/cpu_test.h"
+#define ROM cpu_test
+#else
+#include "test/fpu_test.h"
+#define ROM fpu_test
+#endif
 #else
 #include "pandora/PandoraV2_00.h"
 #endif
@@ -25,7 +31,7 @@ void init_ram(void)
 {
 #ifdef TEST_SUITE
    memset(ns32016ram, 0, sizeof(ns32016ram));
-   memcpy(ns32016ram, cpu_test, sizeof(cpu_test));
+   memcpy(ns32016ram, ROM, sizeof(ROM));
 #elif defined(PANDORA_BASE)
    memcpy(ns32016ram + PANDORA_BASE, PandoraV2_00, sizeof(PandoraV2_00));
 #else
