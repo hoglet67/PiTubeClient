@@ -14,9 +14,9 @@
 #include "mem32016.h"
 
 #ifdef TEST_SUITE
-#include "boot_rom.h"
+#include "test/cpu_test.h"
 #else
-#include "PandoraV2_00.h"
+#include "pandora/PandoraV2_00.h"
 #endif
 
 uint8_t ns32016ram[MEG16];
@@ -25,7 +25,7 @@ void init_ram(void)
 {
 #ifdef TEST_SUITE
    memset(ns32016ram, 0, sizeof(ns32016ram));
-   memcpy(ns32016ram, boot_rom, sizeof(boot_rom));
+   memcpy(ns32016ram, cpu_test, sizeof(cpu_test));
 #elif defined(PANDORA_BASE)
    memcpy(ns32016ram + PANDORA_BASE, PandoraV2_00, sizeof(PandoraV2_00));
 #else
@@ -231,14 +231,14 @@ void write_x64(uint32_t addr, uint64_t val)
    }
 #endif
 
-   write_x8(addr++, val);
-   write_x8(addr++, (val >> 8));
-   write_x8(addr++, (val >> 16));
-   write_x8(addr++, (val >> 24));
-   write_x8(addr++, (val >> 32));
-   write_x8(addr++, (val >> 40));
-   write_x8(addr++, (val >> 48));
-   write_x8(addr,   (val >> 56));
+   write_x8(addr++, (uint8_t) val);
+   write_x8(addr++, (uint8_t) (val >> 8));
+   write_x8(addr++, (uint8_t) (val >> 16));
+   write_x8(addr++, (uint8_t) (val >> 24));
+   write_x8(addr++, (uint8_t) (val >> 32));
+   write_x8(addr++, (uint8_t) (val >> 40));
+   write_x8(addr++, (uint8_t) (val >> 48));
+   write_x8(addr,   (uint8_t) (val >> 56));
 }
 
 void write_Arbitary(uint32_t addr, void* pData, uint32_t Size)

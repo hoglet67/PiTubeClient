@@ -396,6 +396,8 @@ typedef union
 {
    float  FPF[16];
    double FPD[ 8];
+   uint32_t x32;
+   uint64_t x64;
 } FloatingPointRegisters;
   
 typedef union

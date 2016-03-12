@@ -1,0 +1,1711 @@
+	br BEGIN
+ .WORD 13
+L0001:  .BYTE 'Failcode : '
+ .WORD 18
+L0002:  .BYTE ' Tests correct.'
+; No test of all address modes
+; No test of CXP and CXPD
+BEGIN: 
+; R7 contains Failcode
+    movqd 0,r7
+    lprd sp,x'10000
+; LOGICAL AND BOOLEAN
+    movw 1,r7             ; ANDB
+    movd x'FFFFFFAA,r0
+    ANDB x'CC,r0
+    cmpd x'FFFFFF88,r0
+    bne error
+    movw 2,r7             ; ANDW
+    movd x'FFFF5555,r0
+    ANDW x'3333,r0
+    cmpd x'FFFF1111,r0
+    bne error
+    movw 3,r7             ; ANDD
+    movd x'AAAAAAAA,r0
+    ANDD x'CCCCCCCC,r0
+    cmpd x'88888888,r0
+    bne error
+    movw 4,r7             ; BICB
+    movd x'FFFFFFAA,r0
+    BICB x'CC,r0
+    cmpd x'FFFFFF22,r0
+    bne error
+    movw 5,r7             ; BICW
+    movd x'FFFF5555,r0
+    BICW x'3333,r0
+    cmpd x'FFFF4444,r0
+    bne error
+    movw 6,r7             ; BICD
+    movd x'AAAAAAAA,r0
+    BICD x'CCCCCCCC,r0
+    cmpd r0,x'22222222    
+    bne error
+    movw 7,r7             ; ORB
+    movd x'000000CC,r0
+    ORB  x'AA,r0
+    cmpd x'000000EE,r0
+    bne error
+    movw 8,r7             ; ORW
+    movd x'00003333,r0
+    ORW  x'5555,r0
+    cmpd x'00007777,r0
+    bne error
+    movw 9,r7             ; ORD
+    movd x'C35AA53C,r0
+    ORD  x'A53CC35A,r0
+    cmpd x'E77EE77E,r0
+    bne error
+    movw 10,r7            ; XORB
+    movd x'FFFFFFAA,r0
+    XORB x'CC,r0
+    cmpd x'FFFFFF66,r0
+    bne error
+    movw 11,r7            ; XORW
+    movd x'FFFF5555,r0
+    XORW x'3333,r0
+    cmpd x'FFFF6666,r0
+    bne error
+    movw 12,r7            ; XORD
+    movd x'AC5335CA,r0
+    XORD x'CA3553AC,r0
+    cmpd x'66666666,r0
+    bne error
+    movw 13,r7            ; COMB
+    movd x'55555555,r1
+    movd x'00000000,r0
+    COMB r1,r0
+    cmpd x'000000AA,r0
+    bne error
+    movw 14,r7            ; COMW
+    movd x'00000000,r0
+    COMW r1,r0
+    cmpd x'0000AAAA,r0
+    bne error
+    movw 15,r7            ; COMD
+    movd x'00000000,r0
+    COMD r1,r0
+    cmpd x'AAAAAAAA,r0
+    bne error
+    movw 16,r7            ; COMB 2
+    movd x'AAAAAAAA,r1
+    movd x'00000000,r0
+    COMB r1,r0
+    cmpd x'00000055,r0
+    bne error
+    movw 17,r7            ; COMW 2
+    movd x'00000000,r0
+    COMW r1,r0
+    cmpd x'00005555,r0
+    bne error
+    movw 18,r7            ; COMD 2
+    movd x'00000000,r0
+    COMD r1,r0
+    cmpd x'55555555,r0
+    bne error
+    movw 19,r7            ; NOTB
+    movd x'00000000,r1
+    movd x'FFFFFFFF,r0
+    NOTB r1,r0
+    cmpd x'FFFFFF01,r0
+    bne error
+    movw 20,r7            ; NOTW
+    movd x'FFFFFFFF,r0
+    NOTW r1,r0
+    cmpd x'FFFF0001,r0
+    bne error
+    movw 21,r7            ; NOTD
+    movd x'FFFFFFFF,r0
+    NOTD r1,r0
+    cmpd x'00000001,r0
+    bne error
+    movw 22,r7            ; NOTB 2
+    movd x'FFFFFFFF,r1
+    movd x'00000000,r0
+    NOTB r1,r0
+    cmpd x'000000FE,r0
+    bne error
+    movw 23,r7            ; NOTW 2
+    movd x'00000000,r0
+    NOTW r1,r0
+    cmpd x'0000FFFE,r0
+    bne error
+    movw 24,r7            ; NOTD 2
+    movd x'00000000,r0
+    NOTD r1,r0
+    cmpd x'FFFFFFFE,r0
+    bne error
+    movw 25,r7            ; SEQB
+    bicpsrb x'FF          ; lprb psr,x'40 is privileged !
+    bispsrb x'40
+    movd x'AAAAAAAA,r0
+    SEQB r0
+    cmpd x'AAAAAA01,r0
+    bne error
+    movw 26,r7            ; SEQW
+    bispsrb x'40
+    movd x'AAAAAAAA,r0
+    SEQW r0
+    cmpd x'AAAA0001,r0
+    bne error
+    movw 27,r7            ; SEQD
+    bispsrb x'40
+    movd x'AAAAAAAA,r0
+    SEQD r0
+    cmpd x'00000001,r0
+    bne error
+; Assumption that BWD recognizing is independent from Condition-Code.
+; All combinations of N,Z,L,F and C are testet.
+    addr set_tab,r2
+    movw 28,r7
+    movb x'1F,r1
+l0003:
+    bsr psr_code  
+    SEQB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0003
+    movw 29,r7
+    movb x'1F,r1
+l0004:
+    bsr psr_code
+    SNEB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0004
+    movw 30,r7
+    movb x'1F,r1
+l0005:
+    bsr psr_code
+    SCSB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0005
+    movw 31,r7
+    movb x'1F,r1
+l0006:
+    bsr psr_code
+    SCCB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0006
+    movw 32,r7
+    movb x'1F,r1
+l0007:
+    bsr psr_code
+    SHIB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0007
+    movw 33,r7
+    movb x'1F,r1
+l0008:
+    bsr psr_code
+    SLSB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0008
+    movw 34,r7
+    movb x'1F,r1
+l0009:
+    bsr psr_code
+    SGTB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0009
+    movw 35,r7
+    movb x'1F,r1
+l0010:
+    bsr psr_code
+    SLEB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0010
+    movw 36,r7
+    movb x'1F,r1
+l0011:
+    bsr psr_code
+    SFSB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0011
+    movw 37,r7
+    movb x'1F,r1
+l0012:
+    bsr psr_code
+    SFCB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0012
+    movw 38,r7
+    movb x'1F,r1
+l0013:
+    bsr psr_code
+    SLOB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0013
+    movw 39,r7
+    movb x'1F,r1
+l0014:
+    bsr psr_code
+    SHSB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0014
+    movw 40,r7
+    movb x'1F,r1
+l0015:
+    bsr psr_code
+    SLTB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0015
+    movw 41,r7
+    movb x'1F,r1
+l0016:
+    bsr psr_code
+    SGEB r0
+    cmpb 0(r2),r0
+    bne error
+    addqb -1,r1
+    addqd 1,r2
+    cmpqb -1,r1
+    bne l0016
+
+    br next
+
+psr_code:
+       movb r1,r3
+       andb 1,r3
+       extsb r1,r4,1,1  ; this is compact code !
+       inssb r4,r3,2,1
+       extsb r1,r4,2,3
+       inssb r4,r3,5,3
+       bicpsrb x'FF
+       bispsrb r3
+       movb x'AA,r0
+       ret 0
+
+; PSR : -N-Z-F-(V)-.-L-(T)-C-
+
+set_tab: ; 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+      ;F E D C B A 9 8 7 6 5 4 3 2 1 0 F E D C B A 9 8 7 6 5 4 3 2 1 0
+ .byte 1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0 ; EQ
+ .byte 0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1 ; NE
+ .byte 1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0 ; CS
+ .byte 0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1 ; CC
+ .byte 1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0 ; HI
+ .byte 0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1 ; LS
+ .byte 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 ; GT
+ .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 ; LE
+ .byte 1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0 ; FS
+ .byte 0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1 ; FC
+ .byte 0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1 ; LO
+ .byte 1,1,1,1,1,1,1,1,1,1,0,0,1,1,0,0,1,1,1,1,1,1,1,1,1,1,0,0,1,1,0,0 ; HS
+ .byte 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1 ; LT
+ .byte 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0 ; GE
+
+next:  ; SHIFTS
+    movw 42,r7           ; LSHB
+    movd x'55555555,r0
+    LSHB 1,r0
+    cmpd x'555555AA,r0
+    bne error
+    movw 43,r7           ; LSHW
+    movd x'55555555,r0
+    LSHW 1,r0
+    cmpd x'5555AAAA,r0
+    bne error
+    movw 44,r7           ; LSHD
+    movd x'55555555,r0
+    LSHD 1,r0
+    cmpd x'AAAAAAAA,r0
+    bne error
+    movw 45,r7
+    movqd 0,r1
+l0017:
+    movqd 1,r0
+    LSHD r1,r0      ; shift to left
+    cmpd sh_tab[r1:d],r0
+    bne error
+    addqb 1,r1
+    cmpb r1,x'20 
+    bne l0017
+    movw 46,r7
+    movb -31,r1
+    addr sh_tab,r2
+l0018:
+    movd x'80000000,r0
+    LSHD r1,r0      ; shift to right
+    cmpd 0(r2),r0
+    bne error
+    addqd 4,r2
+    acbb 1,r1,l0018  ; 0 already done !
+    br next2
+
+sh_tab3: .double x'80000000  ; special for ROT
+sh_tab:
+ .double 1,2,4,8,x'10,x'20,x'40,x'80,x'100,x'200,x'400,x'800,x'1000,x'2000
+ .double x'4000,x'8000,x'10000,x'20000,x'40000,x'80000,x'100000,x'200000
+ .double x'400000,x'800000,x'1000000,x'2000000,x'4000000,x'8000000
+ .double x'10000000,x'20000000,x'40000000,x'80000000
+
+next2:
+    movw 47,r7           ; ASHB
+    movd x'AAAAAAAA,r0
+    ASHB -5,r0
+    cmpd x'AAAAAAFD,r0
+    bne error
+    movw 48,r7           ; ASHW
+    movd x'AAAAAAAA,r0
+    ASHW -5,r0
+    cmpd x'AAAAFD55,r0
+    bne error
+    movw 49,r7           ; ASHD
+    movd x'AAAAAAAA,r0
+    ASHD -5,r0
+    cmpd x'FD555555,r0
+    bne error
+    movw 50,r7           ; ASHB 2
+    movd x'55555555,r0
+    ASHB -5,r0
+    cmpd x'55555502,r0
+    bne error
+    movw 51,r7           ; ASHW 2
+    movd x'55555555,r0
+    ASHW -5,r0
+    cmpd x'555502AA,r0
+    bne error
+    movw 52,r7           ; ASHD 2
+    movd x'55555555,r0
+    ASHD -5,r0
+    cmpd x'02AAAAAA,r0
+    bne error
+    movw 53,r7
+    movqd 0,r1
+l0019:
+    movqd -1,r0
+    ASHD r1,r0      ; shift to left like LSHD
+    cmpd sh_tab2[r1:d],r0
+    bne error
+    addqb 1,r1
+    cmpb x'20,r1
+    bne l0019
+    movw 54,r7
+    movb -31,r1
+    addr sh_tab2,r2
+l0020:
+    movd x'80000000,r0
+    ASHD r1,r0      ; shift to right
+    cmpd 0(r2),r0
+    bne error
+    addqd 4,r2
+    acbb 1,r1,l0020  ; 0 already done !
+    br next3
+
+sh_tab2:
+ .double x'FFFFFFFF,x'FFFFFFFE,x'FFFFFFFC,x'FFFFFFF8
+ .double x'FFFFFFF0,x'FFFFFFE0,x'FFFFFFC0,x'FFFFFF80
+ .double x'FFFFFF00,x'FFFFFE00,x'FFFFFC00,x'FFFFF800
+ .double x'FFFFF000,x'FFFFE000,x'FFFFC000,x'FFFF8000
+ .double x'FFFF0000,x'FFFE0000,x'FFFC0000,x'FFF80000
+ .double x'FFF00000,x'FFE00000,x'FFC00000,x'FF800000
+ .double x'FF000000,x'FE000000,x'FC000000,x'F8000000
+ .double x'F0000000,x'E0000000,x'C0000000,x'80000000
+
+next3:
+    movw 55,r7           ; ROTB
+    movd x'AAAAAAAA,r0
+    ROTB 1,r0
+    cmpd x'AAAAAA55,r0
+    bne error
+    movw 56,r7           ; ROTW
+    movd x'AAAAAAAA,r0
+    ROTW 1,r0
+    cmpd x'AAAA5555,r0
+    bne error
+    movw 57,r7           ; ROTD
+    movd x'AAAAAAAA,r0
+    ROTD 1,r0
+    cmpd x'55555555,r0
+    bne error
+    movw 58,r7
+    movqd 0,r1
+l0021:
+    movd x'80000000,r0
+    ROTD r1,r0      ; rotate to left
+    cmpd sh_tab3[r1:d],r0
+    bne error
+    addqb 1,r1
+    cmpb x'20,r1
+    bne l0021
+    movw 59,r7
+    movb -31,r1
+    addr sh_tab3,r2
+l0022:
+    movd x'40000000,r0
+    ROTD r1,r0      ; rotate to right
+    cmpd 0(r2),r0
+    bne error
+    addqd 4,r2
+    acbb 1,r1,l0022  ; 0 already done !
+
+; PACKED DECIMAL (BCD) ARITHMETIC
+    movw 60,r7
+    bicpsrb x'FF
+    bispsrb 1        ; Carry set : src1+src2+carry !
+    movd  x'FFFFFF78,r0
+    ADDPB       x'10,r0  ; Carry is 0
+    cmpd  x'FFFFFF89,r0
+    bne error
+    movw 61,r7
+    movd  x'FFFF5432,r0
+    ADDPW     x'6399,r0  ; Carry is 1
+    cmpd  x'FFFF1831,r0
+    bne error
+    movw 62,r7
+    movd  x'12305678,r0
+    ADDPD x'87858320,r0  ; Carry is 1
+    cmpd  x'00163999,r0
+    bne error
+    movw 63,r7
+    movd  x'FFFFFF88,r0
+    SUBPB       x'22,r0  ; Carry is 0
+    cmpd  x'FFFFFF65,r0
+    bne error
+    movw 64,r7
+    movd  x'FFFF1234,r0
+    SUBPW     x'5678,r0  ; Carry is 1
+    cmpd  x'FFFF5556,r0
+    bne error
+    movw 65,r7
+    movd  x'98765432,r0
+    SUBPD x'88888888,r0
+    cmpd  x'09876543,r0
+    bne error
+
+; MOVES
+    movw 66,r7
+    movd   x'5555FF00,r0
+    movqd -1,r1
+    MOVZBW r1,r0
+    cmpd   x'555500FF,r0
+    bne error
+    movw 67,r7
+    movd   x'FFFFFF00,r0
+    MOVZBD r1,r0
+    cmpd   x'000000FF,r0
+    bne error
+    movw 68,r7
+    movd   x'FFFF0000,r0
+    MOVZWD r1,r0
+    cmpd   x'0000FFFF,r0
+    bne error
+    movw 69,r7
+    movd   x'5555FF00,r0
+    MOVXBW r1,r0
+    cmpd   x'5555FFFF,r0
+    bne error
+    movw 70,r7
+    movd   x'AAAAAA00,r0
+    MOVXBD r1,r0
+    cmpd   x'FFFFFFFF,r0
+    bne error
+    movw 71,r7
+    movd   x'AAAA0000,r0
+    MOVXWD r1,r0
+    cmpd   x'FFFFFFFF,r0
+    bne error
+    movw 72,r7
+    movqd 0,r1
+    movd   x'5555FFFF,r0
+    MOVXBW r1,r0
+    cmpd   x'55550000,r0
+    bne error
+    movw 73,r7
+    movd   x'AAAAAAFF,r0
+    MOVXBD r1,r0
+    cmpd   x'00000000,r0
+    bne error
+    movw 74,r7
+    movd   x'AAAAFFFF,r0
+    MOVXWD r1,r0
+    cmpd   x'00000000,r0
+    bne error
+
+; MOVM Test : (1+16)*8 + (2+16)*4 + (4+16)*2 = 17*8+18*4+20*2 = 136+72+40=248
+    adjspw 248
+    addr 0(sp),r0
+    movb 62,r1
+l0023:
+    addqd 4,r0
+    movqd 0,-4(r0)
+    acbb -1,r1,l0023
+    addr bfeld,r0
+;   MOVMB 0(r0),0(sp),1   ; ???
+    movb 0(r0),0(sp)
+    MOVMB 1(r0),1(sp),2
+    MOVMB 3(r0),3(sp),3
+    MOVMB 6(r0),6(sp),4
+    MOVMB 10(r0),10(sp),5
+    MOVMB 15(r0),15(sp),6
+    MOVMB 21(r0),21(sp),7
+    MOVMB 28(r0),28(sp),8
+    MOVMB 36(r0),36(sp),9
+    MOVMB 45(r0),45(sp),10
+    MOVMB 55(r0),55(sp),11
+    MOVMB 66(r0),66(sp),12
+    MOVMB 78(r0),78(sp),13
+    MOVMB 91(r0),91(sp),14
+    MOVMB 105(r0),105(sp),15
+    MOVMB 120(r0),120(sp),16
+;   MOVMW 136(r0),136(sp),1
+    movw 136(r0),136(sp)
+    MOVMW 138(r0),138(sp),2
+    MOVMW 142(r0),142(sp),3
+    MOVMW 148(r0),148(sp),4
+    MOVMW 156(r0),156(sp),5
+    MOVMW 166(r0),166(sp),6
+    MOVMW 178(r0),178(sp),7
+    MOVMW 192(r0),192(sp),8
+;   MOVMD 208(r0),208(sp),1
+    movd 208(r0),208(sp)
+    MOVMD 212(r0),212(sp),2
+    MOVMD 220(r0),220(sp),3
+    MOVMD 232(r0),232(sp),4
+
+    movw 75,r7
+    movqd 1,r1
+    addr 0(sp),r0
+l0024:
+    cmpb r1,0(r0)
+    bne error1   ; SP correction !!!
+    addqb 1,r1
+    addqd 1,r0
+    cmpw 249,r1
+    bne l0024
+
+    movw 76,r7
+    addr bfeld,r0
+;   CMPMB 0(r0),0(sp),1   bne error1
+    CMPMB 1(r0),1(sp),2   bne error1
+    CMPMB 3(r0),3(sp),3   bne error1
+    CMPMB 6(r0),6(sp),4   bne error1
+    CMPMB 10(r0),10(sp),5   bne error1
+    CMPMB 15(r0),15(sp),6   bne error1
+    CMPMB 21(r0),21(sp),7   bne error1
+    CMPMB 28(r0),28(sp),8   bne error1
+    CMPMB 36(r0),36(sp),9   bne error1
+    CMPMB 45(r0),45(sp),10   bne error1
+    CMPMB 55(r0),55(sp),11   bne error1
+    CMPMB 66(r0),66(sp),12   bne error1
+    CMPMB 78(r0),78(sp),13   bne error1
+    CMPMB 91(r0),91(sp),14   bne error1
+    CMPMB 105(r0),105(sp),15   bne error1
+    CMPMB 120(r0),120(sp),16   bne error1
+;   CMPMW 136(r0),136(sp),1   bne error1
+    CMPMW 138(r0),138(sp),2   bne error1
+    CMPMW 142(r0),142(sp),3   bne error1
+    CMPMW 148(r0),148(sp),4   bne error1
+    CMPMW 156(r0),156(sp),5   bne error1
+    CMPMW 166(r0),166(sp),6   bne error1
+    CMPMW 178(r0),178(sp),7   bne error1
+    CMPMW 192(r0),192(sp),8   bne error1
+;   CMPMD 208(r0),208(sp),1   bne error1
+    CMPMD 212(r0),212(sp),2   bne error1
+    CMPMD 220(r0),220(sp),3   bne error1
+    CMPMD 232(r0),232(sp),4   bne error1
+
+;   CMPMB 0(r0),1(sp),1   beq error1
+    CMPMB 1(r0),0(sp),2   beq error1
+    CMPMB 3(r0),2(sp),3   beq error1
+    CMPMB 6(r0),5(sp),4   beq error1
+    CMPMB 10(r0), 9(sp),5   beq error1
+    CMPMB 15(r0),14(sp),6   beq error1
+    CMPMB 21(r0),20(sp),7   beq error1
+    CMPMB 28(r0),27(sp),8   beq error1
+    CMPMB 36(r0),35(sp),9   beq error1
+    CMPMB 45(r0),44(sp),10   beq error1
+    CMPMB 55(r0),54(sp),11   beq error1
+    CMPMB 66(r0),65(sp),12   beq error1
+    CMPMB 78(r0),77(sp),13   beq error1
+    CMPMB 91(r0),90(sp),14   beq error1
+    CMPMB 105(r0),104(sp),15   beq error1
+    CMPMB 120(r0),121(sp),16   beq error1
+;   CMPMW 136(r0),135(sp),1   beq error1
+    CMPMW 138(r0),137(sp),2   beq error1
+    CMPMW 142(r0),141(sp),3   beq error1
+    CMPMW 148(r0),147(sp),4   beq error1
+    CMPMW 156(r0),155(sp),5   beq error1
+    CMPMW 166(r0),165(sp),6   beq error1
+    CMPMW 178(r0),177(sp),7   beq error1
+    CMPMW 192(r0),191(sp),8   beq error1
+;   CMPMD 208(r0),207(sp),1   beq error1
+    CMPMD 212(r0),211(sp),2   beq error1
+    CMPMD 220(r0),221(sp),3   beq error1
+    CMPMD 232(r0),231(sp),4   beq error1
+
+    adjspw -248
+    br next4
+    .align 4
+bfeld:
+   .double x'04030201,x'08070605,x'0C0B0A09,x'100F0E0D
+   .double x'14131211,x'18171615,x'1C1B1A19,x'201F1E1D
+   .double x'24232221,x'28272625,x'2C2B2A29,x'302F2E2D
+   .double x'34333231,x'38373635,x'3C3B3A39,x'403F3E3D
+   .double x'44434241,x'48474645,x'4C4B4A49,x'504F4E4D
+   .double x'54535251,x'58575655,x'5C5B5A59,x'605F5E5D
+   .double x'64636261,x'68676665,x'6C6B6A69,x'706F6E6D
+   .double x'74737271,x'78777675,x'7C7B7A79,x'807F7E7D
+   .double x'84838281,x'88878685,x'8C8B8A89,x'908F8E8D
+   .double x'94939291,x'98979695,x'9C9B9A99,x'A09F9E9D
+   .double x'A4A3A2A1,x'A8A7A6A5,x'ACABAAA9,x'B0AFAEAD
+   .double x'B4B3B2B1,x'B8B7B6B5,x'BCBBBAB9,x'C0BFBEBD
+   .double x'C4C3C2C1,x'C8C7C6C5,x'CCCBCAC9,x'D0CFCECD
+   .double x'D4D3D2D1,x'D8D7D6D5,x'DCDBDAD9,x'E0DFDEDD
+   .double x'E4E3E2E1,x'E8E7E6E5,x'ECEBEAE9,x'F0EFEEED
+   .double x'F4F3F2F1,x'F8F7F6F5
+
+next4:
+; INTEGER ARITHMETIC
+    movw 77,r7
+    bispsrb 1
+    movd x'FFFFFF68,r0
+    ADDB x'C3,r0
+    cmpd x'FFFFFF2B,r0
+    bne error
+    movw 78,r7
+    ADDCB x'DA,r0
+    cmpd x'FFFFFF06,r0
+    bne error
+    movw 79,r7
+    movd x'FFFF9877,r0
+    ADDW x'7654,r0
+    cmpd x'FFFF0ECB,r0
+    bne error
+    movw 80,r7
+    ADDCW x'4444,r0
+    cmpd x'FFFF5310,r0
+    bne error
+    movw 81,r7
+    bispsrb 1
+    movd x'A9876544,r0
+    ADDD x'B0E1F2D3,r0
+    cmpd x'5A695817,r0
+    bne error
+    movw 82,r7
+    ADDCD x'12345678,r0
+    cmpd  x'6C9DAE90,r0
+    bne error
+    movw 83,r7
+    bicpsrb 1
+    movd x'FFFFFF67,r0
+    ADDB x'23,r0
+    cmpd x'FFFFFF8A,r0
+    bne error
+    movw 84,r7
+    ADDCB x'33,r0
+    cmpd x'FFFFFFBD,r0
+    bne error
+    movw 85,r7
+    movd x'FFFF9876,r0
+    ADDW x'1234,r0
+    cmpd x'FFFFAAAA,r0
+    bne error
+    movw 86,r7
+    ADDCW x'4444,r0
+    cmpd x'FFFFEEEE,r0
+    bne error
+    movw 87,r7
+    bicpsrb 1
+    movd x'12345678,r0
+    ADDD x'23456789,r0
+    cmpd x'3579BE01,r0
+    bne error
+    movw 88,r7
+    ADDCD x'12345678,r0
+    cmpd  x'47AE1479,r0
+    bne error
+
+    movw 89,r7
+    bispsrb 1
+    movd x'FFFFFF68,r0
+    SUBB x'C3,r0
+    cmpd x'FFFFFFA5,r0
+    bne error
+    movw 90,r7
+    SUBCB x'DA,r0
+    cmpd x'FFFFFFCA,r0
+    bne error
+    movw 91,r7
+    movd x'FFFF7877,r0
+    SUBW x'9654,r0
+    cmpd x'FFFFE223,r0
+    bne error
+    movw 92,r7
+    SUBCW x'4444,r0
+    cmpd x'FFFF9DDE,r0
+    bne error
+    movw 93,r7
+    bispsrb 1
+    movd x'A9876544,r0
+    SUBD x'B0E1F2D3,r0
+    cmpd x'F8A57271,r0
+    bne error
+    movw 94,r7
+    SUBCD x'12345678,r0
+    cmpd  x'E6711BF8,r0
+    bne error
+    movw 95,r7
+    bicpsrb 1
+    movd x'FFFFFF67,r0
+    SUBB x'23,r0
+    cmpd x'FFFFFF44,r0
+    bne error
+    movw 96,r7
+    SUBCB x'33,r0
+    cmpd x'FFFFFF11,r0
+    bne error
+    movw 97,r7
+    movd x'FFFF9876,r0
+    SUBW x'1234,r0
+    cmpd x'FFFF8642,r0
+    bne error
+    movw 98,r7
+    SUBCW x'4444,r0
+    cmpd x'FFFF41FE,r0
+    bne error
+    movw 99,r7
+    bicpsrb 1
+    movd x'32345678,r0
+    SUBD x'13456789,r0
+    cmpd x'1EEEEEEF,r0
+    bne error
+    movw 100,r7
+    SUBCD x'12345678,r0
+    cmpd  x'0CBA9877,r0
+    bne error
+
+    movw 101,r7
+    movd x'FFFFFFFF,r0
+    movd x'FFFFFF55,r1
+    NEGB r1,r0
+    cmpd x'FFFFFFAB,r0
+    bne error
+    movw 102,r7
+    movd x'FFFFFFFF,r0
+    ABSB r1,r0
+    cmpd x'FFFFFF55,r0
+    bne error
+    movw 103,r7
+    movd x'FFFFFFFF,r0
+    movd x'FFFFFFB6,r1
+    NEGB r1,r0
+    cmpd x'FFFFFF4A,r0
+    bne error
+    movw 104,r7
+    movd x'FFFFFFFF,r0
+    ABSB r1,r0
+    cmpd x'FFFFFF4A,r0
+    bne error
+    movw 105,r7
+    movd x'FFFFFFFF,r0
+    movd x'FFFF1234,r1
+    NEGW r1,r0
+    cmpd x'FFFFEDCC,r0
+    bne error
+    movw 106,r7
+    movd x'FFFFFFFF,r0
+    ABSW r1,r0
+    cmpd x'FFFF1234,r0
+    bne error
+    movw 107,r7
+    movd x'FFFFFFFF,r0
+    movd x'FFFF9876,r1
+    NEGW r1,r0
+    cmpd x'FFFF678A,r0
+    bne error
+    movw 108,r7
+    movd x'FFFFFFFF,r0
+    ABSW r1,r0
+    cmpd x'FFFF678A,r0
+    bne error
+    movw 109,r7
+    movd x'FFFFFFFF,r0
+    movd x'12345678,r1
+    NEGD r1,r0
+    cmpd x'EDCBA988,r0
+    bne error
+    movw 110,r7
+    movd x'FFFFFFFF,r0
+    ABSD r1,r0
+    cmpd x'12345678,r0
+    bne error
+    movw 111,r7
+    movd x'FFFFFFFF,r0
+    movd x'EDCBA988,r1
+    NEGD r1,r0
+    cmpd x'12345678,r0
+    bne error
+    movw 112,r7
+    movd x'FFFFFFFF,r0
+    ABSD r1,r0
+    cmpd x'12345678,r0
+    bne error
+
+    movw 113,r7
+    movd x'FFFFFF05,r0
+    MULB 12,r0
+    cmpd x'FFFFFF3C,r0
+    bne error
+    movw 114,r7
+    movd x'FFFF0015,r0
+    MULW 120,r0
+    cmpd x'FFFF09D8,r0
+    bne error
+    movw 115,r7
+    movd x'0000FF05,r0
+    MULD 1200,r0
+    cmpd x'04AB6770,r0
+    bne error
+    movw 116,r7
+    movd x'000001F0,r0
+    QUOB 3,r0
+    cmpd x'000001FB,r0
+    bne error
+    movw 117,r7
+    movd x'0001FC00,r0
+    QUOW 5,r0
+    cmpd x'0001FF34,r0
+    bne error
+    movw 118,r7
+    movd x'FF800000,r0
+    QUOD 7,r0
+    cmpd x'FFEDB6DC,r0
+    bne error
+    movw 119,r7
+    movd x'000001F0,r0
+    REMB 3,r0
+    cmpd x'000001FF,r0
+    bne error
+    movw 120,r7
+    movd x'0001FC00,r0
+    REMW 5,r0
+    cmpd x'0001FFFC,r0
+    bne error
+    movw 121,r7
+    movd x'FF800001,r0
+    REMD 7,r0
+    cmpd x'FFFFFFFD,r0
+    bne error
+    movw 122,r7
+    movd x'000001F0,r0
+    DIVB 3,r0
+    cmpd x'000001FA,r0
+    bne error
+    movw 123,r7
+    movd x'0001FC00,r0
+    DIVW 5,r0
+    cmpd x'0001FF33,r0
+    bne error
+    movw 124,r7
+    movd x'FF800000,r0
+    DIVD 7,r0
+    cmpd x'FFEDB6DB,r0
+    bne error
+    movw 125,r7
+    movd x'000001F0,r0
+    MODB 3,r0
+    cmpd x'00000102,r0
+    bne error
+    movw 126,r7
+    movd x'0001FC00,r0
+    MODW 5,r0
+    cmpd x'00010001,r0
+    bne error
+    movw 127,r7
+    movd x'FF800001,r0
+    MODD 7,r0
+    cmpd x'00000004,r0
+    bne error
+    movw 128,r7
+    movd x'FFFFFF14,r0
+    movd x'FFFFFFFF,r1
+    MEIB 15,r0
+    cmpd x'FFFFFF2C,r0
+    bne error
+    cmpd x'FFFFFF01,r1
+    bne error
+    movw 129,r7
+    movd x'FFFF0123,r0
+    movd x'FFFFFFFF,r1
+    MEIW 400,r0
+    cmpd x'FFFFC6B0,r0
+    bne error
+    cmpd x'FFFF0001,r1
+    bne error
+    movw 130,r7
+    movd x'00012345,r0
+    movd x'FFFFFFFF,r1
+    MEID 200000,r0
+    cmpd x'78E25240,r0
+    bne error
+    cmpd x'00000003,r1
+    bne error
+    movw 131,r7
+    DEID x'12345,r0
+    cmpqd 0,r0
+    bne error
+    cmpd 200000,r1
+    bne error
+    movw 132,r7
+    movd x'FFFFC6B0,r0
+    movd x'FFFF0001,r1
+    DEIW x'123,r0
+    cmpd x'FFFF0000,r0
+    bne error
+    cmpd x'FFFF0190,r1
+    bne error
+    movw 133,r7
+    movd x'FFFFFF2C,r0
+    movd x'FFFFFF01,r1
+    DEIB x'14,r0
+    cmpd x'FFFFFF00,r0
+    bne error
+    cmpd x'FFFFFF0F,r1
+    bne error
+
+; BITS
+    movw 134,r7
+    movd x'00020000,r0
+    TBITB 17,r0
+    bfc error
+    movw 135,r7
+    TBITW 16,r0
+    bfs error
+    addr -10000(sp),r1  ; no set back necessary
+    movqb 0,8750(r1)
+    movw 136,r7
+    TBITD 70001,0(r1)
+    bfs error
+    movqb 2,8750(r1)
+    movw 137,r7
+    TBITD 70001,0(r1)
+    bfc error
+    movd x'00010101,r0
+    movw 138,r7
+    movqb 0,0(r1)
+    SBITB r0,0(r1)
+    bfs error
+    cmpqb 2,0(r1)
+    bne error
+    movw 139,r7
+    SBITB r0,0(r1)
+    bfc error
+    movw 140,r7
+    movqb 0,32(r1)
+    SBITW r0,0(r1)
+    bfs error
+    cmpqb 2,32(r1)
+    bne error
+    movw 141,r7
+    movqb 0,x'2020(r1)
+    SBITD r0,0(r1)
+    bfs error
+    cmpqb 2,x'2020(r1)
+    bne error
+    movw 142,r7
+    CBITB r0,0(r1)
+    bfc error
+    cmpqb 0,0(r1)
+    bne error
+    movw 143,r7
+    CBITB r0,0(r1)
+    bfs error
+    movw 144,r7
+    CBITW r0,0(r1)
+    bfc error
+    cmpqb 0,32(r1)
+    bne error
+    movw 145,r7
+    CBITD r0,0(r1)
+    bfc error
+    cmpqb 0,x'2020(r1)
+    bne error
+    movqb 2,r0    ; new bit position in Byte
+    movw 146,r7
+    SBITIB r0,0(r1)
+    bfs error
+    cmpqb 4,0(r1)
+    bne error
+    movw 147,r7
+    SBITIB r0,0(r1)
+    bfc error
+    movw 148,r7
+    SBITIW r0,0(r1)
+    bfs error
+    cmpqb 4,32(r1)
+    bne error
+    movw 149,r7
+    SBITID r0,0(r1)
+    bfs error
+    cmpqb 4,x'2020(r1)
+    bne error
+    movw 150,r7
+    CBITIB r0,0(r1)
+    bfc error
+    cmpqb 0,0(r1)
+    bne error
+    movw 151,r7
+    CBITIB r0,0(r1)
+    bfs error
+    movw 152,r7
+    CBITIW r0,0(r1)
+    bfc error
+    cmpqb 0,32(r1)
+    bne error
+    movw 153,r7
+    CBITID r0,0(r1)
+    bfc error
+    cmpqb 0,x'2020(r1)
+    bne error
+    movw 154,r7
+    movd x'00010101,r0
+    IBITB 0,r0
+    bfc error
+    cmpd x'00010100,r0
+    bne error
+    IBITB 1,r0
+    bfs error
+    cmpd x'00010102,r0
+    bne error
+    IBITW 8,r0
+    bfc error
+    cmpd x'00010002,r0
+    bne error
+    IBITD 16,r0
+    bfc error
+    cmpd x'00000002,r0
+    bne error
+    movw 155,r7
+    movd x'00000080,r0
+    movd x'FFFFFF01,r1
+    FFSB r0,r1
+    bfs error
+    movw 156,r7
+    cmpd x'FFFFFF07,r1
+    bne error
+    movw 157,r7
+    movd x'FFFF0000,r0
+    FFSW r0,r1
+    bfc error
+    movw 158,r7
+    cmpd x'FFFFFF00,r1
+    bne error
+    movw 159,r7
+    movd x'10000000,r0
+    FFSD r0,r1
+    bfs error
+    cmpd x'FFFFFF1C,r1
+    bne error
+
+; BIT FIELDS
+    movw 160,r7
+    movd x'01E0380C,-4(sp)
+    movqd -1,r0
+    EXTSB -4(sp),r0,1,4
+    cmpd x'FFFFFF06,r0
+    bne error
+    movqd -1,r0
+    EXTSW -3(sp),r0,2,5
+    cmpd x'FFFF000E,r0
+    bne error
+    movqd -1,r0
+    EXTSD -2(sp),r0,4,7
+    cmpd x'0000001E,r0
+    bne error
+    movw 161,r7
+    movqd -1,-4(sp)
+    movd x'FFFFFF0A,r0
+    INSSB r0,-4(sp),1,5
+    cmpd x'FFFFFFD5,-4(sp)
+    bne error
+    movd x'FFFFFF12,r0
+    INSSW r0,-3(sp),2,6
+    cmpd x'FFFF4BD5,-4(sp)
+    bne error
+    movd x'FFFFFE44,r0
+    INSSD r0,-2(sp),4,9
+    cmpd x'E44F4BD5,-4(sp)
+    bne error
+    movw 162,r7
+    movd x'01E0380C,-4(sp)
+    movqd -1,r0
+    movqd 1,r1
+    EXTB r1,-4(sp),r0,4
+    cmpd x'FFFFFF06,r0
+    bne error
+    movqd -1,r0
+    movqd 2,r1
+    EXTW r1,-3(sp),r0,5
+    cmpd x'FFFF000E,r0
+    bne error
+    movqd -1,r0
+    movqd 4,r1
+    EXTD r1,-2(sp),r0,7
+    cmpd x'0000001E,r0
+    bne error
+    movw 163,r7
+    movqd -1,-4(sp)
+    movd x'FFFFFF0A,r0
+    movqd 1,r1
+    INSB r1,r0,-4(sp),5
+    cmpd x'FFFFFFD5,-4(sp)
+    bne error
+    movd x'FFFFFF12,r0
+    movqd 2,r1
+    INSW r1,r0,-3(sp),6
+    cmpd x'FFFF4BD5,-4(sp)
+    bne error
+    movd x'FFFFFE44,r0
+    movqd 4,r1
+    INSD r1,r0,-2(sp),9
+    cmpd x'E44F4BD5,-4(sp)
+    bne error
+    movw 164,r7
+    movqd -1,r0
+    movqd 7,r1
+    CVTP r1,-4(sp),r0
+    addr -4(sp),r2
+    lshd 3,r2
+    addqd 7,r2
+    cmpd r2,r0
+    bne error
+
+; ARRAYS
+    movw 165,r7
+    movd x'FFFFFF23,r0
+    CHECKB r0,chkb,r0    ; Reg , Bounds, Index
+    bfs error
+    cmpd x'00000013,r0
+    bne error
+    movb x'0F,r1
+    CHECKB r0,chkb,r1
+    bfc error
+    movw 166,r7
+    movd x'FFFF1234,r0
+    CHECKW r0,chkw,r0
+    bfs error
+    cmpd x'00000233,r0
+    bne error
+    movw x'2001,r1
+    CHECKW r0,chkw,r1
+    bfc error
+    movw 167,r7
+    movd x'22334455,r0
+    CHECKD r0,chkd,r0
+    bfs error
+    cmpd x'12131415,r0
+    bne error
+    movd x'30000002,r1
+    CHECKD r0,chkd,r1
+    bfc error
+    br next5
+
+chkb: .byte x'46,x'10
+chkw: .word x'2000,x'1001
+chkd: .double x'30000001,x'10203040
+
+next5:
+    movw 168,r7
+    movqd 5,r0
+    movd x'FFFFFF07,r1   ; Reg:=Length-1
+    movd x'FFFFFF13,r2
+    INDEXB r0,r1,r2      ; Reg, Length, Offset
+    cmpd 59,r0
+    bne error
+    movw 169,r7
+    movqd 5,r0
+    movd x'FFFF0030,r1   ; Reg:=Length-1
+    movd x'FFFF0123,r2
+    INDEXW r0,r1,r2      ; Reg, Length, Offset
+    cmpd x'218,r0
+    bne error
+    movw 170,r7
+    movqd 5,r0
+    movd x'00012344,r1   ; Reg:=Length-1
+    movd x'00023456,r2
+    INDEXD r0,r1,r2      ; Reg, Length, Offset
+    cmpd x'7E4AF,r0
+    bne error
+
+; MISC
+    movqd -1,r1
+    movqd -1,r3
+    movqd -1,r5
+    movqd -1,r7
+    movd x'04030201,r0
+    movd x'08070605,r2
+    movd x'0C0B0A09,r4
+    movd x'100F0E0D,r6
+    SAVE [r0,r2,r4,r6]
+    movqd -1,r0
+    movqd -1,r2
+    movqd -1,r4
+    movqd -1,r6
+    RESTORE [r1,r3,r5,r7]
+    cmpd x'100F0E0D,r7
+    movd 171,r7
+    bne error
+    cmpqd -1,r6
+    bne error
+    cmpd x'0C0B0A09,r5
+    bne error
+    cmpqd -1,r4
+    bne error
+    cmpd x'08070605,r3
+    bne error
+    cmpqd -1,r2
+    bne error
+    cmpd x'04030201,r1
+    bne error
+    cmpqd -1,r0
+    bne error
+    movd x'100F0E0D,r7
+    ENTER [r1,r3,r5,r7], 8
+    cmpd x'100F0E0D,-24(fp)
+    movd 172,r7
+    bne error
+    cmpd x'0C0B0A09,-20(fp)
+    bne error
+    cmpd x'08070605,8(sp)
+    bne error
+    cmpd x'04030201,12(sp)
+    bne error
+    EXIT [r0,r1,r2,r3]
+    movw 173,r7
+    cmpd x'04030201,r0
+    bne error
+    cmpd x'08070605,r1
+    bne error
+    cmpd x'0C0B0A09,r2
+    bne error
+    cmpd x'100F0E0D,r3
+    bne error
+
+    movw 174,r7
+    movqd 2,r0
+l0025:
+    CASEB  l0026[r0:b]
+l0027:  addw 16,r0
+l0028:  addw 32,r0
+l0029:  addw 64,r0
+l0030:  addw 128,r0
+    cmpd 194,r0
+    bne error
+    br next6
+
+l0026:  .byte l0027-l0025
+        .byte l0028-l0025
+        .byte l0029-l0025
+        .byte l0030-l0025
+next6:
+    movw 175,r7
+    movqd 2,r0
+l0031:
+    CASEW  l0032[r0:W]
+l0033:  addw 11,r0
+l0034:  addw 33,r0
+l0035:  addw 88,r0
+l0036:  addw 199,r0
+    cmpd 289,r0
+    bne error
+    br next7
+
+l0032:  .word l0033-l0031
+        .word l0034-l0031
+        .word l0035-l0031
+        .word l0036-l0031
+next7:
+    movw 176,r7
+    movqd 2,r0
+l0037:
+    CASED  l0038[r0:d]
+l0039:  addd 10,r0
+l0040:  addd 100,r0
+l0041:  addd 1000,r0
+l0042:  addd 10000,r0
+    cmpd 11002,r0
+    bne error
+    br next8
+
+l0038:  .double l0039-l0037
+        .double l0040-l0037
+        .double l0041-l0037
+        .double l0042-l0037
+next8:
+
+    movw 177,r7
+    movqd -1,r1
+    addr l0043,r0
+    JSR r0
+    cmpd x'FFFFFF05,r1
+    bne error
+    addr l0044,r0
+    JUMP r0
+l0043:
+    movqb 5,r1
+    ret 0
+l0044:
+
+;	br nofp
+; *****************************************
+
+; FLOATING POINT
+    lfsr x'1A8
+    movw 178,r7
+    SFSR r0
+    cmpd x'1A8,r0
+    bne error
+    movqd 0,r0     
+    LFSR r0
+    movb 16,r0
+    movw 120,r1
+    movd 1987,r2
+    MOVBF r0,f0
+    MOVWF r1,f1
+    MOVDF r2,f2
+    ADDF f0,f1
+    SUBF f0,f2
+    MULF f1,f2
+    DIVF f0,f2
+    ROUNDFD f2,r3
+    TRUNCFD f2,r4
+    cmpd 16754,r3
+    bne error
+    cmpd 16753,r4
+    bne error
+    NEGF f2,f3
+    ABSF f3,f4
+    ROUNDFW f3,r5
+    movw 179,r7
+;    cmpw -16754,r5
+    cmpw r5,-16754 
+    bne error
+    TRUNCFW f4,r6
+    cmpw 16753,r6
+    bne error
+    movw 180,r7
+    MOVF -0.125,f0
+    movqd 0,r0
+    FLOORFD f0,r0
+    ABSF f0,f1
+    movqd -1,r1
+    FLOORFW f1,r1
+    cmpqd -1,r0
+    bne error
+    cmpd x'FFFF0000,r1
+    bne error
+    movw 181,r7
+    MOVF 137.0,f0
+    LOGBF f0,f1
+    movqd -1,r0
+    ROUNDFB f1,r0
+    cmpd x'FFFFFF07,r0
+    bne error
+    movw 182,r7
+    MOVF 1.25,f0
+    MOVF 3.0,f1
+    SCALBF f1,f0    ; 10.0 in F0
+    TRUNCFB f0,r0
+    cmpd x'FFFFFF0A,r0
+    bne error
+    cmpf 10.0,f0   
+    bne error
+    movw 183,r7
+    MOVF 5.5,f2
+    DOTF f1,f2      ; 26.5 in F0
+    FLOORFB f0,r0
+    cmpd x'FFFFFF1A,r0
+    bne error
+    cmpf f0,26.5  
+    bne error
+    movw 184,r7
+    POLYF f1,f2
+    MOVFL f0,tos
+    ROUNDLD tos,r0
+    cmpd 85,r0
+    bne error
+    movw 185,r7
+    SFSR r0
+    tbitb 16,r0
+    bfc error
+
+    SFSR r0         ; now LONG
+    andd x'FFFF,r0  ; Statusbit RMB to 0
+    LFSR r0
+    movb 101,r0
+    movw 1253,r1
+    movd 19874,r2
+    MOVBL r0,f0
+    MOVWL r1,f1
+    MOVDL r2,f2
+    ADDL f0,f1
+    SUBL f0,f2
+    MULL f1,f2
+    DIVL f0,f2
+    ROUNDLD f2,r3
+    TRUNCLD f2,r4
+    movw 186,r7
+    cmpd 265076,r3
+    bne error
+    cmpd 265075,r4
+    bne error
+    NEGL 503.5,f3
+    ABSL f3,f4
+    ROUNDLW f3,r5
+    movw 187,r7
+    cmpw -504,r5
+    bne error
+    TRUNCLW f4,r6
+    cmpw 503,r6
+    bne error
+    movw 188,r7
+    MOVL -0.125,f0
+    movqd 0,r0
+    FLOORLD f0,r0
+    ABSL f0,f1
+    movqd -1,r1
+    FLOORLW f1,r1
+    cmpqd -1,r0
+    bne error
+    cmpd x'FFFF0000,r1
+    bne error
+    movw 189,r7
+    MOVL 1370.0,f0
+    LOGBL f0,f1
+    movqd -1,r0
+    ROUNDLB f1,r0
+    cmpd x'FFFFFF0A,r0
+    bne error
+    movw 190,r7
+    MOVL 1.25,f0
+    MOVL 5.0,f1
+    SCALBL f1,f0    ; 40.0 in F0
+    TRUNCLB f0,r0
+    cmpd x'FFFFFF28,r0
+    bne error
+    CMPL 40.0,f0 
+    bne error
+    movw 191,r7
+    MOVL 5.5,f2
+    DOTL f1,f2      ; 67.5 in F0
+    FLOORLB f0,r0
+    cmpd x'FFFFFF43,r0
+    bne error
+    CMPL f0,67.5   
+    bne error
+    movw 192,r7
+    POLYL f1,f2
+    MOVLF f0,tos
+    ROUNDFD tos,r0
+    cmpd 343,r0
+    bne error
+    movw 193,r7
+    SFSR r0
+    tbitb 16,r0
+    bfc error
+;******************************
+
+nofp:
+
+; STRINGS
+    adjspw 256
+    addr 0(sp),r0
+    movb 64,r1
+l0045:
+    addqd 4,r0
+    movqd 0,-4(r0)
+    acbb -1,r1,l0045
+    movw 194,r7
+    movd 19,r0
+    addr bfeld,r1
+    addr 0(sp),r2
+    MOVSB
+    cmpw 19,-1(r2)
+    bne errors
+    movw 195,r7
+    movb 11,r0
+    MOVSW
+    cmpd x'2928,-2(r2)
+    bne errors
+    movw 196,r7
+    movqb 7,r0
+    MOVSD
+    cmpd x'45444342,-4(r2)
+    bne errors
+    cmpqd 0,0(r2)
+    bne errors
+    movw 197,r7
+    addr 252(sp),r2
+    addr bfeld,r0
+    addr 244(r0),r1
+    movd 13,r0
+    MOVSD [B]
+    cmpd x'C8C7C6C5,4(r2)
+    bne errors
+    cmpqd 0,0(r2)
+    bne errors
+    movw 198,r7
+    movb 9,r0
+    MOVSW [B]
+    cmpd x'B2B10000,0(r2)
+    bne errors
+    movw 199,r7
+    movb 15,r0
+    MOVSB [B]
+    cmpw x'A100,0(r2)
+    bne errors
+    movw 200,r7
+    addr 0(sp),r2
+    addr bfeld,r1
+    addr trans,r3
+    movqd 4,r0
+    MOVST
+    cmpd x'47362514,0(sp)
+    bne errors
+    movw 201,r7
+    addr 4(sp),r1
+    addr bfeld,r0
+    addr 4(r0),r2
+    movd 20,r0
+    CMPSB
+    bne errors
+    cmpqd 0,r0
+    bne errors
+    movw 202,r7
+    negb 10(r2),10(r1)   ; something destroying ...
+    movb 12,r0
+    CMPSW
+    beq errors
+    cmpqd 7,r0
+    bne errors
+    movw 203,r7
+    movb 0(r2),0(r1)   ; now repair it
+    movqd 4,r0
+    CMPSD
+    bne errors
+    cmpqd 0,r0
+    bne errors
+    movw 204,r7
+    addr 5(sp),r1
+    addr 15(sp),r2
+    addr trans,r3
+    movqb 5,r0
+    CMPST
+    bne errors
+    cmpqd 0,r0
+    bne errors
+    movw 205,r7
+    movd x'20,r0
+    addr 0(sp),r1
+    movd x'FFFFFF0D,r4
+    SKPSB [U]
+    bfc errors
+    addr x'C(sp),r2
+    cmpd r1,r2
+    bne errors
+    cmpd 20,r0
+    bne errors
+    movw 206,r7
+    movd 50,r0
+    addr x'50(sp),r1
+    movd x'FFFF0000,r4
+    SKPSW [W]
+    bfc errors
+    addr x'A8(sp),r2
+    cmpd r1,r2
+    bne errors
+    cmpd 6,r0
+    bne errors
+    movw 207,r7
+    movqd 0,r0
+    movd r1,r2
+    SKPSD [B]
+    bfs errors
+    cmpd r1,r2
+    bne errors
+    movw 208,r7
+    movd 10,r0
+    addr trans,r1
+    movd r1,r3
+    bispsrb x'20
+    SKPST     
+    bfs errors
+    subd r3,r1
+    cmpd 10,r1
+    bne errors
+    cmpqd 0,r0
+    bne errors
+
+    adjspw 256
+    br next9
+
+trans:  .byte x'FF,x'14,x'25,x'36,x'47,0,x'10,x'11,x'12,x'13,x'14,0
+
+next9:
+; exit if no error
+    movd r7,r0 
+    ADDR L0002,TOS
+; anything what you want here in case of error-free
+ever0:	br ever0
+
+errors:
+ adjspb -8
+error1:
+ adjspw -248  ; correction of MOVM !
+; enter in error case
+error:
+ movd r7,r0
+ ADDR L0001,TOS
+
+ever:	br ever

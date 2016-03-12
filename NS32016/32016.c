@@ -28,7 +28,13 @@ uint32_t FSR;
 static uint32_t pc;
 uint32_t sp[2];
 
+#ifdef PC_SIMULATION
+uint32_t Trace = 1;
+#else
 uint32_t Trace = 0;
+#endif
+
+
 uint32_t tube_irq = 0;
 
 
@@ -2583,6 +2589,19 @@ void n32016_exec(uint32_t tubecycles)
          break;
 
          // Format 11
+         case ADDf:
+         {
+            if (reg_type == DoublePrecision)
+            {
+               FR.FPD[Regs[1]] += FR.FPD[Regs[0]];
+            }
+            else
+            {
+               FR.FPF[Regs[1]] += FR.FPF[Regs[0]];
+            }
+         }
+         break;
+
          case MOVf:
          {
             if (gentype[0] == TOS || gentype[1] == TOS)
