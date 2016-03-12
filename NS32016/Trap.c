@@ -14,7 +14,7 @@ uint32_t TrapFlags;
 const char TrapText[TrapCount][40] =
 {
    "Break Point Hit",
-   "Break Point Trap"
+   "Break Point Trap",
    "Reserved Addressing Mode",
    "Unknown Format",
    "Unknown Instruction",
@@ -72,5 +72,5 @@ void n32016_dumpregs(char* pMessage)
 
 void HandleTrap(void)
 {
-   n32016_dumpregs("Bad NS32016 opcode");
+   n32016_dumpregs("HandleTrap() called");
 }

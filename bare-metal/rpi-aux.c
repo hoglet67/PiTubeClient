@@ -84,7 +84,7 @@ void RPI_AuxMiniUartWrite(char c)
 
 extern void RPI_EnableUart(char* pMessage)
 {
-  RPI_AuxMiniUartInit(57600, 8);          // Initialise the UART
+  RPI_AuxMiniUartInit(115200, 8);          // Initialise the UART
 
   printf(pMessage);
 }

@@ -16,6 +16,8 @@
 #include "Profile.h"
 #endif
 
+#define CXP_UNUSED_WORD 0xAAAA
+
 int nsoutput = 0;
 
 ProcessorRegisters PR;
@@ -863,8 +865,7 @@ void TakeInterrupt(uint32_t IntBase)
    uint32_t temp2, temp3;
 
    psr &= ~0xF00;
-   pushw(temp);
-   pushw(mod);
+   pushd((temp << 16) | mod);
    
    while (read_x8(pc) == 0xB2)                                    // Do not stack the address of a WAIT instruction!
    {
@@ -1205,8 +1206,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = read_x32(mod + 4) + ((int32_t) temp) * 4;
 
             temp = read_x32(temp2);   // Matching Tail with CXPD, complier do your stuff
-            pushw(0);
-            pushw(mod);
+            pushd((CXP_UNUSED_WORD << 16) | mod);
             pushd(pc);
             mod = temp & 0xFFFF;
             temp3 = temp >> 16;
@@ -1330,8 +1330,7 @@ void n32016_exec(uint32_t tubecycles)
             temp = psr;
             psr &= ~0x700;
             // In SVC, the address pushed is the address of the SVC opcode
-            pushw(temp);
-            pushw(mod);
+            pushd((temp << 16) | mod);
             pushd(startpc);
             temp = read_x32(intbase + (5 * 4));
             mod = temp & 0xFFFF;
@@ -1504,8 +1503,7 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadAddress(0);
 
             temp = read_x32(temp2);   // Matching Tail with CXPD, complier do your stuff
-            pushw(0);
-            pushw(mod);
+            pushd((CXP_UNUSED_WORD << 16) | mod);
             pushd(pc);
             mod = temp & 0xFFFF;
             temp3 = temp >> 16;
@@ -2056,7 +2054,8 @@ void n32016_exec(uint32_t tubecycles)
          {
             uint32_t First    = ReadAddress(0);
             uint32_t Second   = ReadAddress(1);
-            temp = getdisp() + OpSize.Op[0];                      // disp of 0 means move 1 byte
+            //temp = getdisp() + OpSize.Op[0];                      // disp of 0 means move 1 byte
+            temp = (getdisp() & ~(OpSize.Op[0] - 1))  + OpSize.Op[0];
             while (temp)
             {
                temp2 = read_x8(First);
