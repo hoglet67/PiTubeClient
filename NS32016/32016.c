@@ -22,6 +22,9 @@ int nsoutput = 0;
 
 ProcessorRegisters PR;
 uint32_t r[8];
+FloatingPointRegisters FR;
+uint32_t FSR;
+
 static uint32_t pc;
 uint32_t sp[2];
 
@@ -44,12 +47,14 @@ void n32016_ShowRegs(void)
    TrapTRACE("FP=%08"PRIX32" INTBASE=%08"PRIX32" PSR=%04"PRIX32" MOD=%04"PRIX32"\n", fp, intbase, psr, mod);
 }
 
-const uint32_t OpSizeLookup[4] =
+const uint32_t OpSizeLookup[6] =
 {
-   (sz8  << 24) | (sz8  << 16) | (sz8  << 8) | sz8,
-   (sz16 << 24) | (sz16 << 16) | (sz16 << 8) | sz16,
+   (sz8  << 24) | (sz8  << 16) | (sz8  << 8) | sz8,                // Integer byte
+   (sz16 << 24) | (sz16 << 16) | (sz16 << 8) | sz16,               // Integer word
    0xFFFFFFFF,                                                     // Illegal
-   (sz32 << 24) | (sz32 << 16) | (sz32 << 8) | sz32,
+   (sz32 << 24) | (sz32 << 16) | (sz32 << 8) | sz32,               // Integer double-word
+   (sz32 << 24) | (sz32 << 16) | (sz32 << 8) | sz32,               // Floating Point Single Precision
+   (sz64 << 24) | (sz64 << 16) | (sz64 << 8) | sz64                // Floating Point Double Precision
 };
 
 void n32016_reset(uint32_t StartAddress)
@@ -244,13 +249,28 @@ static void getgen(int gen, int c)
    }
 }
 
-static void GetGenPhase2(int gen, int c)
+static void GetGenPhase2(int gen, int c, int reg_type)
 {
    if (gen < 0xFFFF)                                              // Does this Operand exist ?
    {
       if (gen <= R7)
       {
-         genaddr[c] = (uint32_t) &r[gen];
+         if (reg_type == Integer)
+         {
+            genaddr[c] = (uint32_t) &r[gen];
+         }
+         else if (reg_type == SinglePrecision)
+         {
+            genaddr[c] = (uint32_t) &FR.FPF[((gen << 1) & 12)  + (gen & 1)];
+         }
+         else if (reg_type == DoublePrecision)
+         {
+            genaddr[c] = (uint32_t) &FR.FPD[gen];
+         }
+         else
+         {
+            PiWARN("Illegal reg_type value: %d\n", reg_type)
+         }
          gentype[c] = Register;
          return;
       }
@@ -288,7 +308,7 @@ static void GetGenPhase2(int gen, int c)
          temp = (gen >> 8) & 7;
 
          uint32_t Shift = gen & 3;
-         GetGenPhase2(gen >> 11, c);
+         GetGenPhase2(gen >> 11, c, reg_type);
 
          int32_t Offset = ((int32_t) r[temp]) * (1 << Shift);
          if (gentype[c] != Register)
@@ -919,7 +939,9 @@ void n32016_exec(uint32_t tubecycles)
 {
    uint32_t opcode, WriteIndex;
    uint32_t temp = 0, temp2, temp3;
+   uint64_t temp64 = 0;
    uint32_t Function;
+   int reg_type;
 
    if (tube_irq & 2)
    {
@@ -940,6 +962,7 @@ void n32016_exec(uint32_t tubecycles)
       WriteSize      = szVaries;                                            // The size a result may be written as
       WriteIndex     = 1;                                                   // Default to writing operand 0
       OpSize.Whole   = 0;
+      reg_type       = Integer;
  
       Regs[0]        =
       Regs[1]        = 0xFFFF;
@@ -1095,12 +1118,19 @@ void n32016_exec(uint32_t tubecycles)
          case Format9:
          {
             Function += ((opcode >> 11) & 0x07);
+            SET_OP_SIZE(opcode >> 8);
+            getgen(opcode >> 19, 0);
+            getgen(opcode >> 14, 1);
          }
          break;
 
          case Format11:
          {
             Function += ((opcode >> 10) & 0x0F);
+            reg_type  = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
+            SET_FOP_SIZE((opcode >> 8) & 1);                 
+            getgen(opcode >> 19, 0);
+            getgen(opcode >> 14, 1);
          }
          break;
 
@@ -1117,12 +1147,14 @@ void n32016_exec(uint32_t tubecycles)
          break;
       }
 
-      FredSize = OpSize;                     // Temporary hack :(
-      uint32_t Temp = pc;
-      ShowInstruction(startpc, &Temp, opcode, Function, OpSize.Op[0]);
+      if (Trace) {
+         FredSize = OpSize;                     // Temporary hack :(
+         uint32_t Temp = pc;
+         ShowInstruction(startpc, &Temp, opcode, Function, OpSize.Op[0]);
+      }
 
-      GetGenPhase2(Regs[0], 0);
-      GetGenPhase2(Regs[1], 1);
+      GetGenPhase2(Regs[0], 0, reg_type);
+      GetGenPhase2(Regs[1], 1, reg_type);
 
       if (Function <= RETT)
       {
@@ -2196,7 +2228,7 @@ void n32016_exec(uint32_t tubecycles)
          case MEI:
          {
             temp = ReadGen(0); // src
-            uint64_t temp64 = ReadGen(1); // dst
+            temp64 = ReadGen(1); // dst
             temp64 *= temp;
             // Handle the writing to the upper half of dst locally here
             handle_mei_dei_upper_write(temp64);
@@ -2222,7 +2254,7 @@ void n32016_exec(uint32_t tubecycles)
                GOTO_TRAP(DivideByZero);
             }
 
-            uint64_t temp64 = readgenq(1); // dst
+            temp64 = readgenq(1); // dst
             switch (OpSize.Op[0])
             {
                case sz8:
@@ -2540,6 +2572,39 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
+         // Format 9
+         case LFSR:
+         {
+            FSR = ReadGen(0);
+            continue;
+         }
+         // No break due to continue
+
+         case SFSR:
+         {
+            temp = FSR;
+         }
+         break;
+
+         // Format 11
+         case MOVf:
+         {
+            if (gentype[0] == TOS || gentype[1] == TOS)
+            {
+               PiWARN("MOVf with TOS is not yet implemented\n");
+               continue; // with next instruction
+            }
+            if (reg_type == DoublePrecision)
+            {
+               temp64 = readgenq(0);
+            }
+            else
+            {
+               temp = ReadGen(0);
+            }
+         }
+         break;
+
          default:
          {
             if (Function < TRAP)
@@ -2552,7 +2617,7 @@ void n32016_exec(uint32_t tubecycles)
          // No break due to goto
       }
 
-      if (WriteSize && (WriteSize <= sz32))
+      if (WriteSize && (WriteSize <= sz64))
       {
          switch (gentype[WriteIndex])
          {
@@ -2563,6 +2628,7 @@ void n32016_exec(uint32_t tubecycles)
                   case sz8:   write_x8( genaddr[WriteIndex], temp);  break;
                   case sz16:  write_x16(genaddr[WriteIndex], temp);  break;
                   case sz32:  write_x32(genaddr[WriteIndex], temp);  break;
+                  case sz64:  write_x64(genaddr[WriteIndex], temp64);  break;
                }
             }
             break;
@@ -2574,6 +2640,7 @@ void n32016_exec(uint32_t tubecycles)
                   case sz8:   *((uint8_t*)   genaddr[WriteIndex]) = temp;  break;
                   case sz16:  *((uint16_t*)  genaddr[WriteIndex]) = temp;  break;
                   case sz32:  *((uint32_t*)  genaddr[WriteIndex]) = temp;  break;
+                  case sz64:  *((uint64_t*)  genaddr[WriteIndex]) = temp64;  break;
                }
 
                ShowRegisterWrite(WriteIndex, Truncate(temp, WriteSize));

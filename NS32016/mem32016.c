@@ -107,9 +107,30 @@ uint32_t read_x32(uint32_t addr)
    return read_x8(addr) | (read_x8(addr + 1) << 8) | (read_x8(addr + 2) << 16) | (read_x8(addr + 3) << 24);
 }
 
+uint64_t read_x64(uint32_t addr)
+{
+   //addr &= MEM_MASK;
+
+#ifdef NS_FAST_RAM
+   if (addr < IO_BASE)
+   {
+      return *((uint64_t*) (ns32016ram + addr));
+   }
+#endif
+
+   return ((uint64_t) read_x8(addr)) |
+      (((uint64_t) read_x8(addr + 1)) << 8) |
+      (((uint64_t) read_x8(addr + 2)) << 16) |
+      (((uint64_t) read_x8(addr + 3)) << 24) |
+      (((uint64_t) read_x8(addr + 4)) << 32) |
+      (((uint64_t) read_x8(addr + 5)) << 40) |
+      (((uint64_t) read_x8(addr + 6)) << 48) |
+      (((uint64_t) read_x8(addr + 7)) << 56);
+}
+
 uint32_t read_n(uint32_t addr, uint32_t Size)
 {
-   if (Size <= sizeof(uint32_t))
+   if (Size <= sizeof(uint64_t))
    {
       if ((addr + Size) <= IO_BASE)
       {
@@ -194,6 +215,30 @@ void write_x32(uint32_t addr, uint32_t val)
    write_x8(addr++, (val >> 8));
    write_x8(addr++, (val >> 16));
    write_x8(addr, (val >> 24));
+}
+
+void write_x64(uint32_t addr, uint64_t val)
+{
+#ifdef TRACE_WRITEs
+   PiTRACE(" @%06"PRIX32" = %016"PRIX64"\n", addr, val);
+#endif
+
+#ifdef NS_FAST_RAM
+   if (addr <= (RAM_SIZE - sizeof(uint64_t)))
+   {
+      *((uint64_t*) (ns32016ram + addr)) = val;
+      return;
+   }
+#endif
+
+   write_x8(addr++, val);
+   write_x8(addr++, (val >> 8));
+   write_x8(addr++, (val >> 16));
+   write_x8(addr++, (val >> 24));
+   write_x8(addr++, (val >> 32));
+   write_x8(addr++, (val >> 40));
+   write_x8(addr++, (val >> 48));
+   write_x8(addr,   (val >> 56));
 }
 
 void write_Arbitary(uint32_t addr, void* pData, uint32_t Size)
