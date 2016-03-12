@@ -18,7 +18,7 @@ enum TrapTypes
 
 };
 
-#define TrapCount 12
+#define TrapCount 13
 extern uint32_t TrapFlags;
 #define CLEAR_TRAP() TrapFlags = 0
 
