@@ -23,6 +23,8 @@ int nsoutput = 0;
 ProcessorRegisters PR;
 uint32_t r[8];
 FloatingPointRegisters FR;
+uint32_t FSR;
+
 static uint32_t pc;
 uint32_t sp[2];
 
@@ -1116,6 +1118,9 @@ void n32016_exec(uint32_t tubecycles)
          case Format9:
          {
             Function += ((opcode >> 11) & 0x07);
+            SET_OP_SIZE(opcode >> 8);
+            getgen(opcode >> 19, 0);
+            getgen(opcode >> 14, 1);
          }
          break;
 
@@ -1142,9 +1147,11 @@ void n32016_exec(uint32_t tubecycles)
          break;
       }
 
-      FredSize = OpSize;                     // Temporary hack :(
-      uint32_t Temp = pc;
-      ShowInstruction(startpc, &Temp, opcode, Function, OpSize.Op[0]);
+      if (Trace) {
+         FredSize = OpSize;                     // Temporary hack :(
+         uint32_t Temp = pc;
+         ShowInstruction(startpc, &Temp, opcode, Function, OpSize.Op[0]);
+      }
 
       GetGenPhase2(Regs[0], 0, reg_type);
       GetGenPhase2(Regs[1], 1, reg_type);
@@ -2562,6 +2569,20 @@ void n32016_exec(uint32_t tubecycles)
             }
 
             WriteSize = sz8;
+         }
+         break;
+
+         // Format 9
+         case LFSR:
+         {
+            FSR = ReadGen(0);
+            continue;
+         }
+         // No break due to continue
+
+         case SFSR:
+         {
+            temp = FSR;
          }
          break;
 
