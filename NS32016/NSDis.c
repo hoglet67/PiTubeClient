@@ -516,170 +516,188 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
 
    if (StartPc < (IO_BASE - 64))                     // The code will not work near the IO Space as it will have side effects
    {
-      if (StartPc != old_pc)
+      if (StartPc == old_pc)
       {
-         old_pc = StartPc;
+         switch (Function)
+         {
+            case MOVS:
+            case WAIT:                                             // Wait for interrupt then continue execution
+            case DIA:                                              // Wait for interrupt and in theory never resume execution (stack manipulation would get round this)
+            case CMPS:
+            case SKPS:
+            {
+               return;                                            // This is just another iteration of an interruptable instructions
+            }
+            // No break due to return
+         }
+      }
+      
+      old_pc = StartPc;
          
 #ifdef WIN32
-         if (OpCount > 25000)
-         {
-            PiTRACE("25000 Traces done!\n");
-            exit(1);
-         }
-         OpCount++;
-         //PiTRACE("#%08"PRIu32" ", OpCount);
+      if (OpCount > 25000)
+      {
+         PiTRACE("25000 Traces done!\n");
+         exit(1);
+      }
+      OpCount++;
+      //PiTRACE("#%08"PRIu32" ", OpCount);
 #endif
         
-         PiTRACE("&%06" PRIX32 " ", StartPc);
-         PiTRACE("[%08" PRIX32 "] ", opcode);
-         uint32_t Format = Function >> 4;
-         PiTRACE("F%01" PRIu32 " ", Format);
-         //AddASCII(opcode, Format);
+      PiTRACE("&%06" PRIX32 " ", StartPc);
+      PiTRACE("[%08" PRIX32 "] ", opcode);
+      uint32_t Format = Function >> 4;
+      PiTRACE("F%01" PRIu32 " ", Format);
+      //AddASCII(opcode, Format);
 
-         if (Function < InstructionCount)
+      if (Function < InstructionCount)
+      {
+         AddInstructionText(Function, opcode, OperandSize);
+
+         switch (Function)
          {
-            AddInstructionText(Function, opcode, OperandSize);
-
-            switch (Function)
+            case ADDQ:
+            case CMPQ:
+            case ACB:
+            case MOVQ:
             {
-               case ADDQ:
-               case CMPQ:
-               case ACB:
-               case MOVQ:
-               {
-                  int32_t Value = (opcode >> 7) & 0xF;
-                  NIBBLE_EXTEND(Value);
-                  PiTRACE("%" PRId32 ",", Value);
-               }
-               break;
-
-               case LPR:
-               case SPR:
-               {
-                  int32_t Value = (opcode >> 7) & 0xF;
-                  PiTRACE("%s", LPRLookUp[Value]);
-                  if (Function == LPR)
-                  {
-                     PiTRACE(",");
-                  }
-               }
-               break;
+               int32_t Value = (opcode >> 7) & 0xF;
+               NIBBLE_EXTEND(Value);
+               PiTRACE("%" PRId32 ",", Value);
             }
+            break;
 
-            RegLookUp(StartPc, pPC);
+            case LPR:
+            case SPR:
+            {
+               int32_t Value = (opcode >> 7) & 0xF;
+               PiTRACE("%s", LPRLookUp[Value]);
+               if (Function == LPR)
+               {
+                  PiTRACE(",");
+               }
+            }
+            break;
+         }
 
-            if ((Function <= BN) || (Function == BSR))
+         RegLookUp(StartPc, pPC);
+
+         if ((Function <= BN) || (Function == BSR))
+         {
+            int32_t d = GetDisplacement(pPC);
+            PiTRACE("&%06"PRIX32" ", StartPc + d);
+         }
+
+         switch (Function)
+         {
+            case SAVE:
+            {
+               ShowRegs(read_x8((*pPC)++), 0);    //Access directly we do not want tube reads!
+            }
+            break;
+
+            case RESTORE:
+            {
+               ShowRegs(read_x8((*pPC)++), 1);    //Access directly we do not want tube reads!
+            }
+            break;
+
+            case EXIT:
+            {
+               ShowRegs(read_x8((*pPC)++), 1);    //Access directly we do not want tube reads!
+            }
+            break;
+  
+            case ENTER:
+            {
+               ShowRegs(read_x8((*pPC)++), 0);    //Access directly we do not want tube reads!
+               int32_t d = GetDisplacement(pPC);
+               PiTRACE(" " HEX32 "", d);
+            }
+            break;
+
+            case RET:               
+            case CXP:
+            case RXP:
             {
                int32_t d = GetDisplacement(pPC);
-               PiTRACE("&%06"PRIX32" ", StartPc + d);
+               PiTRACE(" " HEX32 "", d);
             }
+            break;
 
-            switch (Function)
+            case ACB:
             {
-               case SAVE:
-               {
-                  ShowRegs(read_x8((*pPC)++), 0);    //Access directly we do not want tube reads!
-               }
-               break;
-
-               case RESTORE:
-               {
-                  ShowRegs(read_x8((*pPC)++), 1);    //Access directly we do not want tube reads!
-               }
-               break;
-
-               case EXIT:
-               {
-                  ShowRegs(read_x8((*pPC)++), 1);    //Access directly we do not want tube reads!
-               }
-               break;
-  
-               case ENTER:
-               {
-                  ShowRegs(read_x8((*pPC)++), 0);    //Access directly we do not want tube reads!
-                  int32_t d = GetDisplacement(pPC);
-                  PiTRACE(" " HEX32 "", d);
-               }
-               break;
-
-               case RET:               
-               case CXP:
-               case RXP:
-               {
-                  int32_t d = GetDisplacement(pPC);
-                  PiTRACE(" " HEX32 "", d);
-               }
-               break;
-
-               case ACB:
-               {
-                  int32_t d = GetDisplacement(pPC); 
-                  PiTRACE("PC x+'%" PRId32 "", d);
-               }
-               break;
-
-               case MOVM:
-               case CMPM:
-               {
-                  int32_t d = GetDisplacement(pPC);
-                  PiTRACE(",%" PRId32, (d / OperandSize) + 1);
-               }
-               break;
-
-               case EXT:
-               case INS:
-               {
-                  int32_t d = GetDisplacement(pPC);
-                  PiTRACE(",%" PRId32, d);
-               }
-               break;
-
-               case MOVS:
-               case CMPS:
-               case SKPS:
-               {
-                 AddStringFlags(opcode);
-               }
-               break;
-
-               case SETCFG:
-               {
-                  AddCfgFLags(opcode);
-               }
-               break;
-
-               case INSS:
-               case EXTS:
-               {
-                  uint8_t Value = read_x8((*pPC)++);
-                  PiTRACE(",%" PRIu32 ",%" PRIu32,  Value >> 5, ((Value & 0x1F) + 1));
-               }
-               break;
+               int32_t d = GetDisplacement(pPC); 
+               PiTRACE("PC x+'%" PRId32 "", d);
             }
+            break;
+
+            case MOVM:
+            case CMPM:
+            {
+               int32_t d = GetDisplacement(pPC);
+               PiTRACE(",%" PRId32, (d / OperandSize) + 1);
+            }
+            break;
+
+            case EXT:
+            case INS:
+            {
+               int32_t d = GetDisplacement(pPC);
+               PiTRACE(",%" PRId32, d);
+            }
+            break;
+
+            case MOVS:
+            case CMPS:
+            case SKPS:
+            {
+               AddStringFlags(opcode);
+            }
+            break;
+
+            case SETCFG:
+            {
+               AddCfgFLags(opcode);
+            }
+            break;
+
+            case INSS:
+            case EXTS:
+            {
+               uint8_t Value = read_x8((*pPC)++);
+               PiTRACE(",%" PRIu32 ",%" PRIu32,  Value >> 5, ((Value & 0x1F) + 1));
+            }
+            break;
+         }
 
 
-            PiTRACE("\n");
+         PiTRACE("\n");
 
 #ifdef TEST_SUITE
-            if ((*pPC == 0x1CA9) || (*pPC == 0x1CB2))
-            {
+
+#if TEST_SUITE == 0
+         if ((*pPC == 0x1CA9) || (*pPC == 0x1CB2))
+#else
+         if ((*pPC == 0x1CA9) || (*pPC == 0x1CB4))
+#endif
+         {
 
 #ifdef INSTRUCTION_PROFILING
-               DisassembleUsingITrace(0, 0x10000);
+            DisassembleUsingITrace(0, 0x10000);
 #endif
 
-               n32016_dumpregs("Test Suite Complete!\n");
-               exit(1);
-            }
+            n32016_dumpregs("Test Suite Complete!\n");
+            exit(1);
+         }
 #endif
 
 #ifndef TEST_SUITE
-            if (OpCount >= 10000)
-            {
-               n32016_dumpregs("Lots of trace data here!");
-            }
-#endif
+         if (OpCount >= 10000)
+         {
+            n32016_dumpregs("Lots of trace data here!");
          }
+#endif
       }
 
       return;

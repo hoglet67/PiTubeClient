@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "32016.h"
 #include "mem32016.h"
 #include "defs.h"
@@ -45,10 +46,16 @@ uint32_t genaddr[2];
 int gentype[2];
 OperandSizeType OpSize;
 
-void n32016_ShowRegs(void)
+void n32016_ShowRegs(int bShowFloat)
 {
    TrapTRACE("R0=%08"PRIX32" R1=%08"PRIX32" R2=%08"PRIX32" R3=%08"PRIX32"\n", r[0], r[1], r[2], r[3]);
    TrapTRACE("R4=%08"PRIX32" R5=%08"PRIX32" R6=%08"PRIX32" R7=%08"PRIX32"\n", r[4], r[5], r[6], r[7]);
+   if (bShowFloat)
+   {
+      TrapTRACE("F0=%lf F1=%lf F2=%lf F3=%lf\n", FR.f64[0], FR.f64[0], FR.f64[0], FR.f64[0]);
+      TrapTRACE("F4=%lf F5=%lf F6=%lf F7=%lf\n", FR.f64[0], FR.f64[0], FR.f64[0], FR.f64[0]);
+   }
+
    TrapTRACE("PC=%08"PRIX32" SB=%08"PRIX32" SP=%08"PRIX32" TRAP=%08"PRIX32"\n", pc, sb, GET_SP(), TrapFlags);
    TrapTRACE("FP=%08"PRIX32" INTBASE=%08"PRIX32" PSR=%04"PRIX32" MOD=%04"PRIX32"\n", fp, intbase, psr, mod);
 }
@@ -267,11 +274,11 @@ static void GetGenPhase2(int gen, int c, int reg_type)
          }
          else if (reg_type == SinglePrecision)
          {
-            genaddr[c] = (uint32_t) &FR.FPF[((gen << 1) & 12)  + (gen & 1)];
+            genaddr[c] = (uint32_t) &FR.f64[((gen << 1) & 12)  + (gen & 1)];
          }
          else if (reg_type == DoublePrecision)
          {
-            genaddr[c] = (uint32_t) &FR.FPD[gen];
+            genaddr[c] = (uint32_t) &FR.f32[gen];
          }
          else
          {
@@ -2596,6 +2603,8 @@ void n32016_exec(uint32_t tubecycles)
                q.f32 = (float) ReadGen(0);
                temp = q.x32;
             }
+
+            n32016_ShowRegs(1);
          }
          break;
 
@@ -2606,23 +2615,77 @@ void n32016_exec(uint32_t tubecycles)
          }
          // No break due to continue
 
+         case MOVLF:
+         {
+            FR.f32[Regs[1]] = (float) FR.f64[Regs[0]];
+            n32016_ShowRegs(1);
+            continue;
+         }
+         // No break due to continue
+
+         case MOVFL:
+         {
+            FR.f64[Regs[1]] = (double) FR.f32[Regs[0]];
+            n32016_ShowRegs(1);
+            continue;
+         }
+         // No break due to continue
+
+         case ROUND:
+         {
+            if (reg_type == DoublePrecision)
+            {
+               temp64.f64 = (double) readgenq(0);
+            }
+            else
+            {
+               Temp32Type q;
+               q.f32 = (float) ReadGen(0);
+               temp = q.x32;
+            }
+
+            n32016_ShowRegs(1);
+         }
+         break;
+
+         case TRUNC:
+         {
+            if (reg_type == DoublePrecision)
+            {
+               temp64.f64 = (double) readgenq(0);
+            }
+            else
+            {
+               Temp32Type q;
+               q.f32 = (float) ReadGen(0);
+               temp = q.x32;
+            }
+            
+            n32016_ShowRegs(1);
+         }
+         break;
+
          case SFSR:
          {
             temp = FSR;
          }
          break;
 
+         //case FLOOR:
+ 
          // Format 11
          case ADDf:
          {
             if (reg_type == DoublePrecision)
             {
-               FR.FPD[Regs[1]] += FR.FPD[Regs[0]];
+               FR.f32[Regs[1]] += FR.f32[Regs[0]];
             }
             else
             {
-               FR.FPF[Regs[1]] += FR.FPF[Regs[0]];
+               FR.f64[Regs[1]] += FR.f64[Regs[0]];
             }
+            n32016_ShowRegs(1);
+
             continue;
          }
          // No break due to continue
@@ -2643,6 +2706,7 @@ void n32016_exec(uint32_t tubecycles)
             {
                temp = ReadGen(0);
             }
+            n32016_ShowRegs(1);
          }
          break;
 
@@ -2652,14 +2716,16 @@ void n32016_exec(uint32_t tubecycles)
 
             if (reg_type == DoublePrecision)
             {
-               Z_FLAG = TEST(FR.FPD[Regs[1]] == FR.FPD[Regs[0]]);
-               N_FLAG = TEST(FR.FPD[Regs[1]] > FR.FPD[Regs[0]]);
+               Z_FLAG = TEST(FR.f32[Regs[1]] == FR.f32[Regs[0]]);
+               N_FLAG = TEST(FR.f32[Regs[1]] > FR.f32[Regs[0]]);
             }
             else
             {
-               Z_FLAG = TEST(FR.FPF[Regs[1]] == FR.FPF[Regs[0]]);
-               N_FLAG = TEST(FR.FPF[Regs[1]] > FR.FPF[Regs[0]]);
+               Z_FLAG = TEST(FR.f64[Regs[1]] == FR.f64[Regs[0]]);
+               N_FLAG = TEST(FR.f64[Regs[1]] > FR.f64[Regs[0]]);
             }
+
+            n32016_ShowRegs(1);
 
             continue;
          }
@@ -2669,12 +2735,14 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (reg_type == DoublePrecision)
             {
-               FR.FPD[Regs[1]] -= FR.FPD[Regs[0]];
+               FR.f32[Regs[1]] -= FR.f32[Regs[0]];
             }
             else
             {
-               FR.FPF[Regs[1]] -= FR.FPF[Regs[0]];
+               FR.f64[Regs[1]] -= FR.f64[Regs[0]];
             }
+
+            n32016_ShowRegs(1);
 
             continue;
          }
@@ -2684,12 +2752,14 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (reg_type == DoublePrecision)
             {
-               FR.FPD[Regs[1]] = -FR.FPD[Regs[0]];
+               FR.f32[Regs[1]] = -FR.f32[Regs[0]];
             }
             else
             {
-               FR.FPF[Regs[1]] = -FR.FPF[Regs[0]];
+               FR.f64[Regs[1]] = -FR.f64[Regs[0]];
             }
+
+            n32016_ShowRegs(1);
 
             continue;
          }
@@ -2699,12 +2769,14 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (reg_type == DoublePrecision)
             {
-               FR.FPD[Regs[1]] /= FR.FPD[Regs[0]];
+               FR.f32[Regs[1]] /= FR.f32[Regs[0]];
             }
             else
             {
-               FR.FPF[Regs[1]] /= FR.FPF[Regs[0]];
+               FR.f64[Regs[1]] /= FR.f64[Regs[0]];
             }
+
+            n32016_ShowRegs(1);
 
             continue;
          }
@@ -2714,12 +2786,15 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (reg_type == DoublePrecision)
             {
-               FR.FPD[Regs[1]] *= FR.FPD[Regs[0]];
+               FR.f32[Regs[1]] *= FR.f32[Regs[0]];
             }
             else
             {
-               FR.FPF[Regs[1]] *= FR.FPF[Regs[0]];
+               FR.f64[Regs[1]] *= FR.f64[Regs[0]];
             }
+            n32016_ShowRegs(1);
+
+            continue;
          }
          // No break due to continue
 
@@ -2727,12 +2802,13 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (reg_type == DoublePrecision)
             {
-               FR.FPD[Regs[1]] = fabs(FR.FPD[Regs[0]]);
+               FR.f32[Regs[1]] = fabs(FR.f32[Regs[0]]);
             }
             else
             {
-               FR.FPF[Regs[1]] = fabs(FR.FPF[Regs[0]]);
+               FR.f64[Regs[1]] = fabs(FR.f64[Regs[0]]);
             }
+            n32016_ShowRegs(1);
 
             continue;
          }

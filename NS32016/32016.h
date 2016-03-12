@@ -394,10 +394,10 @@ typedef union
 
 typedef union
 {
-   float  FPF[16];
-   double FPD[ 8];
-   uint32_t x32;
-   uint64_t x64;
+   float    f64[16];
+   double   f32[ 8];
+   uint32_t u32[16];
+   uint64_t u64[ 8];
 } FloatingPointRegisters;
 
 typedef union
