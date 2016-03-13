@@ -503,6 +503,7 @@ void AddInstructionText(uint32_t Function, uint32_t opcode, uint32_t OperandSize
       }
    }
 }
+
 void AddASCII(opcode, Format)
 {
    if (Format < sizeof(FormatSizes))

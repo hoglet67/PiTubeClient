@@ -449,9 +449,28 @@ typedef union
 
 typedef union
 {
-   uint32_t Whole;   
+   struct
+   {
+      unsigned OpType   : 5;
+      unsigned RegType  : 3;
+      unsigned IdxReg   : 3;
+      unsigned IdxType  : 5;
+   };
+
+   struct
+   {
+      uint8_t LowerByte;
+      uint8_t UpperByte;
+   };
+
+   uint16_t Whole;   
 } RegLKU;
 
+#define FP_SRC_64 FR.f64[Regs[0].Whole]
+#define FP_DST_64 FR.f64[Regs[1].Whole]
+
+#define FP_SRC_32 FR.f32[Regs[0].Whole]
+#define FP_DST_32 FR.f32[Regs[1].Whole]
 
 extern uint32_t sp[2];
 
@@ -475,7 +494,7 @@ enum StringBits
 };
 
 extern void n32016_init();
-extern void n32016_ShowRegs(void);
+extern void n32016_ShowRegs(int bShowFloat);
 extern void n32016_reset(uint32_t StartAddress);
 extern void n32016_exec(uint32_t tubecycles);
 extern void n32016_build_matrix();
