@@ -447,6 +447,12 @@ typedef union
 #define mod          PR.MOD.Whole
 #define nscfg        PR.CFG
 
+typedef union
+{
+   uint32_t Whole;   
+} RegLKU;
+
+
 extern uint32_t sp[2];
 
 #define STACK_P      sp[S_FLAG]
@@ -477,7 +483,7 @@ extern void BreakPoint(uint32_t pc, uint32_t opcode);
 
 extern ProcessorRegisters PR;
 extern uint32_t r[8];
-extern uint16_t Regs[2];
+extern RegLKU Regs[2];
 extern OperandSizeType FredSize;
 
 extern void Disassemble(uint32_t Location, uint32_t End);

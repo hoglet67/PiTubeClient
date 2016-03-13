@@ -199,20 +199,20 @@ int32_t GetDisplacement(uint32_t* pPC)
    return Value;
 }
 
-void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern, uint32_t c)
+void GetOperandText(uint32_t Start, uint32_t* pPC, RegLKU Pattern, uint32_t c)
 {
-   if (Pattern < 8)
+   if (Pattern.Whole < 8)
    {
       PiTRACE("R%0" PRId32, Pattern);
    }
-   else if (Pattern < 16)
+   else if (Pattern.Whole < 16)
    {
       int32_t d = GetDisplacement(pPC);
-      PiTRACE("%0" PRId32 "(R%u)", d, (Pattern & 7));
+      PiTRACE("%0" PRId32 "(R%u)", d, (Pattern.Whole & 7));
    }
    else
    {
-      switch (Pattern & 0x1F)
+      switch (Pattern.Whole & 0x1F)
       {
          case FrameRelative:
          {
@@ -322,8 +322,10 @@ void GetOperandText(uint32_t Start, uint32_t* pPC, uint16_t Pattern, uint32_t c)
          case EaPlus8Rn:
          {
             const char SizeLookup[] = "BWDQ";
-            GetOperandText(Start, pPC, Pattern >> 11, c);   // Recurse
-            PiTRACE("[R%" PRId16 ":%c]", ((Pattern >> 8) & 3), SizeLookup[Pattern & 3]);
+            RegLKU NewPattern;
+            NewPattern.Whole = Pattern.Whole >> 11;
+            GetOperandText(Start, pPC, NewPattern, c);   // Recurse
+            PiTRACE("[R%" PRId16 ":%c]", ((Pattern.Whole >> 8) & 3), SizeLookup[Pattern.Whole & 3]);
          }
          break;
       }
@@ -337,11 +339,11 @@ void RegLookUp(uint32_t Start, uint32_t* pPC)
 
    for (Index = 0; Index < 2; Index++)
    {
-      if (Regs[Index] < 0xFFFF)
+      if (Regs[Index].Whole < 0xFFFF)
       {
          if (Index == 1)
          {
-            if (Regs[0] < 0xFFFF)
+            if (Regs[0].Whole < 0xFFFF)
             {
                PiTRACE(",");
             }
@@ -724,7 +726,7 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
 
 void ShowRegisterWrite(uint32_t Index, uint32_t Value)
 {
-   if (Regs[Index] < 32)
+   if (Regs[Index].Whole < 32)
    {
 #ifdef SHOW_REG_WRITES
       if (Regs[Index] < 8)
@@ -734,7 +736,7 @@ void ShowRegisterWrite(uint32_t Index, uint32_t Value)
 #endif
 
 #ifdef TEST_SUITE
-      if (Regs[Index] == 7)
+      if (Regs[Index].Whole == 7)
       {
          PiTRACE("*** TEST = %u\n", Value);
 
@@ -819,19 +821,19 @@ void n32016_build_matrix()
 static void getgen(int gen, int c, uint32_t* pPC)
 {
    gen &= 0x1F;
-   Regs[c] = gen;
+   Regs[c].Whole = gen;
 
    if (gen >= EaPlusRn)
    {
-      Regs[c] |= read_x8((*pPC)++) << 8;
+      Regs[c].Whole |= read_x8((*pPC)++) << 8;
       (*pPC)++;
 
-      if ((Regs[c] & 0xF800) == (Immediate << 11))
+      if ((Regs[c].Whole & 0xF800) == (Immediate << 11))
       {
          SET_TRAP(IllegalImmediate);
       }
 
-      if ((Regs[c] & 0xF800) >= (EaPlusRn << 11))
+      if ((Regs[c].Whole & 0xF800) >= (EaPlusRn << 11))
       {
          SET_TRAP(IllegalDoubleIndexing);
       }
@@ -847,8 +849,8 @@ void Decode(uint32_t* pPC)
    uint32_t Function = FunctionLookup[opcode & 0xFF];
    uint32_t Format = Function >> 4;
 
-   Regs[0] =
-   Regs[1] = 0xFFFF;
+   Regs[0].Whole =
+   Regs[1].Whole = 0xFFFF;
 
    if (Format < (FormatCount + 1))
    {

@@ -41,7 +41,7 @@ uint32_t tube_irq = 0;
 
 uint32_t startpc;
 
-uint16_t Regs[2];
+RegLKU Regs[2];
 uint32_t genaddr[2];
 int gentype[2];
 OperandSizeType OpSize;
@@ -244,18 +244,18 @@ uint32_t ReadAddress(uint32_t c)
 static void getgen(int gen, int c)
 {
    gen &= 0x1F;
-   Regs[c] = gen;
+   Regs[c].Whole = gen;
 
    if (gen >= EaPlusRn)
    {
-      Regs[c] |= READ_PC_BYTE() << 8;
+      Regs[c].Whole |= READ_PC_BYTE() << 8;
 
-      if ((Regs[c] & 0xF800) == (Immediate << 11))
+      if ((Regs[c].Whole & 0xF800) == (Immediate << 11))
       {
          SET_TRAP(IllegalImmediate);
       }
 
-      if ((Regs[c] & 0xF800) >= (EaPlusRn << 11))
+      if ((Regs[c].Whole & 0xF800) >= (EaPlusRn << 11))
       {
          SET_TRAP(IllegalDoubleIndexing);
       }
@@ -669,7 +669,7 @@ static void handle_mei_dei_upper_write(uint64_t result)
    uint32_t temp;
    // Writing to an odd register is strictly speaking undefined
    // But BBC Basic relies on a particular behaviour that the NS32016 has in this case
-   uint32_t reg_addr = genaddr[1] + ((Regs[1] & 1) ? -4 : 4);
+   uint32_t reg_addr = genaddr[1] + ((Regs[1].Whole & 1) ? -4 : 4);
    switch (OpSize.Op[0])
    {
       case sz8:
@@ -977,8 +977,8 @@ void n32016_exec(uint32_t tubecycles)
       OpSize.Whole   = 0;
       reg_type       = Integer;
  
-      Regs[0]        =
-      Regs[1]        = 0xFFFF;
+      Regs[0].Whole  =
+      Regs[1].Whole  = 0xFFFF;
 
       startpc  = pc;
       opcode = read_x32(pc);
@@ -1191,8 +1191,8 @@ void n32016_exec(uint32_t tubecycles)
          ShowInstruction(startpc, &Temp, opcode, Function, OpSize.Op[0]);
       }
 
-      GetGenPhase2(Regs[0], 0, reg_type);
-      GetGenPhase2(Regs[1], 1, reg_type);
+      GetGenPhase2(Regs[0].Whole, 0, reg_type);
+      GetGenPhase2(Regs[1].Whole, 1, reg_type);
 
       if (Function <= RETT)
       {
@@ -2633,7 +2633,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case MOVLF:
          {
-            FR.f32[Regs[1]] = (float) FR.f64[Regs[0]];
+            FR.f32[Regs[1].Whole] = (float) FR.f64[Regs[0].Whole];
             n32016_ShowRegs(1);
             continue;
          }
@@ -2641,7 +2641,7 @@ void n32016_exec(uint32_t tubecycles)
 
          case MOVFL:
          {
-            FR.f64[Regs[1]] = (double) FR.f32[Regs[0]];
+            FR.f64[Regs[1].Whole] = (double) FR.f32[Regs[0].Whole];
             n32016_ShowRegs(1);
             continue;
          }
@@ -2694,11 +2694,11 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (reg_type == DoublePrecision)
             {
-               FR.f32[Regs[1]] += FR.f32[Regs[0]];
+               FR.f32[Regs[1].Whole] += FR.f32[Regs[0].Whole];
             }
             else
             {
-               FR.f64[Regs[1]] += FR.f64[Regs[0]];
+               FR.f64[Regs[1].Whole] += FR.f64[Regs[0].Whole];
             }
             n32016_ShowRegs(1);
 
@@ -2732,13 +2732,13 @@ void n32016_exec(uint32_t tubecycles)
 
             if (reg_type == DoublePrecision)
             {
-               Z_FLAG = TEST(FR.f32[Regs[1]] == FR.f32[Regs[0]]);
-               N_FLAG = TEST(FR.f32[Regs[1]] > FR.f32[Regs[0]]);
+               Z_FLAG = TEST(FR.f32[Regs[1].Whole] == FR.f32[Regs[0].Whole]);
+               N_FLAG = TEST(FR.f32[Regs[1].Whole] > FR.f32[Regs[0].Whole]);
             }
             else
             {
-               Z_FLAG = TEST(FR.f64[Regs[1]] == FR.f64[Regs[0]]);
-               N_FLAG = TEST(FR.f64[Regs[1]] > FR.f64[Regs[0]]);
+               Z_FLAG = TEST(FR.f64[Regs[1].Whole] == FR.f64[Regs[0].Whole]);
+               N_FLAG = TEST(FR.f64[Regs[1].Whole] > FR.f64[Regs[0].Whole]);
             }
 
             n32016_ShowRegs(1);
@@ -2751,11 +2751,11 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (reg_type == DoublePrecision)
             {
-               FR.f32[Regs[1]] -= FR.f32[Regs[0]];
+               FR.f32[Regs[1].Whole] -= FR.f32[Regs[0].Whole];
             }
             else
             {
-               FR.f64[Regs[1]] -= FR.f64[Regs[0]];
+               FR.f64[Regs[1].Whole] -= FR.f64[Regs[0].Whole];
             }
 
             n32016_ShowRegs(1);
@@ -2768,11 +2768,11 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (reg_type == DoublePrecision)
             {
-               FR.f32[Regs[1]] = -FR.f32[Regs[0]];
+               FR.f32[Regs[1].Whole] = -FR.f32[Regs[0].Whole];
             }
             else
             {
-               FR.f64[Regs[1]] = -FR.f64[Regs[0]];
+               FR.f64[Regs[1].Whole] = -FR.f64[Regs[0].Whole];
             }
 
             n32016_ShowRegs(1);
@@ -2785,11 +2785,11 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (reg_type == DoublePrecision)
             {
-               FR.f32[Regs[1]] /= FR.f32[Regs[0]];
+               FR.f32[Regs[1].Whole] /= FR.f32[Regs[0].Whole];
             }
             else
             {
-               FR.f64[Regs[1]] /= FR.f64[Regs[0]];
+               FR.f64[Regs[1].Whole] /= FR.f64[Regs[0].Whole];
             }
 
             n32016_ShowRegs(1);
@@ -2802,11 +2802,11 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (reg_type == DoublePrecision)
             {
-               FR.f32[Regs[1]] *= FR.f32[Regs[0]];
+               FR.f32[Regs[1].Whole] *= FR.f32[Regs[0].Whole];
             }
             else
             {
-               FR.f64[Regs[1]] *= FR.f64[Regs[0]];
+               FR.f64[Regs[1].Whole] *= FR.f64[Regs[0].Whole];
             }
             n32016_ShowRegs(1);
 
@@ -2818,11 +2818,11 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (reg_type == DoublePrecision)
             {
-               FR.f32[Regs[1]] = fabs(FR.f32[Regs[0]]);
+               FR.f32[Regs[1].Whole] = fabs(FR.f32[Regs[0].Whole]);
             }
             else
             {
-               FR.f64[Regs[1]] = fabs(FR.f64[Regs[0]]);
+               FR.f64[Regs[1].Whole] = fabs(FR.f64[Regs[0].Whole]);
             }
             n32016_ShowRegs(1);
 
