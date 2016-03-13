@@ -1447,6 +1447,8 @@ l0044:
     bne error
     cmpd x'FFFF0000,r1
     bne error
+
+	 br longfp						; Skip bits not on the 32016
     movw 181,r7
     MOVF 137.0,f0
     LOGBF f0,f1
@@ -1482,6 +1484,7 @@ l0044:
     tbitb 16,r0
     bfc error
 
+longfp:	 
     SFSR r0         ; now LONG
     andd x'FFFF,r0  ; Statusbit RMB to 0
     LFSR r0
@@ -1544,8 +1547,10 @@ l0044:
     FLOORLB f0,r0
     cmpd x'FFFFFF43,r0
     bne error
-    CMPL f0,67.5   
+	 CMPL f0,67.5   
     bne error
+	 br nofp
+
     movw 192,r7
     POLYL f1,f2
     MOVLF f0,tos

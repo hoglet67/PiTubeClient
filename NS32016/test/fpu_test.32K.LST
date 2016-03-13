@@ -18,145 +18,145 @@
 0000002D  17A0FFFFFFAA          movd x'FFFFFFAA,r0
 00000033  28A0CC                ANDB x'CC,r0
 00000036  07A0FFFFFF88          cmpd x'FFFFFF88,r0
-0000003C  1A9C76                bne error
+0000003C  1A9C7B                bne error
 0000003F  5D39                  movw 2,r7             ; ANDW
 00000041  17A0FFFF5555          movd x'FFFF5555,r0
 00000047  29A03333              ANDW x'3333,r0
 0000004B  07A0FFFF1111          cmpd x'FFFF1111,r0
-00000051  1A9C61                bne error
+00000051  1A9C66                bne error
 00000054  DD39                  movw 3,r7             ; ANDD
 00000056  17A0AAAAAAAA          movd x'AAAAAAAA,r0
 0000005C  2BA0CCCCCCCC          ANDD x'CCCCCCCC,r0
 00000062  07A088888888          cmpd x'88888888,r0
-00000068  1A9C4A                bne error
+00000068  1A9C4F                bne error
 0000006B  5D3A                  movw 4,r7             ; BICB
 0000006D  17A0FFFFFFAA          movd x'FFFFFFAA,r0
 00000073  08A0CC                BICB x'CC,r0
 00000076  07A0FFFFFF22          cmpd x'FFFFFF22,r0
-0000007C  1A9C36                bne error
+0000007C  1A9C3B                bne error
 0000007F  DD3A                  movw 5,r7             ; BICW
 00000081  17A0FFFF5555          movd x'FFFF5555,r0
 00000087  09A03333              BICW x'3333,r0
 0000008B  07A0FFFF4444          cmpd x'FFFF4444,r0
-00000091  1A9C21                bne error
+00000091  1A9C26                bne error
 00000094  5D3B                  movw 6,r7             ; BICD
 00000096  17A0AAAAAAAA          movd x'AAAAAAAA,r0
 0000009C  0BA0CCCCCCCC          BICD x'CCCCCCCC,r0
 000000A2  070522222222          cmpd r0,x'22222222    
-000000A8  1A9C0A                bne error
+000000A8  1A9C0F                bne error
 000000AB  DD3B                  movw 7,r7             ; ORB
 000000AD  17A0000000CC          movd x'000000CC,r0
 000000B3  18A0AA                ORB  x'AA,r0
 000000B6  07A0000000EE          cmpd x'000000EE,r0
-000000BC  1A9BF6                bne error
+000000BC  1A9BFB                bne error
 000000BF  D5A10008              movw 8,r7             ; ORW
 000000C3  17A000003333          movd x'00003333,r0
 000000C9  19A05555              ORW  x'5555,r0
 000000CD  07A000007777          cmpd x'00007777,r0
-000000D3  1A9BDF                bne error
+000000D3  1A9BE4                bne error
 000000D6  D5A10009              movw 9,r7             ; ORD
 000000DA  17A0C35AA53C          movd x'C35AA53C,r0
 000000E0  1BA0A53CC35A          ORD  x'A53CC35A,r0
 000000E6  07A0E77EE77E          cmpd x'E77EE77E,r0
-000000EC  1A9BC6                bne error
+000000EC  1A9BCB                bne error
 000000EF  D5A1000A              movw 10,r7            ; XORB
 000000F3  17A0FFFFFFAA          movd x'FFFFFFAA,r0
 000000F9  38A0CC                XORB x'CC,r0
 000000FC  07A0FFFFFF66          cmpd x'FFFFFF66,r0
-00000102  1A9BB0                bne error
+00000102  1A9BB5                bne error
 00000105  D5A1000B              movw 11,r7            ; XORW
 00000109  17A0FFFF5555          movd x'FFFF5555,r0
 0000010F  39A03333              XORW x'3333,r0
 00000113  07A0FFFF6666          cmpd x'FFFF6666,r0
-00000119  1A9B99                bne error
+00000119  1A9B9E                bne error
 0000011C  D5A1000C              movw 12,r7            ; XORD
 00000120  17A0AC5335CA          movd x'AC5335CA,r0
 00000126  3BA0CA3553AC          XORD x'CA3553AC,r0
 0000012C  07A066666666          cmpd x'66666666,r0
-00000132  1A9B80                bne error
+00000132  1A9B85                bne error
 00000135  D5A1000D              movw 13,r7            ; COMB
 00000139  57A055555555          movd x'55555555,r1
 0000013F  5F00                  movd x'00000000,r0
 00000141  4E3408                COMB r1,r0
 00000144  07A0000000AA          cmpd x'000000AA,r0
-0000014A  1A9B68                bne error
+0000014A  1A9B6D                bne error
 0000014D  D5A1000E              movw 14,r7            ; COMW
 00000151  5F00                  movd x'00000000,r0
 00000153  4E3508                COMW r1,r0
 00000156  07A00000AAAA          cmpd x'0000AAAA,r0
-0000015C  1A9B56                bne error
+0000015C  1A9B5B                bne error
 0000015F  D5A1000F              movw 15,r7            ; COMD
 00000163  5F00                  movd x'00000000,r0
 00000165  4E3708                COMD r1,r0
 00000168  07A0AAAAAAAA          cmpd x'AAAAAAAA,r0
-0000016E  1A9B44                bne error
+0000016E  1A9B49                bne error
 00000171  D5A10010              movw 16,r7            ; COMB 2
 00000175  57A0AAAAAAAA          movd x'AAAAAAAA,r1
 0000017B  5F00                  movd x'00000000,r0
 0000017D  4E3408                COMB r1,r0
 00000180  07A000000055          cmpd x'00000055,r0
-00000186  1A9B2C                bne error
+00000186  1A9B31                bne error
 00000189  D5A10011              movw 17,r7            ; COMW 2
 0000018D  5F00                  movd x'00000000,r0
 0000018F  4E3508                COMW r1,r0
 00000192  07A000005555          cmpd x'00005555,r0
-00000198  1A9B1A                bne error
+00000198  1A9B1F                bne error
 0000019B  D5A10012              movw 18,r7            ; COMD 2
 0000019F  5F00                  movd x'00000000,r0
 000001A1  4E3708                COMD r1,r0
 000001A4  07A055555555          cmpd x'55555555,r0
-000001AA  1A9B08                bne error
+000001AA  1A9B0D                bne error
 000001AD  D5A10013              movw 19,r7            ; NOTB
 000001B1  5F08                  movd x'00000000,r1
 000001B3  DF07                  movd x'FFFFFFFF,r0
 000001B5  4E2408                NOTB r1,r0
 000001B8  07A0FFFFFF01          cmpd x'FFFFFF01,r0
-000001BE  1A9AF4                bne error
+000001BE  1A9AF9                bne error
 000001C1  D5A10014              movw 20,r7            ; NOTW
 000001C5  DF07                  movd x'FFFFFFFF,r0
 000001C7  4E2508                NOTW r1,r0
 000001CA  07A0FFFF0001          cmpd x'FFFF0001,r0
-000001D0  1A9AE2                bne error
+000001D0  1A9AE7                bne error
 000001D3  D5A10015              movw 21,r7            ; NOTD
 000001D7  DF07                  movd x'FFFFFFFF,r0
 000001D9  4E2708                NOTD r1,r0
 000001DC  9F00                  cmpd x'00000001,r0
-000001DE  1A9AD4                bne error
+000001DE  1A9AD9                bne error
 000001E1  D5A10016              movw 22,r7            ; NOTB 2
 000001E5  DF0F                  movd x'FFFFFFFF,r1
 000001E7  5F00                  movd x'00000000,r0
 000001E9  4E2408                NOTB r1,r0
 000001EC  07A0000000FE          cmpd x'000000FE,r0
-000001F2  1A9AC0                bne error
+000001F2  1A9AC5                bne error
 000001F5  D5A10017              movw 23,r7            ; NOTW 2
 000001F9  5F00                  movd x'00000000,r0
 000001FB  4E2508                NOTW r1,r0
 000001FE  07A00000FFFE          cmpd x'0000FFFE,r0
-00000204  1A9AAE                bne error
+00000204  1A9AB3                bne error
 00000207  D5A10018              movw 24,r7            ; NOTD 2
 0000020B  5F00                  movd x'00000000,r0
 0000020D  4E2708                NOTD r1,r0
 00000210  1F07                  cmpd x'FFFFFFFE,r0
-00000212  1A9AA0                bne error
+00000212  1A9AA5                bne error
 00000215  D5A10019              movw 25,r7            ; SEQB
 00000219  7CA1FF                bicpsrb x'FF          ; lprb psr,x'40 is privileged !
 0000021C  7CA340                bispsrb x'40
 0000021F  17A0AAAAAAAA          movd x'AAAAAAAA,r0
 00000225  3C00                  SEQB r0
 00000227  07A0AAAAAA01          cmpd x'AAAAAA01,r0
-0000022D  1A9A85                bne error
+0000022D  1A9A8A                bne error
 00000230  D5A1001A              movw 26,r7            ; SEQW
 00000234  7CA340                bispsrb x'40
 00000237  17A0AAAAAAAA          movd x'AAAAAAAA,r0
 0000023D  3D00                  SEQW r0
 0000023F  07A0AAAA0001          cmpd x'AAAA0001,r0
-00000245  1A9A6D                bne error
+00000245  1A9A72                bne error
 00000248  D5A1001B              movw 27,r7            ; SEQD
 0000024C  7CA340                bispsrb x'40
 0000024F  17A0AAAAAAAA          movd x'AAAAAAAA,r0
 00000255  3F00                  SEQD r0
 00000257  9F00                  cmpd x'00000001,r0
-00000259  1A9A59                bne error
+00000259  1A9A5E                bne error
                             ; Assumption that BWD recognizing is independent from Condition-Code.
                             ; All combinations of N,Z,L,F and C are testet.
 0000025C  A7D88190              addr set_tab,r2
@@ -166,7 +166,7 @@
 00000267  028166                bsr psr_code  
 0000026A  3C00                  SEQB r0
 0000026C  045000                cmpb 0(r2),r0
-0000026F  1A9A43                bne error
+0000026F  1A9A48                bne error
 00000272  8C0F                  addqb -1,r1
 00000274  8F10                  addqd 1,r2
 00000276  9C0F                  cmpqb -1,r1
@@ -177,7 +177,7 @@
 00000281  02814C                bsr psr_code
 00000284  BC00                  SNEB r0
 00000286  045000                cmpb 0(r2),r0
-00000289  1A9A29                bne error
+00000289  1A9A2E                bne error
 0000028C  8C0F                  addqb -1,r1
 0000028E  8F10                  addqd 1,r2
 00000290  9C0F                  cmpqb -1,r1
@@ -188,7 +188,7 @@
 0000029B  028132                bsr psr_code
 0000029E  3C01                  SCSB r0
 000002A0  045000                cmpb 0(r2),r0
-000002A3  1A9A0F                bne error
+000002A3  1A9A14                bne error
 000002A6  8C0F                  addqb -1,r1
 000002A8  8F10                  addqd 1,r2
 000002AA  9C0F                  cmpqb -1,r1
@@ -199,7 +199,7 @@
 000002B5  028118                bsr psr_code
 000002B8  BC01                  SCCB r0
 000002BA  045000                cmpb 0(r2),r0
-000002BD  1A99F5                bne error
+000002BD  1A99FA                bne error
 000002C0  8C0F                  addqb -1,r1
 000002C2  8F10                  addqd 1,r2
 000002C4  9C0F                  cmpqb -1,r1
@@ -210,7 +210,7 @@
 000002CF  0280FE                bsr psr_code
 000002D2  3C02                  SHIB r0
 000002D4  045000                cmpb 0(r2),r0
-000002D7  1A99DB                bne error
+000002D7  1A99E0                bne error
 000002DA  8C0F                  addqb -1,r1
 000002DC  8F10                  addqd 1,r2
 000002DE  9C0F                  cmpqb -1,r1
@@ -221,7 +221,7 @@
 000002E9  0280E4                bsr psr_code
 000002EC  BC02                  SLSB r0
 000002EE  045000                cmpb 0(r2),r0
-000002F1  1A99C1                bne error
+000002F1  1A99C6                bne error
 000002F4  8C0F                  addqb -1,r1
 000002F6  8F10                  addqd 1,r2
 000002F8  9C0F                  cmpqb -1,r1
@@ -232,7 +232,7 @@
 00000303  0280CA                bsr psr_code
 00000306  3C03                  SGTB r0
 00000308  045000                cmpb 0(r2),r0
-0000030B  1A99A7                bne error
+0000030B  1A99AC                bne error
 0000030E  8C0F                  addqb -1,r1
 00000310  8F10                  addqd 1,r2
 00000312  9C0F                  cmpqb -1,r1
@@ -243,7 +243,7 @@
 0000031D  0280B0                bsr psr_code
 00000320  BC03                  SLEB r0
 00000322  045000                cmpb 0(r2),r0
-00000325  1A998D                bne error
+00000325  1A9992                bne error
 00000328  8C0F                  addqb -1,r1
 0000032A  8F10                  addqd 1,r2
 0000032C  9C0F                  cmpqb -1,r1
@@ -254,7 +254,7 @@
 00000337  028096                bsr psr_code
 0000033A  3C04                  SFSB r0
 0000033C  045000                cmpb 0(r2),r0
-0000033F  1A9973                bne error
+0000033F  1A9978                bne error
 00000342  8C0F                  addqb -1,r1
 00000344  8F10                  addqd 1,r2
 00000346  9C0F                  cmpqb -1,r1
@@ -265,7 +265,7 @@
 00000351  02807C                bsr psr_code
 00000354  BC04                  SFCB r0
 00000356  045000                cmpb 0(r2),r0
-00000359  1A9959                bne error
+00000359  1A995E                bne error
 0000035C  8C0F                  addqb -1,r1
 0000035E  8F10                  addqd 1,r2
 00000360  9C0F                  cmpqb -1,r1
@@ -276,7 +276,7 @@
 0000036B  028062                bsr psr_code
 0000036E  3C05                  SLOB r0
 00000370  045000                cmpb 0(r2),r0
-00000373  1A993F                bne error
+00000373  1A9944                bne error
 00000376  8C0F                  addqb -1,r1
 00000378  8F10                  addqd 1,r2
 0000037A  9C0F                  cmpqb -1,r1
@@ -287,7 +287,7 @@
 00000385  028048                bsr psr_code
 00000388  BC05                  SHSB r0
 0000038A  045000                cmpb 0(r2),r0
-0000038D  1A9925                bne error
+0000038D  1A992A                bne error
 00000390  8C0F                  addqb -1,r1
 00000392  8F10                  addqd 1,r2
 00000394  9C0F                  cmpqb -1,r1
@@ -298,7 +298,7 @@
 0000039F  022E                  bsr psr_code
 000003A1  3C06                  SLTB r0
 000003A3  045000                cmpb 0(r2),r0
-000003A6  1A990C                bne error
+000003A6  1A9911                bne error
 000003A9  8C0F                  addqb -1,r1
 000003AB  8F10                  addqd 1,r2
 000003AD  9C0F                  cmpqb -1,r1
@@ -309,7 +309,7 @@
 000003B8  0215                  bsr psr_code
 000003BA  BC06                  SGEB r0
 000003BC  045000                cmpb 0(r2),r0
-000003BF  1A98F3                bne error
+000003BF  1A98F8                bne error
 000003C2  8C0F                  addqb -1,r1
 000003C4  8F10                  addqd 1,r2
 000003C6  9C0F                  cmpqb -1,r1
@@ -395,24 +395,24 @@
 000005B0  17A055555555          movd x'55555555,r0
 000005B6  4E14A001              LSHB 1,r0
 000005BA  07A0555555AA          cmpd x'555555AA,r0
-000005C0  1A96F2                bne error
+000005C0  1A96F7                bne error
 000005C3  D5A1002B              movw 43,r7           ; LSHW
 000005C7  17A055555555          movd x'55555555,r0
 000005CD  4E15A001              LSHW 1,r0
 000005D1  07A05555AAAA          cmpd x'5555AAAA,r0
-000005D7  1A96DB                bne error
+000005D7  1A96E0                bne error
 000005DA  D5A1002C              movw 44,r7           ; LSHD
 000005DE  17A055555555          movd x'55555555,r0
 000005E4  4E17A001              LSHD 1,r0
 000005E8  07A0AAAAAAAA          cmpd x'AAAAAAAA,r0
-000005EE  1A96C4                bne error
+000005EE  1A96C9                bne error
 000005F1  D5A1002D              movw 45,r7
 000005F5  5F08                  movqd 0,r1
                             l0017:
 000005F7  DF00                  movqd 1,r0
 000005F9  4E1708                LSHD r1,r0      ; shift to left
 000005FC  07F0D933              cmpd sh_tab[r1:d],r0
-00000600  1A96B2                bne error
+00000600  1A96B7                bne error
 00000603  8C08                  addqb 1,r1
 00000605  040D20                cmpb r1,x'20 
 00000608  1A6F                  bne l0017
@@ -423,7 +423,7 @@
 00000614  17A080000000          movd x'80000000,r0
 0000061A  4E1708                LSHD r1,r0      ; shift to right
 0000061D  075000                cmpd 0(r2),r0
-00000620  1A9692                bne error
+00000620  1A9697                bne error
 00000623  0F12                  addqd 4,r2
 00000625  CC086F                acbb 1,r1,l0018  ; 0 already done !
 00000628  EA8087                br next2
@@ -452,39 +452,39 @@
 000006B3  17A0AAAAAAAA          movd x'AAAAAAAA,r0
 000006B9  4E04A0FB              ASHB -5,r0
 000006BD  07A0AAAAAAFD          cmpd x'AAAAAAFD,r0
-000006C3  1A95EF                bne error
+000006C3  1A95F4                bne error
 000006C6  D5A10030              movw 48,r7           ; ASHW
 000006CA  17A0AAAAAAAA          movd x'AAAAAAAA,r0
 000006D0  4E05A0FB              ASHW -5,r0
 000006D4  07A0AAAAFD55          cmpd x'AAAAFD55,r0
-000006DA  1A95D8                bne error
+000006DA  1A95DD                bne error
 000006DD  D5A10031              movw 49,r7           ; ASHD
 000006E1  17A0AAAAAAAA          movd x'AAAAAAAA,r0
 000006E7  4E07A0FB              ASHD -5,r0
 000006EB  07A0FD555555          cmpd x'FD555555,r0
-000006F1  1A95C1                bne error
+000006F1  1A95C6                bne error
 000006F4  D5A10032              movw 50,r7           ; ASHB 2
 000006F8  17A055555555          movd x'55555555,r0
 000006FE  4E04A0FB              ASHB -5,r0
 00000702  07A055555502          cmpd x'55555502,r0
-00000708  1A95AA                bne error
+00000708  1A95AF                bne error
 0000070B  D5A10033              movw 51,r7           ; ASHW 2
 0000070F  17A055555555          movd x'55555555,r0
 00000715  4E05A0FB              ASHW -5,r0
 00000719  07A0555502AA          cmpd x'555502AA,r0
-0000071F  1A9593                bne error
+0000071F  1A9598                bne error
 00000722  D5A10034              movw 52,r7           ; ASHD 2
 00000726  17A055555555          movd x'55555555,r0
 0000072C  4E07A0FB              ASHD -5,r0
 00000730  07A002AAAAAA          cmpd x'02AAAAAA,r0
-00000736  1A957C                bne error
+00000736  1A9581                bne error
 00000739  D5A10035              movw 53,r7
 0000073D  5F08                  movqd 0,r1
                             l0019:
 0000073F  DF07                  movqd -1,r0
 00000741  4E0708                ASHD r1,r0      ; shift to left like LSHD
 00000744  07F0D92F              cmpd sh_tab2[r1:d],r0
-00000748  1A956A                bne error
+00000748  1A956F                bne error
 0000074B  8C08                  addqb 1,r1
 0000074D  44A020                cmpb x'20,r1
 00000750  1A6F                  bne l0019
@@ -495,7 +495,7 @@
 0000075C  17A080000000          movd x'80000000,r0
 00000762  4E0708                ASHD r1,r0      ; shift to right
 00000765  075000                cmpd 0(r2),r0
-00000768  1A954A                bne error
+00000768  1A954F                bne error
 0000076B  0F12                  addqd 4,r2
 0000076D  CC086F                acbb 1,r1,l0020  ; 0 already done !
 00000770  EA8083                br next3
@@ -523,24 +523,24 @@
 000007F7  17A0AAAAAAAA          movd x'AAAAAAAA,r0
 000007FD  4E00A001              ROTB 1,r0
 00000801  07A0AAAAAA55          cmpd x'AAAAAA55,r0
-00000807  1A94AB                bne error
+00000807  1A94B0                bne error
 0000080A  D5A10038              movw 56,r7           ; ROTW
 0000080E  17A0AAAAAAAA          movd x'AAAAAAAA,r0
 00000814  4E01A001              ROTW 1,r0
 00000818  07A0AAAA5555          cmpd x'AAAA5555,r0
-0000081E  1A9494                bne error
+0000081E  1A9499                bne error
 00000821  D5A10039              movw 57,r7           ; ROTD
 00000825  17A0AAAAAAAA          movd x'AAAAAAAA,r0
 0000082B  4E03A001              ROTD 1,r0
 0000082F  07A055555555          cmpd x'55555555,r0
-00000835  1A947D                bne error
+00000835  1A9482                bne error
 00000838  D5A1003A              movw 58,r7
 0000083C  5F08                  movqd 0,r1
                             l0021:
 0000083E  17A080000000          movd x'80000000,r0
 00000844  4E0308                ROTD r1,r0      ; rotate to left
 00000847  07F0D9BDE4            cmpd sh_tab3[r1:d],r0
-0000084C  1A9466                bne error
+0000084C  1A946B                bne error
 0000084F  8C08                  addqb 1,r1
 00000851  44A020                cmpb x'20,r1
 00000854  1A6A                  bne l0021
@@ -551,7 +551,7 @@
 00000861  17A040000000          movd x'40000000,r0
 00000867  4E0308                ROTD r1,r0      ; rotate to right
 0000086A  075000                cmpd 0(r2),r0
-0000086D  1A9445                bne error
+0000086D  1A944A                bne error
 00000870  0F12                  addqd 4,r2
 00000872  CC086F                acbb 1,r1,l0022  ; 0 already done !
                             
@@ -562,32 +562,32 @@
 0000087F  17A0FFFFFF78          movd  x'FFFFFF78,r0
 00000885  4E3CA010              ADDPB       x'10,r0  ; Carry is 0
 00000889  07A0FFFFFF89          cmpd  x'FFFFFF89,r0
-0000088F  1A9423                bne error
+0000088F  1A9428                bne error
 00000892  D5A1003D              movw 61,r7
 00000896  17A0FFFF5432          movd  x'FFFF5432,r0
 0000089C  4E3DA06399            ADDPW     x'6399,r0  ; Carry is 1
 000008A1  07A0FFFF1831          cmpd  x'FFFF1831,r0
-000008A7  1A940B                bne error
+000008A7  1A9410                bne error
 000008AA  D5A1003E              movw 62,r7
 000008AE  17A012305678          movd  x'12305678,r0
 000008B4  4E3FA087858320        ADDPD x'87858320,r0  ; Carry is 1
 000008BB  07A000163999          cmpd  x'00163999,r0
-000008C1  1A93F1                bne error
+000008C1  1A93F6                bne error
 000008C4  D5A1003F              movw 63,r7
 000008C8  17A0FFFFFF88          movd  x'FFFFFF88,r0
 000008CE  4E2CA022              SUBPB       x'22,r0  ; Carry is 0
 000008D2  07A0FFFFFF65          cmpd  x'FFFFFF65,r0
-000008D8  1A93DA                bne error
+000008D8  1A93DF                bne error
 000008DB  D5A10040              movw 64,r7
 000008DF  17A0FFFF1234          movd  x'FFFF1234,r0
 000008E5  4E2DA05678            SUBPW     x'5678,r0  ; Carry is 1
 000008EA  07A0FFFF5556          cmpd  x'FFFF5556,r0
-000008F0  1A93C2                bne error
+000008F0  1A93C7                bne error
 000008F3  D5A10041              movw 65,r7
 000008F7  17A098765432          movd  x'98765432,r0
 000008FD  4E2FA088888888        SUBPD x'88888888,r0
 00000904  07A009876543          cmpd  x'09876543,r0
-0000090A  1A93A8                bne error
+0000090A  1A93AD                bne error
                             
                             ; MOVES
 0000090D  D5A10042              movw 66,r7
@@ -595,48 +595,48 @@
 00000917  DF0F                  movqd -1,r1
 00000919  CE1408                MOVZBW r1,r0
 0000091C  07A0555500FF          cmpd   x'555500FF,r0
-00000922  1A9390                bne error
+00000922  1A9395                bne error
 00000925  D5A10043              movw 67,r7
 00000929  17A0FFFFFF00          movd   x'FFFFFF00,r0
 0000092F  CE1808                MOVZBD r1,r0
 00000932  07A0000000FF          cmpd   x'000000FF,r0
-00000938  1A937A                bne error
+00000938  1A937F                bne error
 0000093B  D5A10044              movw 68,r7
 0000093F  17A0FFFF0000          movd   x'FFFF0000,r0
 00000945  CE1908                MOVZWD r1,r0
 00000948  07A00000FFFF          cmpd   x'0000FFFF,r0
-0000094E  1A9364                bne error
+0000094E  1A9369                bne error
 00000951  D5A10045              movw 69,r7
 00000955  17A05555FF00          movd   x'5555FF00,r0
 0000095B  CE1008                MOVXBW r1,r0
 0000095E  07A05555FFFF          cmpd   x'5555FFFF,r0
-00000964  1A934E                bne error
+00000964  1A9353                bne error
 00000967  D5A10046              movw 70,r7
 0000096B  17A0AAAAAA00          movd   x'AAAAAA00,r0
 00000971  CE1C08                MOVXBD r1,r0
 00000974  9F07                  cmpd   x'FFFFFFFF,r0
-00000976  1A933C                bne error
+00000976  1A9341                bne error
 00000979  D5A10047              movw 71,r7
 0000097D  17A0AAAA0000          movd   x'AAAA0000,r0
 00000983  CE1D08                MOVXWD r1,r0
 00000986  9F07                  cmpd   x'FFFFFFFF,r0
-00000988  1A932A                bne error
+00000988  1A932F                bne error
 0000098B  D5A10048              movw 72,r7
 0000098F  5F08                  movqd 0,r1
 00000991  17A05555FFFF          movd   x'5555FFFF,r0
 00000997  CE1008                MOVXBW r1,r0
 0000099A  07A055550000          cmpd   x'55550000,r0
-000009A0  1A9312                bne error
+000009A0  1A9317                bne error
 000009A3  D5A10049              movw 73,r7
 000009A7  17A0AAAAAAFF          movd   x'AAAAAAFF,r0
 000009AD  CE1C08                MOVXBD r1,r0
 000009B0  1F00                  cmpd   x'00000000,r0
-000009B2  1A9300                bne error
+000009B2  1A9305                bne error
 000009B5  D5A1004A              movw 74,r7
 000009B9  17A0AAAAFFFF          movd   x'AAAAFFFF,r0
 000009BF  CE1D08                MOVXWD r1,r0
 000009C2  1F00                  cmpd   x'00000000,r0
-000009C4  1A92EE                bne error
+000009C4  1A92F3                bne error
                             
                             ; MOVM Test : (1+16)*8 + (2+16)*4 + (4+16)*2 = 17*8+18*4+20*2 = 136+72+40=248
 000009C7  7DA500F8              adjspw 248
@@ -684,7 +684,7 @@
 00000AA7  27C800                addr 0(sp),r0
                             l0024:
 00000AAA  040A00                cmpb r1,0(r0)
-00000AAD  1A9201                bne error1   ; SP correction !!!
+00000AAD  1A9206                bne error1   ; SP correction !!!
 00000AB0  8C08                  addqb 1,r1
 00000AB2  8F00                  addqd 1,r0
 00000AB4  45A000F9              cmpw 249,r1
@@ -693,62 +693,62 @@
 00000ABA  D5A1004C              movw 76,r7
 00000ABE  27D8820A              addr bfeld,r0
                             ;   CMPMB 0(r0),0(sp),1   bne error1
-00000AC2  CE4446010101      00000AC8  1A91E6                CMPMB 1(r0),1(sp),2   bne error1
-00000ACB  CE4446030302      00000AD1  1A91DD                CMPMB 3(r0),3(sp),3   bne error1
-00000AD4  CE4446060603      00000ADA  1A91D4                CMPMB 6(r0),6(sp),4   bne error1
-00000ADD  CE44460A0A04      00000AE3  1A91CB                CMPMB 10(r0),10(sp),5   bne error1
-00000AE6  CE44460F0F05      00000AEC  1A91C2                CMPMB 15(r0),15(sp),6   bne error1
-00000AEF  CE4446151506      00000AF5  1A91B9                CMPMB 21(r0),21(sp),7   bne error1
-00000AF8  CE44461C1C07      00000AFE  1A91B0                CMPMB 28(r0),28(sp),8   bne error1
-00000B01  CE4446242408      00000B07  1A91A7                CMPMB 36(r0),36(sp),9   bne error1
-00000B0A  CE44462D2D09      00000B10  1A919E                CMPMB 45(r0),45(sp),10   bne error1
-00000B13  CE444637370A      00000B19  1A9195                CMPMB 55(r0),55(sp),11   bne error1
-00000B1C  CE4446804280420B  00000B24  1A918A                CMPMB 66(r0),66(sp),12   bne error1
-00000B27  CE4446804E804E0C  00000B2F  1A917F                CMPMB 78(r0),78(sp),13   bne error1
-00000B32  CE4446805B805B0D  00000B3A  1A9174                CMPMB 91(r0),91(sp),14   bne error1
-00000B3D  CE4446806980690E  00000B45  1A9169                CMPMB 105(r0),105(sp),15   bne error1
-00000B48  CE4446807880780F  00000B50  1A915E                CMPMB 120(r0),120(sp),16   bne error1
+00000AC2  CE4446010101      00000AC8  1A91EB                CMPMB 1(r0),1(sp),2   bne error1
+00000ACB  CE4446030302      00000AD1  1A91E2                CMPMB 3(r0),3(sp),3   bne error1
+00000AD4  CE4446060603      00000ADA  1A91D9                CMPMB 6(r0),6(sp),4   bne error1
+00000ADD  CE44460A0A04      00000AE3  1A91D0                CMPMB 10(r0),10(sp),5   bne error1
+00000AE6  CE44460F0F05      00000AEC  1A91C7                CMPMB 15(r0),15(sp),6   bne error1
+00000AEF  CE4446151506      00000AF5  1A91BE                CMPMB 21(r0),21(sp),7   bne error1
+00000AF8  CE44461C1C07      00000AFE  1A91B5                CMPMB 28(r0),28(sp),8   bne error1
+00000B01  CE4446242408      00000B07  1A91AC                CMPMB 36(r0),36(sp),9   bne error1
+00000B0A  CE44462D2D09      00000B10  1A91A3                CMPMB 45(r0),45(sp),10   bne error1
+00000B13  CE444637370A      00000B19  1A919A                CMPMB 55(r0),55(sp),11   bne error1
+00000B1C  CE4446804280420B  00000B24  1A918F                CMPMB 66(r0),66(sp),12   bne error1
+00000B27  CE4446804E804E0C  00000B2F  1A9184                CMPMB 78(r0),78(sp),13   bne error1
+00000B32  CE4446805B805B0D  00000B3A  1A9179                CMPMB 91(r0),91(sp),14   bne error1
+00000B3D  CE4446806980690E  00000B45  1A916E                CMPMB 105(r0),105(sp),15   bne error1
+00000B48  CE4446807880780F  00000B50  1A9163                CMPMB 120(r0),120(sp),16   bne error1
                             ;   CMPMW 136(r0),136(sp),1   bne error1
-00000B53  CE4546808A808A02  00000B5B  1A9153                CMPMW 138(r0),138(sp),2   bne error1
-00000B5E  CE4546808E808E04  00000B66  1A9148                CMPMW 142(r0),142(sp),3   bne error1
-00000B69  CE45468094809406  00000B71  1A913D                CMPMW 148(r0),148(sp),4   bne error1
-00000B74  CE4546809C809C08  00000B7C  1A9132                CMPMW 156(r0),156(sp),5   bne error1
-00000B7F  CE454680A680A60A  00000B87  1A9127                CMPMW 166(r0),166(sp),6   bne error1
-00000B8A  CE454680B280B20C  00000B92  1A911C                CMPMW 178(r0),178(sp),7   bne error1
-00000B95  CE454680C080C00E  00000B9D  1A9111                CMPMW 192(r0),192(sp),8   bne error1
+00000B53  CE4546808A808A02  00000B5B  1A9158                CMPMW 138(r0),138(sp),2   bne error1
+00000B5E  CE4546808E808E04  00000B66  1A914D                CMPMW 142(r0),142(sp),3   bne error1
+00000B69  CE45468094809406  00000B71  1A9142                CMPMW 148(r0),148(sp),4   bne error1
+00000B74  CE4546809C809C08  00000B7C  1A9137                CMPMW 156(r0),156(sp),5   bne error1
+00000B7F  CE454680A680A60A  00000B87  1A912C                CMPMW 166(r0),166(sp),6   bne error1
+00000B8A  CE454680B280B20C  00000B92  1A9121                CMPMW 178(r0),178(sp),7   bne error1
+00000B95  CE454680C080C00E  00000B9D  1A9116                CMPMW 192(r0),192(sp),8   bne error1
                             ;   CMPMD 208(r0),208(sp),1   bne error1
-00000BA0  CE474680D480D404  00000BA8  1A9106                CMPMD 212(r0),212(sp),2   bne error1
-00000BAB  CE474680DC80DC08  00000BB3  1A90FB                CMPMD 220(r0),220(sp),3   bne error1
-00000BB6  CE474680E880E80C  00000BBE  1A90F0                CMPMD 232(r0),232(sp),4   bne error1
+00000BA0  CE474680D480D404  00000BA8  1A910B                CMPMD 212(r0),212(sp),2   bne error1
+00000BAB  CE474680DC80DC08  00000BB3  1A9100                CMPMD 220(r0),220(sp),3   bne error1
+00000BB6  CE474680E880E80C  00000BBE  1A90F5                CMPMD 232(r0),232(sp),4   bne error1
                             
                             ;   CMPMB 0(r0),1(sp),1   beq error1
-00000BC1  CE4446010001      00000BC7  0A90E7                CMPMB 1(r0),0(sp),2   beq error1
-00000BCA  CE4446030202      00000BD0  0A90DE                CMPMB 3(r0),2(sp),3   beq error1
-00000BD3  CE4446060503      00000BD9  0A90D5                CMPMB 6(r0),5(sp),4   beq error1
-00000BDC  CE44460A0904      00000BE2  0A90CC                CMPMB 10(r0), 9(sp),5   beq error1
-00000BE5  CE44460F0E05      00000BEB  0A90C3                CMPMB 15(r0),14(sp),6   beq error1
-00000BEE  CE4446151406      00000BF4  0A90BA                CMPMB 21(r0),20(sp),7   beq error1
-00000BF7  CE44461C1B07      00000BFD  0A90B1                CMPMB 28(r0),27(sp),8   beq error1
-00000C00  CE4446242308      00000C06  0A90A8                CMPMB 36(r0),35(sp),9   beq error1
-00000C09  CE44462D2C09      00000C0F  0A909F                CMPMB 45(r0),44(sp),10   beq error1
-00000C12  CE444637360A      00000C18  0A9096                CMPMB 55(r0),54(sp),11   beq error1
-00000C1B  CE4446804280410B  00000C23  0A908B                CMPMB 66(r0),65(sp),12   beq error1
-00000C26  CE4446804E804D0C  00000C2E  0A9080                CMPMB 78(r0),77(sp),13   beq error1
-00000C31  CE4446805B805A0D  00000C39  0A9075                CMPMB 91(r0),90(sp),14   beq error1
-00000C3C  CE4446806980680E  00000C44  0A906A                CMPMB 105(r0),104(sp),15   beq error1
-00000C47  CE4446807880790F  00000C4F  0A905F                CMPMB 120(r0),121(sp),16   beq error1
+00000BC1  CE4446010001      00000BC7  0A90EC                CMPMB 1(r0),0(sp),2   beq error1
+00000BCA  CE4446030202      00000BD0  0A90E3                CMPMB 3(r0),2(sp),3   beq error1
+00000BD3  CE4446060503      00000BD9  0A90DA                CMPMB 6(r0),5(sp),4   beq error1
+00000BDC  CE44460A0904      00000BE2  0A90D1                CMPMB 10(r0), 9(sp),5   beq error1
+00000BE5  CE44460F0E05      00000BEB  0A90C8                CMPMB 15(r0),14(sp),6   beq error1
+00000BEE  CE4446151406      00000BF4  0A90BF                CMPMB 21(r0),20(sp),7   beq error1
+00000BF7  CE44461C1B07      00000BFD  0A90B6                CMPMB 28(r0),27(sp),8   beq error1
+00000C00  CE4446242308      00000C06  0A90AD                CMPMB 36(r0),35(sp),9   beq error1
+00000C09  CE44462D2C09      00000C0F  0A90A4                CMPMB 45(r0),44(sp),10   beq error1
+00000C12  CE444637360A      00000C18  0A909B                CMPMB 55(r0),54(sp),11   beq error1
+00000C1B  CE4446804280410B  00000C23  0A9090                CMPMB 66(r0),65(sp),12   beq error1
+00000C26  CE4446804E804D0C  00000C2E  0A9085                CMPMB 78(r0),77(sp),13   beq error1
+00000C31  CE4446805B805A0D  00000C39  0A907A                CMPMB 91(r0),90(sp),14   beq error1
+00000C3C  CE4446806980680E  00000C44  0A906F                CMPMB 105(r0),104(sp),15   beq error1
+00000C47  CE4446807880790F  00000C4F  0A9064                CMPMB 120(r0),121(sp),16   beq error1
                             ;   CMPMW 136(r0),135(sp),1   beq error1
-00000C52  CE4546808A808902  00000C5A  0A9054                CMPMW 138(r0),137(sp),2   beq error1
-00000C5D  CE4546808E808D04  00000C65  0A9049                CMPMW 142(r0),141(sp),3   beq error1
-00000C68  CE45468094809306  00000C70  0A903E                CMPMW 148(r0),147(sp),4   beq error1
-00000C73  CE4546809C809B08  00000C7B  0A9033                CMPMW 156(r0),155(sp),5   beq error1
-00000C7E  CE454680A680A50A  00000C86  0A9028                CMPMW 166(r0),165(sp),6   beq error1
-00000C89  CE454680B280B10C  00000C91  0A901D                CMPMW 178(r0),177(sp),7   beq error1
-00000C94  CE454680C080BF0E  00000C9C  0A9012                CMPMW 192(r0),191(sp),8   beq error1
+00000C52  CE4546808A808902  00000C5A  0A9059                CMPMW 138(r0),137(sp),2   beq error1
+00000C5D  CE4546808E808D04  00000C65  0A904E                CMPMW 142(r0),141(sp),3   beq error1
+00000C68  CE45468094809306  00000C70  0A9043                CMPMW 148(r0),147(sp),4   beq error1
+00000C73  CE4546809C809B08  00000C7B  0A9038                CMPMW 156(r0),155(sp),5   beq error1
+00000C7E  CE454680A680A50A  00000C86  0A902D                CMPMW 166(r0),165(sp),6   beq error1
+00000C89  CE454680B280B10C  00000C91  0A9022                CMPMW 178(r0),177(sp),7   beq error1
+00000C94  CE454680C080BF0E  00000C9C  0A9017                CMPMW 192(r0),191(sp),8   beq error1
                             ;   CMPMD 208(r0),207(sp),1   beq error1
-00000C9F  CE474680D480D304  00000CA7  0A9007                CMPMD 212(r0),211(sp),2   beq error1
-00000CAA  CE474680DC80DD08  00000CB2  0A8FFC                CMPMD 220(r0),221(sp),3   beq error1
-00000CB5  CE474680E880E70C  00000CBD  0A8FF1                CMPMD 232(r0),231(sp),4   beq error1
+00000C9F  CE474680D480D304  00000CA7  0A900C                CMPMD 212(r0),211(sp),2   beq error1
+00000CAA  CE474680DC80DD08  00000CB2  0A9001                CMPMD 220(r0),221(sp),3   beq error1
+00000CB5  CE474680E880E70C  00000CBD  0A8FF6                CMPMD 232(r0),231(sp),4   beq error1
                             
 00000CC0  7DA5FF08              adjspw -248
 00000CC4  EA80FC                br next4
@@ -793,441 +793,441 @@
 00000DC7  17A0FFFFFF68          movd x'FFFFFF68,r0
 00000DCD  00A0C3                ADDB x'C3,r0
 00000DD0  07A0FFFFFF2B          cmpd x'FFFFFF2B,r0
-00000DD6  1A8EDC                bne error
+00000DD6  1A8EE1                bne error
 00000DD9  D5A1004E              movw 78,r7
 00000DDD  10A0DA                ADDCB x'DA,r0
 00000DE0  07A0FFFFFF06          cmpd x'FFFFFF06,r0
-00000DE6  1A8ECC                bne error
+00000DE6  1A8ED1                bne error
 00000DE9  D5A1004F              movw 79,r7
 00000DED  17A0FFFF9877          movd x'FFFF9877,r0
 00000DF3  01A07654              ADDW x'7654,r0
 00000DF7  07A0FFFF0ECB          cmpd x'FFFF0ECB,r0
-00000DFD  1A8EB5                bne error
+00000DFD  1A8EBA                bne error
 00000E00  D5A10050              movw 80,r7
 00000E04  11A04444              ADDCW x'4444,r0
 00000E08  07A0FFFF5310          cmpd x'FFFF5310,r0
-00000E0E  1A8EA4                bne error
+00000E0E  1A8EA9                bne error
 00000E11  D5A10051              movw 81,r7
 00000E15  7CA301                bispsrb 1
 00000E18  17A0A9876544          movd x'A9876544,r0
 00000E1E  03A0B0E1F2D3          ADDD x'B0E1F2D3,r0
 00000E24  07A05A695817          cmpd x'5A695817,r0
-00000E2A  1A8E88                bne error
+00000E2A  1A8E8D                bne error
 00000E2D  D5A10052              movw 82,r7
 00000E31  13A012345678          ADDCD x'12345678,r0
 00000E37  07A06C9DAE90          cmpd  x'6C9DAE90,r0
-00000E3D  1A8E75                bne error
+00000E3D  1A8E7A                bne error
 00000E40  D5A10053              movw 83,r7
 00000E44  7CA101                bicpsrb 1
 00000E47  17A0FFFFFF67          movd x'FFFFFF67,r0
 00000E4D  00A023                ADDB x'23,r0
 00000E50  07A0FFFFFF8A          cmpd x'FFFFFF8A,r0
-00000E56  1A8E5C                bne error
+00000E56  1A8E61                bne error
 00000E59  D5A10054              movw 84,r7
 00000E5D  10A033                ADDCB x'33,r0
 00000E60  07A0FFFFFFBD          cmpd x'FFFFFFBD,r0
-00000E66  1A8E4C                bne error
+00000E66  1A8E51                bne error
 00000E69  D5A10055              movw 85,r7
 00000E6D  17A0FFFF9876          movd x'FFFF9876,r0
 00000E73  01A01234              ADDW x'1234,r0
 00000E77  07A0FFFFAAAA          cmpd x'FFFFAAAA,r0
-00000E7D  1A8E35                bne error
+00000E7D  1A8E3A                bne error
 00000E80  D5A10056              movw 86,r7
 00000E84  11A04444              ADDCW x'4444,r0
 00000E88  07A0FFFFEEEE          cmpd x'FFFFEEEE,r0
-00000E8E  1A8E24                bne error
+00000E8E  1A8E29                bne error
 00000E91  D5A10057              movw 87,r7
 00000E95  7CA101                bicpsrb 1
 00000E98  17A012345678          movd x'12345678,r0
 00000E9E  03A023456789          ADDD x'23456789,r0
 00000EA4  07A03579BE01          cmpd x'3579BE01,r0
-00000EAA  1A8E08                bne error
+00000EAA  1A8E0D                bne error
 00000EAD  D5A10058              movw 88,r7
 00000EB1  13A012345678          ADDCD x'12345678,r0
 00000EB7  07A047AE1479          cmpd  x'47AE1479,r0
-00000EBD  1A8DF5                bne error
+00000EBD  1A8DFA                bne error
                             
 00000EC0  D5A10059              movw 89,r7
 00000EC4  7CA301                bispsrb 1
 00000EC7  17A0FFFFFF68          movd x'FFFFFF68,r0
 00000ECD  20A0C3                SUBB x'C3,r0
 00000ED0  07A0FFFFFFA5          cmpd x'FFFFFFA5,r0
-00000ED6  1A8DDC                bne error
+00000ED6  1A8DE1                bne error
 00000ED9  D5A1005A              movw 90,r7
 00000EDD  30A0DA                SUBCB x'DA,r0
 00000EE0  07A0FFFFFFCA          cmpd x'FFFFFFCA,r0
-00000EE6  1A8DCC                bne error
+00000EE6  1A8DD1                bne error
 00000EE9  D5A1005B              movw 91,r7
 00000EED  17A0FFFF7877          movd x'FFFF7877,r0
 00000EF3  21A09654              SUBW x'9654,r0
 00000EF7  07A0FFFFE223          cmpd x'FFFFE223,r0
-00000EFD  1A8DB5                bne error
+00000EFD  1A8DBA                bne error
 00000F00  D5A1005C              movw 92,r7
 00000F04  31A04444              SUBCW x'4444,r0
 00000F08  07A0FFFF9DDE          cmpd x'FFFF9DDE,r0
-00000F0E  1A8DA4                bne error
+00000F0E  1A8DA9                bne error
 00000F11  D5A1005D              movw 93,r7
 00000F15  7CA301                bispsrb 1
 00000F18  17A0A9876544          movd x'A9876544,r0
 00000F1E  23A0B0E1F2D3          SUBD x'B0E1F2D3,r0
 00000F24  07A0F8A57271          cmpd x'F8A57271,r0
-00000F2A  1A8D88                bne error
+00000F2A  1A8D8D                bne error
 00000F2D  D5A1005E              movw 94,r7
 00000F31  33A012345678          SUBCD x'12345678,r0
 00000F37  07A0E6711BF8          cmpd  x'E6711BF8,r0
-00000F3D  1A8D75                bne error
+00000F3D  1A8D7A                bne error
 00000F40  D5A1005F              movw 95,r7
 00000F44  7CA101                bicpsrb 1
 00000F47  17A0FFFFFF67          movd x'FFFFFF67,r0
 00000F4D  20A023                SUBB x'23,r0
 00000F50  07A0FFFFFF44          cmpd x'FFFFFF44,r0
-00000F56  1A8D5C                bne error
+00000F56  1A8D61                bne error
 00000F59  D5A10060              movw 96,r7
 00000F5D  30A033                SUBCB x'33,r0
 00000F60  07A0FFFFFF11          cmpd x'FFFFFF11,r0
-00000F66  1A8D4C                bne error
+00000F66  1A8D51                bne error
 00000F69  D5A10061              movw 97,r7
 00000F6D  17A0FFFF9876          movd x'FFFF9876,r0
 00000F73  21A01234              SUBW x'1234,r0
 00000F77  07A0FFFF8642          cmpd x'FFFF8642,r0
-00000F7D  1A8D35                bne error
+00000F7D  1A8D3A                bne error
 00000F80  D5A10062              movw 98,r7
 00000F84  31A04444              SUBCW x'4444,r0
 00000F88  07A0FFFF41FE          cmpd x'FFFF41FE,r0
-00000F8E  1A8D24                bne error
+00000F8E  1A8D29                bne error
 00000F91  D5A10063              movw 99,r7
 00000F95  7CA101                bicpsrb 1
 00000F98  17A032345678          movd x'32345678,r0
 00000F9E  23A013456789          SUBD x'13456789,r0
 00000FA4  07A01EEEEEEF          cmpd x'1EEEEEEF,r0
-00000FAA  1A8D08                bne error
+00000FAA  1A8D0D                bne error
 00000FAD  D5A10064              movw 100,r7
 00000FB1  33A012345678          SUBCD x'12345678,r0
 00000FB7  07A00CBA9877          cmpd  x'0CBA9877,r0
-00000FBD  1A8CF5                bne error
+00000FBD  1A8CFA                bne error
                             
 00000FC0  D5A10065              movw 101,r7
 00000FC4  DF07                  movd x'FFFFFFFF,r0
 00000FC6  57A0FFFFFF55          movd x'FFFFFF55,r1
 00000FCC  4E2008                NEGB r1,r0
 00000FCF  07A0FFFFFFAB          cmpd x'FFFFFFAB,r0
-00000FD5  1A8CDD                bne error
+00000FD5  1A8CE2                bne error
 00000FD8  D5A10066              movw 102,r7
 00000FDC  DF07                  movd x'FFFFFFFF,r0
 00000FDE  4E3008                ABSB r1,r0
 00000FE1  07A0FFFFFF55          cmpd x'FFFFFF55,r0
-00000FE7  1A8CCB                bne error
+00000FE7  1A8CD0                bne error
 00000FEA  D5A10067              movw 103,r7
 00000FEE  DF07                  movd x'FFFFFFFF,r0
 00000FF0  57A0FFFFFFB6          movd x'FFFFFFB6,r1
 00000FF6  4E2008                NEGB r1,r0
 00000FF9  07A0FFFFFF4A          cmpd x'FFFFFF4A,r0
-00000FFF  1A8CB3                bne error
+00000FFF  1A8CB8                bne error
 00001002  D5A10068              movw 104,r7
 00001006  DF07                  movd x'FFFFFFFF,r0
 00001008  4E3008                ABSB r1,r0
 0000100B  07A0FFFFFF4A          cmpd x'FFFFFF4A,r0
-00001011  1A8CA1                bne error
+00001011  1A8CA6                bne error
 00001014  D5A10069              movw 105,r7
 00001018  DF07                  movd x'FFFFFFFF,r0
 0000101A  57A0FFFF1234          movd x'FFFF1234,r1
 00001020  4E2108                NEGW r1,r0
 00001023  07A0FFFFEDCC          cmpd x'FFFFEDCC,r0
-00001029  1A8C89                bne error
+00001029  1A8C8E                bne error
 0000102C  D5A1006A              movw 106,r7
 00001030  DF07                  movd x'FFFFFFFF,r0
 00001032  4E3108                ABSW r1,r0
 00001035  07A0FFFF1234          cmpd x'FFFF1234,r0
-0000103B  1A8C77                bne error
+0000103B  1A8C7C                bne error
 0000103E  D5A1006B              movw 107,r7
 00001042  DF07                  movd x'FFFFFFFF,r0
 00001044  57A0FFFF9876          movd x'FFFF9876,r1
 0000104A  4E2108                NEGW r1,r0
 0000104D  07A0FFFF678A          cmpd x'FFFF678A,r0
-00001053  1A8C5F                bne error
+00001053  1A8C64                bne error
 00001056  D5A1006C              movw 108,r7
 0000105A  DF07                  movd x'FFFFFFFF,r0
 0000105C  4E3108                ABSW r1,r0
 0000105F  07A0FFFF678A          cmpd x'FFFF678A,r0
-00001065  1A8C4D                bne error
+00001065  1A8C52                bne error
 00001068  D5A1006D              movw 109,r7
 0000106C  DF07                  movd x'FFFFFFFF,r0
 0000106E  57A012345678          movd x'12345678,r1
 00001074  4E2308                NEGD r1,r0
 00001077  07A0EDCBA988          cmpd x'EDCBA988,r0
-0000107D  1A8C35                bne error
+0000107D  1A8C3A                bne error
 00001080  D5A1006E              movw 110,r7
 00001084  DF07                  movd x'FFFFFFFF,r0
 00001086  4E3308                ABSD r1,r0
 00001089  07A012345678          cmpd x'12345678,r0
-0000108F  1A8C23                bne error
+0000108F  1A8C28                bne error
 00001092  D5A1006F              movw 111,r7
 00001096  DF07                  movd x'FFFFFFFF,r0
 00001098  57A0EDCBA988          movd x'EDCBA988,r1
 0000109E  4E2308                NEGD r1,r0
 000010A1  07A012345678          cmpd x'12345678,r0
-000010A7  1A8C0B                bne error
+000010A7  1A8C10                bne error
 000010AA  D5A10070              movw 112,r7
 000010AE  DF07                  movd x'FFFFFFFF,r0
 000010B0  4E3308                ABSD r1,r0
 000010B3  07A012345678          cmpd x'12345678,r0
-000010B9  1A8BF9                bne error
+000010B9  1A8BFE                bne error
                             
 000010BC  D5A10071              movw 113,r7
 000010C0  17A0FFFFFF05          movd x'FFFFFF05,r0
 000010C6  CE20A00C              MULB 12,r0
 000010CA  07A0FFFFFF3C          cmpd x'FFFFFF3C,r0
-000010D0  1A8BE2                bne error
+000010D0  1A8BE7                bne error
 000010D3  D5A10072              movw 114,r7
 000010D7  17A0FFFF0015          movd x'FFFF0015,r0
 000010DD  CE21A00078            MULW 120,r0
 000010E2  07A0FFFF09D8          cmpd x'FFFF09D8,r0
-000010E8  1A8BCA                bne error
+000010E8  1A8BCF                bne error
 000010EB  D5A10073              movw 115,r7
 000010EF  17A00000FF05          movd x'0000FF05,r0
 000010F5  CE23A0000004B0        MULD 1200,r0
 000010FC  07A004AB6770          cmpd x'04AB6770,r0
-00001102  1A8BB0                bne error
+00001102  1A8BB5                bne error
 00001105  D5A10074              movw 116,r7
 00001109  17A0000001F0          movd x'000001F0,r0
 0000110F  CE30A003              QUOB 3,r0
 00001113  07A0000001FB          cmpd x'000001FB,r0
-00001119  1A8B99                bne error
+00001119  1A8B9E                bne error
 0000111C  D5A10075              movw 117,r7
 00001120  17A00001FC00          movd x'0001FC00,r0
 00001126  CE31A00005            QUOW 5,r0
 0000112B  07A00001FF34          cmpd x'0001FF34,r0
-00001131  1A8B81                bne error
+00001131  1A8B86                bne error
 00001134  D5A10076              movw 118,r7
 00001138  17A0FF800000          movd x'FF800000,r0
 0000113E  CE33A000000007        QUOD 7,r0
 00001145  07A0FFEDB6DC          cmpd x'FFEDB6DC,r0
-0000114B  1A8B67                bne error
+0000114B  1A8B6C                bne error
 0000114E  D5A10077              movw 119,r7
 00001152  17A0000001F0          movd x'000001F0,r0
 00001158  CE34A003              REMB 3,r0
 0000115C  07A0000001FF          cmpd x'000001FF,r0
-00001162  1A8B50                bne error
+00001162  1A8B55                bne error
 00001165  D5A10078              movw 120,r7
 00001169  17A00001FC00          movd x'0001FC00,r0
 0000116F  CE35A00005            REMW 5,r0
 00001174  07A00001FFFC          cmpd x'0001FFFC,r0
-0000117A  1A8B38                bne error
+0000117A  1A8B3D                bne error
 0000117D  D5A10079              movw 121,r7
 00001181  17A0FF800001          movd x'FF800001,r0
 00001187  CE37A000000007        REMD 7,r0
 0000118E  9F06                  cmpd x'FFFFFFFD,r0
-00001190  1A8B22                bne error
+00001190  1A8B27                bne error
 00001193  D5A1007A              movw 122,r7
 00001197  17A0000001F0          movd x'000001F0,r0
 0000119D  CE3CA003              DIVB 3,r0
 000011A1  07A0000001FA          cmpd x'000001FA,r0
-000011A7  1A8B0B                bne error
+000011A7  1A8B10                bne error
 000011AA  D5A1007B              movw 123,r7
 000011AE  17A00001FC00          movd x'0001FC00,r0
 000011B4  CE3DA00005            DIVW 5,r0
 000011B9  07A00001FF33          cmpd x'0001FF33,r0
-000011BF  1A8AF3                bne error
+000011BF  1A8AF8                bne error
 000011C2  D5A1007C              movw 124,r7
 000011C6  17A0FF800000          movd x'FF800000,r0
 000011CC  CE3FA000000007        DIVD 7,r0
 000011D3  07A0FFEDB6DB          cmpd x'FFEDB6DB,r0
-000011D9  1A8AD9                bne error
+000011D9  1A8ADE                bne error
 000011DC  D5A1007D              movw 125,r7
 000011E0  17A0000001F0          movd x'000001F0,r0
 000011E6  CE38A003              MODB 3,r0
 000011EA  07A000000102          cmpd x'00000102,r0
-000011F0  1A8AC2                bne error
+000011F0  1A8AC7                bne error
 000011F3  D5A1007E              movw 126,r7
 000011F7  17A00001FC00          movd x'0001FC00,r0
 000011FD  CE39A00005            MODW 5,r0
 00001202  07A000010001          cmpd x'00010001,r0
-00001208  1A8AAA                bne error
+00001208  1A8AAF                bne error
 0000120B  D5A1007F              movw 127,r7
 0000120F  17A0FF800001          movd x'FF800001,r0
 00001215  CE3BA000000007        MODD 7,r0
 0000121C  1F02                  cmpd x'00000004,r0
-0000121E  1A8A94                bne error
+0000121E  1A8A99                bne error
 00001221  D5A10080              movw 128,r7
 00001225  17A0FFFFFF14          movd x'FFFFFF14,r0
 0000122B  DF0F                  movd x'FFFFFFFF,r1
 0000122D  CE24A00F              MEIB 15,r0
 00001231  07A0FFFFFF2C          cmpd x'FFFFFF2C,r0
-00001237  1A8A7B                bne error
+00001237  1A8A80                bne error
 0000123A  47A0FFFFFF01          cmpd x'FFFFFF01,r1
-00001240  1A8A72                bne error
+00001240  1A8A77                bne error
 00001243  D5A10081              movw 129,r7
 00001247  17A0FFFF0123          movd x'FFFF0123,r0
 0000124D  DF0F                  movd x'FFFFFFFF,r1
 0000124F  CE25A00190            MEIW 400,r0
 00001254  07A0FFFFC6B0          cmpd x'FFFFC6B0,r0
-0000125A  1A8A58                bne error
+0000125A  1A8A5D                bne error
 0000125D  47A0FFFF0001          cmpd x'FFFF0001,r1
-00001263  1A8A4F                bne error
+00001263  1A8A54                bne error
 00001266  D5A10082              movw 130,r7
 0000126A  17A000012345          movd x'00012345,r0
 00001270  DF0F                  movd x'FFFFFFFF,r1
 00001272  CE27A000030D40        MEID 200000,r0
 00001279  07A078E25240          cmpd x'78E25240,r0
-0000127F  1A8A33                bne error
+0000127F  1A8A38                bne error
 00001282  9F09                  cmpd x'00000003,r1
-00001284  1A8A2E                bne error
+00001284  1A8A33                bne error
 00001287  D5A10083              movw 131,r7
 0000128B  CE2FA000012345        DEID x'12345,r0
 00001292  1F00                  cmpqd 0,r0
-00001294  1A8A1E                bne error
+00001294  1A8A23                bne error
 00001297  47A000030D40          cmpd 200000,r1
-0000129D  1A8A15                bne error
+0000129D  1A8A1A                bne error
 000012A0  D5A10084              movw 132,r7
 000012A4  17A0FFFFC6B0          movd x'FFFFC6B0,r0
 000012AA  57A0FFFF0001          movd x'FFFF0001,r1
 000012B0  CE2DA00123            DEIW x'123,r0
 000012B5  07A0FFFF0000          cmpd x'FFFF0000,r0
-000012BB  1A89F7                bne error
+000012BB  1A89FC                bne error
 000012BE  47A0FFFF0190          cmpd x'FFFF0190,r1
-000012C4  1A89EE                bne error
+000012C4  1A89F3                bne error
 000012C7  D5A10085              movw 133,r7
 000012CB  17A0FFFFFF2C          movd x'FFFFFF2C,r0
 000012D1  57A0FFFFFF01          movd x'FFFFFF01,r1
 000012D7  CE2CA014              DEIB x'14,r0
 000012DB  07A0FFFFFF00          cmpd x'FFFFFF00,r0
-000012E1  1A89D1                bne error
+000012E1  1A89D6                bne error
 000012E4  47A0FFFFFF0F          cmpd x'FFFFFF0F,r1
-000012EA  1A89C8                bne error
+000012EA  1A89CD                bne error
                             
                             ; BITS
 000012ED  D5A10086              movw 134,r7
 000012F1  17A000020000          movd x'00020000,r0
 000012F7  34A011                TBITB 17,r0
-000012FA  9A89B8                bfc error
+000012FA  9A89BD                bfc error
 000012FD  D5A10087              movw 135,r7
 00001301  35A00010              TBITW 16,r0
-00001305  8A89AD                bfs error
+00001305  8A89B2                bfs error
 00001308  67C8FFFFD8F0          addr -10000(sp),r1  ; no set back necessary
 0000130E  5C48C000222E          movqb 0,8750(r1)
 00001314  D5A10088              movw 136,r7
 00001318  77A20001117100        TBITD 70001,0(r1)
-0000131F  8A8993                bfs error
+0000131F  8A8998                bfs error
 00001322  5C49C000222E          movqb 2,8750(r1)
 00001328  D5A10089              movw 137,r7
 0000132C  77A20001117100        TBITD 70001,0(r1)
-00001333  9A897F                bfc error
+00001333  9A8984                bfc error
 00001336  17A000010101          movd x'00010101,r0
 0000133C  D5A1008A              movw 138,r7
 00001340  5C4800                movqb 0,0(r1)
 00001343  4E580200              SBITB r0,0(r1)
-00001347  8A896B                bfs error
+00001347  8A8970                bfs error
 0000134A  1C4900                cmpqb 2,0(r1)
-0000134D  1A8965                bne error
+0000134D  1A896A                bne error
 00001350  D5A1008B              movw 139,r7
 00001354  4E580200              SBITB r0,0(r1)
-00001358  9A895A                bfc error
+00001358  9A895F                bfc error
 0000135B  D5A1008C              movw 140,r7
 0000135F  5C4820                movqb 0,32(r1)
 00001362  4E590200              SBITW r0,0(r1)
-00001366  8A894C                bfs error
+00001366  8A8951                bfs error
 00001369  1C4920                cmpqb 2,32(r1)
-0000136C  1A8946                bne error
+0000136C  1A894B                bne error
 0000136F  D5A1008D              movw 141,r7
 00001373  5C48C0002020          movqb 0,x'2020(r1)
 00001379  4E5B0200              SBITD r0,0(r1)
-0000137D  8A8935                bfs error
+0000137D  8A893A                bfs error
 00001380  1C49C0002020          cmpqb 2,x'2020(r1)
-00001386  1A892C                bne error
+00001386  1A8931                bne error
 00001389  D5A1008E              movw 142,r7
 0000138D  4E480200              CBITB r0,0(r1)
-00001391  9A8921                bfc error
+00001391  9A8926                bfc error
 00001394  1C4800                cmpqb 0,0(r1)
-00001397  1A891B                bne error
+00001397  1A8920                bne error
 0000139A  D5A1008F              movw 143,r7
 0000139E  4E480200              CBITB r0,0(r1)
-000013A2  8A8910                bfs error
+000013A2  8A8915                bfs error
 000013A5  D5A10090              movw 144,r7
 000013A9  4E490200              CBITW r0,0(r1)
-000013AD  9A8905                bfc error
+000013AD  9A890A                bfc error
 000013B0  1C4820                cmpqb 0,32(r1)
-000013B3  1A88FF                bne error
+000013B3  1A8904                bne error
 000013B6  D5A10091              movw 145,r7
 000013BA  4E4B0200              CBITD r0,0(r1)
-000013BE  9A88F4                bfc error
+000013BE  9A88F9                bfc error
 000013C1  1C48C0002020          cmpqb 0,x'2020(r1)
-000013C7  1A88EB                bne error
+000013C7  1A88F0                bne error
 000013CA  5C01                  movqb 2,r0    ; new bit position in Byte
 000013CC  D5A10092              movw 146,r7
 000013D0  4E5C0200              SBITIB r0,0(r1)
-000013D4  8A88DE                bfs error
+000013D4  8A88E3                bfs error
 000013D7  1C4A00                cmpqb 4,0(r1)
-000013DA  1A88D8                bne error
+000013DA  1A88DD                bne error
 000013DD  D5A10093              movw 147,r7
 000013E1  4E5C0200              SBITIB r0,0(r1)
-000013E5  9A88CD                bfc error
+000013E5  9A88D2                bfc error
 000013E8  D5A10094              movw 148,r7
 000013EC  4E5D0200              SBITIW r0,0(r1)
-000013F0  8A88C2                bfs error
+000013F0  8A88C7                bfs error
 000013F3  1C4A20                cmpqb 4,32(r1)
-000013F6  1A88BC                bne error
+000013F6  1A88C1                bne error
 000013F9  D5A10095              movw 149,r7
 000013FD  4E5F0200              SBITID r0,0(r1)
-00001401  8A88B1                bfs error
+00001401  8A88B6                bfs error
 00001404  1C4AC0002020          cmpqb 4,x'2020(r1)
-0000140A  1A88A8                bne error
+0000140A  1A88AD                bne error
 0000140D  D5A10096              movw 150,r7
 00001411  4E4C0200              CBITIB r0,0(r1)
-00001415  9A889D                bfc error
+00001415  9A88A2                bfc error
 00001418  1C4800                cmpqb 0,0(r1)
-0000141B  1A8897                bne error
+0000141B  1A889C                bne error
 0000141E  D5A10097              movw 151,r7
 00001422  4E4C0200              CBITIB r0,0(r1)
-00001426  8A888C                bfs error
+00001426  8A8891                bfs error
 00001429  D5A10098              movw 152,r7
 0000142D  4E4D0200              CBITIW r0,0(r1)
-00001431  9A8881                bfc error
+00001431  9A8886                bfc error
 00001434  1C4820                cmpqb 0,32(r1)
-00001437  1A887B                bne error
+00001437  1A8880                bne error
 0000143A  D5A10099              movw 153,r7
 0000143E  4E4F0200              CBITID r0,0(r1)
-00001442  9A8870                bfc error
+00001442  9A8875                bfc error
 00001445  1C48C0002020          cmpqb 0,x'2020(r1)
-0000144B  1A8867                bne error
+0000144B  1A886C                bne error
 0000144E  D5A1009A              movw 154,r7
 00001452  17A000010101          movd x'00010101,r0
 00001458  4E38A000              IBITB 0,r0
-0000145C  9A8856                bfc error
+0000145C  9A885B                bfc error
 0000145F  07A000010100          cmpd x'00010100,r0
-00001465  1A884D                bne error
+00001465  1A8852                bne error
 00001468  4E38A001              IBITB 1,r0
-0000146C  8A8846                bfs error
+0000146C  8A884B                bfs error
 0000146F  07A000010102          cmpd x'00010102,r0
-00001475  1A883D                bne error
+00001475  1A8842                bne error
 00001478  4E39A00008            IBITW 8,r0
-0000147D  9A8835                bfc error
+0000147D  9A883A                bfc error
 00001480  07A000010002          cmpd x'00010002,r0
-00001486  1A882C                bne error
+00001486  1A8831                bne error
 00001489  4E3BA000000010        IBITD 16,r0
-00001490  9A8822                bfc error
+00001490  9A8827                bfc error
 00001493  1F01                  cmpd x'00000002,r0
-00001495  1A881D                bne error
+00001495  1A8822                bne error
 00001498  D5A1009B              movw 155,r7
 0000149C  17A000000080          movd x'00000080,r0
 000014A2  57A0FFFFFF01          movd x'FFFFFF01,r1
 000014A8  6E4400                FFSB r0,r1
-000014AB  8A8807                bfs error
+000014AB  8A880C                bfs error
 000014AE  D5A1009C              movw 156,r7
 000014B2  47A0FFFFFF07          cmpd x'FFFFFF07,r1
-000014B8  1A87FA                bne error
+000014B8  1A87FF                bne error
 000014BB  D5A1009D              movw 157,r7
 000014BF  17A0FFFF0000          movd x'FFFF0000,r0
 000014C5  6E4500                FFSW r0,r1
-000014C8  9A87EA                bfc error
+000014C8  9A87EF                bfc error
 000014CB  D5A1009E              movw 158,r7
 000014CF  47A0FFFFFF00          cmpd x'FFFFFF00,r1
-000014D5  1A87DD                bne error
+000014D5  1A87E2                bne error
 000014D8  D5A1009F              movw 159,r7
 000014DC  17A010000000          movd x'10000000,r0
 000014E2  6E4700                FFSD r0,r1
-000014E5  8A87CD                bfs error
+000014E5  8A87D2                bfs error
 000014E8  47A0FFFFFF1C          cmpd x'FFFFFF1C,r1
-000014EE  1A87C4                bne error
+000014EE  1A87C9                bne error
                             
                             ; BIT FIELDS
 000014F1  D5A100A0              movw 160,r7
@@ -1235,63 +1235,63 @@
 000014FC  DF07                  movqd -1,r0
 000014FE  CE0CC87C23            EXTSB -4(sp),r0,1,4
 00001503  07A0FFFFFF06          cmpd x'FFFFFF06,r0
-00001509  1A87A9                bne error
+00001509  1A87AE                bne error
 0000150C  DF07                  movqd -1,r0
 0000150E  CE0DC87D44            EXTSW -3(sp),r0,2,5
 00001513  07A0FFFF000E          cmpd x'FFFF000E,r0
-00001519  1A8799                bne error
+00001519  1A879E                bne error
 0000151C  DF07                  movqd -1,r0
 0000151E  CE0FC87E86            EXTSD -2(sp),r0,4,7
 00001523  07A00000001E          cmpd x'0000001E,r0
-00001529  1A8789                bne error
+00001529  1A878E                bne error
 0000152C  D5A100A1              movw 161,r7
 00001530  DFCF7C                movqd -1,-4(sp)
 00001533  17A0FFFFFF0A          movd x'FFFFFF0A,r0
 00001539  CE48067C24            INSSB r0,-4(sp),1,5
 0000153E  47A6FFFFFFD57C        cmpd x'FFFFFFD5,-4(sp)
-00001545  1A876D                bne error
+00001545  1A8772                bne error
 00001548  17A0FFFFFF12          movd x'FFFFFF12,r0
 0000154E  CE49067D45            INSSW r0,-3(sp),2,6
 00001553  47A6FFFF4BD57C        cmpd x'FFFF4BD5,-4(sp)
-0000155A  1A8758                bne error
+0000155A  1A875D                bne error
 0000155D  17A0FFFFFE44          movd x'FFFFFE44,r0
 00001563  CE4B067E88            INSSD r0,-2(sp),4,9
 00001568  47A6E44F4BD57C        cmpd x'E44F4BD5,-4(sp)
-0000156F  1A8743                bne error
+0000156F  1A8748                bne error
 00001572  D5A100A2              movw 162,r7
 00001576  57A601E0380C7C        movd x'01E0380C,-4(sp)
 0000157D  DF07                  movqd -1,r0
 0000157F  DF08                  movqd 1,r1
 00001581  2E08C87C04            EXTB r1,-4(sp),r0,4
 00001586  07A0FFFFFF06          cmpd x'FFFFFF06,r0
-0000158C  1A8726                bne error
+0000158C  1A872B                bne error
 0000158F  DF07                  movqd -1,r0
 00001591  5F09                  movqd 2,r1
 00001593  2E09C87D05            EXTW r1,-3(sp),r0,5
 00001598  07A0FFFF000E          cmpd x'FFFF000E,r0
-0000159E  1A8714                bne error
+0000159E  1A8719                bne error
 000015A1  DF07                  movqd -1,r0
 000015A3  5F0A                  movqd 4,r1
 000015A5  2E0BC87E07            EXTD r1,-2(sp),r0,7
 000015AA  07A00000001E          cmpd x'0000001E,r0
-000015B0  1A8702                bne error
+000015B0  1A8707                bne error
 000015B3  D5A100A3              movw 163,r7
 000015B7  DFCF7C                movqd -1,-4(sp)
 000015BA  17A0FFFFFF0A          movd x'FFFFFF0A,r0
 000015C0  DF08                  movqd 1,r1
 000015C2  AE48067C05            INSB r1,r0,-4(sp),5
 000015C7  47A6FFFFFFD57C        cmpd x'FFFFFFD5,-4(sp)
-000015CE  1A86E4                bne error
+000015CE  1A86E9                bne error
 000015D1  17A0FFFFFF12          movd x'FFFFFF12,r0
 000015D7  5F09                  movqd 2,r1
 000015D9  AE49067D06            INSW r1,r0,-3(sp),6
 000015DE  47A6FFFF4BD57C        cmpd x'FFFF4BD5,-4(sp)
-000015E5  1A86CD                bne error
+000015E5  1A86D2                bne error
 000015E8  17A0FFFFFE44          movd x'FFFFFE44,r0
 000015EE  5F0A                  movqd 4,r1
 000015F0  AE4B067E09            INSD r1,r0,-2(sp),9
 000015F5  47A6E44F4BD57C        cmpd x'E44F4BD5,-4(sp)
-000015FC  1A86B6                bne error
+000015FC  1A86BB                bne error
 000015FF  D5A100A4              movw 164,r7
 00001603  DF07                  movqd -1,r0
 00001605  DF0B                  movqd 7,r1
@@ -1300,36 +1300,36 @@
 0000160E  4E97A003              lshd 3,r2
 00001612  8F13                  addqd 7,r2
 00001614  0710                  cmpd r2,r0
-00001616  1A869C                bne error
+00001616  1A86A1                bne error
                             
                             ; ARRAYS
 00001619  D5A100A5              movw 165,r7
 0000161D  17A0FFFFFF23          movd x'FFFFFF23,r0
 00001623  EE00D8806B            CHECKB r0,chkb,r0    ; Reg , Bounds, Index
-00001628  8A868A                bfs error
+00001628  8A868F                bfs error
 0000162B  07A000000013          cmpd x'00000013,r0
-00001631  1A8681                bne error
+00001631  1A8686                bne error
 00001634  54A00F                movb x'0F,r1
 00001637  EE40D88057            CHECKB r0,chkb,r1
-0000163C  9A8676                bfc error
+0000163C  9A867B                bfc error
 0000163F  D5A100A6              movw 166,r7
 00001643  17A0FFFF1234          movd x'FFFF1234,r0
 00001649  EE01D88047            CHECKW r0,chkw,r0
-0000164E  8A8664                bfs error
+0000164E  8A8669                bfs error
 00001651  07A000000233          cmpd x'00000233,r0
-00001657  1A865B                bne error
+00001657  1A8660                bne error
 0000165A  55A02001              movw x'2001,r1
 0000165E  EE41D832              CHECKW r0,chkw,r1
-00001662  9A8650                bfc error
+00001662  9A8655                bfc error
 00001665  D5A100A7              movw 167,r7
 00001669  17A022334455          movd x'22334455,r0
 0000166F  EE03D825              CHECKD r0,chkd,r0
-00001673  8A863F                bfs error
+00001673  8A8644                bfs error
 00001676  07A012131415          cmpd x'12131415,r0
-0000167C  1A8636                bne error
+0000167C  1A863B                bne error
 0000167F  57A030000002          movd x'30000002,r1
 00001685  EE43D80F              CHECKD r0,chkd,r1
-00001689  9A8629                bfc error
+00001689  9A862E                bfc error
 0000168C  EA10                  br next5
                             
 0000168E  4610              chkb: .byte x'46,x'10
@@ -1343,21 +1343,21 @@
 000016A8  97A0FFFFFF13          movd x'FFFFFF13,r2
 000016AE  2E8408                INDEXB r0,r1,r2      ; Reg, Length, Offset
 000016B1  07A00000003B          cmpd 59,r0
-000016B7  1A85FB                bne error
+000016B7  1A8600                bne error
 000016BA  D5A100A9              movw 169,r7
 000016BE  DF02                  movqd 5,r0
 000016C0  57A0FFFF0030          movd x'FFFF0030,r1   ; Reg:=Length-1
 000016C6  97A0FFFF0123          movd x'FFFF0123,r2
 000016CC  2E8508                INDEXW r0,r1,r2      ; Reg, Length, Offset
 000016CF  07A000000218          cmpd x'218,r0
-000016D5  1A85DD                bne error
+000016D5  1A85E2                bne error
 000016D8  D5A100AA              movw 170,r7
 000016DC  DF02                  movqd 5,r0
 000016DE  57A000012344          movd x'00012344,r1   ; Reg:=Length-1
 000016E4  97A000023456          movd x'00023456,r2
 000016EA  2E8708                INDEXD r0,r1,r2      ; Reg, Length, Offset
 000016ED  07A00007E4AF          cmpd x'7E4AF,r0
-000016F3  1A85BF                bne error
+000016F3  1A85C4                bne error
                             
                             ; MISC
 000016F6  DF0F                  movqd -1,r1
@@ -1376,42 +1376,42 @@
 00001720  7255                  RESTORE [r1,r3,r5,r7]
 00001722  C7A1100F0E0D          cmpd x'100F0E0D,r7
 00001728  D7A1000000AB          movd 171,r7
-0000172E  1A8584                bne error
+0000172E  1A8589                bne error
 00001731  9F37                  cmpqd -1,r6
-00001733  1A857F                bne error
+00001733  1A8584                bne error
 00001736  47A10C0B0A09          cmpd x'0C0B0A09,r5
-0000173C  1A8576                bne error
+0000173C  1A857B                bne error
 0000173F  9F27                  cmpqd -1,r4
-00001741  1A8571                bne error
+00001741  1A8576                bne error
 00001744  C7A008070605          cmpd x'08070605,r3
-0000174A  1A8568                bne error
+0000174A  1A856D                bne error
 0000174D  9F17                  cmpqd -1,r2
-0000174F  1A8563                bne error
+0000174F  1A8568                bne error
 00001752  47A004030201          cmpd x'04030201,r1
-00001758  1A855A                bne error
+00001758  1A855F                bne error
 0000175B  9F07                  cmpqd -1,r0
-0000175D  1A8555                bne error
+0000175D  1A855A                bne error
 00001760  D7A1100F0E0D          movd x'100F0E0D,r7
 00001766  82AA08                ENTER [r1,r3,r5,r7], 8
 00001769  07A6100F0E0D68        cmpd x'100F0E0D,-24(fp)
 00001770  D7A1000000AC          movd 172,r7
-00001776  1A853C                bne error
+00001776  1A8541                bne error
 00001779  07A60C0B0A096C        cmpd x'0C0B0A09,-20(fp)
-00001780  1A8532                bne error
+00001780  1A8537                bne error
 00001783  47A60807060508        cmpd x'08070605,8(sp)
-0000178A  1A8528                bne error
+0000178A  1A852D                bne error
 0000178D  47A6040302010C        cmpd x'04030201,12(sp)
-00001794  1A851E                bne error
+00001794  1A8523                bne error
 00001797  92F0                  EXIT [r0,r1,r2,r3]
 00001799  D5A100AD              movw 173,r7
 0000179D  07A004030201          cmpd x'04030201,r0
-000017A3  1A850F                bne error
+000017A3  1A8514                bne error
 000017A6  47A008070605          cmpd x'08070605,r1
-000017AC  1A8506                bne error
+000017AC  1A850B                bne error
 000017AF  87A00C0B0A09          cmpd x'0C0B0A09,r2
-000017B5  1A84FD                bne error
+000017B5  1A8502                bne error
 000017B8  C7A0100F0E0D          cmpd x'100F0E0D,r3
-000017BE  1A84F4                bne error
+000017BE  1A84F9                bne error
                             
 000017C1  D5A100AE              movw 174,r7
 000017C5  5F01                  movqd 2,r0
@@ -1422,7 +1422,7 @@
 000017D3  01A00040          l0029:  addw 64,r0
 000017D7  01A00080          l0030:  addw 128,r0
 000017DB  07A0000000C2          cmpd 194,r0
-000017E1  1A84D1                bne error
+000017E1  1A84D6                bne error
 000017E4  EA06                  br next6
                             
 000017E6  04                l0026:  .byte l0027-l0025
@@ -1439,7 +1439,7 @@
 000017FC  01A00058          l0035:  addw 88,r0
 00001800  01A000C7          l0036:  addw 199,r0
 00001804  07A000000121          cmpd 289,r0
-0000180A  1A84A8                bne error
+0000180A  1A84AD                bne error
 0000180D  EA0A                  br next7
                             
 0000180F  0400              l0032:  .word l0033-l0031
@@ -1456,7 +1456,7 @@
 0000182D  03A0000003E8      l0041:  addd 1000,r0
 00001833  03A000002710      l0042:  addd 10000,r0
 00001839  07A000002AFA          cmpd 11002,r0
-0000183F  1A8473                bne error
+0000183F  1A8478                bne error
 00001842  EA12                  br next8
                             
 00001844  04000000          l0038:  .double l0039-l0037
@@ -1470,7 +1470,7 @@
 0000185A  27D813                addr l0043,r0
 0000185D  7F06                  JSR r0
 0000185F  47A0FFFFFF05          cmpd x'FFFFFF05,r1
-00001865  1A844D                bne error
+00001865  1A8452                bne error
 00001868  27D809                addr l0044,r0
 0000186B  7F02                  JUMP r0
                             l0043:
@@ -1486,7 +1486,7 @@
 00001878  D5A100B2              movw 178,r7
 0000187C  3E3700                SFSR r0
 0000187F  07A0000001A8          cmpd x'1A8,r0
-00001885  1A842D                bne error
+00001885  1A8432                bne error
 00001888  5F00                  movqd 0,r0     
 0000188A  3E0F00                LFSR r0
 0000188D  14A010                movb 16,r0
@@ -1502,19 +1502,19 @@
 000018AF  3EE710                ROUNDFD f2,r3
 000018B2  3E2F11                TRUNCFD f2,r4
 000018B5  C7A000004172          cmpd 16754,r3
-000018BB  1A83F7                bne error
+000018BB  1A83FC                bne error
 000018BE  07A100004171          cmpd 16753,r4
-000018C4  1A83EE                bne error
+000018C4  1A83F3                bne error
 000018C7  BED510                NEGF f2,f3
 000018CA  BE3519                ABSF f3,f4
 000018CD  3E6519                ROUNDFW f3,r5
 000018D0  D5A100B3              movw 179,r7
                             ;    cmpw -16754,r5
 000018D4  052DBE8E              cmpw r5,-16754 
-000018D8  1A83DA                bne error
+000018D8  1A83DF                bne error
 000018DB  3EAD21                TRUNCFW f4,r6
 000018DE  85A14171              cmpw 16753,r6
-000018E2  1A83D0                bne error
+000018E2  1A83D5                bne error
 000018E5  D5A100B4              movw 180,r7
 000018E9  BE05A0BE000000        MOVF -0.125,f0
 000018F0  5F00                  movqd 0,r0
@@ -1523,279 +1523,284 @@
 000018F8  DF0F                  movqd -1,r1
 000018FA  3E7D08                FLOORFW f1,r1
 000018FD  9F07                  cmpqd -1,r0
-000018FF  1A83B3                bne error
+000018FF  1A83B8                bne error
 00001902  47A0FFFF0000          cmpd x'FFFF0000,r1
-00001908  1A83AA                bne error
-0000190B  D5A100B5              movw 181,r7
-0000190F  BE05A043090000        MOVF 137.0,f0
-00001916  FE5500                LOGBF f0,f1
-00001919  DF07                  movqd -1,r0
-0000191B  3E2408                ROUNDFB f1,r0
-0000191E  07A0FFFFFF07          cmpd x'FFFFFF07,r0
-00001924  1A838E                bne error
-00001927  D5A100B6              movw 182,r7
-0000192B  BE05A03FA00000        MOVF 1.25,f0
-00001932  BE45A040400000        MOVF 3.0,f1
-00001939  FE1108                SCALBF f1,f0    ; 10.0 in F0
-0000193C  3E2C00                TRUNCFB f0,r0
-0000193F  07A0FFFFFF0A          cmpd x'FFFFFF0A,r0
-00001945  1A836D                bne error
-00001948  BE09A041200000        cmpf 10.0,f0   
-0000194F  1A8363                bne error
-00001952  D5A100B7              movw 183,r7
-00001956  BE85A040B00000        MOVF 5.5,f2
-0000195D  FE8D08                DOTF f1,f2      ; 26.5 in F0
-00001960  3E3C00                FLOORFB f0,r0
-00001963  07A0FFFFFF1A          cmpd x'FFFFFF1A,r0
-00001969  1A8349                bne error
-0000196C  BE090541D40000        cmpf f0,26.5  
-00001973  1A833F                bne error
-00001976  D5A100B8              movw 184,r7
-0000197A  FE8908                POLYF f1,f2
-0000197D  3EDB05                MOVFL f0,tos
-00001980  3E23B8                ROUNDLD tos,r0
-00001983  07A000000055          cmpd 85,r0
-00001989  1A8329                bne error
-0000198C  D5A100B9              movw 185,r7
-00001990  3E3700                SFSR r0
-00001993  34A010                tbitb 16,r0
-00001996  9A831C                bfc error
+00001908  1A83AF                bne error
                             
-00001999  3E3700                SFSR r0         ; now LONG
-0000199C  2BA00000FFFF          andd x'FFFF,r0  ; Statusbit RMB to 0
-000019A2  3E0F00                LFSR r0
-000019A5  14A065                movb 101,r0
-000019A8  55A004E5              movw 1253,r1
-000019AC  97A000004DA2          movd 19874,r2
-000019B2  3E0000                MOVBL r0,f0
-000019B5  3E4108                MOVWL r1,f1
-000019B8  3E8310                MOVDL r2,f2
-000019BB  BE4000                ADDL f0,f1
-000019BE  BE9000                SUBL f0,f2
-000019C1  BEB008                MULL f1,f2
-000019C4  BEA000                DIVL f0,f2
-000019C7  3EE310                ROUNDLD f2,r3
-000019CA  3E2B11                TRUNCLD f2,r4
-000019CD  D5A100BA              movw 186,r7
-000019D1  C7A000040B74          cmpd 265076,r3
-000019D7  1A82DB                bne error
-000019DA  07A100040B73          cmpd 265075,r4
-000019E0  1A82D2                bne error
-000019E3  BED4A0407F780000      NEGL 503.5,f3
+0000190B  EA8091            	 br longfp						; Skip bits not on the 32016
+0000190E  D5A100B5              movw 181,r7
+00001912  BE05A043090000        MOVF 137.0,f0
+00001919  FE5500                LOGBF f0,f1
+0000191C  DF07                  movqd -1,r0
+0000191E  3E2408                ROUNDFB f1,r0
+00001921  07A0FFFFFF07          cmpd x'FFFFFF07,r0
+00001927  1A8390                bne error
+0000192A  D5A100B6              movw 182,r7
+0000192E  BE05A03FA00000        MOVF 1.25,f0
+00001935  BE45A040400000        MOVF 3.0,f1
+0000193C  FE1108                SCALBF f1,f0    ; 10.0 in F0
+0000193F  3E2C00                TRUNCFB f0,r0
+00001942  07A0FFFFFF0A          cmpd x'FFFFFF0A,r0
+00001948  1A836F                bne error
+0000194B  BE09A041200000        cmpf 10.0,f0   
+00001952  1A8365                bne error
+00001955  D5A100B7              movw 183,r7
+00001959  BE85A040B00000        MOVF 5.5,f2
+00001960  FE8D08                DOTF f1,f2      ; 26.5 in F0
+00001963  3E3C00                FLOORFB f0,r0
+00001966  07A0FFFFFF1A          cmpd x'FFFFFF1A,r0
+0000196C  1A834B                bne error
+0000196F  BE090541D40000        cmpf f0,26.5  
+00001976  1A8341                bne error
+00001979  D5A100B8              movw 184,r7
+0000197D  FE8908                POLYF f1,f2
+00001980  3EDB05                MOVFL f0,tos
+00001983  3E23B8                ROUNDLD tos,r0
+00001986  07A000000055          cmpd 85,r0
+0000198C  1A832B                bne error
+0000198F  D5A100B9              movw 185,r7
+00001993  3E3700                SFSR r0
+00001996  34A010                tbitb 16,r0
+00001999  9A831E                bfc error
+                            
+                            longfp:	 
+0000199C  3E3700                SFSR r0         ; now LONG
+0000199F  2BA00000FFFF          andd x'FFFF,r0  ; Statusbit RMB to 0
+000019A5  3E0F00                LFSR r0
+000019A8  14A065                movb 101,r0
+000019AB  55A004E5              movw 1253,r1
+000019AF  97A000004DA2          movd 19874,r2
+000019B5  3E0000                MOVBL r0,f0
+000019B8  3E4108                MOVWL r1,f1
+000019BB  3E8310                MOVDL r2,f2
+000019BE  BE4000                ADDL f0,f1
+000019C1  BE9000                SUBL f0,f2
+000019C4  BEB008                MULL f1,f2
+000019C7  BEA000                DIVL f0,f2
+000019CA  3EE310                ROUNDLD f2,r3
+000019CD  3E2B11                TRUNCLD f2,r4
+000019D0  D5A100BA              movw 186,r7
+000019D4  C7A000040B74          cmpd 265076,r3
+000019DA  1A82DD                bne error
+000019DD  07A100040B73          cmpd 265075,r4
+000019E3  1A82D4                bne error
+000019E6  BED4A0407F780000      NEGL 503.5,f3
           000000
-000019EE  BE3419                ABSL f3,f4
-000019F1  3E6119                ROUNDLW f3,r5
-000019F4  D5A100BB              movw 187,r7
-000019F8  45A1FE08              cmpw -504,r5
-000019FC  1A82B6                bne error
-000019FF  3EA921                TRUNCLW f4,r6
-00001A02  85A101F7              cmpw 503,r6
-00001A06  1A82AC                bne error
-00001A09  D5A100BC              movw 188,r7
-00001A0D  BE04A0BFC0000000      MOVL -0.125,f0
+000019F1  BE3419                ABSL f3,f4
+000019F4  3E6119                ROUNDLW f3,r5
+000019F7  D5A100BB              movw 187,r7
+000019FB  45A1FE08              cmpw -504,r5
+000019FF  1A82B8                bne error
+00001A02  3EA921                TRUNCLW f4,r6
+00001A05  85A101F7              cmpw 503,r6
+00001A09  1A82AE                bne error
+00001A0C  D5A100BC              movw 188,r7
+00001A10  BE04A0BFC0000000      MOVL -0.125,f0
           000000
-00001A18  5F00                  movqd 0,r0
-00001A1A  3E3B00                FLOORLD f0,r0
-00001A1D  BE7400                ABSL f0,f1
-00001A20  DF0F                  movqd -1,r1
-00001A22  3E7908                FLOORLW f1,r1
-00001A25  9F07                  cmpqd -1,r0
-00001A27  1A828B                bne error
-00001A2A  47A0FFFF0000          cmpd x'FFFF0000,r1
-00001A30  1A8282                bne error
-00001A33  D5A100BD              movw 189,r7
-00001A37  BE04A04095680000      MOVL 1370.0,f0
+00001A1B  5F00                  movqd 0,r0
+00001A1D  3E3B00                FLOORLD f0,r0
+00001A20  BE7400                ABSL f0,f1
+00001A23  DF0F                  movqd -1,r1
+00001A25  3E7908                FLOORLW f1,r1
+00001A28  9F07                  cmpqd -1,r0
+00001A2A  1A828D                bne error
+00001A2D  47A0FFFF0000          cmpd x'FFFF0000,r1
+00001A33  1A8284                bne error
+00001A36  D5A100BD              movw 189,r7
+00001A3A  BE04A04095680000      MOVL 1370.0,f0
           000000
-00001A42  FE5400                LOGBL f0,f1
-00001A45  DF07                  movqd -1,r0
-00001A47  3E2008                ROUNDLB f1,r0
-00001A4A  07A0FFFFFF0A          cmpd x'FFFFFF0A,r0
-00001A50  1A8262                bne error
-00001A53  D5A100BE              movw 190,r7
-00001A57  BE04A03FF4000000      MOVL 1.25,f0
+00001A45  FE5400                LOGBL f0,f1
+00001A48  DF07                  movqd -1,r0
+00001A4A  3E2008                ROUNDLB f1,r0
+00001A4D  07A0FFFFFF0A          cmpd x'FFFFFF0A,r0
+00001A53  1A8264                bne error
+00001A56  D5A100BE              movw 190,r7
+00001A5A  BE04A03FF4000000      MOVL 1.25,f0
           000000
-00001A62  BE44A04014000000      MOVL 5.0,f1
+00001A65  BE44A04014000000      MOVL 5.0,f1
           000000
-00001A6D  FE1008                SCALBL f1,f0    ; 40.0 in F0
-00001A70  3E2800                TRUNCLB f0,r0
-00001A73  07A0FFFFFF28          cmpd x'FFFFFF28,r0
-00001A79  1A8239                bne error
-00001A7C  BE08A04044000000      CMPL 40.0,f0 
+00001A70  FE1008                SCALBL f1,f0    ; 40.0 in F0
+00001A73  3E2800                TRUNCLB f0,r0
+00001A76  07A0FFFFFF28          cmpd x'FFFFFF28,r0
+00001A7C  1A823B                bne error
+00001A7F  BE08A04044000000      CMPL 40.0,f0 
           000000
-00001A87  1A822B                bne error
-00001A8A  D5A100BF              movw 191,r7
-00001A8E  BE84A04016000000      MOVL 5.5,f2
+00001A8A  1A822D                bne error
+00001A8D  D5A100BF              movw 191,r7
+00001A91  BE84A04016000000      MOVL 5.5,f2
           000000
-00001A99  FE8C08                DOTL f1,f2      ; 67.5 in F0
-00001A9C  3E3800                FLOORLB f0,r0
-00001A9F  07A0FFFFFF43          cmpd x'FFFFFF43,r0
-00001AA5  1A820D                bne error
-00001AA8  BE08054050E00000      CMPL f0,67.5   
+00001A9C  FE8C08                DOTL f1,f2      ; 67.5 in F0
+00001A9F  3E3800                FLOORLB f0,r0
+00001AA2  07A0FFFFFF43          cmpd x'FFFFFF43,r0
+00001AA8  1A820F                bne error
+00001AAB  BE08054050E00000  	 CMPL f0,67.5   
           000000
-00001AB3  1A81FF                bne error
-00001AB6  D5A100C0              movw 192,r7
-00001ABA  FE8808                POLYL f1,f2
-00001ABD  3ED605                MOVLF f0,tos
-00001AC0  3E27B8                ROUNDFD tos,r0
-00001AC3  07A000000157          cmpd 343,r0
-00001AC9  1A81E9                bne error
-00001ACC  D5A100C1              movw 193,r7
-00001AD0  3E3700                SFSR r0
-00001AD3  34A010                tbitb 16,r0
-00001AD6  9A81DC                bfc error
+00001AB6  1A8201                bne error
+00001AB9  EA25              	 br nofp
+                            
+00001ABB  D5A100C0              movw 192,r7
+00001ABF  FE8808                POLYL f1,f2
+00001AC2  3ED605                MOVLF f0,tos
+00001AC5  3E27B8                ROUNDFD tos,r0
+00001AC8  07A000000157          cmpd 343,r0
+00001ACE  1A81E9                bne error
+00001AD1  D5A100C1              movw 193,r7
+00001AD5  3E3700                SFSR r0
+00001AD8  34A010                tbitb 16,r0
+00001ADB  9A81DC                bfc error
                             ;******************************
                             
                             nofp:
                             
                             ; STRINGS
-00001AD9  7DA50100              adjspw 256
-00001ADD  27C800                addr 0(sp),r0
-00001AE0  54A040                movb 64,r1
+00001ADE  7DA50100              adjspw 256
+00001AE2  27C800                addr 0(sp),r0
+00001AE5  54A040                movb 64,r1
                             l0045:
-00001AE3  0F02                  addqd 4,r0
-00001AE5  5F407C                movqd 0,-4(r0)
-00001AE8  CC0F7B                acbb -1,r1,l0045
-00001AEB  D5A100C2              movw 194,r7
-00001AEF  17A000000013          movd 19,r0
-00001AF5  67D8B1D3              addr bfeld,r1
-00001AF9  A7C800                addr 0(sp),r2
-00001AFC  0E0000                MOVSB
-00001AFF  85A200137F            cmpw 19,-1(r2)
-00001B04  1A81A7                bne errors
-00001B07  D5A100C3              movw 195,r7
-00001B0B  14A00B                movb 11,r0
-00001B0E  0E0100                MOVSW
-00001B11  87A2000029287E        cmpd x'2928,-2(r2)
-00001B18  1A8193                bne errors
-00001B1B  D5A100C4              movw 196,r7
-00001B1F  DC03                  movqb 7,r0
-00001B21  0E0300                MOVSD
-00001B24  87A2454443427C        cmpd x'45444342,-4(r2)
-00001B2B  1A8180                bne errors
-00001B2E  1F5000                cmpqd 0,0(r2)
-00001B31  1A817A                bne errors
-00001B34  D5A100C5              movw 197,r7
-00001B38  A7C880FC              addr 252(sp),r2
-00001B3C  27D8B18C              addr bfeld,r0
-00001B40  674080F4              addr 244(r0),r1
-00001B44  17A00000000D          movd 13,r0
-00001B4A  0E0301                MOVSD [B]
-00001B4D  87A2C8C7C6C504        cmpd x'C8C7C6C5,4(r2)
-00001B54  1A8157                bne errors
-00001B57  1F5000                cmpqd 0,0(r2)
-00001B5A  1A8151                bne errors
-00001B5D  D5A100C6              movw 198,r7
-00001B61  14A009                movb 9,r0
-00001B64  0E0101                MOVSW [B]
-00001B67  87A2B2B1000000        cmpd x'B2B10000,0(r2)
-00001B6E  1A813D                bne errors
-00001B71  D5A100C7              movw 199,r7
-00001B75  14A00F                movb 15,r0
-00001B78  0E0001                MOVSB [B]
-00001B7B  85A2A10000            cmpw x'A100,0(r2)
-00001B80  1A812B                bne errors
-00001B83  D5A100C8              movw 200,r7
-00001B87  A7C800                addr 0(sp),r2
-00001B8A  67D8B13E              addr bfeld,r1
-00001B8E  E7D88109              addr trans,r3
-00001B92  5F02                  movqd 4,r0
-00001B94  0E8000                MOVST
-00001B97  47A64736251400        cmpd x'47362514,0(sp)
-00001B9E  1A810D                bne errors
-00001BA1  D5A100C9              movw 201,r7
-00001BA5  67C804                addr 4(sp),r1
-00001BA8  27D8B120              addr bfeld,r0
-00001BAC  A74004                addr 4(r0),r2
-00001BAF  17A000000014          movd 20,r0
-00001BB5  0E0400                CMPSB
-00001BB8  1A80F3                bne errors
-00001BBB  1F00                  cmpqd 0,r0
-00001BBD  1A80EE                bne errors
-00001BC0  D5A100CA              movw 202,r7
-00001BC4  4E60520A0A            negb 10(r2),10(r1)   ; something destroying ...
-00001BC9  14A00C                movb 12,r0
-00001BCC  0E0500                CMPSW
-00001BCF  0A80DC                beq errors
-00001BD2  9F03                  cmpqd 7,r0
-00001BD4  1A80D7                bne errors
-00001BD7  D5A100CB              movw 203,r7
-00001BDB  54520000              movb 0(r2),0(r1)   ; now repair it
-00001BDF  5F02                  movqd 4,r0
-00001BE1  0E0700                CMPSD
-00001BE4  1A80C7                bne errors
-00001BE7  1F00                  cmpqd 0,r0
-00001BE9  1A80C2                bne errors
-00001BEC  D5A100CC              movw 204,r7
-00001BF0  67C805                addr 5(sp),r1
-00001BF3  A7C80F                addr 15(sp),r2
-00001BF6  E7D880A1              addr trans,r3
-00001BFA  DC02                  movqb 5,r0
-00001BFC  0E8400                CMPST
-00001BFF  1A80AC                bne errors
-00001C02  1F00                  cmpqd 0,r0
-00001C04  1A80A7                bne errors
-00001C07  D5A100CD              movw 205,r7
-00001C0B  17A000000020          movd x'20,r0
-00001C11  67C800                addr 0(sp),r1
-00001C14  17A1FFFFFF0D          movd x'FFFFFF0D,r4
-00001C1A  0E0C06                SKPSB [U]
-00001C1D  9A808E                bfc errors
-00001C20  A7C80C                addr x'C(sp),r2
-00001C23  8708                  cmpd r1,r2
-00001C25  1A8086                bne errors
-00001C28  07A000000014          cmpd 20,r0
-00001C2E  1A807D                bne errors
-00001C31  D5A100CE              movw 206,r7
-00001C35  17A000000032          movd 50,r0
-00001C3B  67C88050              addr x'50(sp),r1
-00001C3F  17A1FFFF0000          movd x'FFFF0000,r4
-00001C45  0E0D02                SKPSW [W]
-00001C48  9A8063                bfc errors
-00001C4B  A7C880A8              addr x'A8(sp),r2
-00001C4F  8708                  cmpd r1,r2
-00001C51  1A805A                bne errors
-00001C54  1F03                  cmpd 6,r0
-00001C56  1A8055                bne errors
-00001C59  D5A100CF              movw 207,r7
-00001C5D  5F00                  movqd 0,r0
-00001C5F  9708                  movd r1,r2
-00001C61  0E0F01                SKPSD [B]
-00001C64  8A8047                bfs errors
-00001C67  8708                  cmpd r1,r2
-00001C69  1A8042                bne errors
-00001C6C  D5A100D0              movw 208,r7
-00001C70  17A00000000A          movd 10,r0
-00001C76  67D821                addr trans,r1
-00001C79  D708                  movd r1,r3
-00001C7B  7CA320                bispsrb x'20
-00001C7E  0E8C00                SKPST     
-00001C81  8A2A                  bfs errors
-00001C83  6318                  subd r3,r1
-00001C85  47A00000000A          cmpd 10,r1
-00001C8B  1A20                  bne errors
-00001C8D  1F00                  cmpqd 0,r0
-00001C8F  1A1C                  bne errors
+00001AE8  0F02                  addqd 4,r0
+00001AEA  5F407C                movqd 0,-4(r0)
+00001AED  CC0F7B                acbb -1,r1,l0045
+00001AF0  D5A100C2              movw 194,r7
+00001AF4  17A000000013          movd 19,r0
+00001AFA  67D8B1CE              addr bfeld,r1
+00001AFE  A7C800                addr 0(sp),r2
+00001B01  0E0000                MOVSB
+00001B04  85A200137F            cmpw 19,-1(r2)
+00001B09  1A81A7                bne errors
+00001B0C  D5A100C3              movw 195,r7
+00001B10  14A00B                movb 11,r0
+00001B13  0E0100                MOVSW
+00001B16  87A2000029287E        cmpd x'2928,-2(r2)
+00001B1D  1A8193                bne errors
+00001B20  D5A100C4              movw 196,r7
+00001B24  DC03                  movqb 7,r0
+00001B26  0E0300                MOVSD
+00001B29  87A2454443427C        cmpd x'45444342,-4(r2)
+00001B30  1A8180                bne errors
+00001B33  1F5000                cmpqd 0,0(r2)
+00001B36  1A817A                bne errors
+00001B39  D5A100C5              movw 197,r7
+00001B3D  A7C880FC              addr 252(sp),r2
+00001B41  27D8B187              addr bfeld,r0
+00001B45  674080F4              addr 244(r0),r1
+00001B49  17A00000000D          movd 13,r0
+00001B4F  0E0301                MOVSD [B]
+00001B52  87A2C8C7C6C504        cmpd x'C8C7C6C5,4(r2)
+00001B59  1A8157                bne errors
+00001B5C  1F5000                cmpqd 0,0(r2)
+00001B5F  1A8151                bne errors
+00001B62  D5A100C6              movw 198,r7
+00001B66  14A009                movb 9,r0
+00001B69  0E0101                MOVSW [B]
+00001B6C  87A2B2B1000000        cmpd x'B2B10000,0(r2)
+00001B73  1A813D                bne errors
+00001B76  D5A100C7              movw 199,r7
+00001B7A  14A00F                movb 15,r0
+00001B7D  0E0001                MOVSB [B]
+00001B80  85A2A10000            cmpw x'A100,0(r2)
+00001B85  1A812B                bne errors
+00001B88  D5A100C8              movw 200,r7
+00001B8C  A7C800                addr 0(sp),r2
+00001B8F  67D8B139              addr bfeld,r1
+00001B93  E7D88109              addr trans,r3
+00001B97  5F02                  movqd 4,r0
+00001B99  0E8000                MOVST
+00001B9C  47A64736251400        cmpd x'47362514,0(sp)
+00001BA3  1A810D                bne errors
+00001BA6  D5A100C9              movw 201,r7
+00001BAA  67C804                addr 4(sp),r1
+00001BAD  27D8B11B              addr bfeld,r0
+00001BB1  A74004                addr 4(r0),r2
+00001BB4  17A000000014          movd 20,r0
+00001BBA  0E0400                CMPSB
+00001BBD  1A80F3                bne errors
+00001BC0  1F00                  cmpqd 0,r0
+00001BC2  1A80EE                bne errors
+00001BC5  D5A100CA              movw 202,r7
+00001BC9  4E60520A0A            negb 10(r2),10(r1)   ; something destroying ...
+00001BCE  14A00C                movb 12,r0
+00001BD1  0E0500                CMPSW
+00001BD4  0A80DC                beq errors
+00001BD7  9F03                  cmpqd 7,r0
+00001BD9  1A80D7                bne errors
+00001BDC  D5A100CB              movw 203,r7
+00001BE0  54520000              movb 0(r2),0(r1)   ; now repair it
+00001BE4  5F02                  movqd 4,r0
+00001BE6  0E0700                CMPSD
+00001BE9  1A80C7                bne errors
+00001BEC  1F00                  cmpqd 0,r0
+00001BEE  1A80C2                bne errors
+00001BF1  D5A100CC              movw 204,r7
+00001BF5  67C805                addr 5(sp),r1
+00001BF8  A7C80F                addr 15(sp),r2
+00001BFB  E7D880A1              addr trans,r3
+00001BFF  DC02                  movqb 5,r0
+00001C01  0E8400                CMPST
+00001C04  1A80AC                bne errors
+00001C07  1F00                  cmpqd 0,r0
+00001C09  1A80A7                bne errors
+00001C0C  D5A100CD              movw 205,r7
+00001C10  17A000000020          movd x'20,r0
+00001C16  67C800                addr 0(sp),r1
+00001C19  17A1FFFFFF0D          movd x'FFFFFF0D,r4
+00001C1F  0E0C06                SKPSB [U]
+00001C22  9A808E                bfc errors
+00001C25  A7C80C                addr x'C(sp),r2
+00001C28  8708                  cmpd r1,r2
+00001C2A  1A8086                bne errors
+00001C2D  07A000000014          cmpd 20,r0
+00001C33  1A807D                bne errors
+00001C36  D5A100CE              movw 206,r7
+00001C3A  17A000000032          movd 50,r0
+00001C40  67C88050              addr x'50(sp),r1
+00001C44  17A1FFFF0000          movd x'FFFF0000,r4
+00001C4A  0E0D02                SKPSW [W]
+00001C4D  9A8063                bfc errors
+00001C50  A7C880A8              addr x'A8(sp),r2
+00001C54  8708                  cmpd r1,r2
+00001C56  1A805A                bne errors
+00001C59  1F03                  cmpd 6,r0
+00001C5B  1A8055                bne errors
+00001C5E  D5A100CF              movw 207,r7
+00001C62  5F00                  movqd 0,r0
+00001C64  9708                  movd r1,r2
+00001C66  0E0F01                SKPSD [B]
+00001C69  8A8047                bfs errors
+00001C6C  8708                  cmpd r1,r2
+00001C6E  1A8042                bne errors
+00001C71  D5A100D0              movw 208,r7
+00001C75  17A00000000A          movd 10,r0
+00001C7B  67D821                addr trans,r1
+00001C7E  D708                  movd r1,r3
+00001C80  7CA320                bispsrb x'20
+00001C83  0E8C00                SKPST     
+00001C86  8A2A                  bfs errors
+00001C88  6318                  subd r3,r1
+00001C8A  47A00000000A          cmpd 10,r1
+00001C90  1A20                  bne errors
+00001C92  1F00                  cmpqd 0,r0
+00001C94  1A1C                  bne errors
                             
-00001C91  7DA50100              adjspw 256
-00001C95  EA0E                  br next9
+00001C96  7DA50100              adjspw 256
+00001C9A  EA0E                  br next9
                             
-00001C97  FF14253647001011  trans:  .byte x'FF,x'14,x'25,x'36,x'47,0,x'10,x'11,x'12,x'13,x'14,0
+00001C9C  FF14253647001011  trans:  .byte x'FF,x'14,x'25,x'36,x'47,0,x'10,x'11,x'12,x'13,x'14,0
           12131400
                             
                             next9:
                             ; exit if no error
-00001CA3  1738                  movd r7,r0 
-00001CA5  E7DDA36F              ADDR L0002,TOS
+00001CA8  1738                  movd r7,r0 
+00001CAA  E7DDA36A              ADDR L0002,TOS
                             ; anything what you want here in case of error-free
-00001CA9  EA00              ever0:	br ever0
+00001CAE  EA00              ever0:	br ever0
                             
                             errors:
-00001CAB  7CA5F8             adjspb -8
+00001CB0  7CA5F8             adjspb -8
                             error1:
-00001CAE  7DA5FF08           adjspw -248  ; correction of MOVM !
+00001CB3  7DA5FF08           adjspw -248  ; correction of MOVM !
                             ; enter in error case
                             error:
-00001CB2  1738               movd r7,r0
-00001CB4  E7DDA353           ADDR L0001,TOS
+00001CB7  1738               movd r7,r0
+00001CB9  E7DDA34E           ADDR L0001,TOS
                             
-00001CB8  EA00              ever:	br ever
+00001CBD  EA00              ever:	br ever

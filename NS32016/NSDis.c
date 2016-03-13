@@ -78,7 +78,6 @@ void AddStringFlags(uint32_t opcode)
    }
 }
 
-
 void AddCfgFLags(uint32_t opcode)
 {
    PiTRACE("[");
@@ -128,7 +127,7 @@ const char InstuctionText[InstructionCount][8] =
    "ADDf", "MOVf", "CMPf", "TRAP", "SUBf", "NEGf", "TRAP", "TRAP", "DIVf", "TRAP", "TRAP", "TRAP", "MULf", "ABSf", "TRAP", "TRAP",
 
    // FORMAT 12
-   "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
+   "TRAP", "TRAP", "POLY", "DOT", "SCALB", "LOGB", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
 
    // FORMAT 13
    "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
@@ -396,28 +395,7 @@ void BreakPoint(uint32_t pc, uint32_t opcode)
       ProfileInit();
    }
 #endif
-
-   // Useful way to be able to get a breakpoint on a particular instruction
-   //if (pc == 0)
-#if 0     
-   if (pc == 0xF001E9)
-   {
-      printf("Here!\n");
-      //n32016_dumpregs("Oops how did I get here!");
-   }
-
-   if ((opcode == 0) && (pc < 20))
-   {
-      n32016_dumpregs("Oops how did I get here!");
-      //Trace = 1;
-   }
 #endif
-#endif
-
-   if (pc == 0x18E9)
-   {
-      printf("Here!\n");
-   }
 }
 
 void ShowRegs(uint8_t Pattern, uint8_t Reverse)
@@ -721,7 +699,7 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
 #if TEST_SUITE == 0
          if ((*pPC == 0x1CA9) || (*pPC == 0x1CB2))
 #else
-         if ((*pPC == 0x1CA9) || (*pPC == 0x1CB4))
+         if ((*pPC == 0x1CA8) || (*pPC == 0x1CBD))
 #endif
          {
 

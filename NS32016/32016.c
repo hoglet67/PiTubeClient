@@ -28,6 +28,7 @@ uint32_t FSR;
 
 static uint32_t pc;
 uint32_t sp[2];
+Temp64Type Immediate64;
 
 #ifdef PC_SIMULATION
 uint32_t Trace = 1;
@@ -319,16 +320,26 @@ static void GetGenPhase2(RegLKU gen, int c)
 
       if (gen.OpType == Immediate)
       {
-         // Why can't they just decided on an endian and then stick to it?
          MultiReg temp3;
 
-         temp3.u32 = SWAP32(read_x32(pc));
-         if (OpSize.Op[c] == sz8)
-            genaddr[c] = temp3.u8;
-         else if (OpSize.Op[c] == sz16)
-            genaddr[c] = temp3.u16;
+         if (OpSize.Op[c] == sz64)
+         {
+            temp3.u32 = SWAP32(read_x32(pc));
+            Immediate64.x64 = (((uint64_t) temp3.u32) << 32);
+            temp3.u32 = SWAP32(read_x32(pc + 4));
+            Immediate64.x64 |= temp3.u32;
+         }
          else
-            genaddr[c] = temp3.u32;
+         {
+            // Why can't they just decided on an endian and then stick to it?
+            temp3.u32 = SWAP32(read_x32(pc));
+            if (OpSize.Op[c] == sz8)
+               genaddr[c] = temp3.u8;
+            else if (OpSize.Op[c] == sz16)
+               genaddr[c] = temp3.u16;
+            else
+               genaddr[c] = temp3.u32;
+         }
 
          pc += OpSize.Op[c];
          gentype[c] = OpImmediate;
@@ -473,7 +484,7 @@ uint64_t readgenq(uint32_t c)
 
       case OpImmediate:
       {
-         Temp = genaddr[c];
+         Temp = Immediate64.x64;
       }
       break;
    }
@@ -1250,6 +1261,7 @@ void n32016_exec(uint32_t tubecycles)
          break;
 
          case Format11:
+         case Format12:
          {
             if (nscfg.fpu_flag == 0)
             {
