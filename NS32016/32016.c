@@ -1141,7 +1141,10 @@ void n32016_exec(uint32_t tubecycles)
                SET_OP_SIZE(opcode >> 8);
             }
 
-            getgen(opcode >> 19, 0);
+            if (Function != SFSR)
+            {
+               getgen(opcode >> 19, 0);
+            }
             getgen(opcode >> 14, 1);
          }
          break;

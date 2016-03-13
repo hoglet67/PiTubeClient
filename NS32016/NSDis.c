@@ -341,7 +341,10 @@ void RegLookUp(uint32_t Start, uint32_t* pPC)
       {
          if (Index == 1)
          {
-            PiTRACE(",");
+            if (Regs[0] < 0xFFFF)
+            {
+               PiTRACE(",");
+            }
          }
 
          GetOperandText(Start, pPC, Regs[Index], Index);
@@ -432,14 +435,25 @@ void AddInstructionText(uint32_t Function, uint32_t opcode, uint32_t OperandSize
    {
       char Str[80];
 
-      if (Function == Scond)
+      switch (Function)
       {
-         uint32_t Condition = ((opcode >> 7) & 0x0F);
-         sprintf(Str, "S%s", &InstuctionText[Condition][1]);             // Offset by 1 to lose the 'B'
-      }
-      else
-      {
-         sprintf(Str, "%s", InstuctionText[Function]);
+         case Scond:
+         {
+            uint32_t Condition = ((opcode >> 7) & 0x0F);
+            sprintf(Str, "S%s", &InstuctionText[Condition][1]);             // Offset by 1 to lose the 'B'
+         }
+         break;
+
+         case SFSR:
+         {
+            OperandSize = 0;
+         }
+         // Fall Through
+
+         default:
+         {
+            sprintf(Str, "%s", InstuctionText[Function]);
+         }
       }
 
       if ((opcode & 0x80FF) == 0x800E)
