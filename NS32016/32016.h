@@ -335,21 +335,21 @@ typedef union
 {
    struct
    {
-      unsigned i_flag  : 1;         // 0x0001
-      unsigned f_flag  : 1;         // 0x0002
-      unsigned m_flag  : 1;         // 0x0004
-      unsigned c_flag  : 1;         // 0x0008
+      unsigned i_flag      : 1;         // 0x0001
+      unsigned fpu_flag    : 1;         // 0x0002
+      unsigned m_flag      : 1;         // 0x0004
+      unsigned c_flag      : 1;         // 0x0008
 
-      unsigned not_used : 4;        // 0x00X0
+      unsigned not_used    : 4;        // 0x00X0
 
-      unsigned de_flag  : 1;        // 0x0100
-      unsigned dc_flag  : 1;        // 0x0200
-      unsigned ldc_flag : 1;        // 0x0400
-      unsigned ic_flag  : 1;        // 0x0800
+      unsigned de_flag     : 1;        // 0x0100
+      unsigned dc_flag     : 1;        // 0x0200
+      unsigned ldc_flag    : 1;        // 0x0400
+      unsigned ic_flag     : 1;        // 0x0800
 
-      unsigned lic_flag : 1;        // 0x2000
-      unsigned pf_flag  : 1;        // 0x0400
-      unsigned NU       : 18;
+      unsigned lic_flag    : 1;        // 0x2000
+      unsigned pf_flag     : 1;        // 0x0400
+      unsigned NU          : 18;
    };
 
    struct

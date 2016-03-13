@@ -445,6 +445,7 @@ void AddInstructionText(uint32_t Function, uint32_t opcode, uint32_t OperandSize
          break;
 
          case SFSR:
+         case LFSR:
          {
             OperandSize = 0;
          }

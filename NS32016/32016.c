@@ -1130,6 +1130,11 @@ void n32016_exec(uint32_t tubecycles)
 
          case Format9:
          {
+            if (nscfg.fpu_flag == 0)
+            {
+               GOTO_TRAP(UnknownInstruction);
+            }
+
             Function += ((opcode >> 11) & 0x07);
             if (Function == MOVif)
             {
@@ -1145,12 +1150,20 @@ void n32016_exec(uint32_t tubecycles)
             {
                getgen(opcode >> 19, 0);
             }
-            getgen(opcode >> 14, 1);
+            if (Function != LFSR)
+            {
+               getgen(opcode >> 14, 1);
+            }
          }
          break;
 
          case Format11:
          {
+            if (nscfg.fpu_flag == 0)
+            {
+               GOTO_TRAP(UnknownInstruction);
+            }
+
             Function += ((opcode >> 10) & 0x0F);
             reg_type  = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
             SET_FOP_SIZE((opcode >> 8) & 1);                 

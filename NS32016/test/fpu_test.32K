@@ -1,3 +1,5 @@
+;	SETCFG 1
+.byte x'0E, x'0B, x'01
 	br BEGIN
  .WORD 13
 L0001:  .BYTE 'Failcode : '
