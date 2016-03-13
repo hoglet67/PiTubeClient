@@ -54,12 +54,11 @@ add_executable( tube-client
     copro-32016.h
     ../../NS32016/32016.c
     ../../NS32016/32016.h
-    ../../NS32016/boot_rom.h
     ../../NS32016/mem32016.c
     ../../NS32016/mem32016.h
     ../../NS32016/NSDis.c
-    ../../NS32016/PandoraV0_61.h
-    ../../NS32016/PandoraV2_00.h
+    ../../NS32016/pandora/PandoraV0_61.h
+    ../../NS32016/pandora/PandoraV2_00.h
     ../../NS32016/Trap.c
     ../../NS32016/Trap.h
     ../../NS32016/Profile.c
@@ -148,6 +147,8 @@ add_executable( tube-client
     lib6502.c
     lib6502.h
 )
+
+target_link_libraries (tube-client m)
 
 add_custom_command(
     TARGET tube-client POST_BUILD
