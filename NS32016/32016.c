@@ -309,7 +309,7 @@ static void GetGenPhase2(RegLKU gen, int c)
          
             default:         
             {
-               PiWARN("Illegal reg_type value: %d\n", gen.RegType)
+               PiWARN("Illegal RegType value: %d\n", gen.RegType)
             }
          }
 
@@ -428,6 +428,7 @@ static void GetGenPhase2(RegLKU gen, int c)
    }
 }
 
+#if 0
 uint64_t readgenq(uint32_t c)
 {
    uint64_t temp;
@@ -444,6 +445,42 @@ uint64_t readgenq(uint32_t c)
 
    return temp;
 }
+#else
+uint64_t readgenq(uint32_t c)
+{
+   uint64_t Temp = 0;
+
+   switch (gentype[c])
+   {
+      case Memory:
+      {
+         Temp = read_x64(genaddr[c]);
+      }
+      break;
+
+      case Register:
+      {
+         Temp = *(uint64_t*) genaddr[c];
+      }
+      break;
+
+      case TOS:
+      {
+         Temp = read_x64(GET_SP());
+         INC_SP(sz64);
+      }
+      break;
+
+      case OpImmediate:
+      {
+         Temp = genaddr[c];
+      }
+      break;
+   }
+
+   return Temp;
+}
+#endif
 
 // From: http://homepage.cs.uiowa.edu/~jones/bcd/bcd.html
 static uint32_t bcd_add_16(uint32_t a, uint32_t b, uint32_t *carry)
@@ -983,7 +1020,6 @@ void n32016_exec(uint32_t tubecycles)
    uint32_t temp = 0, temp2, temp3;
    Temp64Type temp64;
    uint32_t Function;
-   int reg_type;
 
    if (tube_irq & 2)
    {
@@ -1004,7 +1040,6 @@ void n32016_exec(uint32_t tubecycles)
       WriteSize      = szVaries;                                            // The size a result may be written as
       WriteIndex     = 1;                                                   // Default to writing operand 0
       OpSize.Whole   = 0;
-      reg_type       = Integer;
  
       Regs[0].Whole  =
       Regs[1].Whole  = 0xFFFF;
@@ -1171,22 +1206,22 @@ void n32016_exec(uint32_t tubecycles)
                {
                   OpSize.Op[0] = ((opcode >> 8) & 3) + 1;                           // Source Size (Integer)
                   WriteSize    =
-                  OpSize.Op[1] = (opcode & BIT(10)) ? sz64 : sz32;                  // Destination Size (Float/ Double)
+                  OpSize.Op[1] = GET_F_SIZE(opcode & BIT(10));                      // Destination Size (Float/ Double)
                   getgen(opcode >> 19, 0);                                          // Source Operand
                   getgen(opcode >> 14, 1);                                          // Destination Operand
-                  Regs[1].RegType = (opcode & BIT(10)) ? DoublePrecision : SinglePrecision;
+                  Regs[1].RegType = GET_PRECISION(opcode & BIT(10));
                }
                break;
 
                case ROUND:
                case TRUNC:
                {
-                  OpSize.Op[0] = (opcode & BIT(10)) ? sz64 : sz32;                  // Source Size (Float/ Double)
+                  OpSize.Op[0] = GET_F_SIZE(opcode & BIT(10));                      // Source Size (Float/ Double)
                   WriteSize =
                   OpSize.Op[1] = ((opcode >> 8) & 3) + 1;                           // Destination Size (Integer)
                   getgen(opcode >> 19, 0);                                          // Source Operand
                   getgen(opcode >> 14, 1);                                          // Destination Operand
-                  Regs[0].RegType = (opcode & BIT(10)) ? DoublePrecision : SinglePrecision;
+                  Regs[0].RegType = GET_PRECISION(opcode & BIT(10));
                }
                break;
 
@@ -1198,15 +1233,14 @@ void n32016_exec(uint32_t tubecycles)
                      getgen(opcode >> 19, 0);
                      if (Function != MOVif)
                      {
-                        Regs[0].RegType = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
+                        Regs[0].RegType = GET_PRECISION(opcode & BIT(8));
                      }
                   }
 
                   if (Function != LFSR)
                   {
                      getgen(opcode >> 14, 1);
-                     reg_type = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
-                     Regs[0].RegType = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
+                     Regs[0].RegType = GET_PRECISION(opcode & BIT(8));
                   }
                }
                break;
@@ -1222,11 +1256,12 @@ void n32016_exec(uint32_t tubecycles)
             }
 
             Function += ((opcode >> 10) & 0x0F);
-            SET_FOP_SIZE((opcode >> 8) & 1);
+            OpSize.Op[0] =
+            OpSize.Op[1] = GET_F_SIZE(opcode & BIT(8));
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
-            Regs[0].RegType = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
-            Regs[1].RegType = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
+            Regs[0].RegType =
+            Regs[1].RegType = GET_PRECISION(opcode & BIT(8));
          }
          break;
 
@@ -2707,13 +2742,29 @@ void n32016_exec(uint32_t tubecycles)
             if (Regs[0].RegType == DoublePrecision)
             {
                temp64.x64 = readgenq(0);
-               temp = (int32_t) (temp64.f64 + 0.5f);
+               if (temp64.f64 > 0.0)
+               {
+                  temp64.f64 += 0.5;
+               }
+               else
+               {
+                  temp64.f64 -= 0.5;
+               }
+               temp = (int32_t) temp64.f64;
             }
             else
             {
                Temp32Type q;
                q.x32 = ReadGen(0);
-               temp = (int32_t) (q.f32 + 0.5f);
+               if (q.f32 > 0.0)
+               {
+                  q.f32 += 0.5;
+               }
+               else
+               {
+                  q.f32 -= 0.5;
+               }
+               temp = (int32_t) q.f32;
             }
          }
          break;
@@ -2772,6 +2823,8 @@ void n32016_exec(uint32_t tubecycles)
             {
                temp = ReadGen(0);
             }
+
+            WriteSize = OpSize.Op[1];
          }
          break;
 

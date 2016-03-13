@@ -413,6 +413,11 @@ void BreakPoint(uint32_t pc, uint32_t opcode)
    }
 #endif
 #endif
+
+   if (pc == 0x18E9)
+   {
+      printf("Here!\n");
+   }
 }
 
 void ShowRegs(uint8_t Pattern, uint8_t Reverse)

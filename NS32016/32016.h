@@ -58,6 +58,9 @@ enum RegType
    DoublePrecision
 };
 
+#define GET_PRECISION(in) ((in) ? SinglePrecision : DoublePrecision)
+#define GET_F_SIZE(in) ((in) ? sz32 : sz64)
+
 enum OpTypes
 {
    Memory,
