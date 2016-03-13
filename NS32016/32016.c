@@ -1318,7 +1318,7 @@ void n32016_exec(uint32_t tubecycles)
 #endif
 
 #ifdef PROFILING
-      ProfileAdd(Function, Regs[0], Regs[1]);
+      ProfileAdd(Function, Regs[0].Whole, Regs[1]);
 #endif
 
       switch (Function)
