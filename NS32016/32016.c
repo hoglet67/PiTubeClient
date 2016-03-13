@@ -1165,33 +1165,51 @@ void n32016_exec(uint32_t tubecycles)
             }
 
             Function += ((opcode >> 11) & 0x07);
-            if (Function == MOVif)
+            switch (Function)
             {
-               OpSize.Op[0] = ((opcode >> 8) & 3) + 1;                           // Source Size
-               WriteSize    =
-               OpSize.Op[1] = (opcode & BIT(10)) ? sz64 : sz32;                  // Destination Size
-               getgen(opcode >> 19, 0);                                          // Source Operand
-               getgen(opcode >> 14, 1);                                          // Destination Operand
-               Regs[1].RegType = (opcode & BIT(10)) ? DoublePrecision : SinglePrecision;
-            }
-            else
-            {
-               SET_OP_SIZE(opcode >> 8);
-               if (Function != SFSR)
+               case MOVif:
                {
-                  getgen(opcode >> 19, 0);
-                  if (Function != MOVif)
+                  OpSize.Op[0] = ((opcode >> 8) & 3) + 1;                           // Source Size (Integer)
+                  WriteSize    =
+                  OpSize.Op[1] = (opcode & BIT(10)) ? sz64 : sz32;                  // Destination Size (Float/ Double)
+                  getgen(opcode >> 19, 0);                                          // Source Operand
+                  getgen(opcode >> 14, 1);                                          // Destination Operand
+                  Regs[1].RegType = (opcode & BIT(10)) ? DoublePrecision : SinglePrecision;
+               }
+               break;
+
+               case ROUND:
+               case TRUNC:
+               {
+                  OpSize.Op[0] = (opcode & BIT(10)) ? sz64 : sz32;                  // Source Size (Float/ Double)
+                  WriteSize =
+                  OpSize.Op[1] = ((opcode >> 8) & 3) + 1;                           // Destination Size (Integer)
+                  getgen(opcode >> 19, 0);                                          // Source Operand
+                  getgen(opcode >> 14, 1);                                          // Destination Operand
+                  Regs[0].RegType = (opcode & BIT(10)) ? DoublePrecision : SinglePrecision;
+               }
+               break;
+
+               default:
+               {
+                  SET_OP_SIZE(opcode >> 8);
+                  if (Function != SFSR)
                   {
+                     getgen(opcode >> 19, 0);
+                     if (Function != MOVif)
+                     {
+                        Regs[0].RegType = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
+                     }
+                  }
+
+                  if (Function != LFSR)
+                  {
+                     getgen(opcode >> 14, 1);
+                     reg_type = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
                      Regs[0].RegType = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
                   }
                }
-
-               if (Function != LFSR)
-               {
-                  getgen(opcode >> 14, 1);
-                  reg_type = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
-                  Regs[0].RegType = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
-               }
+               break;
             }
          }
          break;
@@ -2686,30 +2704,32 @@ void n32016_exec(uint32_t tubecycles)
 
          case ROUND:
          {
-            if (Regs[1].RegType == DoublePrecision)
+            if (Regs[0].RegType == DoublePrecision)
             {
-               temp64.f64 = (double) readgenq(0);
+               temp64.x64 = readgenq(0);
+               temp = (int32_t) (temp64.f64 + 0.5f);
             }
             else
             {
                Temp32Type q;
-               q.f32 = (float) ReadGen(0);
-               temp = q.x32;
+               q.x32 = ReadGen(0);
+               temp = (int32_t) (q.f32 + 0.5f);
             }
          }
          break;
 
          case TRUNC:
          {
-            if (Regs[1].RegType == DoublePrecision)
+            if (Regs[0].RegType == DoublePrecision)
             {
-               temp64.f64 = (double) readgenq(0);
+               temp64.x64 = readgenq(0);
+               temp = (int32_t) temp64.f64;
             }
             else
             {
                Temp32Type q;
-               q.f32 = (float) ReadGen(0);
-               temp = q.x32;
+               q.x32 = ReadGen(0);
+               temp = (int32_t) q.f32;
             }
          }
          break;
@@ -2809,7 +2829,6 @@ void n32016_exec(uint32_t tubecycles)
             {
                FP_DST_32 /= FP_SRC_32;
             }
-            continue;
          }
          break;
 
@@ -2823,7 +2842,6 @@ void n32016_exec(uint32_t tubecycles)
             {
                FP_DST_32 *= FP_SRC_32;
             }
-            continue;
          }
          break;
 
@@ -2837,7 +2855,6 @@ void n32016_exec(uint32_t tubecycles)
             {
                FP_DST_32 = fabsf(FP_SRC_32);
             }
-            continue;
          }
          break;
   
