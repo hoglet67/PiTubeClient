@@ -1257,6 +1257,7 @@ void n32016_exec(uint32_t tubecycles)
             }
 
             Function += ((opcode >> 10) & 0x0F);
+            WriteSize    =
             OpSize.Op[0] =
             OpSize.Op[1] = GET_F_SIZE(opcode & BIT(8));
             getgen(opcode >> 19, 0);
@@ -2727,14 +2728,17 @@ void n32016_exec(uint32_t tubecycles)
          case MOVLF:
          {
             Temp32Type q;
-            q.f32 = (float) FP_SRC_64;
+            temp64.x64 = readgenq(0);
+            q.f32 = (float) temp64.f64;
             temp = q.x32;
          }
          break;
 
          case MOVFL:
          {
-            temp64.f64 = (double) FP_SRC_64;
+            Temp32Type q;
+            q.x32 = ReadGen(0);
+            temp64.f64 = (double) q.f32;
          }
          break;
 
@@ -2797,11 +2801,20 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (Regs[0].RegType == DoublePrecision)
             {
-               FP_DST_64 += FP_SRC_64;
+               Temp64Type Src;
+               Src.x64     = readgenq(0);
+               temp64.x64  = readgenq(1);
+
+               temp64.f64 += Src.f64;
             }
             else
             {
-               FP_DST_32 += FP_SRC_32;
+               Temp32Type Src, Dst;
+               Src.x32 = ReadGen(0);
+               Dst.x32 = ReadGen(1);
+
+               Dst.f32 += Src.f32;
+               temp = Dst.x32;
             }
          }
          break;
@@ -2822,8 +2835,6 @@ void n32016_exec(uint32_t tubecycles)
             {
                temp = ReadGen(0);
             }
-
-            WriteSize = OpSize.Op[1];
          }
          break;
 
@@ -2833,13 +2844,21 @@ void n32016_exec(uint32_t tubecycles)
 
             if (Regs[0].RegType == DoublePrecision)
             {
-               Z_FLAG = TEST(FP_DST_64 == FP_SRC_64);
-               N_FLAG = TEST(FP_DST_64 > FP_SRC_64);
+               Temp64Type Src;
+               Src.x64 = readgenq(0);
+               temp64.x64 = readgenq(1);
+
+               Z_FLAG = TEST(temp64.f64 == Src.f64);
+               N_FLAG = TEST(temp64.f64 >  Src.f64);
             }
             else
             {
-               Z_FLAG = TEST(FP_DST_32 == FP_SRC_32);
-               N_FLAG = TEST(FP_DST_32 > FP_SRC_32);
+               Temp32Type Src, Dst;
+               Src.x32 = ReadGen(0);
+               Dst.x32 = ReadGen(1);
+
+               Z_FLAG = TEST(Dst.f32 == Src.f32);
+               N_FLAG = TEST(Dst.f32 >  Src.f32);
             }
             continue;
          }
@@ -2849,11 +2868,20 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (Regs[0].RegType == DoublePrecision)
             {
-               FP_DST_64 -= FP_SRC_64;
+               Temp64Type Src;
+               Src.x64    = readgenq(0);
+               temp64.x64 = readgenq(1);
+
+               temp64.f64 -= Src.f64;
             }
             else
             {
-               FP_DST_32 -= FP_SRC_32;
+               Temp32Type Src, Dst;
+               Src.x32 = ReadGen(0);
+               Dst.x32 = ReadGen(1);
+ 
+               Dst.f32 -= Src.f32;
+               temp = Dst.x32;
             }
          }
          break;
@@ -2862,11 +2890,16 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (Regs[0].RegType == DoublePrecision)
             {
-               FP_DST_64 = -FP_SRC_64;
+               Temp64Type Src;
+               Src.x64 = readgenq(0);
+               temp64.f64 = -Src.f64;
             }
             else
             {
-               FP_DST_32 = -FP_SRC_32;
+               Temp32Type Src, Dst;
+               Src.x32 = ReadGen(0);
+               Dst.f32 = -Src.f32;
+               temp = Dst.x32;
             }
          }
          break;
@@ -2875,11 +2908,20 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (Regs[0].RegType == DoublePrecision)
             {
-               FP_DST_64 /= FP_SRC_64;
+               Temp64Type Src;
+               Src.x64 = readgenq(0);
+               temp64.x64 = readgenq(1);
+
+               temp64.f64 /= Src.f64;
             }
             else
             {
-               FP_DST_32 /= FP_SRC_32;
+               Temp32Type Src, Dst;
+               Src.x32 = ReadGen(0);
+               Dst.x32 = ReadGen(1);
+
+               Dst.f32 /= Src.f32;
+               temp = Dst.x32;
             }
          }
          break;
@@ -2888,11 +2930,20 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (Regs[0].RegType == DoublePrecision)
             {
-               FP_DST_64 *= FP_SRC_64;
+               Temp64Type Src;
+               Src.x64 = readgenq(0);
+               temp64.x64 = readgenq(1);
+
+               temp64.f64 *= Src.f64;
             }
             else
             {
-               FP_DST_32 *= FP_SRC_32;
+               Temp32Type Src, Dst;
+               Src.x32 = ReadGen(0);
+               Dst.x32 = ReadGen(1);
+
+               Dst.f32 *= Src.f32;
+               temp = Dst.x32;
             }
          }
          break;
@@ -2901,11 +2952,16 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (Regs[0].RegType == DoublePrecision)
             {
-               FP_DST_64 = fabs(FP_SRC_64);
+               Temp64Type Src;
+               Src.x64 = readgenq(0);
+               temp64.f64 = fabs(Src.f64);
             }
             else
             {
-               FP_DST_32 = fabsf(FP_SRC_32);
+               Temp32Type Src, Dst;
+               Src.x32  = ReadGen(0);
+               Dst.f32  = -Src.f32;
+               temp     = fabsf(Dst.x32);
             }
          }
          break;

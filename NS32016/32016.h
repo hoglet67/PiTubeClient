@@ -469,12 +469,6 @@ typedef union
    uint16_t Whole;   
 } RegLKU;
 
-#define FP_SRC_64 FR.f64[Regs[0].OpType]
-#define FP_DST_64 FR.f64[Regs[1].OpType]
-
-#define FP_SRC_32 FR.f32[Regs[0].OpType]
-#define FP_DST_32 FR.f32[Regs[1].OpType]
-
 extern uint32_t sp[2];
 
 #define STACK_P      sp[S_FLAG]
