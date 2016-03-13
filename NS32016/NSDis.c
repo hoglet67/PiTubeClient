@@ -201,9 +201,28 @@ int32_t GetDisplacement(uint32_t* pPC)
 
 void GetOperandText(uint32_t Start, uint32_t* pPC, RegLKU Pattern, uint32_t c)
 {
-   if (Pattern.Whole < 8)
+   if (Pattern.OpType < 8)
    {
-      PiTRACE("R%0" PRId32, Pattern);
+      switch (Pattern.RegType)
+      {
+         case Integer:
+         {
+            PiTRACE("R%0" PRId32, Pattern.OpType);
+         }
+         break;
+
+         case SinglePrecision:
+         {
+            PiTRACE("F%0" PRId32, Pattern.OpType);
+         }
+         break;
+
+         case DoublePrecision:
+         {
+            PiTRACE("D%0" PRId32, Pattern.OpType);
+         }
+         break;
+      }
    }
    else if (Pattern.Whole < 16)
    {

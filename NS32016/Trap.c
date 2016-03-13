@@ -45,7 +45,7 @@ void ShowTraps(void)
 
 void Dump(void)
 {
-   n32016_ShowRegs(1);
+   n32016_ShowRegs(0xFF);
    ShowTraps();
    TrapTRACE("\n");
 

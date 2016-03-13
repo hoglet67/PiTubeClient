@@ -394,8 +394,8 @@ typedef union
 
 typedef union
 {
-   float    f64[16];
-   double   f32[ 8];
+   float    f32[16];
+   double   f64[ 8];
    uint32_t u32[16];
    uint64_t u64[ 8];
 } FloatingPointRegisters;
@@ -466,11 +466,11 @@ typedef union
    uint16_t Whole;   
 } RegLKU;
 
-#define FP_SRC_64 FR.f64[Regs[0].Whole]
-#define FP_DST_64 FR.f64[Regs[1].Whole]
+#define FP_SRC_64 FR.f64[Regs[0].OpType]
+#define FP_DST_64 FR.f64[Regs[1].OpType]
 
-#define FP_SRC_32 FR.f32[Regs[0].Whole]
-#define FP_DST_32 FR.f32[Regs[1].Whole]
+#define FP_SRC_32 FR.f32[Regs[0].OpType]
+#define FP_DST_32 FR.f32[Regs[1].OpType]
 
 extern uint32_t sp[2];
 

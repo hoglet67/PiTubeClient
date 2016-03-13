@@ -46,18 +46,34 @@ uint32_t genaddr[2];
 int gentype[2];
 OperandSizeType OpSize;
 
-void n32016_ShowRegs(int bShowFloat)
+void n32016_ShowRegs(int Option)
 {
-   TrapTRACE("R0=%08"PRIX32" R1=%08"PRIX32" R2=%08"PRIX32" R3=%08"PRIX32"\n", r[0], r[1], r[2], r[3]);
-   TrapTRACE("R4=%08"PRIX32" R5=%08"PRIX32" R6=%08"PRIX32" R7=%08"PRIX32"\n", r[4], r[5], r[6], r[7]);
-   if (bShowFloat)
+   if (Option & BIT(0))
    {
-      TrapTRACE("F0=%lf F1=%lf F2=%lf F3=%lf\n", FR.f64[0], FR.f64[0], FR.f64[0], FR.f64[0]);
-      TrapTRACE("F4=%lf F5=%lf F6=%lf F7=%lf\n", FR.f64[0], FR.f64[0], FR.f64[0], FR.f64[0]);
+      TrapTRACE("R0=%08"PRIX32" R1=%08"PRIX32" R2=%08"PRIX32" R3=%08"PRIX32"\n", r[0], r[1], r[2], r[3]);
+      TrapTRACE("R4=%08"PRIX32" R5=%08"PRIX32" R6=%08"PRIX32" R7=%08"PRIX32"\n", r[4], r[5], r[6], r[7]);
    }
 
-   TrapTRACE("PC=%08"PRIX32" SB=%08"PRIX32" SP=%08"PRIX32" TRAP=%08"PRIX32"\n", pc, sb, GET_SP(), TrapFlags);
-   TrapTRACE("FP=%08"PRIX32" INTBASE=%08"PRIX32" PSR=%04"PRIX32" MOD=%04"PRIX32"\n", fp, intbase, psr, mod);
+   if (Option & BIT(1))
+   {
+      TrapTRACE("PC=%08"PRIX32" SB=%08"PRIX32" SP=%08"PRIX32" TRAP=%08"PRIX32"\n", pc, sb, GET_SP(), TrapFlags);
+      TrapTRACE("FP=%08"PRIX32" INTBASE=%08"PRIX32" PSR=%04"PRIX32" MOD=%04"PRIX32"\n", fp, intbase, psr, mod);
+   }
+
+   if (nscfg.fpu_flag)
+   {
+      if (Option & BIT(2))
+      {
+         TrapTRACE("F0=%f F1=%f F2=%f F3=%f\n", FR.f32[0], FR.f32[1], FR.f32[2], FR.f64[3]);
+         TrapTRACE("F4=%f F5=%f F6=%f F7=%f\n", FR.f64[4], FR.f64[5], FR.f64[6], FR.f64[7]);
+      }
+
+      if (Option & BIT(3))
+      {
+         TrapTRACE("D0=%lf D1=%lf D2=%lf D3=%lf\n", FR.f64[0], FR.f64[1], FR.f64[2], FR.f64[3]);
+         TrapTRACE("D4=%lf D5=%lf D6=%lf D7=%lf\n", FR.f64[4], FR.f64[5], FR.f64[6], FR.f64[7]);
+      }
+   }
 }
 
 const uint32_t OpSizeLookup[6] =
@@ -66,8 +82,10 @@ const uint32_t OpSizeLookup[6] =
    (sz16 << 24) | (sz16 << 16) | (sz16 << 8) | sz16,               // Integer word
    0xFFFFFFFF,                                                     // Illegal
    (sz32 << 24) | (sz32 << 16) | (sz32 << 8) | sz32,               // Integer double-word
-   (sz32 << 24) | (sz32 << 16) | (sz32 << 8) | sz32,               // Floating Point Single Precision
-   (sz64 << 24) | (sz64 << 16) | (sz64 << 8) | sz64                // Floating Point Double Precision
+//   (sz32 << 24) | (sz32 << 16) | (sz32 << 8) | sz32,               // Floating Point Single Precision
+//   (sz64 << 24) | (sz64 << 16) | (sz64 << 8) | sz64                // Floating Point Double Precision
+   (sz32 << 8) | sz32,               // Floating Point Single Precision
+   (sz64 << 8) | sz64                // Floating Point Double Precision
 };
 
 void n32016_reset(uint32_t StartAddress)
@@ -1150,6 +1168,7 @@ void n32016_exec(uint32_t tubecycles)
             if (Function == MOVif)
             {
                OpSize.Op[0] = ((opcode >> 8) & 3) + 1;                           // Source Size
+               WriteSize    =
                OpSize.Op[1] = (opcode & BIT(10)) ? sz64 : sz32;                  // Destination Size
                getgen(opcode >> 19, 0);                                          // Source Operand
                getgen(opcode >> 14, 1);                                          // Destination Operand
@@ -1185,7 +1204,7 @@ void n32016_exec(uint32_t tubecycles)
             }
 
             Function += ((opcode >> 10) & 0x0F);
-            SET_FOP_SIZE((opcode >> 8) & 1);                 
+            SET_FOP_SIZE((opcode >> 8) & 1);
             getgen(opcode >> 19, 0);
             getgen(opcode >> 14, 1);
             Regs[0].RegType = ((opcode >> 8) & 1) ? DoublePrecision : SinglePrecision;
@@ -2641,8 +2660,6 @@ void n32016_exec(uint32_t tubecycles)
                q.f32 = (float) temp2;
                temp = q.x32;
             }
-
-            n32016_ShowRegs(1);
          }
          break;
 
@@ -2655,23 +2672,21 @@ void n32016_exec(uint32_t tubecycles)
 
          case MOVLF:
          {
-            FP_SRC_32 = (float) FP_SRC_64;
-            n32016_ShowRegs(1);
-            continue;
+            Temp32Type q;
+            q.f32 = (float) FP_SRC_64;
+            temp = q.x32;
          }
-         // No break due to continue
+         break;
 
          case MOVFL:
          {
-            FP_DST_64 = (double) FP_SRC_64;
-            n32016_ShowRegs(1);
-            continue;
+            temp64.f64 = (double) FP_SRC_64;
          }
-         // No break due to continue
+         break;
 
          case ROUND:
          {
-            if (Regs[0].RegType == DoublePrecision)
+            if (Regs[1].RegType == DoublePrecision)
             {
                temp64.f64 = (double) readgenq(0);
             }
@@ -2681,14 +2696,12 @@ void n32016_exec(uint32_t tubecycles)
                q.f32 = (float) ReadGen(0);
                temp = q.x32;
             }
-
-            n32016_ShowRegs(1);
          }
          break;
 
          case TRUNC:
          {
-            if (Regs[0].RegType == DoublePrecision)
+            if (Regs[1].RegType == DoublePrecision)
             {
                temp64.f64 = (double) readgenq(0);
             }
@@ -2698,8 +2711,6 @@ void n32016_exec(uint32_t tubecycles)
                q.f32 = (float) ReadGen(0);
                temp = q.x32;
             }
-            
-            n32016_ShowRegs(1);
          }
          break;
 
@@ -2722,11 +2733,8 @@ void n32016_exec(uint32_t tubecycles)
             {
                FP_DST_32 += FP_SRC_32;
             }
-            n32016_ShowRegs(1);
-
-            continue;
          }
-         // No break due to continue
+         break;
 
          case MOVf:
          {
@@ -2744,7 +2752,6 @@ void n32016_exec(uint32_t tubecycles)
             {
                temp = ReadGen(0);
             }
-            n32016_ShowRegs(1);
          }
          break;
 
@@ -2762,9 +2769,6 @@ void n32016_exec(uint32_t tubecycles)
                Z_FLAG = TEST(FP_DST_32 == FP_SRC_32);
                N_FLAG = TEST(FP_DST_32 > FP_SRC_32);
             }
-
-            n32016_ShowRegs(1);
-
             continue;
          }
          // No break due to continue
@@ -2779,12 +2783,8 @@ void n32016_exec(uint32_t tubecycles)
             {
                FP_DST_32 -= FP_SRC_32;
             }
-
-            n32016_ShowRegs(1);
-
-            continue;
          }
-         // No break due to continue
+         break;
 
          case NEGf:
          {
@@ -2796,12 +2796,8 @@ void n32016_exec(uint32_t tubecycles)
             {
                FP_DST_32 = -FP_SRC_32;
             }
-
-            n32016_ShowRegs(1);
-
-            continue;
          }
-         // No break due to continue    
+         break;
 
          case DIVf:
          {
@@ -2813,12 +2809,9 @@ void n32016_exec(uint32_t tubecycles)
             {
                FP_DST_32 /= FP_SRC_32;
             }
-
-            n32016_ShowRegs(1);
-
             continue;
          }
-         // No break due to continue   
+         break;
 
          case MULf:
          {
@@ -2830,11 +2823,9 @@ void n32016_exec(uint32_t tubecycles)
             {
                FP_DST_32 *= FP_SRC_32;
             }
-            n32016_ShowRegs(1);
-
             continue;
          }
-         // No break due to continue
+         break;
 
          case ABSf:
          {
@@ -2846,11 +2837,9 @@ void n32016_exec(uint32_t tubecycles)
             {
                FP_DST_32 = fabsf(FP_SRC_32);
             }
-            n32016_ShowRegs(1);
-
             continue;
          }
-         // No break due to continue
+         break;
   
          default:
          {
@@ -2905,6 +2894,20 @@ void n32016_exec(uint32_t tubecycles)
                GOTO_TRAP(IllegalWritingImmediate);
                goto DoTrap;
             }
+         }
+      }
+
+      switch (Regs[1].RegType)
+      {
+         case SinglePrecision:
+         {
+            n32016_ShowRegs(BIT(2));
+         }
+         break;
+
+         case DoublePrecision:
+         {
+            n32016_ShowRegs(BIT(3));
          }
       }
    }
