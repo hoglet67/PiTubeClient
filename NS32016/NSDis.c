@@ -749,26 +749,28 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
 }
 #endif
 
-void ShowRegisterWrite(uint32_t Index, uint32_t Value)
+void ShowRegisterWrite(RegLKU RegIn, uint32_t Value)
 {
-   if (Regs[Index].Whole < 32)
+   if (RegIn.OpType < 8)
    {
 #ifdef SHOW_REG_WRITES
-      if (Regs[Index] < 8)
+      if (RegIn.RegType == Integer)
       {
-         PiTRACE(" R%u = %08"PRIX32"\n", Regs[Index], Value);
+         PiTRACE(" R%u = %"PRIX32"\n", RegIn.OpType, Value);
       }
 #endif
 
 #ifdef TEST_SUITE
-      if (Regs[Index].Whole == 7)
+      if (RegIn.OpType == 7)
       {
          PiTRACE("*** TEST = %u\n", Value);
 
+#if 0
          if (Value == 137)
          {
             PiTRACE("*** BREAKPOINT\n");
          }
+#endif
       }
 #endif
    }

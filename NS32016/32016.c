@@ -1215,6 +1215,7 @@ void n32016_exec(uint32_t tubecycles)
 
                case ROUND:
                case TRUNC:
+               case FLOOR:
                {
                   OpSize.Op[0] = GET_F_SIZE(opcode & BIT(10));                      // Source Size (Float/ Double)
                   WriteSize =
@@ -2742,29 +2743,13 @@ void n32016_exec(uint32_t tubecycles)
             if (Regs[0].RegType == DoublePrecision)
             {
                temp64.x64 = readgenq(0);
-               if (temp64.f64 > 0.0)
-               {
-                  temp64.f64 += 0.5;
-               }
-               else
-               {
-                  temp64.f64 -= 0.5;
-               }
-               temp = (int32_t) temp64.f64;
+               temp = round(temp64.f64);
             }
             else
             {
                Temp32Type q;
                q.x32 = ReadGen(0);
-               if (q.f32 > 0.0)
-               {
-                  q.f32 += 0.5;
-               }
-               else
-               {
-                  q.f32 -= 0.5;
-               }
-               temp = (int32_t) q.f32;
+               temp = roundf(q.f32);
             }
          }
          break;
@@ -2791,7 +2776,21 @@ void n32016_exec(uint32_t tubecycles)
          }
          break;
 
-         //case FLOOR:
+         case FLOOR:
+         {
+            if (Regs[0].RegType == DoublePrecision)
+            {
+               temp64.x64 = readgenq(0);
+               temp = floor(temp64.f64);
+            }
+            else
+            {
+               Temp32Type q;
+               q.x32 = ReadGen(0);
+               temp = floorf(q.f32);
+            }
+         }
+         break;
  
          // Format 11
          case ADDf:
@@ -2949,7 +2948,10 @@ void n32016_exec(uint32_t tubecycles)
                   case sz64:  *((uint64_t*)  genaddr[WriteIndex]) = temp64.x64;  break;
                }
 
-               ShowRegisterWrite(WriteIndex, Truncate(temp, WriteSize));
+               if (WriteSize <= sz32)
+               {
+                  ShowRegisterWrite(Regs[WriteIndex], Truncate(temp, WriteSize));
+               }
             }
             break;
 

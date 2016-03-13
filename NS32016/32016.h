@@ -523,7 +523,7 @@ extern void ShowInstruction(uint32_t pc, uint32_t* pPC, uint32_t opcode, uint32_
 #endif
 
 #if 1
-extern void ShowRegisterWrite(uint32_t Index, uint32_t Value);
+extern void ShowRegisterWrite(RegLKU RegIn, uint32_t Value);
 #else
 #define ShowRegisterWrite(...)
 #endif
