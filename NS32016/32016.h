@@ -397,8 +397,8 @@ typedef union
 
 typedef union
 {
-   float    f32[16];
-   double   f64[ 8];
+   float    fr32[16];
+   double   fr64[ 8];
    uint32_t u32[16];
    uint64_t u64[ 8];
 } FloatingPointRegisters;

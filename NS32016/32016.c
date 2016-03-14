@@ -65,14 +65,14 @@ void n32016_ShowRegs(int Option)
    {
       if (Option & BIT(2))
       {
-         TrapTRACE("F0=%f F1=%f F2=%f F3=%f\n", FR.f32[0], FR.f32[1], FR.f32[2], FR.f64[3]);
-         TrapTRACE("F4=%f F5=%f F6=%f F7=%f\n", FR.f64[4], FR.f64[5], FR.f64[6], FR.f64[7]);
+         TrapTRACE("F0=%f F1=%f F2=%f F3=%f\n", FR.fr32[0], FR.fr32[1], FR.fr32[4], FR.fr32[5]);
+         TrapTRACE("F4=%f F5=%f F6=%f F7=%f\n", FR.fr32[8], FR.fr32[9], FR.fr32[12], FR.fr32[13]);
       }
 
       if (Option & BIT(3))
       {
-         TrapTRACE("D0=%lf D1=%lf D2=%lf D3=%lf\n", FR.f64[0], FR.f64[1], FR.f64[2], FR.f64[3]);
-         TrapTRACE("D4=%lf D5=%lf D6=%lf D7=%lf\n", FR.f64[4], FR.f64[5], FR.f64[6], FR.f64[7]);
+         TrapTRACE("D0=%lf D1=%lf D2=%lf D3=%lf\n", FR.fr64[0], FR.fr64[1], FR.fr64[2], FR.fr64[3]);
+         TrapTRACE("D4=%lf D5=%lf D6=%lf D7=%lf\n", FR.fr64[4], FR.fr64[5], FR.fr64[6], FR.fr64[7]);
       }
    }
 }
@@ -291,14 +291,14 @@ static void GetGenPhase2(RegLKU gen, int c)
 
             case SinglePrecision:
             {
-               //genaddr[c] = (uint32_t) &FR.f32[((gen << 1) & 12) + (gen & 1)];
-               genaddr[c] = (uint32_t) &FR.f32[gen.OpType];                // Wrong stop gap
+               const uint32_t IndexLKUP[8] = { 0x0, 0x1, 0x4, 0x5, 0x8, 0x9, 0xC, 0xD };                    // See Page 2-3 of the manual!
+               genaddr[c] = (uint32_t) &FR.fr32[IndexLKUP[gen.OpType]];
             }
             break;
 
             case DoublePrecision:
             {
-               genaddr[c] = (uint32_t) &FR.f64[gen.OpType];
+               genaddr[c] = (uint32_t) &FR.fr64[gen.OpType];
             }
             break;
          
