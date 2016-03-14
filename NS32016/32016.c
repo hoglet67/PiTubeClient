@@ -2759,13 +2759,13 @@ void n32016_exec(uint32_t tubecycles)
             if (Regs[0].RegType == DoublePrecision)
             {
                temp64.x64 = readgenq(0);
-               temp = round(temp64.f64);
+               temp = (int32_t) round(temp64.f64);
             }
             else
             {
                Temp32Type q;
                q.x32 = ReadGen(0);
-               temp = roundf(q.f32);
+               temp = (int32_t) roundf(q.f32);
             }
          }
          break;
@@ -2797,13 +2797,13 @@ void n32016_exec(uint32_t tubecycles)
             if (Regs[0].RegType == DoublePrecision)
             {
                temp64.x64 = readgenq(0);
-               temp = floor(temp64.f64);
+               temp = (int32_t) floor(temp64.f64);
             }
             else
             {
                Temp32Type q;
                q.x32 = ReadGen(0);
-               temp = floorf(q.f32);
+               temp = (int32_t) floorf(q.f32);
             }
          }
          break;
@@ -2833,12 +2833,6 @@ void n32016_exec(uint32_t tubecycles)
 
          case MOVf:
          {
-            if (gentype[0] == TOS || gentype[1] == TOS)
-            {
-               PiWARN("MOVf with TOS is not yet implemented\n");
-               continue; // with next instruction
-            }
-
             if (Regs[0].RegType == DoublePrecision)
             {
                temp64.x64 = readgenq(0);
@@ -2972,8 +2966,8 @@ void n32016_exec(uint32_t tubecycles)
             {
                Temp32Type Src, Dst;
                Src.x32  = ReadGen(0);
-               Dst.f32  = -Src.f32;
-               temp     = fabsf(Dst.x32);
+               Dst.f32  = fabsf(Src.f32);
+               temp     = Dst.x32;
             }
          }
          break;
