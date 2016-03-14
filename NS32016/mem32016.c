@@ -115,23 +115,10 @@ uint32_t read_x32(uint32_t addr)
 
 uint64_t read_x64(uint32_t addr)
 {
-   //addr &= MEM_MASK;
-
-#ifdef NS_FAST_RAM
-   if (addr < IO_BASE)
-   {
-      return *((uint64_t*) (ns32016ram + addr));
-   }
-#endif
-
-   return ((uint64_t) read_x8(addr)) |
-      (((uint64_t) read_x8(addr + 1)) << 8) |
-      (((uint64_t) read_x8(addr + 2)) << 16) |
-      (((uint64_t) read_x8(addr + 3)) << 24) |
-      (((uint64_t) read_x8(addr + 4)) << 32) |
-      (((uint64_t) read_x8(addr + 5)) << 40) |
-      (((uint64_t) read_x8(addr + 6)) << 48) |
-      (((uint64_t) read_x8(addr + 7)) << 56);
+   // ARM doesn't support unalizged 64-bit loads, so the following
+   // results in a Data Abort exception:
+   // return *((uint64_t*) (ns32016ram + addr))
+   return (((uint64_t) read_x32(addr + 4)) << 32) + read_x32(addr + 4);
 }
 
 uint32_t read_n(uint32_t addr, uint32_t Size)
