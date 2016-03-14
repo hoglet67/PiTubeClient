@@ -118,7 +118,7 @@ uint64_t read_x64(uint32_t addr)
    // ARM doesn't support unalizged 64-bit loads, so the following
    // results in a Data Abort exception:
    // return *((uint64_t*) (ns32016ram + addr))
-   return (((uint64_t) read_x32(addr + 4)) << 32) + read_x32(addr + 4);
+   return (((uint64_t) read_x32(addr + 4)) << 32) + read_x32(addr);
 }
 
 uint32_t read_n(uint32_t addr, uint32_t Size)
