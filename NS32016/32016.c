@@ -2848,8 +2848,8 @@ void n32016_exec(uint32_t tubecycles)
                Src.x64 = readgenq(0);
                temp64.x64 = readgenq(1);
 
-               Z_FLAG = TEST(temp64.f64 == Src.f64);
-               N_FLAG = TEST(temp64.f64 >  Src.f64);
+               Z_FLAG = TEST(Src.f64 == temp64.f64);
+               N_FLAG = TEST(Src.f64 >  temp64.f64);
             }
             else
             {
@@ -2857,8 +2857,8 @@ void n32016_exec(uint32_t tubecycles)
                Src.x32 = ReadGen(0);
                Dst.x32 = ReadGen(1);
 
-               Z_FLAG = TEST(Dst.f32 == Src.f32);
-               N_FLAG = TEST(Dst.f32 >  Src.f32);
+               Z_FLAG = TEST(Src.f32 == Dst.f32);
+               N_FLAG = TEST(Src.f32 >  Dst.f32);
             }
             continue;
          }
