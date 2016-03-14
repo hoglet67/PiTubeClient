@@ -47,6 +47,8 @@ uint32_t genaddr[2];
 int gentype[2];
 OperandSizeType OpSize;
 
+const uint32_t IndexLKUP[8] = { 0x0, 0x1, 0x4, 0x5, 0x8, 0x9, 0xC, 0xD };                    // See Page 2-3 of the manual!
+
 void n32016_ShowRegs(int Option)
 {
    if (Option & BIT(0))
@@ -291,7 +293,6 @@ static void GetGenPhase2(RegLKU gen, int c)
 
             case SinglePrecision:
             {
-               const uint32_t IndexLKUP[8] = { 0x0, 0x1, 0x4, 0x5, 0x8, 0x9, 0xC, 0xD };                    // See Page 2-3 of the manual!
                genaddr[c] = (uint32_t) &FR.fr32[IndexLKUP[gen.OpType]];
             }
             break;
