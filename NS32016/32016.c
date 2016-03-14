@@ -319,9 +319,9 @@ static void GetGenPhase2(RegLKU gen, int c)
          if (OpSize.Op[c] == sz64)
          {
             temp3.u32 = SWAP32(read_x32(pc));
-            Immediate64.x64 = (((uint64_t) temp3.u32) << 32);
+            Immediate64.u64 = (((uint64_t) temp3.u32) << 32);
             temp3.u32 = SWAP32(read_x32(pc + 4));
-            Immediate64.x64 |= temp3.u32;
+            Immediate64.u64 |= temp3.u32;
          }
          else
          {
@@ -478,7 +478,7 @@ uint64_t readgenq(uint32_t c)
 
       case OpImmediate:
       {
-         Temp = Immediate64.x64;
+         Temp = Immediate64.u64;
       }
       break;
    }
@@ -2367,12 +2367,12 @@ void n32016_exec(uint32_t tubecycles)
          case MEI:
          {
             temp = ReadGen(0); // src
-            temp64.x64 = ReadGen(1); // dst
-            temp64.x64 *= temp;
+            temp64.u64 = ReadGen(1); // dst
+            temp64.u64 *= temp;
             // Handle the writing to the upper half of dst locally here
-            handle_mei_dei_upper_write(temp64.x64);
+            handle_mei_dei_upper_write(temp64.u64);
             // Allow fallthrough write logic to write the lower half of dst
-            temp = (uint32_t) temp64.x64;
+            temp = (uint32_t) temp64.u64;
          }
          break;
 
@@ -2393,25 +2393,25 @@ void n32016_exec(uint32_t tubecycles)
                GOTO_TRAP(DivideByZero);
             }
 
-            temp64.x64 = readgenq(1); // dst
+            temp64.u64 = readgenq(1); // dst
             switch (OpSize.Op[0])
             {
                case sz8:
-                  temp64.x64 = ((temp64.x64 >> 24) & 0xFF00) | (temp64.x64 & 0xFF);
+                  temp64.u64 = ((temp64.u64 >> 24) & 0xFF00) | (temp64.u64 & 0xFF);
                   break;
 
                case sz16:
-                  temp64.x64 = ((temp64.x64 >> 16) & 0xFFFF0000) | (temp64.x64 & 0xFFFF);
+                  temp64.u64 = ((temp64.u64 >> 16) & 0xFFFF0000) | (temp64.u64 & 0xFFFF);
                   break;
             }
             // PiTRACE("temp = %08x\n", temp);
-            // PiTRACE("temp64.x64 = %016" PRIu64 "\n", temp64.x64);
-            temp64.x64 = ((temp64.x64 / temp) << size) | (temp64.x64 % temp);
-            //PiTRACE("result = %016" PRIu64 "\n", temp64.x64);
+            // PiTRACE("temp64.u64 = %016" PRIu64 "\n", temp64.u64);
+            temp64.u64 = ((temp64.u64 / temp) << size) | (temp64.u64 % temp);
+            //PiTRACE("result = %016" PRIu64 "\n", temp64.u64);
             // Handle the writing to the upper half of dst locally here
-            handle_mei_dei_upper_write(temp64.x64);
+            handle_mei_dei_upper_write(temp64.u64);
             // Allow fallthrough write logic to write the lower half of dst
-            temp = (uint32_t) temp64.x64;
+            temp = (uint32_t) temp64.u64;
          }
          break;
 
@@ -2710,16 +2710,17 @@ void n32016_exec(uint32_t tubecycles)
          // Format 9
          case MOVif:
          {
-            temp2 = ReadGen(0);
+            Temp32Type Src;
+            Src.u32 = ReadGen(0);
             if (Regs[1].RegType == DoublePrecision)
             {
-               temp64.f64 = (double) ((int32_t) temp2);
+               temp64.f64 = (double) Src.s32;
             }
             else
             {
                Temp32Type q;
-               q.f32 = (float) ((int32_t) temp2);;
-               temp = q.x32;
+               q.f32 = (float) Src.s32;
+               temp = q.u32;
             }
          }
          break;
@@ -2734,17 +2735,17 @@ void n32016_exec(uint32_t tubecycles)
          case MOVLF:
          {
             Temp32Type q;
-            temp64.x64 = readgenq(0);
+            temp64.u64 = readgenq(0);
             q.f32 = (float) temp64.f64;
-            temp = q.x32;
+            temp = q.u32;
          }
          break;
 
          case MOVFL:
          {
-            Temp32Type q;
-            q.x32 = ReadGen(0);
-            temp64.f64 = (double) q.f32;
+            Temp32Type Src;
+            Src.u32 = ReadGen(0);
+            temp64.f64 = (double) Src.f32;
          }
          break;
 
@@ -2752,13 +2753,13 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (Regs[0].RegType == DoublePrecision)
             {
-               temp64.x64 = readgenq(0);
+               temp64.u64 = readgenq(0);
                temp = (int32_t) round(temp64.f64);
             }
             else
             {
                Temp32Type q;
-               q.x32 = ReadGen(0);
+               q.u32 = ReadGen(0);
                temp = (int32_t) roundf(q.f32);
             }
          }
@@ -2768,13 +2769,13 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (Regs[0].RegType == DoublePrecision)
             {
-               temp64.x64 = readgenq(0);
+               temp64.u64 = readgenq(0);
                temp = (int32_t) temp64.f64;
             }
             else
             {
                Temp32Type q;
-               q.x32 = ReadGen(0);
+               q.u32 = ReadGen(0);
                temp = (int32_t) q.f32;
             }
          }
@@ -2790,13 +2791,13 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (Regs[0].RegType == DoublePrecision)
             {
-               temp64.x64 = readgenq(0);
+               temp64.u64 = readgenq(0);
                temp = (int32_t) floor(temp64.f64);
             }
             else
             {
                Temp32Type q;
-               q.x32 = ReadGen(0);
+               q.u32 = ReadGen(0);
                temp = (int32_t) floorf(q.f32);
             }
          }
@@ -2808,19 +2809,19 @@ void n32016_exec(uint32_t tubecycles)
             if (Regs[0].RegType == DoublePrecision)
             {
                Temp64Type Src;
-               Src.x64     = readgenq(0);
-               temp64.x64  = readgenq(1);
+               Src.u64     = readgenq(0);
+               temp64.u64  = readgenq(1);
 
                temp64.f64 += Src.f64;
             }
             else
             {
                Temp32Type Src, Dst;
-               Src.x32 = ReadGen(0);
-               Dst.x32 = ReadGen(1);
+               Src.u32 = ReadGen(0);
+               Dst.u32 = ReadGen(1);
 
                Dst.f32 += Src.f32;
-               temp = Dst.x32;
+               temp = Dst.u32;
             }
          }
          break;
@@ -2829,7 +2830,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             if (Regs[0].RegType == DoublePrecision)
             {
-               temp64.x64 = readgenq(0);
+               temp64.u64 = readgenq(0);
             }
             else
             {
@@ -2845,8 +2846,8 @@ void n32016_exec(uint32_t tubecycles)
             if (Regs[0].RegType == DoublePrecision)
             {
                Temp64Type Src;
-               Src.x64 = readgenq(0);
-               temp64.x64 = readgenq(1);
+               Src.u64 = readgenq(0);
+               temp64.u64 = readgenq(1);
 
                Z_FLAG = TEST(Src.f64 == temp64.f64);
                N_FLAG = TEST(Src.f64 >  temp64.f64);
@@ -2854,8 +2855,8 @@ void n32016_exec(uint32_t tubecycles)
             else
             {
                Temp32Type Src, Dst;
-               Src.x32 = ReadGen(0);
-               Dst.x32 = ReadGen(1);
+               Src.u32 = ReadGen(0);
+               Dst.u32 = ReadGen(1);
 
                Z_FLAG = TEST(Src.f32 == Dst.f32);
                N_FLAG = TEST(Src.f32 >  Dst.f32);
@@ -2869,19 +2870,19 @@ void n32016_exec(uint32_t tubecycles)
             if (Regs[0].RegType == DoublePrecision)
             {
                Temp64Type Src;
-               Src.x64    = readgenq(0);
-               temp64.x64 = readgenq(1);
+               Src.u64    = readgenq(0);
+               temp64.u64 = readgenq(1);
 
                temp64.f64 -= Src.f64;
             }
             else
             {
                Temp32Type Src, Dst;
-               Src.x32 = ReadGen(0);
-               Dst.x32 = ReadGen(1);
+               Src.u32 = ReadGen(0);
+               Dst.u32 = ReadGen(1);
  
                Dst.f32 -= Src.f32;
-               temp = Dst.x32;
+               temp = Dst.u32;
             }
          }
          break;
@@ -2891,15 +2892,15 @@ void n32016_exec(uint32_t tubecycles)
             if (Regs[0].RegType == DoublePrecision)
             {
                Temp64Type Src;
-               Src.x64 = readgenq(0);
+               Src.u64 = readgenq(0);
                temp64.f64 = -Src.f64;
             }
             else
             {
                Temp32Type Src, Dst;
-               Src.x32 = ReadGen(0);
+               Src.u32 = ReadGen(0);
                Dst.f32 = -Src.f32;
-               temp = Dst.x32;
+               temp = Dst.u32;
             }
          }
          break;
@@ -2909,19 +2910,19 @@ void n32016_exec(uint32_t tubecycles)
             if (Regs[0].RegType == DoublePrecision)
             {
                Temp64Type Src;
-               Src.x64 = readgenq(0);
-               temp64.x64 = readgenq(1);
+               Src.u64 = readgenq(0);
+               temp64.u64 = readgenq(1);
 
                temp64.f64 /= Src.f64;
             }
             else
             {
                Temp32Type Src, Dst;
-               Src.x32 = ReadGen(0);
-               Dst.x32 = ReadGen(1);
+               Src.u32 = ReadGen(0);
+               Dst.u32 = ReadGen(1);
 
                Dst.f32 /= Src.f32;
-               temp = Dst.x32;
+               temp = Dst.u32;
             }
          }
          break;
@@ -2931,19 +2932,19 @@ void n32016_exec(uint32_t tubecycles)
             if (Regs[0].RegType == DoublePrecision)
             {
                Temp64Type Src;
-               Src.x64 = readgenq(0);
-               temp64.x64 = readgenq(1);
+               Src.u64 = readgenq(0);
+               temp64.u64 = readgenq(1);
 
                temp64.f64 *= Src.f64;
             }
             else
             {
                Temp32Type Src, Dst;
-               Src.x32 = ReadGen(0);
-               Dst.x32 = ReadGen(1);
+               Src.u32 = ReadGen(0);
+               Dst.u32 = ReadGen(1);
 
                Dst.f32 *= Src.f32;
-               temp = Dst.x32;
+               temp = Dst.u32;
             }
          }
          break;
@@ -2953,15 +2954,15 @@ void n32016_exec(uint32_t tubecycles)
             if (Regs[0].RegType == DoublePrecision)
             {
                Temp64Type Src;
-               Src.x64 = readgenq(0);
+               Src.u64 = readgenq(0);
                temp64.f64 = fabs(Src.f64);
             }
             else
             {
                Temp32Type Src, Dst;
-               Src.x32  = ReadGen(0);
+               Src.u32  = ReadGen(0);
                Dst.f32  = fabsf(Src.f32);
-               temp     = Dst.x32;
+               temp     = Dst.u32;
             }
          }
          break;
@@ -2989,7 +2990,7 @@ void n32016_exec(uint32_t tubecycles)
                   case sz8:   write_x8( genaddr[WriteIndex], temp);  break;
                   case sz16:  write_x16(genaddr[WriteIndex], temp);  break;
                   case sz32:  write_x32(genaddr[WriteIndex], temp);  break;
-                  case sz64:  write_x64(genaddr[WriteIndex], temp64.x64);  break;
+                  case sz64:  write_x64(genaddr[WriteIndex], temp64.u64);  break;
                }
             }
             break;
@@ -3001,7 +3002,7 @@ void n32016_exec(uint32_t tubecycles)
                   case sz8:   *((uint8_t*)   genaddr[WriteIndex]) = temp;  break;
                   case sz16:  *((uint16_t*)  genaddr[WriteIndex]) = temp;  break;
                   case sz32:  *((uint32_t*)  genaddr[WriteIndex]) = temp;  break;
-                  case sz64:  *((uint64_t*)  genaddr[WriteIndex]) = temp64.x64;  break;
+                  case sz64:  *((uint64_t*)  genaddr[WriteIndex]) = temp64.u64;  break;
                }
 
                if (WriteSize <= sz32)
@@ -3015,7 +3016,7 @@ void n32016_exec(uint32_t tubecycles)
             {
                if (WriteSize == sz64)
                {
-                  PushArbitary(temp64.x64, WriteSize);
+                  PushArbitary(temp64.u64, WriteSize);
                }
                else
                {
