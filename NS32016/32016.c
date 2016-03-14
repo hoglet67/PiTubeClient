@@ -100,12 +100,6 @@ void n32016_reset(uint32_t StartAddress)
    PR.BPC = 0xFFFFFFFF;
 }
 
-static void pushw(uint16_t val)
-{
-   DEC_SP(2);
-   write_x16(GET_SP(), val);
-}
-
 static void pushd(uint32_t val)
 {
    DEC_SP(4);
