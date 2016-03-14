@@ -106,7 +106,7 @@ static void pushd(uint32_t val)
    write_x32(GET_SP(), val);
 }
 
-void PushArbitary(uint32_t Value, uint32_t Size)
+void PushArbitary(uint64_t Value, uint32_t Size)
 {
    DEC_SP(Size);
    write_Arbitary(GET_SP(), &Value, Size);
@@ -3013,7 +3013,14 @@ void n32016_exec(uint32_t tubecycles)
 
             case TOS:
             {
-               PushArbitary(temp, WriteSize);
+               if (WriteSize == sz64)
+               {
+                  PushArbitary(temp64.x64, WriteSize);
+               }
+               else
+               {
+                  PushArbitary(temp, WriteSize);
+               }
             }
             break;
 
