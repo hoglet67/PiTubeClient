@@ -2713,12 +2713,12 @@ void n32016_exec(uint32_t tubecycles)
             temp2 = ReadGen(0);
             if (Regs[1].RegType == DoublePrecision)
             {
-               temp64.f64 = (double) temp2;
+               temp64.f64 = (double) ((int32_t) temp2);
             }
             else
             {
                Temp32Type q;
-               q.f32 = (float) temp2;
+               q.f32 = (float) ((int32_t) temp2);;
                temp = q.x32;
             }
          }
