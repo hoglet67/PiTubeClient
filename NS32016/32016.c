@@ -149,7 +149,7 @@ int32_t GetDisplacement(uint32_t* pPC)
    switch (Disp.u32 >> 29)
       // Look at the top 3 bits
    {
-      case 0: // 7 Bit Posative
+      case 0: // 7 Bit Positive
       case 1:
       {
          Value = Disp.u8;
@@ -165,7 +165,7 @@ int32_t GetDisplacement(uint32_t* pPC)
       }
       break;
 
-      case 4: // 14 Bit Posative
+      case 4: // 14 Bit Positive
       {
          Value = (Disp.u16 & 0x3FFF);
          (*pPC) += sizeof(int16_t);
@@ -179,7 +179,7 @@ int32_t GetDisplacement(uint32_t* pPC)
       }
       break;
 
-      case 6: // 30 Bit Posative
+      case 6: // 30 Bit Positive
       {
          Value = (Disp.u32 & 0x3FFFFFFF);
          (*pPC) += sizeof(int32_t);
