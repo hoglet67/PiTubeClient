@@ -4,10 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "32016.h"
-#include "mem32016.h"
 #include "Profile.h"
 #include "Trap.h"
 #include "defs.h"
+#include "Decode.h"
+
+uint8_t FunctionLookup[256];
 
 const uint8_t FormatSizes[FormatCount + 1] =
 {
@@ -52,8 +54,8 @@ uint8_t GetFunction(uint8_t FirstByte)
          return FUNC(Format6, 0);
       case 0xCE:
          return FUNC(Format7, 0);
-         CASE4(0x2E)
-            : return FUNC(Format8, 0);
+      CASE4(0x2E):
+         return FUNC(Format8, 0);
       case 0x3E:
          return FUNC(Format9, 0);
       case 0x7E:
@@ -71,12 +73,9 @@ uint8_t GetFunction(uint8_t FirstByte)
    return FormatBad;
 }
 
-
 void n32016_build_matrix()
 {
    uint32_t Index;
-
-   memset(FunctionLookup, FormatBad, sizeof(FunctionLookup));
 
    for (Index = 0; Index < 256; Index++)
    {

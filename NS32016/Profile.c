@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "32016.h"
+#include "Decode.h"
 #include "mem32016.h"
 #include "defs.h"
 //#include "Trap.h"

@@ -3,17 +3,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "defs.h"
 #include "32016.h"
 #include "mem32016.h"
 #include "Profile.h"
 #include "Trap.h"
-#include "defs.h"
+#include "Decode.h"
 
 #define HEX24 "x'%06" PRIX32
 #define HEX32 "x'%" PRIX32
 
 uint32_t OpCount = 0;
-uint8_t FunctionLookup[256];
+
 OperandSizeType FredSize;
 
 const char LPRLookUp[16][20] = 

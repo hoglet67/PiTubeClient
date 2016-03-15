@@ -12,6 +12,7 @@
 #include "mem32016.h"
 #include "defs.h"
 #include "Trap.h"
+#include "Decode.h"
 
 #ifdef PROFILING
 #include "Profile.h"
