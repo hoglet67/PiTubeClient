@@ -136,67 +136,8 @@ const char InstuctionText[InstructionCount][8] =
    "RDVAL", "WRVAL", "LMR", "SMR", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "CINV", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP", "TRAP",
 
    // Illegal
-   "TRAP" };
-
-int32_t GetDisplacement(uint32_t* pPC)
-{
-   // Displacements are in Little Endian and need to be sign extended
-   int32_t Value;
-
-   MultiReg Disp;
-   Disp.u32 = SWAP32(read_x32(*pPC));
-
-   switch (Disp.u32 >> 29)
-      // Look at the top 3 bits
-   {
-      case 0: // 7 Bit Posative
-      case 1:
-      {
-         Value = Disp.u8;
-         (*pPC) += sizeof(int8_t);
-      }
-      break;
-
-      case 2: // 7 Bit Negative
-      case 3:
-      {
-         Value = (Disp.u8 | 0xFFFFFF80);
-         (*pPC) += sizeof(int8_t);
-      }
-      break;
-
-      case 4: // 14 Bit Posative
-      {
-         Value = (Disp.u16 & 0x3FFF);
-         (*pPC) += sizeof(int16_t);
-      }
-      break;
-
-      case 5: // 14 Bit Negative
-      {
-         Value = (Disp.u16 | 0xFFFFC000);
-         (*pPC) += sizeof(int16_t);
-      }
-      break;
-
-      case 6: // 30 Bit Posative
-      {
-         Value = (Disp.u32 & 0x3FFFFFFF);
-         (*pPC) += sizeof(int32_t);
-      }
-      break;
-
-      case 7: // 30 Bit Negative
-      default: // Stop it moaning about Value not being set ;)
-      {
-         Value = Disp.u32;
-         (*pPC) += sizeof(int32_t);
-      }
-      break;
-   }
-
-   return Value;
-}
+   "TRAP"
+};
 
 void GetOperandText(uint32_t Start, uint32_t* pPC, RegLKU Pattern, uint32_t c)
 {

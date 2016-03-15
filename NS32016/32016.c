@@ -138,59 +138,64 @@ uint32_t PopArbitary(uint32_t Size)
    return Result;
 }
 
-static uint32_t getdisp()
-{ 
+int32_t GetDisplacement(uint32_t* pPC)
+{
    // Displacements are in Little Endian and need to be sign extended
+   int32_t Value;
 
    MultiReg Disp;
-   Disp.u32 = SWAP32(read_x32(pc++));
+   Disp.u32 = SWAP32(read_x32(*pPC));
 
-   switch (Disp.u32 >> 29)                                              // Look at the top 3 bits
+   switch (Disp.u32 >> 29)
+      // Look at the top 3 bits
    {
-      case 0:                                                           // 7 Bit Posative
+      case 0: // 7 Bit Posative
       case 1:
       {
-         return Disp.u8;
+         Value = Disp.u8;
+         (*pPC) += sizeof(int8_t);
       }
-      // No break due to return
+      break;
 
-      case 2:                                                           // 7 Bit Negative
+      case 2: // 7 Bit Negative
       case 3:
       {
-         return Disp.u8 | 0xFFFFFF80;
+         Value = (Disp.u8 | 0xFFFFFF80);
+         (*pPC) += sizeof(int8_t);
       }
-      // No break due to return
+      break;
 
-      case 4:                                                           // 14 Bit Posative
+      case 4: // 14 Bit Posative
       {
-         pc++;
-         return Disp.u16 & 0x3FFF;
+         Value = (Disp.u16 & 0x3FFF);
+         (*pPC) += sizeof(int16_t);
       }
-      // No break due to return
+      break;
 
-      case 5:                                                           // 14 Bit Negative
+      case 5: // 14 Bit Negative
       {
-         pc++;
-         return Disp.u16 | 0xFFFFC000;
+         Value = (Disp.u16 | 0xFFFFC000);
+         (*pPC) += sizeof(int16_t);
       }
-      // No break due to return
+      break;
 
-      case 6:                                                           // 30 Bit Posative
+      case 6: // 30 Bit Posative
       {
-         pc += 3;
-         return Disp.u32 & 0x3FFFFFFF;
+         Value = (Disp.u32 & 0x3FFFFFFF);
+         (*pPC) += sizeof(int32_t);
       }
-      // No break due to return
-   
-      case 7:                                                           // 30 Bit Negative
+      break;
+
+      case 7: // 30 Bit Negative
+      default: // Stop it moaning about Value not being set ;)
       {
-         pc += 3;
-         return Disp.u32;
+         Value = Disp.u32;
+         (*pPC) += sizeof(int32_t);
       }
-      // No break due to return
+      break;
    }
 
-   return 0;                                                            // Unreaable code
+   return Value;
 }
 
 uint32_t Truncate(uint32_t Value, uint32_t Size)
@@ -345,7 +350,7 @@ static void GetGenPhase2(RegLKU gen, int c)
 
       if (gen.OpType <= R7_Offset)
       {
-         genaddr[c] = r[gen.Whole & 7] + getdisp();
+         genaddr[c] = r[gen.Whole & 7] + GetDisplacement(&pc);
          return;
       }
 
@@ -375,35 +380,35 @@ static void GetGenPhase2(RegLKU gen, int c)
       switch (gen.OpType)
       {
          case FrameRelative:
-            temp = getdisp();
-            temp2 = getdisp();
+            temp = GetDisplacement(&pc);
+            temp2 = GetDisplacement(&pc);
             genaddr[c] = read_x32(fp + temp);
             genaddr[c] += temp2;
             break;
 
          case StackRelative:
-            temp = getdisp();
-            temp2 = getdisp();
+            temp = GetDisplacement(&pc);
+            temp2 = GetDisplacement(&pc);
             genaddr[c] = read_x32(GET_SP() + temp);
             genaddr[c] += temp2;
             break;
 
          case StaticRelative:
-            temp = getdisp();
-            temp2 = getdisp();
+            temp = GetDisplacement(&pc);
+            temp2 = GetDisplacement(&pc);
             genaddr[c] = read_x32(sb + temp);
             genaddr[c] += temp2;
             break;
 
          case Absolute:
-            genaddr[c] = getdisp();
+            genaddr[c] = GetDisplacement(&pc);
             break;
 
          case External:
             temp = read_x32(mod + 4);
-            temp += ((int32_t) getdisp()) * 4;
+            temp += ((int32_t) GetDisplacement(&pc)) * 4;
             temp2 = read_x32(temp);
-            genaddr[c] = temp2 + getdisp();
+            genaddr[c] = temp2 + GetDisplacement(&pc);
             break;
 
          case TopOfStack:
@@ -412,19 +417,19 @@ static void GetGenPhase2(RegLKU gen, int c)
             break;
 
          case FpRelative:
-            genaddr[c] = getdisp() + fp;
+            genaddr[c] = GetDisplacement(&pc) + fp;
             break;
 
          case SpRelative:
-            genaddr[c] = getdisp() + GET_SP();
+            genaddr[c] = GetDisplacement(&pc) + GET_SP();
             break;
 
          case SbRelative:
-            genaddr[c] = getdisp() + sb;
+            genaddr[c] = GetDisplacement(&pc) + sb;
             break;
 
          case PcRelative:
-            genaddr[c] = getdisp() + startpc;
+            genaddr[c] = GetDisplacement(&pc) + startpc;
             break;
 
          default:
@@ -1298,7 +1303,7 @@ void n32016_exec(uint32_t tubecycles)
 
       if (Function <= RETT)
       {
-         temp = getdisp();
+         temp = GetDisplacement(&pc);
       }
 
       if (TrapFlags)
@@ -1451,7 +1456,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             int c;
             temp = READ_PC_BYTE();
-            temp2 = getdisp();
+            temp2 = GetDisplacement(&pc);
             pushd(fp);
             fp = GET_SP();
             DEC_SP(temp2);
@@ -1603,7 +1608,7 @@ void n32016_exec(uint32_t tubecycles)
             NIBBLE_EXTEND(temp2);
             temp = ReadGen(0);
             temp += temp2;
-            temp2 = getdisp();
+            temp2 = GetDisplacement(&pc);
             if (Truncate(temp, OpSize.Op[0]))
                pc = startpc + temp2;
          }
@@ -2226,8 +2231,8 @@ void n32016_exec(uint32_t tubecycles)
          {
             uint32_t First    = ReadAddress(0);
             uint32_t Second   = ReadAddress(1);
-            //temp = getdisp() + OpSize.Op[0];                      // disp of 0 means move 1 byte
-            temp = (getdisp() & ~(OpSize.Op[0] - 1))  + OpSize.Op[0];
+            //temp = GetDisplacement(&pc) + OpSize.Op[0];                      // disp of 0 means move 1 byte
+            temp = (GetDisplacement(&pc) & ~(OpSize.Op[0] - 1))  + OpSize.Op[0];
             while (temp)
             {
                temp2 = read_x8(First);
@@ -2247,7 +2252,7 @@ void n32016_exec(uint32_t tubecycles)
             uint32_t First    = ReadAddress(0);
             uint32_t Second   = ReadAddress(1);
 
-            temp3 = (getdisp() / temp4) + 1;
+            temp3 = (GetDisplacement(&pc) / temp4) + 1;
 
             //PiTRACE("CMP Size = %u Count = %u\n", temp4, temp3);
             while (temp3--)
@@ -2500,7 +2505,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             uint32_t c;
             int32_t  Offset = r[(opcode >> 11) & 7];
-            uint32_t Length = getdisp();
+            uint32_t Length = GetDisplacement(&pc);
             uint32_t StartBit;
 
             if (Length < 1 || Length > 32)
@@ -2562,7 +2567,7 @@ void n32016_exec(uint32_t tubecycles)
          {
             uint32_t c;
             int32_t  Offset = r[(opcode >> 11) & 7];
-            uint32_t Length = getdisp();
+            uint32_t Length = GetDisplacement(&pc);
             uint32_t Source = ReadGen(0);
             uint32_t StartBit;
 
