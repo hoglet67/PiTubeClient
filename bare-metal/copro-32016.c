@@ -22,6 +22,9 @@
 
 #define PANDORA_BASE 0xF00000
 
+int tubecycles = 0;
+int tube_irq = 0;
+
 uint8_t Exit;
 
 void copro_32016_init_hardware()
@@ -36,9 +39,9 @@ void copro_32016_init_hardware()
 static void copro_32016_reset()
 {
 #ifdef PANDORA_BASE
-   n32016_reset(PANDORA_BASE); // Start directly in the ROM
+   n32016_reset_addr(PANDORA_BASE); // Start directly in the ROM
 #else
-         n32016_reset(0); // Start at 0 just like the original
+   n32016_reset_addr(0); // Start at 0 just like the original
 #endif
 }
 
@@ -54,7 +57,7 @@ void copro_32016_main(unsigned int r0, unsigned int r1, unsigned int atags)
    enable_MMU_and_IDCaches();
    _enable_unaligned_access();
 
-   init_ram();
+   n32016_init();
 
    copro_32016_reset();
 
@@ -64,7 +67,8 @@ void copro_32016_main(unsigned int r0, unsigned int r1, unsigned int atags)
    tube_irq = 0;
    while (1)
    {
-      n32016_exec(4);
+      tubecycles = 32;
+      n32016_exec();
 
       gpio = RPI_GpioBase->GPLEV0;
 

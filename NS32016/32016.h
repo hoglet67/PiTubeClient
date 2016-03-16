@@ -327,8 +327,10 @@ enum StringBits
 
 extern void n32016_init();
 extern void n32016_ShowRegs(int bShowFloat);
-extern void n32016_reset(uint32_t StartAddress);
-extern void n32016_exec(uint32_t tubecycles);
+extern void n32016_reset();
+extern void n32016_reset_addr(uint32_t StartAddress);
+extern void n32016_exec();
+extern void n32016_close();
 extern void n32016_build_matrix();
 extern void BreakPoint(uint32_t pc, uint32_t opcode);
 extern int32_t GetDisplacement(uint32_t* pPC);
@@ -373,7 +375,8 @@ extern FILE *pTraceFile;
 
 #define PiWARN(...)  { printf("pc=%08"PRIX32": ",pc); printf(__VA_ARGS__); }
 
-extern uint32_t tube_irq;
+extern int tubecycles;
+extern int tube_irq;
 extern uint32_t genaddr[2];
 extern int gentype[2];
 extern const uint8_t FormatSizes[FormatCount + 1];

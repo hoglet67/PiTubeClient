@@ -37,10 +37,6 @@ uint32_t Trace = 1;
 uint32_t Trace = 0;
 #endif
 
-
-uint32_t tube_irq = 0;
-
-
 uint32_t startpc;
 
 RegLKU Regs[2];
@@ -92,7 +88,21 @@ const uint32_t OpSizeLookup[6] =
    (sz64 << 8) | sz64                // Floating Point Double Precision
 };
 
-void n32016_reset(uint32_t StartAddress)
+void n32016_init()
+{
+   init_ram();
+}
+
+void n32016_close()
+{
+}
+
+void n32016_reset()
+{
+   n32016_reset_addr(0xF00000);
+}
+
+void n32016_reset_addr(uint32_t StartAddress)
 {
    n32016_build_matrix();
 
@@ -1007,7 +1017,7 @@ uint32_t ReturnCommon(void)
    return 0;                     // OK
 }
 
-void n32016_exec(uint32_t tubecycles)
+void n32016_exec()
 {
    uint32_t opcode, WriteIndex;
    uint32_t temp = 0, temp2, temp3;
@@ -1026,8 +1036,10 @@ void n32016_exec(uint32_t tubecycles)
       TakeInterrupt(intbase);
    }
 
-   while (tubecycles--)
+   while (tubecycles > 0)
    {
+      tubecycles -= 8;
+
       CLEAR_TRAP();
 
       WriteSize      = szVaries;                                            // The size a result may be written as

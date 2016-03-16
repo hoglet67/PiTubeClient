@@ -11,6 +11,9 @@
 FILE* pTraceFile = NULL;
 #endif
 
+int tubecycles = 0;
+int tube_irq = 0;
+
 void tubeWrite(unsigned char Address, unsigned char Data)
 {
    unsigned char temp = (Data < ' ') ? ' ' : Data;
@@ -50,16 +53,16 @@ int main(int argc, char* argv[])
 {
    OpenTrace("PandoraTrace.txt");
    ProfileInit();
-   init_ram();
+   n32016_init();
 
 #ifdef INSTRUCTION_PROFILING
    memset(IP, 0, sizeof(IP));
 #endif
 
 #ifdef PANDORA_BASE
-   n32016_reset(PANDORA_BASE);
+   n32016_reset_addr(PANDORA_BASE);
 #else
-   n32016_reset(0);
+   n32016_reset_addr(0);
 #endif
 
 #if 0
@@ -73,7 +76,8 @@ int main(int argc, char* argv[])
 
 	while (1)
 	{
-		n32016_exec(1);
+		tubecycles = 8;
+		n32016_exec();
 	}
 #endif
 

@@ -10,8 +10,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include "32016.h"
-#include "../bare-metal/tube-lib.h"
 #include "mem32016.h"
+
+#ifdef BEEBEM
+#define tubeRead tube_parasite_read
+#define tubeWrite tube_parasite_write
+#else
+#include "../bare-metal/tube-lib.h"
+#endif
 
 #ifdef TEST_SUITE
 #if TEST_SUITE == 0
