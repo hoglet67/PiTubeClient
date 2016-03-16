@@ -54,6 +54,8 @@ add_executable( tube-client
     copro-32016.h
     ../../NS32016/32016.c
     ../../NS32016/32016.h
+    ../../NS32016/Decode.c
+    ../../NS32016/Decode.h
     ../../NS32016/mem32016.c
     ../../NS32016/mem32016.h
     ../../NS32016/NSDis.c
