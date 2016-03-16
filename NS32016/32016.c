@@ -3021,6 +3021,7 @@ void n32016_exec(uint32_t tubecycles)
          }
       }
 
+#if 0
       switch (Regs[1].RegType)
       {
          case SinglePrecision:
@@ -3034,5 +3035,6 @@ void n32016_exec(uint32_t tubecycles)
             n32016_ShowRegs(BIT(3));
          }
       }
+#endif
    }
 }
