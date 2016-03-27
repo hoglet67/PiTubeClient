@@ -2671,10 +2671,12 @@ void n32016_exec()
                }
                break;
             }
+            SIGN_EXTEND(OpSize.Op[0], temp);  // upper bound
+            SIGN_EXTEND(OpSize.Op[0], temp2); // lower bound
 
             //PiTRACE("Reg = %u Bounds [%u - %u] Index = %u", 0, temp, temp2, temp3);
 
-            if ((temp >= temp3) && (temp3 >= temp2))
+            if (((signed int)temp >= (signed int)temp3) && ((signed int)temp3 >= (signed int)temp2))
             {
                r[(opcode >> 11) & 7] = temp3 - temp2;
                F_FLAG = 0;
