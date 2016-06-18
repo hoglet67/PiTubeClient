@@ -18,7 +18,7 @@
 #define COPRO_ECO_CLK 7
 
 //#define COPRO COPRO_80186
-#define COPRO COPRO_32016
+#define COPRO COPRO_65TUBE
 
 void kernel_main(unsigned int r0, unsigned int r1, unsigned int atags)
 {
