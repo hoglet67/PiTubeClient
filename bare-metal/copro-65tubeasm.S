@@ -78,6 +78,8 @@
 .equ    Z_FLAG,      0x40000000
 .equ    C_FLAG,      0x20000000
 
+.equ    ARM_INT_MASK,0x80
+
 // **********************************************
 // Start of macros
 // **********************************************
@@ -162,7 +164,7 @@
         ldrb    r1, [sl]
         mrs     r2, CPSR
         push    {r2}
-        orr     r2, r2, #0x80
+        orr     r2, r2, #ARM_INT_MASK
         msr     CPSR_c, r2        
         push    {r3-r12}
         bl      copro_65tube_trace
@@ -581,8 +583,15 @@ exec_65tube:
         str     r0, [r1]
         
         mrs     r0, CPSR                // Enable ARM interrupts
-        bic     r0, r0, #0x80
+        bic     r0, r0, #ARM_INT_MASK
         msr     CPSR_c, r0
+
+        mov     r4, #0x00               // Initialize r4 (flags) to zero on power up
+                                        // This was added to fix a bug where the language transfer
+                                        // would fail if exec_65tube was entered with certain
+                                        // values of r4 (specifically, with bit 7 = 1).
+                                        // This is very strange, because r4 bit 7 is not used!
+                                        // To reproduce, initialize r4 to 0x80
 
 handle_rst:
         orr     r4, r4, #4              // Set the I bit
@@ -619,7 +628,7 @@ arm_irq_handler:
 // We have come here via a branch from the second instruction table
 Event_Handler:
         mrs     r2, CPSR                // preserve the 6502 flags
-        orr     r1, r2, #0x80           // disable ARM IRQs
+        orr     r1, r2, #ARM_INT_MASK   // disable ARM IRQs
         msr     CPSR_c, r1
         
         ldr     r0, events
@@ -680,7 +689,7 @@ decimal_mode_sbc:
 
 tube_load_handler:
         push    {r0-r3,lr}                // r0 = address, r2 = current cpsr
-        orr     r2, r2, #0x80             // disable ARM interrupts
+        orr     r2, r2, #ARM_INT_MASK     // disable ARM interrupts
         msr     CPSR_c, r2
         push    {ip}                      // push ip after disabling interrupts to avoid a race condition
         bl      copro_65tube_tube_read
@@ -690,7 +699,7 @@ tube_load_handler:
 
 tube_store_handler:
         push    {r0-r3,lr}                // r0 = address, r1 = data, r2 = current cpsr
-        orr     r2, r2, #0x80             // disable ARM interrupts
+        orr     r2, r2, #ARM_INT_MASK     // disable ARM interrupts
         msr     CPSR_c, r2
         push    {ip}                      // push ip after disabling interrupts to avoid a race condition
         bl      copro_65tube_tube_write
@@ -2654,5 +2663,5 @@ mpu_memory:
 .endr
 
 // **********************************************
-// Start of opcode implementations
+// End of 64K of 6502 RAM
 // **********************************************
