@@ -74,26 +74,26 @@ void dump_ram(void)
 
 uint8_t read_x8(uint32_t addr)
 {
-   //addr &= MEM_MASK;
+   addr &= 0xFFFFFF;
 
    if (addr < IO_BASE)
    {
       return ns32016ram[addr];
    }
 
-   if ((addr & 0x01) == 0)
+   if ((addr & 0xFFFFF1) == 0xFFFFF0)
    {
       return tubeRead(addr >> 1);
    }
 
-   //PiTRACE("Bad read_x8 @ %06"PRIX32"\n", addr);
+   PiWARN("Bad Read @ %06" PRIX32 "\n", addr);
 
    return 0;
 }
 
 uint16_t read_x16(uint32_t addr)
 {
-   //addr &= MEM_MASK;
+   addr &= 0xFFFFFF;
 
 #ifdef NS_FAST_RAM
    if (addr < IO_BASE)
@@ -107,7 +107,7 @@ uint16_t read_x16(uint32_t addr)
 
 uint32_t read_x32(uint32_t addr)
 {
-   //addr &= MEM_MASK;
+   addr &= 0xFFFFFF;
 
 #ifdef NS_FAST_RAM
    if (addr < IO_BASE)
@@ -121,6 +121,7 @@ uint32_t read_x32(uint32_t addr)
 
 uint64_t read_x64(uint32_t addr)
 {
+   addr &= 0xFFFFFF;
    // ARM doesn't support unalizged 64-bit loads, so the following
    // results in a Data Abort exception:
    // return *((uint64_t*) (ns32016ram + addr))
@@ -129,6 +130,7 @@ uint64_t read_x64(uint32_t addr)
 
 uint32_t read_n(uint32_t addr, uint32_t Size)
 {
+   addr &= 0xFFFFFF;
    if (Size <= sizeof(uint64_t))
    {
       if ((addr + Size) <= IO_BASE)
@@ -139,13 +141,13 @@ uint32_t read_n(uint32_t addr, uint32_t Size)
       }
    }
 
-   PiTRACE("Bad Read @ %06" PRIu32 "\n", addr);
+   PiWARN("Bad Read @ %06" PRIX32 "\n", addr);
    return 0;
 }
 
 void write_x8(uint32_t addr, uint8_t val)
 { 
-  //addr &= MEM_MASK;
+   addr &= 0xFFFFFF;
 
 #ifdef TRACE_WRITEs
    PiTRACE(" @%06"PRIX32" = %02"PRIX8"\n", addr, val);
@@ -157,7 +159,7 @@ void write_x8(uint32_t addr, uint8_t val)
       return;
    }
 
-   if ((addr >= IO_BASE) && ((addr & 0x01) == 0))
+   if ((addr & 0xFFFFF1) == 0xFFFFF0)
    {
       tubeWrite(addr >> 1, val);
       return;
@@ -175,11 +177,13 @@ void write_x8(uint32_t addr, uint8_t val)
       return;
    }
 
-   PiTRACE("Writing outside of RAM @%06"PRIX32" %02"PRIX8"\n", addr, val);
+   PiWARN("Writing outside of RAM @%06"PRIX32" %02"PRIX8"\n", addr, val);
 }
 
 void write_x16(uint32_t addr, uint16_t val)
 {
+   addr &= 0xFFFFFF;
+
 #ifdef TRACE_WRITEs
    PiTRACE(" @%06"PRIX32" = %04"PRIX16"\n", addr, val);
 #endif
@@ -198,8 +202,10 @@ void write_x16(uint32_t addr, uint16_t val)
 
 void write_x32(uint32_t addr, uint32_t val)
 {
+   addr &= 0xFFFFFF;
+
 #ifdef TRACE_WRITEs
-   PiTRACE(" @%06"PRIX32" = %08"PRIX32"\n", addr, val);
+   PiTRACE(" @%06"PRIX32" = %06"PRIX32"\n", addr, val);
 #endif
 
 #ifdef NS_FAST_RAM
@@ -218,6 +224,8 @@ void write_x32(uint32_t addr, uint32_t val)
 
 void write_x64(uint32_t addr, uint64_t val)
 {
+   addr &= 0xFFFFFF;
+
 #ifdef TRACE_WRITEs
    PiTRACE(" @%06"PRIX32" = %016"PRIX64"\n", addr, val);
 #endif
@@ -242,6 +250,8 @@ void write_x64(uint32_t addr, uint64_t val)
 
 void write_Arbitary(uint32_t addr, void* pData, uint32_t Size)
 {
+   addr &= 0xFFFFFF;
+
 #ifdef TRACE_WRITEs
    uint32_t Index;
    register uint8_t* pV = (uint8_t*) pData;
