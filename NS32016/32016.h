@@ -347,6 +347,9 @@ extern void DisassembleUsingITrace(uint32_t Location, uint32_t End);
 extern uint32_t IP[MEG16];
 #endif
 
+extern uint32_t Trace;
+
+#define SHOW_INSTRUCTIONS
 
 #ifdef SHOW_INSTRUCTIONS
 extern void ShowInstruction(uint32_t pc, uint32_t* pPC, uint32_t opcode, uint32_t Function, uint32_t OperandSize);
@@ -370,7 +373,7 @@ extern FILE *pTraceFile;
 #elif defined(TRACE_TO_CONSOLE)
 #define PiTRACE printf
 #else
-#define PiTRACE(...)
+#define PiTRACE(...) if (Trace) printf(__VA_ARGS__)
 #endif
 
 #define PiWARN(...)  { printf("pc=%08"PRIX32": ",pc); printf(__VA_ARGS__); }
@@ -388,7 +391,7 @@ extern const uint8_t FormatSizes[FormatCount + 1];
 #define PrintSP(str)
 #endif
 
-#define READ_PC_BYTE() read_x8(pc++) 
+#define READ_PC_BYTE() read_x8(pc++, 0) 
 
 #define SIGN_EXTEND(size, reg) \
   if ((size == sz8) && (reg & 0x80)) { \

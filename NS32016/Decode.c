@@ -87,6 +87,19 @@ void BreakPoint(uint32_t pc, uint32_t opcode)
 {
 #if 1
 #ifndef TEST_SUITE
+   static int trigger = 0;
+// cc trigger point
+//   if (pc == 0x31CF3) {
+// pascal trigger point
+//   if (pc == 0x321CC) {
+// link trigger point
+   if (pc == 0x3AD5A) {
+      trigger = 1;
+   }
+   Trace = trigger && (pc < 0xf00000) ? 7 : 0;
+   //if (pc == 0x32F48) {
+   //   Trace = 1;
+   //}
    // Exec address of Bas32
    if (pc == 0x000200)
    {
@@ -102,7 +115,8 @@ void BreakPoint(uint32_t pc, uint32_t opcode)
    // Address of SVC &11 (OS_EXIT)
    if (pc == 0xF007BB)
    {
-      n32016_dumpregs("Retuning to Pandora");
+      n32016_dumpregs("Returning to Pandora");
+      ProfileDump();
       ProfileInit();
    }
 #endif

@@ -127,7 +127,7 @@ void PushArbitary(uint64_t Value, uint32_t Size)
 
 static uint16_t popw()
 {
-   uint16_t temp = read_x16(GET_SP());
+   uint16_t temp = read_x16(GET_SP(), 1);
    INC_SP(2);
 
    return temp;
@@ -135,7 +135,7 @@ static uint16_t popw()
 
 static uint32_t popd()
 {
-   uint32_t temp = read_x32(GET_SP());
+   uint32_t temp = read_x32(GET_SP(), 1);
    INC_SP(4);
 
    return temp;
@@ -143,7 +143,7 @@ static uint32_t popd()
 
 uint32_t PopArbitary(uint32_t Size)
 {
-   uint32_t Result = read_n(GET_SP(), Size);
+   uint32_t Result = read_n(GET_SP(), Size, 1);
    INC_SP(Size);
 
    return Result;
@@ -155,7 +155,7 @@ int32_t GetDisplacement(uint32_t* pPC)
    int32_t Value;
 
    MultiReg Disp;
-   Disp.u32 = SWAP32(read_x32(*pPC));
+   Disp.u32 = SWAP32(read_x32(*pPC, 0));
 
    switch (Disp.u32 >> 29)
       // Look at the top 3 bits
@@ -232,9 +232,9 @@ uint32_t ReadGen(uint32_t c)
       {
          switch (OpSize.Op[c])
          {
-            case sz8:   return read_x8(genaddr[c]);
-            case sz16:  return read_x16(genaddr[c]);
-            case sz32:  return read_x32(genaddr[c]);
+         case sz8:   return read_x8(genaddr[c], 1);
+         case sz16:  return read_x16(genaddr[c], 1);
+         case sz32:  return read_x32(genaddr[c], 1);
          }
       }
       break;
@@ -270,7 +270,7 @@ uint64_t ReadGen64(uint32_t c)
    {
       case Memory:
       {
-         Temp = read_x64(genaddr[c]);
+         Temp = read_x64(genaddr[c], 1);
       }
       break;
 
@@ -282,7 +282,7 @@ uint64_t ReadGen64(uint32_t c)
 
       case TOS:
       {
-         Temp = read_x64(GET_SP());
+         Temp = read_x64(GET_SP(), 1);
          INC_SP(sz64);
       }
       break;
@@ -370,15 +370,15 @@ static void GetGenPhase2(RegLKU gen, int c)
 
          if (OpSize.Op[c] == sz64)
          {
-            temp3.u32 = SWAP32(read_x32(pc));
+            temp3.u32 = SWAP32(read_x32(pc, 0));
             Immediate64.u64 = (((uint64_t) temp3.u32) << 32);
-            temp3.u32 = SWAP32(read_x32(pc + 4));
+            temp3.u32 = SWAP32(read_x32(pc + 4, 0));
             Immediate64.u64 |= temp3.u32;
          }
          else
          {
             // Why can't they just decided on an endian and then stick to it?
-            temp3.u32 = SWAP32(read_x32(pc));
+            temp3.u32 = SWAP32(read_x32(pc, 0));
             if (OpSize.Op[c] == sz8)
                genaddr[c] = temp3.u8;
             else if (OpSize.Op[c] == sz16)
@@ -428,21 +428,21 @@ static void GetGenPhase2(RegLKU gen, int c)
          case FrameRelative:
             temp = GetDisplacement(&pc);
             temp2 = GetDisplacement(&pc);
-            genaddr[c] = read_x32(fp + temp);
+            genaddr[c] = read_x32(fp + temp, 1);
             genaddr[c] += temp2;
             break;
 
          case StackRelative:
             temp = GetDisplacement(&pc);
             temp2 = GetDisplacement(&pc);
-            genaddr[c] = read_x32(GET_SP() + temp);
+            genaddr[c] = read_x32(GET_SP() + temp, 1);
             genaddr[c] += temp2;
             break;
 
          case StaticRelative:
             temp = GetDisplacement(&pc);
             temp2 = GetDisplacement(&pc);
-            genaddr[c] = read_x32(sb + temp);
+            genaddr[c] = read_x32(sb + temp, 1);
             genaddr[c] += temp2;
             break;
 
@@ -451,9 +451,9 @@ static void GetGenPhase2(RegLKU gen, int c)
             break;
 
          case External:
-            temp = read_x32(mod + 4);
+            temp = read_x32(mod + 4, 1);
             temp += ((int32_t) GetDisplacement(&pc)) * 4;
-            temp2 = read_x32(temp);
+            temp2 = read_x32(temp, 1);
             genaddr[c] = temp2 + GetDisplacement(&pc);
             break;
 
@@ -969,17 +969,17 @@ void TakeInterrupt(uint32_t IntBase)
    psr &= ~0xF00;
    pushd((temp << 16) | mod);
    
-   while (read_x8(pc) == 0xB2)                                    // Do not stack the address of a WAIT instruction!
+   while (read_x8(pc, 0) == 0xB2)                                    // Do not stack the address of a WAIT instruction!
    {
       pc++;
    }
    
    pushd(pc);
-   temp = read_x32(IntBase);
+   temp = read_x32(IntBase, 1);
    mod = temp & 0xFFFF;
    temp3 = temp >> 16;
-   sb = read_x32(mod);
-   temp2 = read_x32(mod + 8);
+   sb = read_x32(mod, 1);
+   temp2 = read_x32(mod + 8, 1);
    pc = temp2 + temp3;
 }
 
@@ -1011,7 +1011,7 @@ uint32_t ReturnCommon(void)
 
    if (nscfg.de_flag == 0)
    {
-      sb = read_x32(mod);
+      sb = read_x32(mod, 1);
    }
 
    return 0;                     // OK
@@ -1050,7 +1050,7 @@ void n32016_exec()
       Regs[1].Whole  = 0xFFFF;
 
       startpc  = pc;
-      opcode = read_x32(pc);
+      opcode = read_x32(pc, 0);
 
       if (pc == PR.BPC)
       {
@@ -1398,15 +1398,15 @@ void n32016_exec()
 
          case CXP:
          {
-            temp2 = read_x32(mod + 4) + ((int32_t) temp) * 4;
+            temp2 = read_x32(mod + 4, 1) + ((int32_t) temp) * 4;
 
-            temp = read_x32(temp2);   // Matching Tail with CXPD, complier do your stuff
+            temp = read_x32(temp2, 1);   // Matching Tail with CXPD, complier do your stuff
             pushd((CXP_UNUSED_WORD << 16) | mod);
             pushd(pc);
             mod = temp & 0xFFFF;
             temp3 = temp >> 16;
-            sb = read_x32(mod);
-            temp2 = read_x32(mod + 8);
+            sb = read_x32(mod, 1);
+            temp2 = read_x32(mod + 8, 1);
             pc = temp2 + temp3;
             continue;
          }
@@ -1418,7 +1418,7 @@ void n32016_exec()
             temp2 = popd();
             mod = temp2 & 0xFFFF;
             INC_SP(temp);
-            sb = read_x32(mod);
+            sb = read_x32(mod, 1);
             continue;
          }
          // No break due to continue
@@ -1527,11 +1527,11 @@ void n32016_exec()
             // In SVC, the address pushed is the address of the SVC opcode
             pushd((temp << 16) | mod);
             pushd(startpc);
-            temp = read_x32(intbase + (5 * 4));
+            temp = read_x32(intbase + (5 * 4), 1);
             mod = temp & 0xFFFF;
             temp3 = temp >> 16;
-            sb = read_x32(mod);
-            temp2 = read_x32(mod + 8);
+            sb = read_x32(mod, 1);
+            temp2 = read_x32(mod + 8, 1);
             pc = temp2 + temp3;
             continue;
          }
@@ -1697,13 +1697,13 @@ void n32016_exec()
          {
             temp2 = ReadAddress(0);
 
-            temp = read_x32(temp2);   // Matching Tail with CXPD, complier do your stuff
+            temp = read_x32(temp2, 1);   // Matching Tail with CXPD, complier do your stuff
             pushd((CXP_UNUSED_WORD << 16) | mod);
             pushd(pc);
             mod = temp & 0xFFFF;
             temp3 = temp >> 16;
-            sb = read_x32(mod);
-            temp2 = read_x32(mod + 8);
+            sb = read_x32(mod, 1);
+            temp2 = read_x32(mod + 8, 1);
             pc = temp2 + temp3;
             continue;
          }
@@ -1891,11 +1891,11 @@ void n32016_exec()
                continue;
             }
 
-            temp = read_n(r[1], OpSize.Op[0]);
+            temp = read_n(r[1], OpSize.Op[0], 1);
 
             if (opcode & BIT(Translation))
             {
-               temp = read_x8(r[3] + temp); // Lookup the translation
+               temp = read_x8(r[3] + temp, 1); // Lookup the translation
             }
 
             if (StringMatching(opcode, temp))
@@ -1919,11 +1919,11 @@ void n32016_exec()
                continue;
             }
 
-            temp = read_n(r[1], OpSize.Op[0]);
+            temp = read_n(r[1], OpSize.Op[0], 1);
 
             if (opcode & BIT(Translation))
             {
-               temp = read_x8(r[3] + temp);                               // Lookup the translation
+               temp = read_x8(r[3] + temp, 1);                               // Lookup the translation
             }
 
             if (StringMatching(opcode, temp))
@@ -1931,7 +1931,7 @@ void n32016_exec()
                continue;
             }
 
-            temp2 = read_n(r[2], OpSize.Op[0]);
+            temp2 = read_n(r[2], OpSize.Op[0], 1);
 
             if (CompareCommon(temp, temp2) == 0)
             {
@@ -1964,11 +1964,11 @@ void n32016_exec()
                continue;
             }
 
-            temp = read_n(r[1], OpSize.Op[0]);
+            temp = read_n(r[1], OpSize.Op[0], 1);
 
             if (opcode & BIT(Translation))
             {
-               temp = read_x8(r[3] + temp); // Lookup the translation
+               temp = read_x8(r[3] + temp, 1); // Lookup the translation
                write_x8(r[1], temp); // Write back
             }
 
@@ -2253,7 +2253,7 @@ void n32016_exec()
             temp = (GetDisplacement(&pc) & ~(OpSize.Op[0] - 1))  + OpSize.Op[0];
             while (temp)
             {
-               temp2 = read_x8(First);
+               temp2 = read_x8(First, 1);
                First++;
                write_x8(Second, temp2);
                Second++;
@@ -2275,8 +2275,8 @@ void n32016_exec()
             //PiTRACE("CMP Size = %u Count = %u\n", temp4, temp3);
             while (temp3--)
             {
-               temp  = read_n(First, temp4);
-               temp2 = read_n(Second, temp4);
+               temp  = read_n(First, temp4, 1);
+               temp2 = read_n(Second, temp4, 1);
  
                if (CompareCommon(temp, temp2) == 0)
                {
@@ -2652,22 +2652,22 @@ void n32016_exec()
             {
                case sz8:
                {
-                  temp = read_x8(ad);
-                  temp2 = read_x8(ad + 1);
+                  temp = read_x8(ad, 1);
+                  temp2 = read_x8(ad + 1, 1);
                }
                break;
 
                case sz16:
                {
-                  temp = read_x16(ad);
-                  temp2 = read_x16(ad + 2);
+                  temp = read_x16(ad, 1);
+                  temp2 = read_x16(ad + 2, 1);
                }
                break;
 
                case sz32:
                {
-                  temp = read_x32(ad);
-                  temp2 = read_x32(ad + 4);
+                  temp = read_x32(ad, 1);
+                  temp2 = read_x32(ad + 4, 1);
                }
                break;
             }

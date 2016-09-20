@@ -49,7 +49,6 @@ void Dump(void)
    ShowTraps();
    TrapTRACE("\n");
 
-   ProfileDump();
 }
 
 void n32016_dumpregs(char* pMessage)

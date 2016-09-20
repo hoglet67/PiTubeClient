@@ -63,35 +63,41 @@ void dump_ram(void)
 #endif
 
 // Tube Access
-// FFFFF0 - R1 status
-// FFFFF2 - R1 data
-// FFFFF4 - R2 status
-// FFFFF6 - R2 data
-// FFFFF8 - R3 status
-// FFFFFA - R3 data
-// FFFFFC - R4 status
-// FFFFFE - R4 data
+// FFFFFFF0 - R1 status
+// FFFFFFF2 - R1 data
+// FFFFFFF4 - R2 status
+// FFFFFFF6 - R2 data
+// FFFFFFF8 - R3 status
+// FFFFFFFA - R3 data
+// FFFFFFFC - R4 status
+// FFFFFFFE - R4 data
 
-uint8_t read_x8(uint32_t addr)
+
+uint8_t read_x8(uint32_t addr, int log)
 {
    //addr &= MEM_MASK;
 
    if (addr < IO_BASE)
    {
-      return ns32016ram[addr];
+      uint8_t val = ns32016ram[addr];
+      if (log)
+      {
+         PiTRACE("RD &%06"PRIX32" &%02"PRIX8"\n", addr, val);
+      }
+      return val;
    }
 
-   if ((addr & 0x01) == 0)
+   if ((addr & 0xFFFFFF01) == 0xFFFFFF00)
    {
       return tubeRead(addr >> 1);
    }
 
-   //PiTRACE("Bad read_x8 @ %06"PRIX32"\n", addr);
+   printf("Bad Read @ %08" PRIX32 "\n", addr);
 
    return 0;
 }
 
-uint16_t read_x16(uint32_t addr)
+uint16_t read_x16(uint32_t addr, int log)
 {
    //addr &= MEM_MASK;
 
@@ -102,10 +108,10 @@ uint16_t read_x16(uint32_t addr)
    }
 #endif
 
-   return read_x8(addr) | (read_x8(addr + 1) << 8);
+   return read_x8(addr, log) | (read_x8(addr + 1, log) << 8);
 }
 
-uint32_t read_x32(uint32_t addr)
+uint32_t read_x32(uint32_t addr, int log)
 {
    //addr &= MEM_MASK;
 
@@ -116,19 +122,37 @@ uint32_t read_x32(uint32_t addr)
    }
 #endif
 
-   return read_x8(addr) | (read_x8(addr + 1) << 8) | (read_x8(addr + 2) << 16) | (read_x8(addr + 3) << 24);
+   return read_x8(addr, log) | (read_x8(addr + 1, log) << 8) | (read_x8(addr + 2, log) << 16) | (read_x8(addr + 3, log) << 24);
 }
 
-uint64_t read_x64(uint32_t addr)
+uint64_t read_x64(uint32_t addr, int log)
 {
    // ARM doesn't support unalizged 64-bit loads, so the following
    // results in a Data Abort exception:
    // return *((uint64_t*) (ns32016ram + addr))
-   return (((uint64_t) read_x32(addr + 4)) << 32) + read_x32(addr);
+   return (((uint64_t) read_x32(addr + 4, log)) << 32) + read_x32(addr, log);
 }
 
-uint32_t read_n(uint32_t addr, uint32_t Size)
+uint32_t read_n(uint32_t addr, uint32_t Size, int log)
 {
+   if (Size == 1)
+   {
+      return read_x8(addr, log);
+   }
+   else if (Size == 2)
+   {
+      return read_x16(addr, log);
+   }
+   else if (Size == 4)
+   {
+      return read_x32(addr, log);
+   }
+   else
+   {
+      printf("Bad Read @ %08" PRIX32 " size = %"PRIu32"\n", addr, Size);
+      return 0;
+   }
+#if 0
    if (Size <= sizeof(uint64_t))
    {
       if ((addr + Size) <= IO_BASE)
@@ -138,9 +162,9 @@ uint32_t read_n(uint32_t addr, uint32_t Size)
          return Result;
       }
    }
-
    PiTRACE("Bad Read @ %06" PRIu32 "\n", addr);
    return 0;
+#endif
 }
 
 void write_x8(uint32_t addr, uint8_t val)
@@ -153,11 +177,15 @@ void write_x8(uint32_t addr, uint8_t val)
 
    if (addr <= (RAM_SIZE - sizeof(uint8_t)))
    {
+      if (Trace)
+      {
+         printf("WR &%06"PRIX32" &%02"PRIX8"\n", addr, val);
+      }
       ns32016ram[addr] = val;
       return;
    }
 
-   if ((addr >= IO_BASE) && ((addr & 0x01) == 0))
+   if ((addr & 0xFFFFFF01) == 0xFFFFFF00)
    {
       tubeWrite(addr >> 1, val);
       return;

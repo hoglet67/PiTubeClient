@@ -4,6 +4,8 @@
 #include "rpi-interrupts.h"
 #include "tube-isr.h"
 
+extern uint32_t startpc;
+
 void dump_hex(unsigned int value) {
   int i;
   for (i = 0; i < 8; i++) {   
@@ -105,7 +107,17 @@ void dump_info(unsigned int *context, int offset, char *type) {
 	dump_string("Illegal");
 	break;
   };
-  dump_string(" Mode)\r\nHalted waiting for reset\r\n");
+  dump_string(" Mode)\r\n");
+
+  dump_string("32016 PC = ");
+  dump_hex(startpc);
+  dump_string("\r\n");
+
+  dump_string("32016 Opcode = ");
+  dump_hex(read_x32(startpc));
+  dump_string("\r\n");
+
+  dump_string("Halted waiting for reset\r\n");
   rstlow = 0;
   led = 0;
   while (1) {

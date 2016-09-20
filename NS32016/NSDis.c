@@ -189,7 +189,7 @@ void GetOperandText(uint32_t Start, uint32_t* pPC, RegLKU Pattern, uint32_t c)
             int32_t Value;
             MultiReg temp3;
 
-            temp3.u32 = SWAP32(read_x32(*pPC));
+            temp3.u32 = SWAP32(read_x32(*pPC, 0));
             if (FredSize.Op[c] == sz8)
                Value = temp3.u8;
             else if (FredSize.Op[c] == sz16)
@@ -460,7 +460,7 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
       //PiTRACE("#%08"PRIu32" ", OpCount);
 #endif
         
-      PiTRACE("&%06" PRIX32 " ", StartPc);
+      PiTRACE("PC &%06" PRIX32 " ", StartPc);
       PiTRACE("[%08" PRIX32 "] ", opcode);
       uint32_t Format = Function >> 4;
       PiTRACE("F%01" PRIu32 " ", Format);
@@ -508,25 +508,25 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
          {
             case SAVE:
             {
-               ShowRegs(read_x8((*pPC)++), 0);    //Access directly we do not want tube reads!
+               ShowRegs(read_x8((*pPC)++, 0), 0);    //Access directly we do not want tube reads!
             }
             break;
 
             case RESTORE:
             {
-               ShowRegs(read_x8((*pPC)++), 1);    //Access directly we do not want tube reads!
+               ShowRegs(read_x8((*pPC)++, 0), 1);    //Access directly we do not want tube reads!
             }
             break;
 
             case EXIT:
             {
-               ShowRegs(read_x8((*pPC)++), 1);    //Access directly we do not want tube reads!
+               ShowRegs(read_x8((*pPC)++, 0), 1);    //Access directly we do not want tube reads!
             }
             break;
   
             case ENTER:
             {
-               ShowRegs(read_x8((*pPC)++), 0);    //Access directly we do not want tube reads!
+               ShowRegs(read_x8((*pPC)++, 0), 0);    //Access directly we do not want tube reads!
                int32_t d = GetDisplacement(pPC);
                PiTRACE(" " HEX32 "", d);
             }
@@ -581,7 +581,7 @@ void ShowInstruction(uint32_t StartPc, uint32_t* pPC, uint32_t opcode, uint32_t 
             case INSS:
             case EXTS:
             {
-               uint8_t Value = read_x8((*pPC)++);
+               uint8_t Value = read_x8((*pPC)++, 0);
                PiTRACE(",%" PRIu32 ",%" PRIu32,  Value >> 5, ((Value & 0x1F) + 1));
             }
             break;
@@ -657,7 +657,7 @@ static void getgen(int gen, int c, uint32_t* pPC)
 
    if (gen >= EaPlusRn)
    {
-      Regs[c].Whole |= read_x8((*pPC)++) << 8;
+      Regs[c].Whole |= read_x8((*pPC)++, 0) << 8;
       (*pPC)++;
 
       if ((Regs[c].Whole & 0xF800) == (Immediate << 11))
@@ -677,7 +677,7 @@ static void getgen(int gen, int c, uint32_t* pPC)
 void Decode(uint32_t* pPC)
 {
    uint32_t StartPc = *pPC;
-   uint32_t opcode = read_x32(*pPC);
+   uint32_t opcode = read_x32(*pPC, 0);
    uint32_t Function = FunctionLookup[opcode & 0xFF];
    uint32_t Format = Function >> 4;
 
@@ -863,11 +863,11 @@ void DisassembleUsingITrace(uint32_t Location, uint32_t End)
             {
                if ((Break % BYTE_COUNT) == 0)
                {
-                  PiTRACE("\n.byte %u", read_x8(Temp));
+                  PiTRACE("\n.byte %u", read_x8(Temp, 0));
                   continue;
                }
 
-               PiTRACE(",%u", read_x8(Temp));
+               PiTRACE(",%u", read_x8(Temp, 0));
             }
 
             PiTRACE("\n");
