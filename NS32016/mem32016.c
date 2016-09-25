@@ -177,7 +177,11 @@ void write_x8(uint32_t addr, uint8_t val)
       return;
    }
 
-   PiWARN("Writing outside of RAM @%06"PRIX32" %02"PRIX8"\n", addr, val);
+   // Silently ignore writing one word beyond end of RAM
+   // as Pandora RAM test does this
+   if (addr >= RAM_SIZE + 4) {
+      PiWARN("Writing outside of RAM @%06"PRIX32" %02"PRIX8"\n", addr, val);
+   }
 }
 
 void write_x16(uint32_t addr, uint16_t val)
