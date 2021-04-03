@@ -1,7 +1,7 @@
 # Raspberry Pi Tube Client (PiTubeClient)
 
 A project to turn a Raspberry Pi into a SPI Connected Second Processor
-for the Acorn MMC Micro Model B or Master 128.
+for the Acorn BBC Micro Model B or Master 128.
 
 See:http://stardot.org.uk/forums/viewtopic.php?f=3&t=10421
 
